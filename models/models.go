@@ -9,10 +9,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
@@ -22,6 +24,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+	"gopkg.in/yaml.v2"
 
 	// Needed for the Postgresql driver
 	_ "github.com/lib/pq"
@@ -301,6 +304,15 @@ func NewEngine(migrateFunc func(*xorm.Engine) error) (err error) {
 	return nil
 }
 
+// SyncDBStructs will sync database structs
+func SyncDBStructs() error {
+	if err := x.StoreEngine("InnoDB").Sync2(tables...); err != nil {
+		return fmt.Errorf("sync database struct error: %v", err)
+	}
+
+	return nil
+}
+
 // Statistic contains the database statistics
 type Statistic struct {
 	Counter struct {
@@ -359,4 +371,114 @@ func DumpDatabase(filePath string, dbType string) error {
 		return x.DumpTablesToFile(tbs, filePath, core.DbType(dbType))
 	}
 	return x.DumpTablesToFile(tbs, filePath)
+}
+
+// DumpDatabaseFixtures dumps all data from database to fixtures files on dirPath
+func DumpDatabaseFixtures(dirPath string) error {
+	for _, t := range tables {
+		if err := dumpTableFixtures(t, dirPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dumpTableFixtures(bean interface{}, dirPath string) error {
+	table := x.TableInfo(bean)
+	f, err := os.Create(filepath.Join(dirPath, table.Name+".yml"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	const bufferSize = 100
+	var start = 0
+	for {
+		objs, err := x.Table(table.Name).Limit(bufferSize, start).QueryInterface()
+		if err != nil {
+			return err
+		}
+		if len(objs) == 0 {
+			break
+		}
+
+		data, err := yaml.Marshal(objs)
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(data)
+		if err != nil {
+			return err
+		}
+		if len(objs) < bufferSize {
+			break
+		}
+		start += len(objs)
+	}
+
+	return nil
+}
+
+// RestoreDatabaseFixtures restores all data from dir to database
+func RestoreDatabaseFixtures(dirPath string) error {
+	for _, t := range tables {
+		if err := restoreTableFixtures(t, dirPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func restoreTableFixtures(bean interface{}, dirPath string) error {
+	table := x.TableInfo(bean)
+	data, err := ioutil.ReadFile(filepath.Join(dirPath, table.Name+".yml"))
+	if err != nil {
+		return err
+	}
+
+	const bufferSize = 100
+	var records = make([]map[string]interface{}, 0, bufferSize*10)
+	err = yaml.Unmarshal(data, &records)
+	if err != nil {
+		return err
+	}
+
+	if len(records) == 0 {
+		return nil
+	}
+
+	var columns = make([]string, 0, len(records[0]))
+	for k := range records[0] {
+		columns = append(columns, k)
+	}
+	sort.Strings(columns)
+
+	qm := strings.Repeat("?,", len(columns))
+	qm = "(" + qm[:len(qm)-1] + ")"
+
+	_, err = x.Exec("DELETE FROM `" + table.Name + "`")
+	if err != nil {
+		return err
+	}
+
+	var sql = "INSERT INTO `" + table.Name + "` (`" + strings.Join(columns, "`,`") + "`) VALUES "
+	var args = make([]interface{}, 0, bufferSize)
+	var insertSQLs = make([]string, 0, bufferSize)
+	for i, vals := range records {
+		insertSQLs = append(insertSQLs, qm)
+		for _, colName := range columns {
+			args = append(args, vals[colName])
+		}
+
+		if i+1%100 == 0 || i == len(records)-1 {
+			_, err = x.Exec(sql+strings.Join(insertSQLs, ","), args...)
+			if err != nil {
+				return err
+			}
+			insertSQLs = make([]string, 0, bufferSize)
+			args = make([]interface{}, 0, bufferSize)
+		}
+	}
+
+	return err
 }
