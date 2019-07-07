@@ -232,6 +232,10 @@ var migrations = []Migration{
 	NewMigration("add avatar field to repository", addAvatarFieldToRepository),
 	// v88 -> v89
 	NewMigration("add commit status context field to commit_status", addCommitStatusContext),
+	// v89 -> v90
+	NewMigration("add toc on wiki and markedown", addCanTocOnWikiAndMarkdown),
+	// v90 -> v91
+	NewMigration("add pagetoc to wiki", addCanWikiPageToc),
 }
 
 // Migrate database to current version
