@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -165,6 +166,23 @@ func renderDirectory(ctx *context.Context, treeLink string) {
 				buf = charset.ToUTF8WithFallback(append(buf, d...))
 
 				if markupType := markup.Type(readmeFile.Name()); markupType != "" {
+					// Check if extension matches TOC file list
+					tocExts := setting.Markdown.TocMarkupFileExtensions
+					isTocMarkup := false
+					if len(tocExts) == 0 || len(tocExts) == 1 && tocExts[0] == "" || len(tocExts) == 2 && tocExts[0] == "" && tocExts[1] == "" {
+						isTocMarkup = true
+					} else {
+						fileExt := strings.ToLower(filepath.Ext(readmeFile.Name()))
+						if fileExt != "" {
+							for _, tExt := range tocExts {
+								if tExt == fileExt {
+									isTocMarkup = true
+									break
+								}
+							}
+						}
+					}
+					ctx.Data["IsTocMarkup"] = isTocMarkup
 					ctx.Data["IsMarkup"] = true
 					ctx.Data["MarkupType"] = string(markupType)
 					ctx.Data["FileContent"] = string(markup.Render(readmeFile.Name(), buf, treeLink, ctx.Repo.Repository.ComposeMetas()))
@@ -296,7 +314,25 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry, treeLink, rawLink st
 
 		readmeExist := markup.IsReadmeFile(blob.Name())
 		ctx.Data["ReadmeExist"] = readmeExist
+
 		if markupType := markup.Type(blob.Name()); markupType != "" {
+			// Check if extension matches TOC file list
+			tocExts := setting.Markdown.TocMarkupFileExtensions
+			isTocMarkup := false
+			if len(tocExts) == 0 || len(tocExts) == 1 && tocExts[0] == "" || len(tocExts) == 2 && tocExts[0] == "" && tocExts[1] == "" {
+				isTocMarkup = true
+			} else {
+				fileExt := strings.ToLower(filepath.Ext(blob.Name()))
+				if fileExt != "" {
+					for _, tExt := range tocExts {
+						if tExt == fileExt {
+							isTocMarkup = true
+							break
+						}
+					}
+				}
+			}
+			ctx.Data["IsTocMarkup"] = isTocMarkup
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
 			ctx.Data["FileContent"] = string(markup.Render(blob.Name(), buf, path.Dir(treeLink), ctx.Repo.Repository.ComposeMetas()))

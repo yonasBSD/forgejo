@@ -3337,3 +3337,135 @@ window.onOAuthLoginClick = function () {
     oauthNav.show();
   }, 5000);
 };
+(function () {
+  // html listings ----------------------------------------------------
+  let openedLists, listEopen;
+  // close list
+  const closeList = function (count) {
+    let out = '';
+    if (count === false || count === 0 || count === 'undefined' || typeof (count) === 'undefined') {
+      count = openedLists.length;
+    } else {
+      count = Math.min(count, openedLists.length);
+    }
+    while (count > 0) {
+      out += `</li>${openedLists.pop()}`;
+      listEopen = true;
+      count--;
+    }
+    return out;
+  };
+  // open list
+  const openList = function () {
+    const out = '<ul>';
+    openedLists.push('</ul>');
+    listEopen = false;
+    return out;
+  };
+  // handle list element
+  // create valid html list
+  const recursive_list = function (line, level, id) {
+    let out = '';
+    const diff = level - openedLists.length;
+    if (diff > 0) { // open new level
+      out += openList();
+      out += recursive_list(line, level, id);
+    } else if (diff < 0) {
+      out += closeList(-diff);
+      out += recursive_list(line, level, id);
+    } else { // only add list element
+      out += `${listEopen ? '</li>' : ''}<li><a href="#${id}" rel="nofollow">${line}</a>`;
+      listEopen = true;
+    }
+    return out;
+  };
+  /**
+   * find headlines and create list ----------------------------------
+   * @param target Element target container where toc should be created
+   */
+  const create_toc_inside = function (target) {
+    let rm;
+    if (target != null) {
+      rm = target.querySelector('.auto-toc-wrapper');
+      if (rm != null) {
+        rm.parentNode.removeChild(rm);
+      }
+      // remove optional toc flag
+      const ps = target.querySelectorAll('p');
+      // look for toc keywoard
+      for (let i = 0; i < ps.length; i++) {
+        if (ps[i].textContent.trim() === '%%TOC%%') {
+          ps[i].parentNode.removeChild(ps[i]);
+        }
+      }
+      openedLists = []; listEopen = false;
+      // get content and create html
+      const elms = target.querySelectorAll('h1,h2,h3,h4,h5');
+      if (elms.length > 0) {
+        let html = '';
+        for (let i = 0; i < elms.length; i++) {
+          const l = elms[i].tagName.substr(1); // level
+          const t = elms[i].innerText.trim().trim(''); // text
+          const id = elms[i].id;
+          // create html
+          if (t.length > 0 && l >= 1) {
+            html += recursive_list(t, l, id);
+          } else {
+            html += closeList(0);
+          }
+        }
+        html += closeList(0);
+        // create elements
+        const d = document.createElement('div');
+        d.id = 'auto-toc';
+        d.className = 'anchor-wrap';
+        // d.innerHTML = '<h2>'+((typeof(target.dataset.toc) == 'string' && target.dataset.toc != '')?target.dataset.toc:'Table of Contents')+'</h2>';
+        d.innerHTML = `<h2>${(typeof (target.dataset.toc) === 'string' && target.dataset.toc !== '') ? target.dataset.toc : 'Table of Contents'}</h2>`;
+        const d2 = document.createElement('div');
+        d2.className = 'auto-toc-container';
+        d2.innerHTML = html;
+        d2.insertBefore(d, d2.firstChild);
+        const c = document.createElement('div');
+        c.className = 'auto-toc-wrapper';
+        c.appendChild(d2);
+        // inject toc
+        target.insertBefore(c, target.firstChild);
+        rm = document.querySelector('.auto-toc-clear');
+        if (rm != null) {
+          rm.parentNode.removeChild(rm);
+        }
+        const a = document.createElement('div'); a.className = 'auto-toc-clear';
+        target.appendChild(a);
+      }
+    }
+  };
+  /**
+   * search for %%TOC%% inside document if found create toc --------------------------
+   * @param target Element target container where toc should be created
+   */
+  const detect_toc_flag = function (target) {
+    if (target != null) {
+      const ps = target.querySelectorAll('p');
+      let found = false;
+      // look for toc keywoard
+      for (let i = 0; i < ps.length; i++) {
+        if (ps[i].textContent.trim() === '%%TOC%%') {
+          found = ps[i];
+          break;
+        }
+      }
+      if (found !== false) {
+        // remove toc keywoard
+        found.parentNode.removeChild(found);
+        // create toc
+        create_toc_inside(target);
+      }
+    }
+  };
+  // create toc ----------------------------------
+  window.addEventListener('load', () => {
+    create_toc_inside(document.querySelector('.file-view.markdown.auto-toc')); // md
+    detect_toc_flag(document.querySelector('.file-view.markdown.auto-toc-by-flag')); // md by %%TOC%% flag
+    create_toc_inside(document.querySelector('.segment.markdown.auto-toc')); // wiki pages
+  });
+}());

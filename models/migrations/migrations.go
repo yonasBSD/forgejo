@@ -272,6 +272,8 @@ var migrations = []Migration{
 	NewMigration("Add template options to repository", addTemplateToRepo),
 	// v108 -> v109
 	NewMigration("Add comment_id on table notification", addCommentIDOnNotification),
+	// v109 -> v110
+	NewMigration("add toc on wiki and markdown", addCanTocOnWikiAndMarkdown),
 }
 
 // Migrate database to current version

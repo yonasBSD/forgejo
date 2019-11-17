@@ -186,6 +186,9 @@ type Repository struct {
 	IndexerStatus                   *RepoIndexerStatus `xorm:"-"`
 	IsFsckEnabled                   bool               `xorm:"NOT NULL DEFAULT true"`
 	CloseIssuesViaCommitInAnyBranch bool               `xorm:"NOT NULL DEFAULT false"`
+	TocWikiFile                     bool               `xorm:"NOT NULL DEFAULT true"`
+	TocMarkupAlways                 bool               `xorm:"NOT NULL DEFAULT false"`
+	TocMarkupByFlag                 bool               `xorm:"NOT NULL DEFAULT true"`
 	Topics                          []string           `xorm:"TEXT JSON"`
 
 	// Avatar: ID(10-20)-md5(32) - must fit into 64 symbols
@@ -1620,6 +1623,9 @@ func CreateRepository(doer, u *User, opts CreateRepoOptions) (_ *Repository, err
 		IsPrivate:                       opts.IsPrivate,
 		IsFsckEnabled:                   !opts.IsMirror,
 		CloseIssuesViaCommitInAnyBranch: setting.Repository.DefaultCloseIssuesViaCommitsInAnyBranch,
+		TocWikiFile:                     setting.Markdown.DefaultTocWikiFile,
+		TocMarkupAlways:                 setting.Markdown.DefaultTocMarkupAlways,
+		TocMarkupByFlag:                 setting.Markdown.DefaultTocMarkupByFlag,
 		Status:                          opts.Status,
 		IsEmpty:                         !opts.AutoInit,
 	}

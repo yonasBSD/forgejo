@@ -133,6 +133,9 @@ type RepoSettingForm struct {
 	AllowOnlyContributorsToTrackTime bool
 	EnableIssueDependencies          bool
 	IsArchived                       bool
+	TocWikiFile                      bool
+	TocMarkupAlways                  bool
+	TocMarkupByFlag                  bool
 
 	// Admin settings
 	EnableHealthCheck                     bool

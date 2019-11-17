@@ -250,7 +250,7 @@ i.icon.centerlock{top:1.5em}
 .code-view :not(.fa):not(.octicon):not(.icon){font-size:12px;font-family:'SF Mono',Consolas,Menlo,'Liberation Mono',Monaco,'Lucida Console',monospace;line-height:20px}
 .code-view table{width:100%}
 .code-view .active{background:#fff866}
-.markdown:not(code){overflow:hidden;font-size:16px;line-height:1.6!important;word-wrap:break-word}
+.markdown:not(code){font-size:16px;line-height:1.6!important;word-wrap:break-word}
 .markdown:not(code).ui.segment{padding:3em}
 .markdown:not(code).file-view{padding:2em 2em 2em!important}
 .markdown:not(code)>:first-child{margin-top:0!important}
@@ -329,6 +329,14 @@ i.icon.centerlock{top:1.5em}
 .markdown:not(code) .csv-data tr{border-top:0}
 .markdown:not(code) .csv-data th{font-weight:700;background:#f8f8f8;border-top:0}
 .markdown:not(code) .ui.list .list,.markdown:not(code) ol.ui.list ol,.markdown:not(code) ul.ui.list ul{padding-left:2em}
+.markdown:not(code) .auto-toc-wrapper{position:relative;padding:0 0 7px 20px;float:right;background:#fff;z-index:1}
+@media only screen and (min-width:1760px){.markdown:not(code) .auto-toc-wrapper{right:-31%;width:26%;padding:0;margin-top:-3em!important;margin-left:-26%}
+}
+@media only screen and (max-width:479px){.markdown:not(code) .auto-toc-wrapper{float:none;width:100%;padding:0;margin-bottom:1em}
+}
+.markdown:not(code) .auto-toc-container{padding:7px;border:1px solid #d4d4d5;border-radius:5px}
+.markdown:not(code) .auto-toc-container h2{padding:.3em;font-size:1.65em}
+.markdown:not(code) .auto-toc-clear{clear:both;margin-bottom:-20px!important}
 .repository.wiki.revisions .ui.container>.ui.stackable.grid{flex-direction:row-reverse}
 .repository.wiki.revisions .ui.container>.ui.stackable.grid>.header{margin-top:0}
 .repository.wiki.revisions .ui.container>.ui.stackable.grid>.header .sub.header{padding-left:52px;word-break:break-word}

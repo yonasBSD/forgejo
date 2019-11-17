@@ -293,6 +293,24 @@ func SettingsPost(ctx *context.Context, form auth.RepoSettingForm) {
 			ctx.ServerError("UpdateRepositoryUnits", err)
 			return
 		}
+
+		if repo.TocWikiFile != form.TocWikiFile {
+			repo.TocWikiFile = form.TocWikiFile
+		}
+
+		if repo.TocMarkupAlways != form.TocMarkupAlways {
+			repo.TocMarkupAlways = form.TocMarkupAlways
+		}
+
+		if repo.TocMarkupByFlag != form.TocMarkupByFlag {
+			repo.TocMarkupByFlag = form.TocMarkupByFlag
+		}
+
+		if err := models.UpdateRepository(repo, false); err != nil {
+			ctx.ServerError("UpdateRepository", err)
+			return
+		}
+
 		log.Trace("Repository advanced settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
