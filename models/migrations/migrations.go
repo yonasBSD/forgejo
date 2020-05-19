@@ -304,6 +304,16 @@ Please try upgrading to a lower version first (suggested v1.6.4), then upgrade t
 			return err
 		}
 	}
+
+	// IMPORTANT: THIS MIGRATION DOES NOT HAVE IT'S FINAL NUMBER OR FORM.
+	// IT'S NOT INTENDED TO GO LIKE THIS IN THE FINAL VERSION OF THE PR.
+	// FIXME: GAP: assign a proper migration number and remove from here
+	// NewMigration("Add and populate the user_repo_unit table", addUserRepoUnit),
+	log.Info("FIXME: GAP: Migration[999/%d]: Add and populate the user_repo_unit table", currentVersion.Version)
+	if err = addUserRepoUnit(x); err != nil {
+		return fmt.Errorf("do migrate: %v", err)
+	}
+
 	return nil
 }
 
