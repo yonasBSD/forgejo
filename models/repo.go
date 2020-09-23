@@ -1050,7 +1050,7 @@ func (repo *Repository) CloneLink() (cl *CloneLink) {
 // CheckCreateRepository check if could created a repository
 func CheckCreateRepository(doer, u *User, name string) error {
 	if !doer.CanCreateRepo() {
-		return ErrReachLimitOfRepo{u.MaxRepoCreation}
+		return ErrReachLimitOfRepo{u.MaxCreationLimit()}
 	}
 
 	if err := IsUsableRepoName(name); err != nil {
@@ -1176,10 +1176,17 @@ func CreateRepository(ctx DBContext, doer, u *User, repo *Repository) (err error
 		return fmt.Errorf("updateUser: %v", err)
 	}
 
-	if _, err = ctx.e.Incr("num_repos").ID(u.ID).Update(new(User)); err != nil {
-		return fmt.Errorf("increment user total_repos: %v", err)
+	if !repo.IsPrivate {
+		if _, err = ctx.e.Incr("num_public_repos").ID(u.ID).Update(new(User)); err != nil {
+			return fmt.Errorf("increment user num_public_repos: %v", err)
+		}
+		u.NumPublicRepos++
+	} else {
+		if _, err = ctx.e.Incr("num_private_repos").ID(u.ID).Update(new(User)); err != nil {
+			return fmt.Errorf("increment user num_private_repos: %v", err)
+		}
+		u.NumPrivateRepos++
 	}
-	u.NumRepos++
 
 	// Give access to all members in teams with access to all repositories.
 	if u.IsOrganization() {
@@ -1456,6 +1463,14 @@ func GetRepositoriesByForkID(forkID int64) ([]*Repository, error) {
 }
 
 func updateRepository(e Engine, repo *Repository, visibilityChanged bool) (err error) {
+	if visibilityChanged {
+		if repo.IsPrivate && !repo.Owner.CanCreatePrivateRepo() {
+			return ErrReachLimitOfRepo{repo.Owner.MaxPrivateCreationLimit()}
+		} else if !repo.Owner.CanCreatePublicRepo() {
+			return ErrReachLimitOfRepo{repo.Owner.MaxPublicCreationLimit()}
+		}
+	}
+
 	repo.LowerName = strings.ToLower(repo.Name)
 
 	if utf8.RuneCountInString(repo.Description) > 255 {
