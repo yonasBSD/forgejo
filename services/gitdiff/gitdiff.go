@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
@@ -76,6 +77,7 @@ type DiffLine struct {
 	Content     string
 	Comments    []*models.Comment
 	SectionInfo *DiffLineSectionInfo
+	NEOF        bool
 }
 
 // DiffLineSectionInfo represents diff line section meta data
@@ -180,6 +182,7 @@ var (
 	addedCodePrefix   = []byte(`<span class="added-code">`)
 	removedCodePrefix = []byte(`<span class="removed-code">`)
 	codeTagSuffix     = []byte(`</span>`)
+	neofSuffix        = []byte(`⍉⏎`)
 )
 var trailingSpanRegex = regexp.MustCompile(`<span\s*[[:alpha:]="]*?[>]?$`)
 
@@ -290,10 +293,28 @@ func init() {
 	diffMatchPatch.DiffEditCost = 100
 }
 
+func getDiffLineContentForDisplay(diffLine *DiffLine) string {
+	content := getLineContent(diffLine.Content[1:])
+	if diffLine.NEOF {
+		content += string(neofSuffix)
+	}
+
+	return content
+}
+
+func getDiffLineContentForDiff(diffLine *DiffLine) string {
+	content := diffLine.Content[1:]
+	if diffLine.NEOF {
+		content += string(neofSuffix)
+	}
+
+	return content
+}
+
 // GetComputedInlineDiffFor computes inline diff for the given line.
 func (diffSection *DiffSection) GetComputedInlineDiffFor(diffLine *DiffLine) template.HTML {
 	if setting.Git.DisableDiffHighlight {
-		return template.HTML(getLineContent(diffLine.Content[1:]))
+		return template.HTML(getDiffLineContentForDisplay(diffLine))
 	}
 
 	var (
@@ -305,29 +326,29 @@ func (diffSection *DiffSection) GetComputedInlineDiffFor(diffLine *DiffLine) tem
 	// try to find equivalent diff line. ignore, otherwise
 	switch diffLine.Type {
 	case DiffLineSection:
-		return template.HTML(getLineContent(diffLine.Content[1:]))
+		return template.HTML(getLineContent(diffLine.Content))
 	case DiffLineAdd:
 		compareDiffLine = diffSection.GetLine(DiffLineDel, diffLine.RightIdx)
 		if compareDiffLine == nil {
-			return template.HTML(highlight.Code(diffSection.FileName, diffLine.Content[1:]))
+			return template.HTML(highlight.Code(diffSection.FileName, getDiffLineContentForDisplay(diffLine)))
 		}
-		diff1 = compareDiffLine.Content
-		diff2 = diffLine.Content
+		diff1 = getDiffLineContentForDiff(compareDiffLine)
+		diff2 = getDiffLineContentForDiff(diffLine)
 	case DiffLineDel:
 		compareDiffLine = diffSection.GetLine(DiffLineAdd, diffLine.LeftIdx)
 		if compareDiffLine == nil {
-			return template.HTML(highlight.Code(diffSection.FileName, diffLine.Content[1:]))
+			return template.HTML(highlight.Code(diffSection.FileName, getDiffLineContentForDisplay(diffLine)))
 		}
-		diff1 = diffLine.Content
-		diff2 = compareDiffLine.Content
+		diff1 = getDiffLineContentForDiff(diffLine)
+		diff2 = getDiffLineContentForDiff(compareDiffLine)
 	default:
 		if strings.IndexByte(" +-", diffLine.Content[0]) > -1 {
-			return template.HTML(highlight.Code(diffSection.FileName, diffLine.Content[1:]))
+			return template.HTML(highlight.Code(diffSection.FileName, getDiffLineContentForDiff(diffLine)))
 		}
 		return template.HTML(highlight.Code(diffSection.FileName, diffLine.Content))
 	}
 
-	diffRecord := diffMatchPatch.DiffMain(highlight.Code(diffSection.FileName, diff1[1:]), highlight.Code(diffSection.FileName, diff2[1:]), true)
+	diffRecord := diffMatchPatch.DiffMain(highlight.Code(diffSection.FileName, diff1), highlight.Code(diffSection.FileName, diff2), true)
 	diffRecord = diffMatchPatch.DiffCleanupEfficiency(diffRecord)
 	return diffToHTML(diffSection.FileName, diffRecord, diffLine.Type)
 }
@@ -452,16 +473,30 @@ func ParsePatch(maxLines, maxLineCharacters, maxFiles int, reader io.Reader) (*D
 		readerSize = 4096
 	}
 
+	var line = ""
+	var err error
 	input := bufio.NewReaderSize(reader, readerSize)
-	line, err := input.ReadString('\n')
-	if err != nil {
-		if err == io.EOF {
-			return diff, nil
+	for len(line) == 0 {
+		line, err = input.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return diff, nil
+			}
+			return diff, err
 		}
-		return diff, err
 	}
 parsingLoop:
 	for {
+		for len(line) == 0 {
+			log.Error("continue")
+			line, err = input.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					return diff, nil
+				}
+				return diff, err
+			}
+		}
 		// 1. A patch file always begins with `diff --git ` + `a/path b/path` (possibly quoted)
 		// if it does not we have bad input!
 		if !strings.HasPrefix(line, cmdDiffHead) {
@@ -655,6 +690,9 @@ func parseHunks(curFile *DiffFile, maxLines, maxLineCharacters int, input *bufio
 			err = fmt.Errorf("Unable to ReadLine: %v", err)
 			return
 		}
+		if len(lineBytes) == 0 {
+			continue
+		}
 		if lineBytes[0] == 'd' {
 			// End of hunks
 			return
@@ -707,8 +745,7 @@ func parseHunks(curFile *DiffFile, maxLines, maxLineCharacters int, input *bufio
 				err = fmt.Errorf("Unexpected line in hunk: %s", string(lineBytes))
 				return
 			}
-			// Technically this should be the end the file!
-			// FIXME: we should be putting a marker at the end of the file if there is no terminal new line
+			curSection.Lines[len(curSection.Lines)-1].NEOF = true
 			continue
 		case '+':
 			curFileLinesCount++
@@ -905,17 +942,11 @@ func GetDiffRangeWithWhitespaceBehavior(repoPath, beforeCommitID, afterCommitID 
 		return nil, fmt.Errorf("Wait: %v", err)
 	}
 
-	shortstatArgs := []string{beforeCommitID + "..." + afterCommitID}
+	shortstatArgs := []string{beforeCommitID, afterCommitID}
 	if len(beforeCommitID) == 0 || beforeCommitID == git.EmptySHA {
 		shortstatArgs = []string{git.EmptyTreeSHA, afterCommitID}
 	}
 	diff.NumFiles, diff.TotalAddition, diff.TotalDeletion, err = git.GetDiffShortStat(repoPath, shortstatArgs...)
-	if err != nil && strings.Contains(err.Error(), "no merge base") {
-		// git >= 2.28 now returns an error if base and head have become unrelated.
-		// previously it would return the results of git diff --shortstat base head so let's try that...
-		shortstatArgs = []string{beforeCommitID, afterCommitID}
-		diff.NumFiles, diff.TotalAddition, diff.TotalDeletion, err = git.GetDiffShortStat(repoPath, shortstatArgs...)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -952,4 +983,87 @@ func CommentMustAsDiff(c *models.Comment) *Diff {
 		log.Warn("CommentMustAsDiff: %v", err)
 	}
 	return diff
+}
+
+// ParsedRangeDiffEntry git range-diff entry.
+type ParsedRangeDiffEntry struct {
+	ParsedInterDiff          Diff
+	ParsedMetaDiff           []*DiffFile
+	SignedCommitWithStatuses *models.SignCommitWithStatuses
+	git.RangeDiffEntry
+}
+
+// GetChangeSummary describe how the commit was changed.
+func (entry ParsedRangeDiffEntry) GetChangeSummary() string {
+	if entry.Old != "" && entry.New != "" {
+		return base.ShortSha(entry.Old) + " " + entry.Relation + " " + base.ShortSha(entry.New)
+	}
+	return base.ShortSha(entry.Commit.ID.String())
+}
+
+// GetShortSummary short description of a rangediff entry
+func (entry ParsedRangeDiffEntry) GetShortSummary() string {
+	return entry.GetChangeSummary() + " " + entry.Commit.Summary()
+}
+
+// GetParsedRangeDiff Gets and parses git range-diff
+func GetParsedRangeDiff(repo *models.Repository, rev1, rev2 string, maxLines, maxLineCharacters, maxFiles int, whitespaceBehavior string) ([]ParsedRangeDiffEntry, error) {
+	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	if err != nil {
+		return nil, err
+	}
+
+	entries, err := gitRepo.GetRangeDiff(rev1, rev2)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRangeDiff(repo, entries, maxLines, maxLineCharacters, maxFiles, whitespaceBehavior)
+}
+
+// ParseRangeDiff Parse the interdiffs in an array of RangeDiffEntry.
+func ParseRangeDiff(repo *models.Repository, diffs []git.RangeDiffEntry, maxLines, maxLineCharacters, maxFiles int, whitespaceBehavior string) ([]ParsedRangeDiffEntry, error) {
+	var parsed []ParsedRangeDiffEntry
+
+	var emailCache = map[string]*models.User{}
+	var keyMapCache = map[string]bool{}
+
+	for _, diff := range diffs {
+		parsedDiff, parsedMeta, err := ParsePatchWithMeta(maxLines, maxLineCharacters, maxFiles, &diff)
+		if err != nil {
+			return nil, err
+		}
+
+		signedCommitWithStatuses := models.ParseGitCommitWithStatus(diff.Commit, repo, &emailCache, &keyMapCache)
+
+		parsedEntry := ParsedRangeDiffEntry{
+			RangeDiffEntry:           diff,
+			ParsedInterDiff:          *parsedDiff,
+			SignedCommitWithStatuses: &signedCommitWithStatuses,
+			ParsedMetaDiff:           parsedMeta,
+		}
+
+		parsed = append(parsed, parsedEntry)
+	}
+
+	return parsed, nil
+}
+
+// ParsePatchWithMeta Parse the change in a rangediff entry into a diff
+func ParsePatchWithMeta(maxLines, maxLineCharacters, maxFiles int, entry *git.RangeDiffEntry) (*Diff, []*DiffFile, error) {
+	gitdiff := git.PatchToGitDiff(entry.InterDiff)
+
+	parsedDiff, err := ParsePatch(maxLines, maxLineCharacters, maxFiles, strings.NewReader(gitdiff))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	meta := entry.MetaDiff + "\n" + entry.CommitMessageDiff + "\n"
+
+	metaDiff, err := ParsePatch(setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffLineCharacters, 3, strings.NewReader(meta))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return parsedDiff, metaDiff.Files, nil
 }

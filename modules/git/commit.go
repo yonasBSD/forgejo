@@ -467,8 +467,7 @@ func (c *Commit) GetSubModule(entryname string) (*SubModule, error) {
 	return nil, nil
 }
 
-// GetBranchName gets the closest branch name (as returned by 'git name-rev --name-only')
-func (c *Commit) GetBranchName() (string, error) {
+func (c *Commit) nameRev(prefix string, excludeTags, excludeHeads, excludePullRefs, excludePullHeads bool, excludes ...string) (string, error) {
 	err := LoadGitVersion()
 	if err != nil {
 		return "", fmt.Errorf("Git version missing: %v", err)
@@ -477,9 +476,31 @@ func (c *Commit) GetBranchName() (string, error) {
 	args := []string{
 		"name-rev",
 	}
-	if CheckGitVersionAtLeast("2.13.0") == nil {
-		args = append(args, "--exclude", "refs/tags/*")
+
+	if CheckGitVersionAtLeast("2.28.0") == nil {
+		args = append(args, "--refs", prefix)
 	}
+
+	if CheckGitVersionAtLeast("2.13.0") == nil {
+		if excludeTags {
+			args = append(args, "--exclude", "refs/tags/*")
+		}
+		if excludeHeads {
+			args = append(args, "--exclude", "refs/heads/*")
+		}
+		if excludePullRefs {
+			args = append(args, "--exclude", "refs/pull/*")
+		}
+		if excludePullHeads {
+			args = append(args, "--exclude", "refs/pull/*/head")
+		}
+		args = append(args, "--exclude", "refs/pull/*/revision/latest")
+
+		for _, exclude := range excludes {
+			args = append(args, "--exclude", exclude)
+		}
+	}
+
 	args = append(args, "--name-only", "--no-undefined", c.ID.String())
 
 	data, err := NewCommand(args...).RunInDir(c.repo.Path)
@@ -494,6 +515,53 @@ func (c *Commit) GetBranchName() (string, error) {
 
 	// name-rev commitID output will be "master" or "master~12"
 	return strings.SplitN(strings.TrimSpace(data), "~", 2)[0], nil
+}
+
+// GetBranchName gets the closest branch name (as returned by 'git name-rev --name-only')
+func (c *Commit) GetBranchName(exclude ...string) (string, error) {
+	name, err := c.nameRev("refs/heads/*", true, false, true, true, exclude...)
+
+	if err != nil {
+		return "", err
+	}
+
+	return name, nil
+}
+
+// GetRevisionRef gets the git revision ref (as returned by 'git name-rev --name-only')
+func (c *Commit) GetRevisionRef(exclude ...string) (string, error) {
+	name, err := c.nameRev("refs/pull/*/revision/*", true, true, false, true, exclude...)
+
+	if err != nil {
+		return "", err
+	}
+
+	if name == "" {
+		return "", nil
+	}
+
+	return "refs/" + name, nil
+}
+
+// GetRevisionRefs gets the git revision refs (as returned by 'git name-rev --name-only')
+func (c *Commit) GetRevisionRefs() ([]string, error) {
+	var refs []string
+
+	for {
+		name, err := c.GetRevisionRef(refs...)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if name == "" {
+			break
+		}
+
+		refs = append(refs, name)
+	}
+
+	return refs, nil
 }
 
 // LoadBranchName load branch name for commit

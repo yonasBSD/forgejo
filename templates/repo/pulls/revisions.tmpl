@@ -1,7 +1,7 @@
 {{template "base/head" .}}
-<div class="repository view issue pull files diff">
+<div class="repository view issue pull revisions">
 	{{template "repo/header" .}}
-	<div class="ui container {{if .IsSplitStyle}}fluid padded{{end}}">
+	<div class="ui container">
 		<div class="navbar">
 			{{template "repo/issue/navbar" .}}
 			<div class="ui right">
@@ -11,9 +11,8 @@
 		<div class="ui divider"></div>
 		{{template "repo/issue/view_title" .}}
 		{{template "repo/pulls/tab_menu" .}}
-		{{template "base/alert" .}}
 		<div class="ui bottom attached tab pull active">
-			{{template "repo/diff/box" dict "root" . "Diff" .Diff}}
+			{{template "repo/revisions_table" .}}
 		</div>
 	</div>
 </div>

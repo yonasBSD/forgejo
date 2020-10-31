@@ -39,6 +39,7 @@ const (
 	tplFork        base.TplName = "repo/pulls/fork"
 	tplCompareDiff base.TplName = "repo/diff/compare"
 	tplPullCommits base.TplName = "repo/pulls/commits"
+	tplRevisions   base.TplName = "repo/pulls/revisions"
 	tplPullFiles   base.TplName = "repo/pulls/files"
 
 	pullRequestTemplateKey = "PullRequestTemplate"
@@ -316,6 +317,7 @@ func PrepareMergedViewPullInfo(ctx *context.Context, issue *models.Issue) *git.C
 			ctx.Data["IsPullRequestBroken"] = true
 			ctx.Data["BaseTarget"] = pull.BaseBranch
 			ctx.Data["NumCommits"] = 0
+			ctx.Data["NumRevisions"] = 0
 			ctx.Data["NumFiles"] = 0
 			return nil
 		}
@@ -324,6 +326,12 @@ func PrepareMergedViewPullInfo(ctx *context.Context, issue *models.Issue) *git.C
 		return nil
 	}
 	ctx.Data["NumCommits"] = compareInfo.Commits.Len()
+	numberOfRevisions, err := ctx.Repo.GitRepo.GetLastRevisionIndex(pull.Index)
+	if err != nil {
+		ctx.ServerError("GetLastRevisionIndex", err)
+		return nil
+	}
+	ctx.Data["NumRevisions"] = numberOfRevisions
 	ctx.Data["NumFiles"] = compareInfo.NumFiles
 	return compareInfo
 }
@@ -385,6 +393,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 				ctx.Data["IsPullRequestBroken"] = true
 				ctx.Data["BaseTarget"] = pull.BaseBranch
 				ctx.Data["NumCommits"] = 0
+				ctx.Data["NumRevisions"] = 0
 				ctx.Data["NumFiles"] = 0
 				return nil
 			}
@@ -394,6 +403,12 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 		}
 
 		ctx.Data["NumCommits"] = compareInfo.Commits.Len()
+		numberOfRevisions, err := baseGitRepo.GetLastRevisionIndex(pull.Index)
+		if err != nil {
+			ctx.ServerError("GetLastRevisionIndex", err)
+			return nil
+		}
+		ctx.Data["NumRevisions"] = numberOfRevisions
 		ctx.Data["NumFiles"] = compareInfo.NumFiles
 		return compareInfo
 	}
@@ -442,6 +457,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 			}
 			ctx.Data["BaseTarget"] = pull.BaseBranch
 			ctx.Data["NumCommits"] = 0
+			ctx.Data["NumRevisions"] = 0
 			ctx.Data["NumFiles"] = 0
 			return nil
 		}
@@ -493,6 +509,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 			ctx.Data["IsPullRequestBroken"] = true
 			ctx.Data["BaseTarget"] = pull.BaseBranch
 			ctx.Data["NumCommits"] = 0
+			ctx.Data["NumRevisions"] = 0
 			ctx.Data["NumFiles"] = 0
 			return nil
 		}
@@ -512,6 +529,12 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 	}
 
 	ctx.Data["NumCommits"] = compareInfo.Commits.Len()
+	numberOfRevisions, err := ctx.Repo.GitRepo.GetLastRevisionIndex(pull.Index)
+	if err != nil {
+		ctx.ServerError("GetLastRevisionIndex", err)
+		return nil
+	}
+	ctx.Data["NumRevisions"] = numberOfRevisions
 	ctx.Data["NumFiles"] = compareInfo.NumFiles
 	return compareInfo
 }
@@ -553,6 +576,46 @@ func ViewPullCommits(ctx *context.Context) {
 
 	getBranchData(ctx, issue)
 	ctx.HTML(200, tplPullCommits)
+}
+
+// ViewRevisions show the revisions of a pull request
+func ViewRevisions(ctx *context.Context) {
+	ctx.Data["PageIsPullList"] = true
+	ctx.Data["PageIsRevisions"] = true
+
+	issue := checkPullInfo(ctx)
+	if ctx.Written() {
+		return
+	}
+	pull := issue.PullRequest
+
+	if pull.HasMerged {
+		PrepareMergedViewPullInfo(ctx, issue)
+	} else {
+		PrepareViewPullInfo(ctx, issue)
+	}
+
+	if ctx.Written() {
+		return
+	}
+
+	var revisions, err = models.GetRevisions(issue.PullRequest)
+	if err != nil {
+		ctx.ServerError("ViewRevisions", err)
+		return
+	}
+	if revisions == nil {
+		ctx.NotFound("ViewRevisions", nil)
+		return
+	}
+
+	ctx.Data["Username"] = ctx.Repo.Owner.Name
+	ctx.Data["Reponame"] = ctx.Repo.Repository.Name
+	ctx.Data["Revisions"] = revisions
+	ctx.Data["RevisionCount"] = len(revisions)
+
+	getBranchData(ctx, issue)
+	ctx.HTML(200, tplRevisions)
 }
 
 // ViewPullFiles render pull request changed files list page
@@ -606,10 +669,27 @@ func ViewPullFiles(ctx *context.Context) {
 	startCommitID = prInfo.MergeBase
 	endCommitID = headCommitID
 
+	revisions, err := models.GetRevisions(issue.PullRequest)
+	if err != nil || revisions == nil {
+		ctx.NotFound("ViewRevisions", nil)
+		return
+	}
+
 	headTarget = path.Join(ctx.Repo.Owner.Name, ctx.Repo.Repository.Name)
 	ctx.Data["Username"] = ctx.Repo.Owner.Name
 	ctx.Data["Reponame"] = ctx.Repo.Repository.Name
 	ctx.Data["AfterCommitID"] = endCommitID
+	ctx.Data["Revisions"] = revisions
+	ctx.Data["RevisionCount"] = len(revisions)
+
+	var revisionIndex = ctx.Data["RevisionIndex"].(int64)
+	ctx.Data["RevisionIndex"] = revisionIndex
+
+	if revisionIndex > 0 && revisionIndex <= int64(len(revisions)) {
+		var rev = revisions[int64(len(revisions))-revisionIndex]
+		ctx.Data["Revision"] = rev
+		startCommitID = rev.Commit
+	}
 
 	diff, err := gitdiff.GetDiffRangeWithWhitespaceBehavior(diffRepoPath,
 		startCommitID, endCommitID, setting.Git.MaxGitDiffLines,
@@ -640,7 +720,7 @@ func ViewPullFiles(ctx *context.Context) {
 	}
 
 	ctx.Data["Diff"] = diff
-	ctx.Data["DiffNotAvailable"] = diff.NumFiles == 0
+	ctx.Data["DiffNotAvailable"] = false
 
 	baseCommit, err := ctx.Repo.GitRepo.GetCommit(startCommitID)
 	if err != nil {
@@ -972,7 +1052,7 @@ func CompareAndPullRequestPost(ctx *context.Context, form auth.CreateIssueForm) 
 
 		// This stage is already stop creating new pull request, so it does not matter if it has
 		// something to compare or not.
-		PrepareCompareDiff(ctx, headUser, headRepo, headGitRepo, prInfo, baseBranch, headBranch)
+		PrepareCompareDiff(ctx, headUser, headRepo, headGitRepo, prInfo, baseBranch, headBranch, false)
 		if ctx.Written() {
 			return
 		}
@@ -982,7 +1062,7 @@ func CompareAndPullRequestPost(ctx *context.Context, form auth.CreateIssueForm) 
 	}
 
 	if util.IsEmptyString(form.Title) {
-		PrepareCompareDiff(ctx, headUser, headRepo, headGitRepo, prInfo, baseBranch, headBranch)
+		PrepareCompareDiff(ctx, headUser, headRepo, headGitRepo, prInfo, baseBranch, headBranch, false)
 		if ctx.Written() {
 			return
 		}
