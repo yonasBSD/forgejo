@@ -82,6 +82,8 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/settings"
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 	"code.gitea.io/gitea/routers/api/v1/user"
+	"code.gitea.io/gitea/routers/api/v1/utils"
+	"code.gitea.io/gitea/routers/gql"
 
 	"gitea.com/macaron/binding"
 	"gitea.com/macaron/macaron"
@@ -177,6 +179,11 @@ func repoAssignment() macaron.Handler {
 	}
 }
 
+// ReqToken requires auth token to be present
+func ReqToken() macaron.Handler {
+	return reqToken()
+}
+
 // Contexter middleware already checks token for user sign in process.
 func reqToken() macaron.Handler {
 	return func(ctx *context.APIContext) {
@@ -247,9 +254,9 @@ func reqRepoWriter(unitTypes ...models.UnitType) macaron.Handler {
 
 // reqRepoReader user should have specific read permission or be a repo admin or a site admin
 func reqRepoReader(unitType models.UnitType) macaron.Handler {
-	return func(ctx *context.Context) {
-		if !ctx.IsUserRepoReaderSpecific(unitType) && !ctx.IsUserRepoAdmin() && !ctx.IsUserSiteAdmin() {
-			ctx.Error(http.StatusForbidden)
+	return func(ctx *context.APIContext) {
+		if !utils.IsRepoReader(ctx, unitType) {
+			ctx.Error(http.StatusForbidden, "", "Must have read permission or be a repo or site admin")
 			return
 		}
 	}
@@ -257,9 +264,9 @@ func reqRepoReader(unitType models.UnitType) macaron.Handler {
 
 // reqAnyRepoReader user should have any permission to read repository or permissions of site admin
 func reqAnyRepoReader() macaron.Handler {
-	return func(ctx *context.Context) {
-		if !ctx.IsUserRepoReaderAny() && !ctx.IsUserSiteAdmin() {
-			ctx.Error(http.StatusForbidden)
+	return func(ctx *context.APIContext) {
+		if !utils.IsAnyRepoReader(ctx) {
+			ctx.Error(http.StatusForbidden, "", "Must have permission to read repository")
 			return
 		}
 	}
@@ -509,6 +516,10 @@ func RegisterRoutes(m *macaron.Macaron) {
 	if setting.API.EnableSwagger {
 		m.Get("/swagger", misc.Swagger) // Render V1 by default
 	}
+
+	m.Group("/", func() {
+		m.Post("/graphql", gql.GraphQL)
+	}, securityHeaders(), context.APIContexter(), sudo())
 
 	m.Group("/v1", func() {
 		// Miscellaneous

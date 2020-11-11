@@ -53,6 +53,7 @@ require (
 	github.com/google/go-github/v32 v32.1.0
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/context v1.1.1
+	github.com/graphql-go/graphql v0.7.9
 	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
 	github.com/hashicorp/go-version v1.2.1
 	github.com/huandu/xstrings v1.3.2
@@ -94,6 +95,7 @@ require (
 	github.com/quasoft/websspi v1.0.0
 	github.com/remyoudompheng/bigfft v0.0.0-20190321074620-2f0d2b0e0001 // indirect
 	github.com/sergi/go-diff v1.1.0
+	github.com/seripap/relay v0.0.2
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546
 	github.com/spf13/viper v1.7.1 // indirect

@@ -46,3 +46,19 @@ func GetListOptions(ctx *context.APIContext) models.ListOptions {
 		PageSize: convert.ToCorrectPageSize(ctx.QueryInt("limit")),
 	}
 }
+
+// IsAnyRepoReader returns if user has any permission to read repository or permissions of site admin
+func IsAnyRepoReader(ctx *context.APIContext) bool {
+	if ctx.IsUserRepoReaderAny() || ctx.IsUserSiteAdmin() {
+		return true
+	}
+	return false
+}
+
+// IsRepoReader returns if user should has specific read permission or is a repo admin/site admin
+func IsRepoReader(ctx *context.APIContext, unitType models.UnitType) bool {
+	if ctx.IsUserRepoReaderSpecific(unitType) || ctx.IsUserRepoAdmin() || ctx.IsUserSiteAdmin() {
+		return true
+	}
+	return false
+}

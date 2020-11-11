@@ -57,6 +57,12 @@ gitea.com/macaron/session/postgres
 # gitea.com/macaron/toolbox v0.0.0-20190822013122-05ff0fc766b7
 ## explicit
 gitea.com/macaron/toolbox
+# github.com/graphql-go/graphql v0.7.9
+## explicit
+github.com/graphql-go/graphql
+# github.com/seripap/relay v0.0.2
+## explicit
+github.com/seripap/relay
 # github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
 github.com/Azure/go-ntlmssp
 # github.com/PuerkitoBio/goquery v1.5.1
@@ -444,6 +450,18 @@ github.com/gorilla/mux
 github.com/gorilla/securecookie
 # github.com/gorilla/sessions v1.2.0
 github.com/gorilla/sessions
+# github.com/graphql-go/graphql v0.7.9
+github.com/graphql-go/graphql
+github.com/graphql-go/graphql/gqlerrors
+github.com/graphql-go/graphql/language/ast
+github.com/graphql-go/graphql/language/kinds
+github.com/graphql-go/graphql/language/lexer
+github.com/graphql-go/graphql/language/location
+github.com/graphql-go/graphql/language/parser
+github.com/graphql-go/graphql/language/printer
+github.com/graphql-go/graphql/language/source
+github.com/graphql-go/graphql/language/typeInfo
+github.com/graphql-go/graphql/language/visitor
 # github.com/hashicorp/go-cleanhttp v0.5.1
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.6.8
@@ -693,6 +711,8 @@ github.com/russross/blackfriday/v2
 # github.com/sergi/go-diff v1.1.0
 ## explicit
 github.com/sergi/go-diff/diffmatchpatch
+# github.com/seripap/relay v0.0.2
+github.com/seripap/relay
 # github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
