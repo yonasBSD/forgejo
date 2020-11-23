@@ -579,7 +579,7 @@ func CompareDiff(ctx *context.Context) {
 	ctx.Data["RequireTribute"] = true
 	ctx.Data["RequireSimpleMDE"] = true
 	ctx.Data["PullRequestWorkInProgressPrefixes"] = setting.Repository.PullRequest.WorkInProgressPrefixes
-	setTemplateIfExists(ctx, pullRequestTemplateKey, nil, pullRequestTemplateCandidates)
+	setPullTemplateIfExists(ctx, pullRequestTemplateKey, nil, pullRequestTemplateCandidates, baseBranch)
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
 
@@ -692,4 +692,26 @@ func getExcerptLines(commit *git.Commit, filePath string, idxLeft int, idxRight 
 		diffLines = append(diffLines, diffLine)
 	}
 	return diffLines, nil
+}
+
+// if the base branch is different with default branch, try to use it first
+// so you can define defferent templates for the prs target to different branches
+func setPullTemplateIfExists(ctx *context.Context, ctxDataKey string, possibleDirs []string, possibleFiles []string, baseBranch string) {
+	allowUseTemplateInBaseBranch := false
+
+	prUnit, err := ctx.Repo.Repository.GetUnit(models.UnitTypePullRequests)
+	if err != nil {
+		log.Error("Repository.GetUnit: %v", err)
+		allowUseTemplateInBaseBranch = false
+	} else {
+		allowUseTemplateInBaseBranch = prUnit.PullRequestsConfig().UseTemplateInBaseBranch
+	}
+
+	if len(baseBranch) > 0 && baseBranch != ctx.Repo.Repository.DefaultBranch && allowUseTemplateInBaseBranch {
+		if ok := setTemplateIfExists(ctx, ctxDataKey, possibleDirs, possibleFiles, baseBranch); ok {
+			return
+		}
+	}
+
+	setTemplateIfExists(ctx, ctxDataKey, possibleDirs, possibleFiles, "")
 }
