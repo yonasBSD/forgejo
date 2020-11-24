@@ -68,6 +68,33 @@ func testGit(t *testing.T, u *url.URL) {
 		rawTest(t, &httpContext, little, big, littleLFS, bigLFS)
 		mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
 
+		t.Run("SizeLimit", func(t *testing.T) {
+			t.Run("Under", func(t *testing.T) {
+				PrintCurrentTest(t)
+				doCommitAndPush(t, littleSize, dstPath, "data-file-")
+			})
+			t.Run("Over", func(t *testing.T) {
+				PrintCurrentTest(t)
+				doAPISetRepoSizeLimit(forkedUserCtx, forkedUserCtx.Username, forkedUserCtx.Reponame, littleSize)
+				doCommitAndPushWithExpectedError(t, bigSize, dstPath, "data-file-")
+			})
+			t.Run("UnderAfterResize", func(t *testing.T) {
+				PrintCurrentTest(t)
+				doAPISetRepoSizeLimit(forkedUserCtx, forkedUserCtx.Username, forkedUserCtx.Reponame, bigSize*10)
+				doCommitAndPush(t, littleSize, dstPath, "data-file-")
+			})
+			t.Run("Deletion", func(t *testing.T) {
+				PrintCurrentTest(t)
+				//TODO doDeleteCommitAndPush(t, littleSize, dstPath, "data-file-")
+			})
+			//TODO delete branch
+			//TODO delete tag
+			//TODO add big commit that will be over with the push
+			//TODO add lfs
+			//TODO remove lfs
+			//TODO add missing case
+		})
+
 		t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
 		t.Run("MergeFork", func(t *testing.T) {
 			defer PrintCurrentTest(t)()
@@ -288,6 +315,14 @@ func doCommitAndPush(t *testing.T, size int, repoPath, prefix string) string {
 	assert.NoError(t, err)
 	_, err = git.NewCommand("push", "origin", "master").RunInDir(repoPath) //Push
 	assert.NoError(t, err)
+	return name
+}
+
+func doCommitAndPushWithExpectedError(t *testing.T, size int, repoPath, prefix string) string {
+	name, err := generateCommitWithNewData(size, repoPath, "user2@example.com", "User Two", prefix)
+	assert.NoError(t, err)
+	_, err = git.NewCommand("push", "origin", "master").RunInDir(repoPath) //Push
+	assert.Error(t, err)
 	return name
 }
 
