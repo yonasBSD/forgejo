@@ -254,6 +254,54 @@ func Profile(ctx *context.Context) {
 			return
 		}
 
+		pinnedRepos := make([]*models.Repository, 0, 10)
+		pinnedRepoIDs, err := ctxUser.GetPinnedRepoIDs(ctx.User)
+		if err != nil {
+			ctx.ServerError("GetPinnedRepos", err)
+			return
+		}
+
+		pinnedRepos2 := make(models.RepositoryList, 0, 5)
+		for _, pinnedRepoID := range pinnedRepoIDs {
+			has := false
+			for _, repo := range repos {
+				if repo.ID == pinnedRepoID {
+					has = true
+					repo.IsPinned = true
+					pinnedRepos = append(pinnedRepos, repo)
+					break
+				}
+			}
+
+			if !has {
+				repo, err := models.GetRepositoryByID(pinnedRepoID)
+				if err != nil && !models.IsErrRepoNotExist(err) {
+					ctx.ServerError("GetRepositoryByID", err)
+					return
+				}
+
+				if repo != nil {
+					repo.IsPinned = true
+					pinnedRepos2 = append(pinnedRepos2, repo)
+				}
+			}
+		}
+
+		if len(pinnedRepos2) > 0 {
+			if err = pinnedRepos2.LoadAttributes(); err != nil {
+				ctx.ServerError("pinnedRepos2.LoadAttributes()", err)
+				return
+			}
+			pinnedRepos = append(pinnedRepos, pinnedRepos2...)
+		}
+
+		ctx.Data["PinnedRepos"] = pinnedRepos
+		ctx.Data["PinnedReposNum"] = len(pinnedRepos)
+		ctx.Data["CanConfigPinnedRepos"] = ctx.IsSigned && ctx.User.ID == ctxUser.ID
+		if ctx.IsSigned && ctx.User.ID == ctxUser.ID {
+			ctx.Data["ConfigPinnedReposLink"] = "/user/settings/pinned_repo"
+		}
+
 		total = int(count)
 	}
 	ctx.Data["Repos"] = repos

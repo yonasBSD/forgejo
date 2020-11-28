@@ -254,6 +254,8 @@ var migrations = []Migration{
 	NewMigration("code comment replies should have the commitID of the review they are replying to", updateCodeCommentReplies),
 	// v159 -> v160
 	NewMigration("update reactions constraint", updateReactionConstraint),
+	// v160 -> v161
+	NewMigration("Add user_pinned_repo table", addUserPinnedRepoTable),
 }
 
 // GetCurrentDBVersion returns the current db version

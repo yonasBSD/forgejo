@@ -1,0 +1,61 @@
+{{if (gt .PinnedReposNum 0)}}
+<h2>{{.i18n.Tr "explore.pinned_repos"}}</h2>
+<div class="ui cards">
+    {{range .PinnedRepos}}
+    <div class="card">
+      <div class="content">
+        <div class="header">
+            {{if .RelAvatarLink}}
+                <img class="ui avatar image" src="{{.RelAvatarLink}}">
+            {{end}}
+            <a class="name" href="{{.Link}}">
+                {{if $.Owner}}{{if (ne .Owner.ID $.Owner.ID)}}{{.Owner.Name}} / {{end}}{{end}}{{.Name}}
+			</a>
+			{{if $.CanConfigPinnedRepos}}
+				<button class="ui text grey pinned-repo-btn poping up" 
+					data-content="{{if .IsPinned}}{{$.i18n.Tr "settings.unpinned_repo"}}{{else}}{{$.i18n.Tr "settings.pinned_repo"}}{{end}}"
+					data-url="{{$.ConfigPinnedReposLink}}"
+					data-name="{{if $.Owner}}{{if (ne .Owner.ID $.Owner.ID)}}{{.Owner.Name}}/{{end}}{{end}}{{.Name}}"
+					data-status="{{if .IsPinned}}unpinned{{else}}pinned{{end}}">
+					{{if .IsPinned}}{{$.i18n.Tr "settings.unpinned_btn"}}{{else}}{{$.i18n.Tr "settings.pinned_btn"}}{{end}}
+				</button>
+			{{end}}
+            {{if .IsArchived}}<span class="ui compact label">{{$.i18n.Tr "repo.desc.archived"}}</span>{{end}}
+			{{if .IsTemplate}}
+				{{if .IsPrivate}}
+					<span class="ui basic label">{{$.i18n.Tr "repo.desc.private_template"}}</span>
+				{{else}}
+					{{if .Owner.Visibility.IsPrivate}}
+						<span class="ui basic label">{{$.i18n.Tr "repo.desc.internal_template"}}</span>
+					{{end}}
+				{{end}}
+			{{else}}
+				{{if .IsPrivate}}
+					<span class="ui basic label">{{$.i18n.Tr "repo.desc.private"}}</span>
+				{{else}}
+					{{if .Owner.Visibility.IsPrivate}}
+						<span class="ui basic label">{{$.i18n.Tr "repo.desc.internal"}}</span>
+					{{end}}
+				{{end}}
+			{{end}}
+			{{if .IsFork}}
+				<span class="middle">{{svg "octicon-repo-forked" 16}}</span>
+			{{else if .IsMirror}}
+				<span class="middle">{{svg "octicon-mirror" 16}}</span>
+			{{end}}
+        </div>
+        <div class="meta">
+            {{if .DescriptionHTML}}<p>{{.DescriptionHTML}}</p>{{end}}
+        </div>
+        <div class="description">
+            {{if .PrimaryLanguage }}
+                <span class="text grey"><i class="color-icon" style="background-color: {{.PrimaryLanguage.Color}}"></i>{{ .PrimaryLanguage.Language }}</span>
+            {{end}}
+            <span class="text grey">{{svg "octicon-star" 16}} {{.NumStars}}</span>
+            <span class="text grey">{{svg "octicon-git-branch" 16}} {{.NumForks}}</span>
+        </div>
+      </div>
+    </div>
+    {{end}}
+</div>
+{{end}}

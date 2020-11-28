@@ -294,3 +294,73 @@ func Repos(ctx *context.Context) {
 	ctx.Data["Page"] = pager
 	ctx.HTML(200, tplSettingsRepositories)
 }
+
+// PinnedRepoPost response pinned repo settings
+func PinnedRepoPost(ctx *context.Context, form auth.RepoPinnedForm) {
+	names := strings.SplitN(form.RepoFullName, "/", 3)
+	var (
+		ownerName string
+		repoName  string
+		err       error
+	)
+
+	if len(names) == 2 {
+		ownerName = names[0]
+		repoName = names[1]
+	} else if len(names) != 1 {
+		ctx.Status(403)
+		return
+	} else {
+		ownerName = ctx.User.Name
+		repoName = names[0]
+	}
+
+	repo, err := models.GetRepositoryByOwnerAndName(ownerName, repoName)
+	if err != nil {
+		if models.IsErrRepoNotExist(err) {
+			ctx.Status(404)
+			return
+		}
+
+		ctx.ServerError("models.GetRepositoryByOwnerAndName", err)
+		return
+	}
+
+	if form.Status == "unpinned" {
+		if err = ctx.User.RemovePinnedRepo(repo.ID); err != nil && !models.IsErrUserPinnedRepoNotExist(err) {
+			ctx.ServerError("ctx.User.RemovePinnedRepo", err)
+			return
+		}
+
+		if form.IsBtn {
+			ctx.Status(200)
+			return
+		}
+
+		ctx.Redirect(ctx.User.HomeLink())
+		return
+	}
+
+	perm, err := models.GetUserRepoPermission(repo, ctx.User)
+	if err != nil {
+		ctx.ServerError("models.GetUserRepoPermission", err)
+		return
+	}
+
+	if !perm.CanRead(models.UnitTypeCode) {
+		ctx.Status(403)
+		return
+	}
+
+	if err = ctx.User.AddPinnedRepo(repo); err != nil && !models.IsErrUserPinnedRepoAlreadyExist(err) {
+		ctx.ServerError("ctx.User.AddPinnedRepo", err)
+		return
+	}
+
+	if form.IsBtn {
+		ctx.Status(200)
+		return
+	}
+
+	ctx.Redirect(ctx.User.HomeLink())
+}

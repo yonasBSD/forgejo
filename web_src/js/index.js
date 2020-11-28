@@ -2466,6 +2466,17 @@ $(document).ready(async () => {
     });
   });
 
+  $('.pinned-repo-btn').on('click', function (e) {
+    const $this = $(this);
+    e.preventDefault();
+    $.post($this.data('url'), {
+      _csrf: csrf,
+      name: $this.data('name'),
+      status: $this.data('status'),
+      is_btn: true,
+    }).done(reload());
+  });
+
   // NOTICE: This event trigger targets Firefox caching behaviour, as the checkboxes stay checked after reload
   // trigger ckecked event, if checkboxes are checked on load
   $('.issue-checkbox input[type="checkbox"]:checked').first().each((_, e) => {
