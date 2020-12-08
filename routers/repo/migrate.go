@@ -6,17 +6,22 @@
 package repo
 
 import (
+	"net/http"
 	"strings"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/migrations"
+	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/task"
+	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
+	repo_service "code.gitea.io/gitea/services/repository"
 )
 
 const (
@@ -187,4 +192,54 @@ func MigratePost(ctx *context.Context, form auth.MigrateRepoForm) {
 	}
 
 	handleMigrateError(ctx, ctxUser, err, "MigratePost", tpl, &form)
+}
+
+// CancelMigration cancels a running migration
+func CancelMigration(ctx *context.Context) {
+	if !ctx.Repo.IsOwner() {
+		ctx.Error(http.StatusNotFound)
+		return
+	}
+
+	if ctx.Repo.Repository.Status != models.RepositoryBeingMigrated {
+		ctx.Error(http.StatusConflict, "repo already migrated")
+		return
+	}
+
+	guid := process.GetManager().GUID()
+	task, err := models.GetMigratingTask(ctx.Repo.Repository.ID)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+	if task.Status != structs.TaskStatusRunning {
+		task.Status = structs.TaskStatusStopped
+		task.EndTime = timeutil.TimeStampNow()
+		task.RepoID = 0
+
+		if err = task.UpdateCols("status", "repo_id", "end_time"); err != nil {
+			log.Error("Task UpdateCols failed: %v", err)
+		}
+
+		if err := repo_service.DeleteRepository(ctx.User, ctx.Repo.Repository); err != nil {
+			ctx.ServerError("DeleteRepository", err)
+			return
+		}
+
+		ctx.Flash.Success(ctx.Tr("repo.migrate.cancelled"))
+		ctx.Redirect(ctx.Repo.Owner.DashboardLink())
+		return
+	}
+
+	tGUID, tPID := task.GUIDandPID()
+	if guid == tGUID {
+		log.Trace("Migration [%s] cancel PID [%d] ", ctx.Repo.Repository.FullName(), tPID)
+		process.GetManager().Cancel(tPID)
+		ctx.Flash.Success(ctx.Tr("repo.migrate.cancelled"))
+		ctx.Redirect(ctx.Repo.Owner.DashboardLink())
+		return
+	}
+
+	ctx.Flash.Error(ctx.Tr("repo.migrate.task_not_found", ctx.Repo.Repository.FullName()))
+	ctx.Redirect(ctx.Repo.Owner.DashboardLink())
 }

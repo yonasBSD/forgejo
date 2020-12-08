@@ -102,7 +102,8 @@ func runMigrateTask(t *models.Task) (err error) {
 
 	t.StartTime = timeutil.TimeStampNow()
 	t.Status = structs.TaskStatusRunning
-	if err = t.UpdateCols("start_time", "status"); err != nil {
+	t.Process = fmt.Sprintf("%d/%d", process.GetManager().GUID(), pid)
+	if err = t.UpdateCols("start_time", "status", "process"); err != nil {
 		return
 	}
 
