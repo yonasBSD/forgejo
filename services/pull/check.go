@@ -15,6 +15,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -70,7 +71,7 @@ func checkAndUpdateStatus(pr *models.PullRequest) {
 
 // getMergeCommit checks if a pull request got merged
 // Returns the git.Commit of the pull request if merged
-func getMergeCommit(pr *models.PullRequest) (*git.Commit, error) {
+func getMergeCommit(pr *models.PullRequest) (service.Commit, error) {
 	if pr.BaseRepo == nil {
 		var err error
 		pr.BaseRepo, err = models.GetRepositoryByID(pr.BaseRepoID)
@@ -122,7 +123,7 @@ func getMergeCommit(pr *models.PullRequest) (*git.Commit, error) {
 		mergeCommit = commitID[:40]
 	}
 
-	gitRepo, err := git.OpenRepository(pr.BaseRepo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(pr.BaseRepo.RepoPath())
 	if err != nil {
 		return nil, fmt.Errorf("OpenRepository: %v", err)
 	}
@@ -145,10 +146,10 @@ func manuallyMerged(pr *models.PullRequest) bool {
 		return false
 	}
 	if commit != nil {
-		pr.MergedCommitID = commit.ID.String()
-		pr.MergedUnix = timeutil.TimeStamp(commit.Author.When.Unix())
+		pr.MergedCommitID = commit.ID().String()
+		pr.MergedUnix = timeutil.TimeStamp(commit.Author().When.Unix())
 		pr.Status = models.PullRequestStatusManuallyMerged
-		merger, _ := models.GetUserByEmail(commit.Author.Email)
+		merger, _ := models.GetUserByEmail(commit.Author().Email)
 
 		// When the commit author is unknown set the BaseRepo owner as merger
 		if merger == nil {
@@ -172,7 +173,7 @@ func manuallyMerged(pr *models.PullRequest) bool {
 
 		notification.NotifyMergePullRequest(pr, merger)
 
-		log.Info("manuallyMerged[%d]: Marked as manually merged into %s/%s by commit id: %s", pr.ID, pr.BaseRepo.Name, pr.BaseBranch, commit.ID.String())
+		log.Info("manuallyMerged[%d]: Marked as manually merged into %s/%s by commit id: %s", pr.ID, pr.BaseRepo.Name, pr.BaseBranch, commit.ID().String())
 		return true
 	}
 	return false

@@ -15,6 +15,8 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/content"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/upload"
@@ -27,7 +29,7 @@ const (
 )
 
 // setPathsCompareContext sets context data for source and raw paths
-func setPathsCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit, headTarget string) {
+func setPathsCompareContext(ctx *context.Context, base, head service.Commit, headTarget string) {
 	sourcePath := setting.AppSubURL + "/%s/src/commit/%s"
 	rawPath := setting.AppSubURL + "/%s/raw/commit/%s"
 
@@ -41,22 +43,26 @@ func setPathsCompareContext(ctx *context.Context, base *git.Commit, head *git.Co
 }
 
 // setImageCompareContext sets context data that is required by image compare template
-func setImageCompareContext(ctx *context.Context, base *git.Commit, head *git.Commit) {
-	ctx.Data["IsImageFileInHead"] = head.IsImageFile
-	ctx.Data["IsImageFileInBase"] = base.IsImageFile
-	ctx.Data["ImageInfoBase"] = func(name string) *git.ImageMetaData {
+func setImageCompareContext(ctx *context.Context, base, head service.Commit) {
+	ctx.Data["IsImageFileInHead"] = func(file string) bool {
+		return content.IsImageFile(head, file)
+	}
+	ctx.Data["IsImageFileInBase"] = func(file string) bool {
+		return content.IsImageFile(base, file)
+	}
+	ctx.Data["ImageInfoBase"] = func(name string) *content.ImageMetaData {
 		if base == nil {
 			return nil
 		}
-		result, err := base.ImageInfo(name)
+		result, err := content.ImageInfo(base, name)
 		if err != nil {
 			log.Error("ImageInfo failed: %v", err)
 			return nil
 		}
 		return result
 	}
-	ctx.Data["ImageInfo"] = func(name string) *git.ImageMetaData {
-		result, err := head.ImageInfo(name)
+	ctx.Data["ImageInfo"] = func(name string) *content.ImageMetaData {
+		result, err := content.ImageInfo(head, name)
 		if err != nil {
 			log.Error("ImageInfo failed: %v", err)
 			return nil
@@ -66,7 +72,7 @@ func setImageCompareContext(ctx *context.Context, base *git.Commit, head *git.Co
 }
 
 // ParseCompareInfo parse compare info between two commit for preparing comparing references
-func ParseCompareInfo(ctx *context.Context) (*models.User, *models.Repository, *git.Repository, *git.CompareInfo, string, string) {
+func ParseCompareInfo(ctx *context.Context) (*models.User, *models.Repository, service.Repository, *service.CompareInfo, string, string) {
 	baseRepo := ctx.Repo.Repository
 
 	// Get compared branches information
@@ -173,7 +179,7 @@ func ParseCompareInfo(ctx *context.Context) (*models.User, *models.Repository, *
 	if !baseIsCommit && !baseIsBranch && !baseIsTag {
 		// Check if baseBranch is short sha commit hash
 		if baseCommit, _ := ctx.Repo.GitRepo.GetCommit(baseBranch); baseCommit != nil {
-			baseBranch = baseCommit.ID.String()
+			baseBranch = baseCommit.ID().String()
 			ctx.Data["BaseBranch"] = baseBranch
 			baseIsCommit = true
 		} else {
@@ -254,12 +260,12 @@ func ParseCompareInfo(ctx *context.Context) (*models.User, *models.Repository, *
 	}
 
 	// 8. Finally open the git repo
-	var headGitRepo *git.Repository
+	var headGitRepo service.Repository
 	if isSameRepo {
 		headRepo = ctx.Repo.Repository
 		headGitRepo = ctx.Repo.GitRepo
 	} else if has {
-		headGitRepo, err = git.OpenRepository(headRepo.RepoPath())
+		headGitRepo, err = git.Service.OpenRepository(headRepo.RepoPath())
 		if err != nil {
 			ctx.ServerError("OpenRepository", err)
 			return nil, nil, nil, nil, "", ""
@@ -353,7 +359,7 @@ func ParseCompareInfo(ctx *context.Context) (*models.User, *models.Repository, *
 	if !headIsCommit && !headIsBranch && !headIsTag {
 		// Check if headBranch is short sha commit hash
 		if headCommit, _ := headGitRepo.GetCommit(headBranch); headCommit != nil {
-			headBranch = headCommit.ID.String()
+			headBranch = headCommit.ID().String()
 			ctx.Data["HeadBranch"] = headBranch
 			headIsCommit = true
 		} else {
@@ -409,8 +415,8 @@ func PrepareCompareDiff(
 	ctx *context.Context,
 	headUser *models.User,
 	headRepo *models.Repository,
-	headGitRepo *git.Repository,
-	compareInfo *git.CompareInfo,
+	headGitRepo service.Repository,
+	compareInfo *service.CompareInfo,
 	baseBranch, headBranch string) bool {
 
 	var (
@@ -514,7 +520,7 @@ func getBranchesForRepo(user *models.User, repo *models.Repository) (bool, []str
 	if !perm.CanRead(models.UnitTypeCode) {
 		return false, nil, nil
 	}
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(repo.RepoPath())
 	if err != nil {
 		return false, nil, err
 	}
@@ -663,12 +669,12 @@ func ExcerptBlob(ctx *context.Context) {
 	ctx.HTML(200, tplBlobExcerpt)
 }
 
-func getExcerptLines(commit *git.Commit, filePath string, idxLeft int, idxRight int, chunkSize int) ([]*gitdiff.DiffLine, error) {
-	blob, err := commit.Tree.GetBlobByPath(filePath)
+func getExcerptLines(commit service.Commit, filePath string, idxLeft int, idxRight int, chunkSize int) ([]*gitdiff.DiffLine, error) {
+	blob, err := commit.Tree().GetBlobByPath(filePath)
 	if err != nil {
 		return nil, err
 	}
-	reader, err := blob.DataAsync()
+	reader, err := blob.Reader()
 	if err != nil {
 		return nil, err
 	}

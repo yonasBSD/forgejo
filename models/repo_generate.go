@@ -77,25 +77,25 @@ func GenerateTopics(ctx DBContext, templateRepo, generateRepo *Repository) error
 
 // GenerateGitHooks generates git hooks from a template repository
 func GenerateGitHooks(ctx DBContext, templateRepo, generateRepo *Repository) error {
-	generateGitRepo, err := git.OpenRepository(generateRepo.RepoPath())
+	generateGitRepo, err := git.Service.OpenRepository(generateRepo.RepoPath())
 	if err != nil {
 		return err
 	}
 	defer generateGitRepo.Close()
 
-	templateGitRepo, err := git.OpenRepository(templateRepo.RepoPath())
+	templateGitRepo, err := git.Service.OpenRepository(templateRepo.RepoPath())
 	if err != nil {
 		return err
 	}
 	defer templateGitRepo.Close()
 
-	templateHooks, err := templateGitRepo.Hooks()
+	templateHooks, err := git.ListHooks(templateGitRepo.Path())
 	if err != nil {
 		return err
 	}
 
 	for _, templateHook := range templateHooks {
-		generateHook, err := generateGitRepo.GetHook(templateHook.Name())
+		generateHook, err := git.GetHook(generateGitRepo.Path(), templateHook.Name())
 		if err != nil {
 			return err
 		}

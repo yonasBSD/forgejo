@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -249,7 +250,7 @@ func runSync(m *models.Mirror) ([]*mirrorSyncResult, bool) {
 	}
 	output := stderrBuilder.String()
 
-	gitRepo, err := git.OpenRepository(repoPath)
+	gitRepo, err := git.Service.OpenRepository(repoPath)
 	if err != nil {
 		log.Error("OpenRepository: %v", err)
 		return nil, false
@@ -309,7 +310,7 @@ func runSync(m *models.Mirror) ([]*mirrorSyncResult, bool) {
 	}
 
 	for _, branch := range branches {
-		cache.Remove(m.Repo.GetCommitsCountCacheKey(branch.Name, true))
+		cache.Remove(m.Repo.GetCommitsCountCacheKey(branch.Name(), true))
 	}
 
 	m.UpdatedUnix = timeutil.TimeStampNow()
@@ -416,12 +417,12 @@ func syncMirror(repoID string) {
 		return
 	}
 
-	var gitRepo *git.Repository
+	var gitRepo service.Repository
 	if len(results) == 0 {
 		log.Trace("SyncMirrors [repo: %-v]: no branches updated", m.Repo)
 	} else {
 		log.Trace("SyncMirrors [repo: %-v]: %d branches updated", m.Repo, len(results))
-		gitRepo, err = git.OpenRepository(m.Repo.RepoPath())
+		gitRepo, err = git.Service.OpenRepository(m.Repo.RepoPath())
 		if err != nil {
 			log.Error("OpenRepository [%d]: %v", m.RepoID, err)
 			return
@@ -455,7 +456,7 @@ func syncMirror(repoID string) {
 			}
 			notification.NotifySyncPushCommits(m.Repo.MustOwner(), m.Repo, &repo_module.PushUpdateOptions{
 				RefFullName: result.refName,
-				OldCommitID: git.EmptySHA,
+				OldCommitID: service.EmptySHA,
 				NewCommitID: commitID,
 			}, repo_module.NewPushCommits())
 			notification.NotifySyncCreateRef(m.Repo.MustOwner(), m.Repo, tp, result.refName)
@@ -469,17 +470,17 @@ func syncMirror(repoID string) {
 		}
 
 		// Push commits
-		oldCommitID, err := git.GetFullCommitID(gitRepo.Path, result.oldCommitID)
+		oldCommitID, err := git.Service.GetFullCommitID(gitRepo.Path(), result.oldCommitID)
 		if err != nil {
 			log.Error("GetFullCommitID [%d]: %v", m.RepoID, err)
 			continue
 		}
-		newCommitID, err := git.GetFullCommitID(gitRepo.Path, result.newCommitID)
+		newCommitID, err := git.Service.GetFullCommitID(gitRepo.Path(), result.newCommitID)
 		if err != nil {
 			log.Error("GetFullCommitID [%d]: %v", m.RepoID, err)
 			continue
 		}
-		commits, err := gitRepo.CommitsBetweenIDs(newCommitID, oldCommitID)
+		commits, err := git.Service.CommitsBetweenIDs(gitRepo, newCommitID, oldCommitID)
 		if err != nil {
 			log.Error("CommitsBetweenIDs [repo_id: %d, new_commit_id: %s, old_commit_id: %s]: %v", m.RepoID, newCommitID, oldCommitID, err)
 			continue
@@ -515,7 +516,7 @@ func syncMirror(repoID string) {
 	log.Trace("SyncMirrors [repo: %-v]: Successfully updated", m.Repo)
 }
 
-func checkAndUpdateEmptyRepository(m *models.Mirror, gitRepo *git.Repository, results []*mirrorSyncResult) bool {
+func checkAndUpdateEmptyRepository(m *models.Mirror, gitRepo service.Repository, results []*mirrorSyncResult) bool {
 	if !m.Repo.IsEmpty {
 		return true
 	}

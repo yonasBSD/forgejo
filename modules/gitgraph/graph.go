@@ -13,11 +13,12 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/setting"
 )
 
 // GetCommitGraph return a list of commit (GraphItems) from all branches
-func GetCommitGraph(r *git.Repository, page int, maxAllowedColors int, hidePRRefs bool, branches, files []string) (*Graph, error) {
+func GetCommitGraph(r service.Repository, page int, maxAllowedColors int, hidePRRefs bool, branches, files []string) (*Graph, error) {
 	format := "DATA:%D|%H|%ad|%h|%s"
 
 	if page == 0 {
@@ -64,7 +65,7 @@ func GetCommitGraph(r *git.Repository, page int, maxAllowedColors int, hidePRRef
 
 	scanner := bufio.NewScanner(stdoutReader)
 
-	if err := graphCmd.RunInDirTimeoutEnvFullPipelineFunc(nil, -1, r.Path, stdoutWriter, stderr, nil, func(ctx context.Context, cancel context.CancelFunc) error {
+	if err := graphCmd.RunInDirTimeoutEnvFullPipelineFunc(nil, -1, r.Path(), stdoutWriter, stderr, nil, func(ctx context.Context, cancel context.CancelFunc) error {
 		_ = stdoutWriter.Close()
 		defer stdoutReader.Close()
 		parser := &Parser{}

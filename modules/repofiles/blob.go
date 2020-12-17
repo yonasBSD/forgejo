@@ -7,13 +7,14 @@ package repofiles
 import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	gitcontent "code.gitea.io/gitea/modules/git/content"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 // GetBlobBySHA get the GitBlobResponse of a repository using a sha hash.
 func GetBlobBySHA(repo *models.Repository, sha string) (*api.GitBlobResponse, error) {
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(repo.RepoPath())
 	if err != nil {
 		return nil, err
 	}
@@ -24,14 +25,14 @@ func GetBlobBySHA(repo *models.Repository, sha string) (*api.GitBlobResponse, er
 	}
 	content := ""
 	if gitBlob.Size() <= setting.API.DefaultMaxBlobSize {
-		content, err = gitBlob.GetBlobContentBase64()
+		content, err = gitcontent.GetBlobContentBase64(gitBlob)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return &api.GitBlobResponse{
-		SHA:      gitBlob.ID.String(),
-		URL:      repo.APIURL() + "/git/blobs/" + gitBlob.ID.String(),
+		SHA:      gitBlob.ID().String(),
+		URL:      repo.APIURL() + "/git/blobs/" + gitBlob.ID().String(),
 		Size:     gitBlob.Size(),
 		Encoding: "base64",
 		Content:  content,

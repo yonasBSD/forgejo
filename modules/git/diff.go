@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 
+	"code.gitea.io/gitea/modules/git/service"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/process"
 )
 
@@ -34,7 +36,7 @@ func GetRawDiff(repoPath, commitID string, diffType RawDiffType, writer io.Write
 
 // GetRawDiffForFile dumps diff results of file in given commit ID to io.Writer.
 func GetRawDiffForFile(repoPath, startCommit, endCommit string, diffType RawDiffType, file string, writer io.Writer) error {
-	repo, err := OpenRepository(repoPath)
+	repo, err := Service.OpenRepository(repoPath)
 	if err != nil {
 		return fmt.Errorf("OpenRepository: %v", err)
 	}
@@ -44,7 +46,7 @@ func GetRawDiffForFile(repoPath, startCommit, endCommit string, diffType RawDiff
 }
 
 // GetRepoRawDiffForFile dumps diff results of file in given commit ID to io.Writer according given repository
-func GetRepoRawDiffForFile(repo *Repository, startCommit, endCommit string, diffType RawDiffType, file string, writer io.Writer) error {
+func GetRepoRawDiffForFile(repo service.Repository, startCommit, endCommit string, diffType RawDiffType, file string, writer io.Writer) error {
 	commit, err := repo.GetCommit(endCommit)
 	if err != nil {
 		return fmt.Errorf("GetCommit: %v", err)
@@ -66,7 +68,7 @@ func GetRepoRawDiffForFile(repo *Repository, startCommit, endCommit string, diff
 			cmd = exec.CommandContext(ctx, GitExecutable, append([]string{"show", endCommit}, fileArgs...)...)
 		} else {
 			c, _ := commit.Parent(0)
-			cmd = exec.CommandContext(ctx, GitExecutable, append([]string{"diff", "-M", c.ID.String(), endCommit}, fileArgs...)...)
+			cmd = exec.CommandContext(ctx, GitExecutable, append([]string{"diff", "-M", c.ID().String(), endCommit}, fileArgs...)...)
 		}
 	case RawDiffPatch:
 		if len(startCommit) != 0 {
@@ -76,7 +78,7 @@ func GetRepoRawDiffForFile(repo *Repository, startCommit, endCommit string, diff
 			cmd = exec.CommandContext(ctx, GitExecutable, append([]string{"format-patch", "--no-signature", "--stdout", "--root", endCommit}, fileArgs...)...)
 		} else {
 			c, _ := commit.Parent(0)
-			query := fmt.Sprintf("%s...%s", endCommit, c.ID.String())
+			query := fmt.Sprintf("%s...%s", endCommit, c.ID().String())
 			cmd = exec.CommandContext(ctx, GitExecutable, append([]string{"format-patch", "--no-signature", "--stdout", query}, fileArgs...)...)
 		}
 	default:
@@ -85,10 +87,10 @@ func GetRepoRawDiffForFile(repo *Repository, startCommit, endCommit string, diff
 
 	stderr := new(bytes.Buffer)
 
-	cmd.Dir = repo.Path
+	cmd.Dir = repo.Path()
 	cmd.Stdout = writer
 	cmd.Stderr = stderr
-	pid := process.GetManager().Add(fmt.Sprintf("GetRawDiffForFile: [repo_path: %s]", repo.Path), cancel)
+	pid := process.GetManager().Add(fmt.Sprintf("GetRawDiffForFile: [repo_path: %s]", repo.Path()), cancel)
 	defer process.GetManager().Remove(pid)
 
 	if err = cmd.Run(); err != nil {
@@ -113,7 +115,7 @@ func ParseDiffHunkString(diffhunk string) (leftLine, leftHunk, rightLine, righHu
 			righHunk, _ = strconv.Atoi(rightRange[1])
 		}
 	} else {
-		log("Parse line number failed: %v", diffhunk)
+		log.Error("Parse line number failed: %v", diffhunk)
 		rightLine = leftLine
 		righHunk = leftHunk
 	}

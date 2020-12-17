@@ -18,6 +18,8 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
+	gitservice "code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -31,13 +33,13 @@ import (
 // handle elsewhere.
 type ArchiveRequest struct {
 	uri             string
-	repo            *git.Repository
+	repo            service.Repository
 	refName         string
 	ext             string
 	archivePath     string
-	archiveType     git.ArchiveType
+	archiveType     gitservice.ArchiveType
 	archiveComplete bool
-	commit          *git.Commit
+	commit          service.Commit
 	cchan           chan struct{}
 }
 
@@ -99,10 +101,10 @@ func (aReq *ArchiveRequest) TimedWaitForCompletion(ctx *context.Context, dur tim
 }
 
 // The caller must hold the archiveMutex across calls to getArchiveRequest.
-func getArchiveRequest(repo *git.Repository, commit *git.Commit, archiveType git.ArchiveType) *ArchiveRequest {
+func getArchiveRequest(repo service.Repository, commit service.Commit, archiveType gitservice.ArchiveType) *ArchiveRequest {
 	for _, r := range archiveInProgress {
 		// Need to be referring to the same repository.
-		if r.repo.Path == repo.Path && r.commit.ID == commit.ID && r.archiveType == archiveType {
+		if r.repo.Path() == repo.Path() && r.commit.ID().String() == commit.ID().String() && r.archiveType == archiveType {
 			return r
 		}
 	}
@@ -125,12 +127,12 @@ func DeriveRequestFrom(ctx *context.Context, uri string) *ArchiveRequest {
 	switch {
 	case strings.HasSuffix(uri, ".zip"):
 		r.ext = ".zip"
-		r.archivePath = path.Join(r.repo.Path, "archives/zip")
-		r.archiveType = git.ZIP
+		r.archivePath = path.Join(r.repo.Path(), "archives/zip")
+		r.archiveType = gitservice.ZIP
 	case strings.HasSuffix(uri, ".tar.gz"):
 		r.ext = ".tar.gz"
-		r.archivePath = path.Join(r.repo.Path, "archives/targz")
-		r.archiveType = git.TARGZ
+		r.archivePath = path.Join(r.repo.Path(), "archives/targz")
+		r.archiveType = gitservice.TARGZ
 	default:
 		log.Trace("Unknown format: %s", uri)
 		return nil
@@ -179,7 +181,7 @@ func DeriveRequestFrom(ctx *context.Context, uri string) *ArchiveRequest {
 		return rExisting
 	}
 
-	r.archivePath = path.Join(r.archivePath, base.ShortSha(r.commit.ID.String())+r.ext)
+	r.archivePath = path.Join(r.archivePath, base.ShortSha(r.commit.ID().String())+r.ext)
 	r.archiveComplete, err = util.IsFile(r.archivePath)
 	if err != nil {
 		ctx.ServerError("util.IsFile", err)
@@ -225,7 +227,11 @@ func doArchive(r *ArchiveRequest) {
 		os.Remove(tmpArchive.Name())
 	}()
 
-	if err = r.commit.CreateArchive(graceful.GetManager().ShutdownContext(), tmpArchive.Name(), git.CreateArchiveOpts{
+	// FIXME:
+	repo, _ := git.Service.OpenRepository(r.repo.Path())
+	defer repo.Close()
+
+	if err = git.Service.CreateArchive(graceful.GetManager().ShutdownContext(), repo, r.commit.ID().String(), tmpArchive.Name(), gitservice.CreateArchiveOpts{
 		Format: r.archiveType,
 		Prefix: setting.Repository.PrefixArchiveFiles,
 	}); err != nil {

@@ -15,6 +15,8 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/common"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -57,7 +59,7 @@ func NewPullRequest(repo *models.Repository, pull *models.Issue, labelIDs []int6
 	notification.NotifyNewPullRequest(pr)
 
 	// add first push codes comment
-	baseGitRepo, err := git.OpenRepository(pr.BaseRepo.RepoPath())
+	baseGitRepo, err := git.Service.OpenRepository(pr.BaseRepo.RepoPath())
 	if err != nil {
 		return err
 	}
@@ -73,7 +75,7 @@ func NewPullRequest(repo *models.Repository, pull *models.Issue, labelIDs []int6
 		data := models.PushActionContent{IsForcePush: false}
 		data.CommitIDs = make([]string, 0, compareInfo.Commits.Len())
 		for e := compareInfo.Commits.Back(); e != nil; e = e.Prev() {
-			data.CommitIDs = append(data.CommitIDs, e.Value.(*git.Commit).ID.String())
+			data.CommitIDs = append(data.CommitIDs, e.Value.(service.Commit).ID().String())
 		}
 
 		dataJSON, err := json.Marshal(data)
@@ -198,9 +200,9 @@ func checkForInvalidation(requests models.PullRequestList, repoID int64, doer *m
 	if err != nil {
 		return fmt.Errorf("GetRepositoryByID: %v", err)
 	}
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(repo.RepoPath())
 	if err != nil {
-		return fmt.Errorf("git.OpenRepository: %v", err)
+		return fmt.Errorf("git.Service.OpenRepository: %v", err)
 	}
 	go func() {
 		// FIXME: graceful: We need to tell the manager we're doing something...
@@ -238,7 +240,7 @@ func AddTestPullRequestTask(doer *models.User, repoID int64, branch string, isSy
 			}
 			if err == nil {
 				for _, pr := range prs {
-					if newCommitID != "" && newCommitID != git.EmptySHA {
+					if newCommitID != "" && newCommitID != service.EmptySHA {
 						changed, err := checkIfPRContentChanged(pr, oldCommitID, newCommitID)
 						if err != nil {
 							log.Error("checkIfPRContentChanged: %v", err)
@@ -318,7 +320,7 @@ func checkIfPRContentChanged(pr *models.PullRequest, oldCommitID, newCommitID st
 		return false, fmt.Errorf("LoadBaseRepo: %v", err)
 	}
 
-	headGitRepo, err := git.OpenRepository(pr.HeadRepo.RepoPath())
+	headGitRepo, err := git.Service.OpenRepository(pr.HeadRepo.RepoPath())
 	if err != nil {
 		return false, fmt.Errorf("OpenRepository: %v", err)
 	}
@@ -472,14 +474,14 @@ func CloseBranchPulls(doer *models.User, repoID int64, branch string) error {
 
 // CloseRepoBranchesPulls close all pull requests which head branches are in the given repository
 func CloseRepoBranchesPulls(doer *models.User, repo *models.Repository) error {
-	branches, err := git.GetBranchesByPath(repo.RepoPath())
+	branches, err := common.GetBranchesByPath(repo.RepoPath())
 	if err != nil {
 		return err
 	}
 
 	var errs errlist
 	for _, branch := range branches {
-		prs, err := models.GetUnmergedPullRequestsByHeadInfo(repo.ID, branch.Name)
+		prs, err := models.GetUnmergedPullRequestsByHeadInfo(repo.ID, branch.Name())
 		if err != nil {
 			return err
 		}
@@ -522,7 +524,7 @@ func GetCommitMessages(pr *models.PullRequest) string {
 		}
 	}
 
-	gitRepo, err := git.OpenRepository(pr.HeadRepo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(pr.HeadRepo.RepoPath())
 	if err != nil {
 		log.Error("Unable to open head repository: Error: %v", err)
 		return ""
@@ -543,7 +545,7 @@ func GetCommitMessages(pr *models.PullRequest) string {
 
 	limit := setting.Repository.PullRequest.DefaultMergeMessageCommitsLimit
 
-	list, err := gitRepo.CommitsBetweenLimit(headCommit, mergeBase, limit, 0)
+	list, err := git.Service.CommitsBetweenLimit(gitRepo, headCommit, mergeBase, limit, 0)
 	if err != nil {
 		log.Error("Unable to get commits between: %s %s Error: %v", pr.HeadBranch, pr.MergeBase, err)
 		return ""
@@ -559,10 +561,10 @@ func GetCommitMessages(pr *models.PullRequest) string {
 	// commits list is in reverse chronological order
 	element := list.Back()
 	for element != nil {
-		commit := element.Value.(*git.Commit)
+		commit := element.Value.(service.Commit)
 
 		if maxSize < 0 || stringBuilder.Len() < maxSize {
-			toWrite := []byte(commit.CommitMessage)
+			toWrite := []byte(commit.Message())
 			if len(toWrite) > maxSize-stringBuilder.Len() && maxSize > -1 {
 				toWrite = append(toWrite[:maxSize-stringBuilder.Len()], "..."...)
 			}
@@ -577,7 +579,7 @@ func GetCommitMessages(pr *models.PullRequest) string {
 			}
 		}
 
-		authorString := commit.Author.String()
+		authorString := commit.Author().String()
 		if !authorsMap[authorString] && authorString != posterSig {
 			authors = append(authors, authorString)
 			authorsMap[authorString] = true
@@ -590,7 +592,7 @@ func GetCommitMessages(pr *models.PullRequest) string {
 		skip := limit
 		limit = 30
 		for {
-			list, err := gitRepo.CommitsBetweenLimit(headCommit, mergeBase, limit, skip)
+			list, err := git.Service.CommitsBetweenLimit(gitRepo, headCommit, mergeBase, limit, skip)
 			if err != nil {
 				log.Error("Unable to get commits between: %s %s Error: %v", pr.HeadBranch, pr.MergeBase, err)
 				return ""
@@ -601,9 +603,9 @@ func GetCommitMessages(pr *models.PullRequest) string {
 			}
 			element := list.Front()
 			for element != nil {
-				commit := element.Value.(*git.Commit)
+				commit := element.Value.(service.Commit)
 
-				authorString := commit.Author.String()
+				authorString := commit.Author().String()
 				if !authorsMap[authorString] && authorString != posterSig {
 					authors = append(authors, authorString)
 					authorsMap[authorString] = true
@@ -649,7 +651,7 @@ func GetLastCommitStatus(pr *models.PullRequest) (status *models.CommitStatus, e
 		return nil, models.ErrPullRequestHeadRepoMissing{ID: pr.ID, HeadRepoID: pr.HeadRepoID}
 	}
 
-	headGitRepo, err := git.OpenRepository(pr.HeadRepo.RepoPath())
+	headGitRepo, err := git.Service.OpenRepository(pr.HeadRepo.RepoPath())
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +680,7 @@ func IsHeadEqualWithBranch(pr *models.PullRequest, branchName string) (bool, err
 	if err = pr.LoadBaseRepo(); err != nil {
 		return false, err
 	}
-	baseGitRepo, err := git.OpenRepository(pr.BaseRepo.RepoPath())
+	baseGitRepo, err := git.Service.OpenRepository(pr.BaseRepo.RepoPath())
 	if err != nil {
 		return false, err
 	}
@@ -690,7 +692,7 @@ func IsHeadEqualWithBranch(pr *models.PullRequest, branchName string) (bool, err
 	if err = pr.LoadHeadRepo(); err != nil {
 		return false, err
 	}
-	headGitRepo, err := git.OpenRepository(pr.HeadRepo.RepoPath())
+	headGitRepo, err := git.Service.OpenRepository(pr.HeadRepo.RepoPath())
 	if err != nil {
 		return false, err
 	}
@@ -698,5 +700,5 @@ func IsHeadEqualWithBranch(pr *models.PullRequest, branchName string) (bool, err
 	if err != nil {
 		return false, err
 	}
-	return baseCommit.HasPreviousCommit(headCommit.ID)
+	return baseCommit.HasPreviousCommit(headCommit.ID())
 }

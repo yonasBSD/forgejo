@@ -13,6 +13,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/sync"
@@ -121,7 +122,7 @@ func updateWikiPage(doer *models.User, repo *models.Repository, oldWikiName, new
 		return fmt.Errorf("Failed to clone repository: %s (%v)", repo.FullName(), err)
 	}
 
-	gitRepo, err := git.OpenRepository(basePath)
+	gitRepo, err := git.Service.OpenRepository(basePath)
 	if err != nil {
 		log.Error("Unable to open temporary repository: %s (%v)", basePath, err)
 		return fmt.Errorf("Failed to open new temporary repository in: %s %v", basePath, err)
@@ -129,7 +130,7 @@ func updateWikiPage(doer *models.User, repo *models.Repository, oldWikiName, new
 	defer gitRepo.Close()
 
 	if hasMasterBranch {
-		if err := gitRepo.ReadTreeToIndex("HEAD"); err != nil {
+		if err := git.Service.ReadTreeToIndex(gitRepo, "HEAD"); err != nil {
 			log.Error("Unable to read HEAD tree to index in: %s %v", basePath, err)
 			return fmt.Errorf("Unable to read HEAD tree to index in: %s %v", basePath, err)
 		}
@@ -137,7 +138,7 @@ func updateWikiPage(doer *models.User, repo *models.Repository, oldWikiName, new
 
 	newWikiPath := NameToFilename(newWikiName)
 	if isNew {
-		filesInIndex, err := gitRepo.LsFiles(newWikiPath)
+		filesInIndex, err := git.Service.LsFiles(gitRepo, newWikiPath)
 		if err != nil {
 			log.Error("%v", err)
 			return err
@@ -149,14 +150,14 @@ func updateWikiPage(doer *models.User, repo *models.Repository, oldWikiName, new
 		}
 	} else {
 		oldWikiPath := NameToFilename(oldWikiName)
-		filesInIndex, err := gitRepo.LsFiles(oldWikiPath)
+		filesInIndex, err := git.Service.LsFiles(gitRepo, oldWikiPath)
 		if err != nil {
 			log.Error("%v", err)
 			return err
 		}
 
 		if util.IsStringInSlice(oldWikiPath, filesInIndex) {
-			err := gitRepo.RemoveFilesFromIndex(oldWikiPath)
+			err := git.Service.RemoveFilesFromIndex(gitRepo, oldWikiPath)
 			if err != nil {
 				log.Error("%v", err)
 				return err
@@ -172,18 +173,18 @@ func updateWikiPage(doer *models.User, repo *models.Repository, oldWikiName, new
 		return err
 	}
 
-	if err := gitRepo.AddObjectToIndex("100644", objectHash, newWikiPath); err != nil {
+	if err := git.Service.AddObjectToIndex(gitRepo, "100644", objectHash, newWikiPath); err != nil {
 		log.Error("%v", err)
 		return err
 	}
 
-	tree, err := gitRepo.WriteTree()
+	tree, err := git.Service.WriteTree(gitRepo)
 	if err != nil {
 		log.Error("%v", err)
 		return err
 	}
 
-	commitTreeOpts := git.CommitTreeOpts{
+	commitTreeOpts := service.CommitTreeOpts{
 		Message: message,
 	}
 
@@ -268,20 +269,20 @@ func DeleteWikiPage(doer *models.User, repo *models.Repository, wikiName string)
 		return fmt.Errorf("Failed to clone repository: %s (%v)", repo.FullName(), err)
 	}
 
-	gitRepo, err := git.OpenRepository(basePath)
+	gitRepo, err := git.Service.OpenRepository(basePath)
 	if err != nil {
 		log.Error("Unable to open temporary repository: %s (%v)", basePath, err)
 		return fmt.Errorf("Failed to open new temporary repository in: %s %v", basePath, err)
 	}
 	defer gitRepo.Close()
 
-	if err := gitRepo.ReadTreeToIndex("HEAD"); err != nil {
+	if err := git.Service.ReadTreeToIndex(gitRepo, "HEAD"); err != nil {
 		log.Error("Unable to read HEAD tree to index in: %s %v", basePath, err)
 		return fmt.Errorf("Unable to read HEAD tree to index in: %s %v", basePath, err)
 	}
 
 	wikiPath := NameToFilename(wikiName)
-	filesInIndex, err := gitRepo.LsFiles(wikiPath)
+	filesInIndex, err := git.Service.LsFiles(gitRepo, wikiPath)
 	found := false
 	for _, file := range filesInIndex {
 		if file == wikiPath {
@@ -290,7 +291,7 @@ func DeleteWikiPage(doer *models.User, repo *models.Repository, wikiName string)
 		}
 	}
 	if found {
-		err := gitRepo.RemoveFilesFromIndex(wikiPath)
+		err := git.Service.RemoveFilesFromIndex(gitRepo, wikiPath)
 		if err != nil {
 			return err
 		}
@@ -300,12 +301,12 @@ func DeleteWikiPage(doer *models.User, repo *models.Repository, wikiName string)
 
 	// FIXME: The wiki doesn't have lfs support at present - if this changes need to check attributes here
 
-	tree, err := gitRepo.WriteTree()
+	tree, err := git.Service.WriteTree(gitRepo)
 	if err != nil {
 		return err
 	}
 	message := "Delete page '" + wikiName + "'"
-	commitTreeOpts := git.CommitTreeOpts{
+	commitTreeOpts := service.CommitTreeOpts{
 		Message: message,
 		Parents: []string{"HEAD"},
 	}

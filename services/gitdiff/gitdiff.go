@@ -23,6 +23,8 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/content"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/process"
@@ -386,7 +388,7 @@ func (diffFile *DiffFile) GetType() int {
 }
 
 // GetTailSection creates a fake DiffLineSection if the last section is not the end of the file
-func (diffFile *DiffFile) GetTailSection(gitRepo *git.Repository, leftCommitID, rightCommitID string) *DiffSection {
+func (diffFile *DiffFile) GetTailSection(gitRepo service.Repository, leftCommitID, rightCommitID string) *DiffSection {
 	if len(diffFile.Sections) == 0 || diffFile.Type != DiffFileChange || diffFile.IsBin || diffFile.IsLFSFile {
 		return nil
 	}
@@ -420,12 +422,12 @@ func (diffFile *DiffFile) GetTailSection(gitRepo *git.Repository, leftCommitID, 
 
 }
 
-func getCommitFileLineCount(commit *git.Commit, filePath string) int {
-	blob, err := commit.GetBlobByPath(filePath)
+func getCommitFileLineCount(commit service.Commit, filePath string) int {
+	blob, err := commit.Tree().GetBlobByPath(filePath)
 	if err != nil {
 		return 0
 	}
-	lineCount, err := blob.GetBlobLineCount()
+	lineCount, err := content.GetBlobLineCount(blob)
 	if err != nil {
 		return 0
 	}
@@ -879,7 +881,7 @@ func GetDiffRange(repoPath, beforeCommitID, afterCommitID string, maxLines, maxL
 // Passing the empty string as beforeCommitID returns a diff from the parent commit.
 // The whitespaceBehavior is either an empty string or a git flag
 func GetDiffRangeWithWhitespaceBehavior(repoPath, beforeCommitID, afterCommitID string, maxLines, maxLineCharacters, maxFiles int, whitespaceBehavior string) (*Diff, error) {
-	gitRepo, err := git.OpenRepository(repoPath)
+	gitRepo, err := git.Service.OpenRepository(repoPath)
 	if err != nil {
 		return nil, err
 	}
@@ -894,7 +896,7 @@ func GetDiffRangeWithWhitespaceBehavior(repoPath, beforeCommitID, afterCommitID 
 	ctx, cancel := context.WithCancel(git.DefaultContext)
 	defer cancel()
 	var cmd *exec.Cmd
-	if (len(beforeCommitID) == 0 || beforeCommitID == git.EmptySHA) && commit.ParentCount() == 0 {
+	if (len(beforeCommitID) == 0 || beforeCommitID == service.EmptySHA) && commit.ParentCount() == 0 {
 		diffArgs := []string{"diff", "--src-prefix=\\a/", "--dst-prefix=\\b/", "-M"}
 		if len(whitespaceBehavior) != 0 {
 			diffArgs = append(diffArgs, whitespaceBehavior)
@@ -907,7 +909,7 @@ func GetDiffRangeWithWhitespaceBehavior(repoPath, beforeCommitID, afterCommitID 
 		actualBeforeCommitID := beforeCommitID
 		if len(actualBeforeCommitID) == 0 {
 			parentCommit, _ := commit.Parent(0)
-			actualBeforeCommitID = parentCommit.ID.String()
+			actualBeforeCommitID = parentCommit.ID().String()
 		}
 		diffArgs := []string{"diff", "--src-prefix=\\a/", "--dst-prefix=\\b/", "-M"}
 		if len(whitespaceBehavior) != 0 {
@@ -949,8 +951,8 @@ func GetDiffRangeWithWhitespaceBehavior(repoPath, beforeCommitID, afterCommitID 
 	}
 
 	shortstatArgs := []string{beforeCommitID + "..." + afterCommitID}
-	if len(beforeCommitID) == 0 || beforeCommitID == git.EmptySHA {
-		shortstatArgs = []string{git.EmptyTreeSHA, afterCommitID}
+	if len(beforeCommitID) == 0 || beforeCommitID == service.EmptySHA {
+		shortstatArgs = []string{service.EmptyTreeSHA, afterCommitID}
 	}
 	diff.NumFiles, diff.TotalAddition, diff.TotalDeletion, err = git.GetDiffShortStat(repoPath, shortstatArgs...)
 	if err != nil && strings.Contains(err.Error(), "no merge base") {

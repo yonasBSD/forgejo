@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
@@ -58,7 +59,7 @@ func PushUpdates(opts []*repo_module.PushUpdateOptions) error {
 
 	for _, opt := range opts {
 		if opt.IsNewRef() && opt.IsDelRef() {
-			return fmt.Errorf("Old and new revisions are both %s", git.EmptySHA)
+			return fmt.Errorf("Old and new revisions are both %s", service.EmptySHA)
 		}
 	}
 
@@ -77,7 +78,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 	}
 
 	repoPath := repo.RepoPath()
-	gitRepo, err := git.OpenRepository(repoPath)
+	gitRepo, err := git.Service.OpenRepository(repoPath)
 	if err != nil {
 		return fmt.Errorf("OpenRepository: %v", err)
 	}
@@ -93,7 +94,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 
 	for _, opts := range optsList {
 		if opts.IsNewRef() && opts.IsDelRef() {
-			return fmt.Errorf("Old and new revisions are both %s", git.EmptySHA)
+			return fmt.Errorf("Old and new revisions are both %s", service.EmptySHA)
 		}
 		var commits = &repo_module.PushCommits{}
 		if opts.IsTag() { // If is tag reference
@@ -110,7 +111,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 					&repo_module.PushUpdateOptions{
 						RefFullName: git.TagPrefix + tagName,
 						OldCommitID: opts.OldCommitID,
-						NewCommitID: git.EmptySHA,
+						NewCommitID: service.EmptySHA,
 					}, repo_module.NewPushCommits())
 
 				delTags = append(delTags, tagName)
@@ -120,7 +121,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 					pusher, repo,
 					&repo_module.PushUpdateOptions{
 						RefFullName: git.TagPrefix + tagName,
-						OldCommitID: git.EmptySHA,
+						OldCommitID: service.EmptySHA,
 						NewCommitID: opts.NewCommitID,
 					}, repo_module.NewPushCommits())
 

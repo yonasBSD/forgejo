@@ -16,6 +16,8 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/providers/native"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/private"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -27,10 +29,10 @@ import (
 	"gitea.com/macaron/macaron"
 )
 
-func verifyCommits(oldCommitID, newCommitID string, repo *git.Repository, env []string) error {
+func verifyCommits(oldCommitID, newCommitID string, repo service.Repository, env []string) error {
 	stdoutReader, stdoutWriter, err := os.Pipe()
 	if err != nil {
-		log.Error("Unable to create os.Pipe for %s", repo.Path)
+		log.Error("Unable to create os.Pipe for %s", repo.Path())
 		return err
 	}
 	defer func() {
@@ -40,7 +42,7 @@ func verifyCommits(oldCommitID, newCommitID string, repo *git.Repository, env []
 
 	// This is safe as force pushes are already forbidden
 	err = git.NewCommand("rev-list", oldCommitID+"..."+newCommitID).
-		RunInDirTimeoutEnvFullPipelineFunc(env, -1, repo.Path,
+		RunInDirTimeoutEnvFullPipelineFunc(env, -1, repo.Path(),
 			stdoutWriter, nil, nil,
 			func(ctx context.Context, cancel context.CancelFunc) error {
 				_ = stdoutWriter.Close()
@@ -53,12 +55,12 @@ func verifyCommits(oldCommitID, newCommitID string, repo *git.Repository, env []
 				return err
 			})
 	if err != nil && !isErrUnverifiedCommit(err) {
-		log.Error("Unable to check commits from %s to %s in %s: %v", oldCommitID, newCommitID, repo.Path, err)
+		log.Error("Unable to check commits from %s to %s in %s: %v", oldCommitID, newCommitID, repo.Path(), err)
 	}
 	return err
 }
 
-func readAndVerifyCommitsFromShaReader(input io.ReadCloser, repo *git.Repository, env []string) error {
+func readAndVerifyCommitsFromShaReader(input io.ReadCloser, repo service.Repository, env []string) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -71,24 +73,24 @@ func readAndVerifyCommitsFromShaReader(input io.ReadCloser, repo *git.Repository
 	return scanner.Err()
 }
 
-func readAndVerifyCommit(sha string, repo *git.Repository, env []string) error {
+func readAndVerifyCommit(sha string, repo service.Repository, env []string) error {
 	stdoutReader, stdoutWriter, err := os.Pipe()
 	if err != nil {
-		log.Error("Unable to create pipe for %s: %v", repo.Path, err)
+		log.Error("Unable to create pipe for %s: %v", repo.Path(), err)
 		return err
 	}
 	defer func() {
 		_ = stdoutReader.Close()
 		_ = stdoutWriter.Close()
 	}()
-	hash := git.MustIDFromString(sha)
+	hash := native.StringHash(sha)
 
 	return git.NewCommand("cat-file", "commit", sha).
-		RunInDirTimeoutEnvFullPipelineFunc(env, -1, repo.Path,
+		RunInDirTimeoutEnvFullPipelineFunc(env, -1, repo.Path(),
 			stdoutWriter, nil, nil,
 			func(ctx context.Context, cancel context.CancelFunc) error {
 				_ = stdoutWriter.Close()
-				commit, err := git.CommitFromReader(repo, hash, stdoutReader)
+				commit, err := native.CommitFromReader(repo, hash, stdoutReader)
 				if err != nil {
 					return err
 				}
@@ -96,7 +98,7 @@ func readAndVerifyCommit(sha string, repo *git.Repository, env []string) error {
 				if !verification.Verified {
 					cancel()
 					return &errUnverifiedCommit{
-						commit.ID.String(),
+						commit.ID().String(),
 					}
 				}
 				return nil
@@ -129,7 +131,7 @@ func HookPreReceive(ctx *macaron.Context, opts private.HookOptions) {
 		return
 	}
 	repo.OwnerName = ownerName
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(repo.RepoPath())
 	if err != nil {
 		log.Error("Unable to get git repository for: %s/%s Error: %v", ownerName, repoName, err)
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
@@ -161,7 +163,7 @@ func HookPreReceive(ctx *macaron.Context, opts private.HookOptions) {
 		refFullName := opts.RefFullNames[i]
 
 		branchName := strings.TrimPrefix(refFullName, git.BranchPrefix)
-		if branchName == repo.DefaultBranch && newCommitID == git.EmptySHA {
+		if branchName == repo.DefaultBranch && newCommitID == service.EmptySHA {
 			log.Warn("Forbidden: Branch: %s is the default branch in %-v and cannot be deleted", branchName, repo)
 			ctx.JSON(http.StatusForbidden, map[string]interface{}{
 				"err": fmt.Sprintf("branch %s is the default branch and cannot be deleted", branchName),
@@ -188,7 +190,7 @@ func HookPreReceive(ctx *macaron.Context, opts private.HookOptions) {
 		// First of all we need to enforce absolutely:
 		//
 		// 1. Detect and prevent deletion of the branch
-		if newCommitID == git.EmptySHA {
+		if newCommitID == service.EmptySHA {
 			log.Warn("Forbidden: Branch: %s in %-v is protected from deletion", branchName, repo)
 			ctx.JSON(http.StatusForbidden, map[string]interface{}{
 				"err": fmt.Sprintf("branch %s is protected from deletion", branchName),
@@ -197,7 +199,7 @@ func HookPreReceive(ctx *macaron.Context, opts private.HookOptions) {
 		}
 
 		// 2. Disallow force pushes to protected branches
-		if git.EmptySHA != oldCommitID {
+		if service.EmptySHA != oldCommitID {
 			output, err := git.NewCommand("rev-list", "--max-count=1", oldCommitID, "^"+newCommitID).RunInDirWithEnv(repo.RepoPath(), env)
 			if err != nil {
 				log.Error("Unable to detect force push between: %s and %s in %-v Error: %v", oldCommitID, newCommitID, repo, err)
@@ -459,7 +461,7 @@ func HookPostReceive(ctx *macaron.Context, opts private.HookOptions) {
 
 		branch := git.RefEndName(opts.RefFullNames[i])
 
-		if newCommitID != git.EmptySHA && strings.HasPrefix(refFullName, git.BranchPrefix) {
+		if newCommitID != service.EmptySHA && strings.HasPrefix(refFullName, git.BranchPrefix) {
 			if repo == nil {
 				var err error
 				repo, err = models.GetRepositoryByOwnerAndName(ownerName, repoName)
@@ -557,7 +559,7 @@ func SetDefaultBranch(ctx *macaron.Context) {
 	}
 
 	repo.DefaultBranch = branch
-	gitRepo, err := git.OpenRepository(repo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(repo.RepoPath())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"Err": fmt.Sprintf("Failed to get git repository: %s/%s Error: %v", ownerName, repoName, err),

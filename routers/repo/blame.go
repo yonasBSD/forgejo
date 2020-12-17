@@ -16,6 +16,8 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/content"
+	gitservice "code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/templates"
@@ -48,7 +50,7 @@ func RefBlame(ctx *context.Context) {
 		return
 	}
 	if len(commitID) != 40 {
-		commitID = commit.ID.String()
+		commitID = commit.ID().String()
 	}
 
 	branchLink := ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
@@ -77,7 +79,7 @@ func RefBlame(ctx *context.Context) {
 	// or of directory if not in root directory.
 	latestCommit := ctx.Repo.Commit
 	if len(ctx.Repo.TreePath) > 0 {
-		latestCommit, err = ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
+		latestCommit, err = git.Service.GetCommitByPathWithID(ctx.Repo.GitRepo, ctx.Repo.Commit.ID(), ctx.Repo.TreePath)
 		if err != nil {
 			ctx.ServerError("GetCommitByPath", err)
 			return
@@ -87,19 +89,17 @@ func RefBlame(ctx *context.Context) {
 	ctx.Data["LatestCommitVerification"] = models.ParseCommitWithSignature(latestCommit)
 	ctx.Data["LatestCommitUser"] = models.ValidateCommitWithEmail(latestCommit)
 
-	statuses, err := models.GetLatestCommitStatus(ctx.Repo.Repository, ctx.Repo.Commit.ID.String(), 0)
+	statuses, err := models.GetLatestCommitStatus(ctx.Repo.Repository, ctx.Repo.Commit.ID().String(), 0)
 	if err != nil {
 		log.Error("GetLatestCommitStatus: %v", err)
 	}
 
 	// Get current entry user currently looking at.
-	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx.Repo.TreePath)
+	entry, err := ctx.Repo.Commit.Tree().GetTreeEntryByPath(ctx.Repo.TreePath)
 	if err != nil {
 		ctx.NotFoundOrServerError("Repo.Commit.GetTreeEntryByPath", git.IsErrNotExist, err)
 		return
 	}
-
-	blob := entry.Blob()
 
 	ctx.Data["LatestCommitStatus"] = models.CalcCommitStatus(statuses)
 
@@ -113,23 +113,23 @@ func RefBlame(ctx *context.Context) {
 
 	ctx.Data["IsBlame"] = true
 
-	ctx.Data["FileSize"] = blob.Size()
-	ctx.Data["FileName"] = blob.Name()
+	ctx.Data["FileSize"] = entry.Size()
+	ctx.Data["FileName"] = entry.Name()
 
-	ctx.Data["NumLines"], err = blob.GetBlobLineCount()
+	ctx.Data["NumLines"], err = content.GetBlobLineCount(entry)
 	if err != nil {
 		ctx.NotFound("GetBlobLineCount", err)
 		return
 	}
 
-	blameReader, err := git.CreateBlameReader(ctx.Req.Context(), models.RepoPath(userName, repoName), commitID, fileName)
+	blameReader, err := git.Service.CreateBlameReader(ctx.Req.Context(), models.RepoPath(userName, repoName), commitID, fileName)
 	if err != nil {
 		ctx.NotFound("CreateBlameReader", err)
 		return
 	}
 	defer blameReader.Close()
 
-	blameParts := make([]git.BlamePart, 0)
+	blameParts := make([]gitservice.BlamePart, 0)
 
 	for {
 		blamePart, err := blameReader.NextPart()
@@ -147,7 +147,7 @@ func RefBlame(ctx *context.Context) {
 	commits := list.New()
 
 	for _, part := range blameParts {
-		sha := part.Sha
+		sha := part.SHA
 		if _, ok := commitNames[sha]; ok {
 			continue
 		}
@@ -164,7 +164,7 @@ func RefBlame(ctx *context.Context) {
 
 		commits.PushBack(commit)
 
-		commitNames[commit.ID.String()] = models.UserCommit{}
+		commitNames[commit.ID().String()] = models.UserCommit{}
 	}
 
 	commits = models.ValidateCommitsWithEmails(commits)
@@ -172,7 +172,7 @@ func RefBlame(ctx *context.Context) {
 	for e := commits.Front(); e != nil; e = e.Next() {
 		c := e.Value.(models.UserCommit)
 
-		commitNames[c.ID.String()] = c
+		commitNames[c.ID().String()] = c
 	}
 
 	// Get Topics of this repo
@@ -186,7 +186,7 @@ func RefBlame(ctx *context.Context) {
 	ctx.HTML(200, tplBlame)
 }
 
-func renderBlame(ctx *context.Context, blameParts []git.BlamePart, commitNames map[string]models.UserCommit) {
+func renderBlame(ctx *context.Context, blameParts []gitservice.BlamePart, commitNames map[string]models.UserCommit) {
 	repoLink := ctx.Repo.RepoLink
 
 	var lines = make([]string, 0)
@@ -205,19 +205,19 @@ func renderBlame(ctx *context.Context, blameParts []git.BlamePart, commitNames m
 			if len(part.Lines)-1 == index && len(blameParts)-1 != pi {
 				attr = " bottom-line"
 			}
-			commit := commitNames[part.Sha]
+			commit := commitNames[part.SHA]
 			if index == 0 {
 				// User avatar image
-				commitSince := timeutil.TimeSinceUnix(timeutil.TimeStamp(commit.Author.When.Unix()), ctx.Data["Lang"].(string))
+				commitSince := timeutil.TimeSinceUnix(timeutil.TimeStamp(commit.Author().When.Unix()), ctx.Data["Lang"].(string))
 
 				var avatar string
 				if commit.User != nil {
 					avatar = string(templates.Avatar(commit.User, 18, "mr-3"))
 				} else {
-					avatar = string(templates.AvatarByEmail(commit.Author.Email, commit.Author.Name, 18, "mr-3"))
+					avatar = string(templates.AvatarByEmail(commit.Author().Email, commit.Author().Name, 18, "mr-3"))
 				}
 
-				commitInfo.WriteString(fmt.Sprintf(`<div class="blame-info%s"><div class="blame-data"><div class="blame-avatar">%s</div><div class="blame-message"><a href="%s/commit/%s" title="%[5]s">%[5]s</a></div><div class="blame-time">%s</div></div></div>`, attr, avatar, repoLink, part.Sha, html.EscapeString(commit.CommitMessage), commitSince))
+				commitInfo.WriteString(fmt.Sprintf(`<div class="blame-info%s"><div class="blame-data"><div class="blame-avatar">%s</div><div class="blame-message"><a href="%s/commit/%s" title="%[5]s">%[5]s</a></div><div class="blame-time">%s</div></div></div>`, attr, avatar, repoLink, part.SHA, html.EscapeString(commit.Message()), commitSince))
 			} else {
 				commitInfo.WriteString(fmt.Sprintf(`<div class="blame-info%s">&#8203;</div>`, attr))
 			}

@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -303,7 +304,7 @@ func setMergeTarget(ctx *context.Context, pull *models.PullRequest) {
 }
 
 // PrepareMergedViewPullInfo show meta information for a merged pull request view page
-func PrepareMergedViewPullInfo(ctx *context.Context, issue *models.Issue) *git.CompareInfo {
+func PrepareMergedViewPullInfo(ctx *context.Context, issue *models.Issue) *service.CompareInfo {
 	pull := issue.PullRequest
 
 	setMergeTarget(ctx, pull)
@@ -329,7 +330,7 @@ func PrepareMergedViewPullInfo(ctx *context.Context, issue *models.Issue) *git.C
 }
 
 // PrepareViewPullInfo show meta information for a pull request preview page
-func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.CompareInfo {
+func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *service.CompareInfo {
 	repo := ctx.Repo.Repository
 	pull := issue.PullRequest
 
@@ -351,7 +352,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 	}
 	ctx.Data["EnableStatusCheck"] = pull.ProtectedBranch != nil && pull.ProtectedBranch.EnableStatusCheck
 
-	baseGitRepo, err := git.OpenRepository(pull.BaseRepo.RepoPath())
+	baseGitRepo, err := git.Service.OpenRepository(pull.BaseRepo.RepoPath())
 	if err != nil {
 		ctx.ServerError("OpenRepository", err)
 		return nil
@@ -402,7 +403,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *models.Issue) *git.Compare
 	var headBranchSha string
 	// HeadRepo may be missing
 	if pull.HeadRepo != nil {
-		headGitRepo, err := git.OpenRepository(pull.HeadRepo.RepoPath())
+		headGitRepo, err := git.Service.OpenRepository(pull.HeadRepo.RepoPath())
 		if err != nil {
 			ctx.ServerError("OpenRepository", err)
 			return nil
@@ -528,7 +529,7 @@ func ViewPullCommits(ctx *context.Context) {
 	pull := issue.PullRequest
 
 	var commits *list.List
-	var prInfo *git.CompareInfo
+	var prInfo *service.CompareInfo
 	if pull.HasMerged {
 		prInfo = PrepareMergedViewPullInfo(ctx, issue)
 	} else {
@@ -576,11 +577,11 @@ func ViewPullFiles(ctx *context.Context) {
 		diffRepoPath  string
 		startCommitID string
 		endCommitID   string
-		gitRepo       *git.Repository
+		gitRepo       service.Repository
 	)
 
 	var headTarget string
-	var prInfo *git.CompareInfo
+	var prInfo *service.CompareInfo
 	if pull.HasMerged {
 		prInfo = PrepareMergedViewPullInfo(ctx, issue)
 	} else {
@@ -594,7 +595,7 @@ func ViewPullFiles(ctx *context.Context) {
 		return
 	}
 
-	diffRepoPath = ctx.Repo.GitRepo.Path
+	diffRepoPath = ctx.Repo.GitRepo.Path()
 	gitRepo = ctx.Repo.GitRepo
 
 	headCommitID, err := gitRepo.GetRefCommitID(pull.GetGitRefName())
@@ -1125,14 +1126,14 @@ func CleanUpPullRequest(ctx *context.Context) {
 
 	fullBranchName := pr.HeadRepo.Owner.Name + "/" + pr.HeadBranch
 
-	gitRepo, err := git.OpenRepository(pr.HeadRepo.RepoPath())
+	gitRepo, err := git.Service.OpenRepository(pr.HeadRepo.RepoPath())
 	if err != nil {
 		ctx.ServerError(fmt.Sprintf("OpenRepository[%s]", pr.HeadRepo.RepoPath()), err)
 		return
 	}
 	defer gitRepo.Close()
 
-	gitBaseRepo, err := git.OpenRepository(pr.BaseRepo.RepoPath())
+	gitBaseRepo, err := git.Service.OpenRepository(pr.BaseRepo.RepoPath())
 	if err != nil {
 		ctx.ServerError(fmt.Sprintf("OpenRepository[%s]", pr.BaseRepo.RepoPath()), err)
 		return
@@ -1177,7 +1178,7 @@ func CleanUpPullRequest(ctx *context.Context) {
 		return
 	}
 
-	if err := gitRepo.DeleteBranch(pr.HeadBranch, git.DeleteBranchOptions{
+	if err := gitRepo.DeleteBranch(pr.HeadBranch, service.DeleteBranchOptions{
 		Force: true,
 	}); err != nil {
 		log.Error("DeleteBranch: %v", err)
@@ -1189,7 +1190,7 @@ func CleanUpPullRequest(ctx *context.Context) {
 		&repo_module.PushUpdateOptions{
 			RefFullName:  git.BranchPrefix + pr.HeadBranch,
 			OldCommitID:  branchCommitID,
-			NewCommitID:  git.EmptySHA,
+			NewCommitID:  service.EmptySHA,
 			PusherID:     ctx.User.ID,
 			PusherName:   ctx.User.Name,
 			RepoUserName: pr.HeadRepo.Owner.Name,

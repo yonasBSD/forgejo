@@ -19,6 +19,7 @@ import (
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/git"
+	gitservice "code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/notification"
 	"code.gitea.io/gitea/modules/references"
@@ -30,7 +31,7 @@ import (
 // Merge merges pull request to base repository.
 // Caller should check PR is ready to be merged (review and status checks)
 // FIXME: add repoWorkingPull make sure two merges does not happen at same time.
-func Merge(pr *models.PullRequest, doer *models.User, baseGitRepo *git.Repository, mergeStyle models.MergeStyle, message string) (err error) {
+func Merge(pr *models.PullRequest, doer *models.User, baseGitRepo gitservice.Repository, mergeStyle models.MergeStyle, message string) (err error) {
 	if err = pr.LoadHeadRepo(); err != nil {
 		log.Error("LoadHeadRepo: %v", err)
 		return fmt.Errorf("LoadHeadRepo: %v", err)
@@ -367,15 +368,15 @@ func rawMerge(pr *models.PullRequest, doer *models.User, mergeStyle models.Merge
 	}
 
 	// OK we should cache our current head and origin/headbranch
-	mergeHeadSHA, err := git.GetFullCommitID(tmpBasePath, "HEAD")
+	mergeHeadSHA, err := git.Service.GetFullCommitID(tmpBasePath, "HEAD")
 	if err != nil {
 		return "", fmt.Errorf("Failed to get full commit id for HEAD: %v", err)
 	}
-	mergeBaseSHA, err := git.GetFullCommitID(tmpBasePath, "original_"+baseBranch)
+	mergeBaseSHA, err := git.Service.GetFullCommitID(tmpBasePath, "original_"+baseBranch)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get full commit id for origin/%s: %v", pr.BaseBranch, err)
 	}
-	mergeCommitID, err := git.GetFullCommitID(tmpBasePath, baseBranch)
+	mergeCommitID, err := git.Service.GetFullCommitID(tmpBasePath, baseBranch)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get full commit id for the new merge: %v", err)
 	}

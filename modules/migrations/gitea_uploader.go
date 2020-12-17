@@ -20,6 +20,7 @@ import (
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
+	gitservice "code.gitea.io/gitea/modules/git/service"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/migrations/base"
 	"code.gitea.io/gitea/modules/repository"
@@ -47,7 +48,7 @@ type GiteaLocalUploader struct {
 	labels         sync.Map
 	milestones     sync.Map
 	issues         sync.Map
-	gitRepo        *git.Repository
+	gitRepo        gitservice.Repository
 	prHeadCache    map[string]struct{}
 	userMap        map[int64]int64 // external user id mapping to user id
 	prCache        map[int64]*models.PullRequest
@@ -141,7 +142,7 @@ func (g *GiteaLocalUploader) CreateRepo(repo *base.Repository, opts base.Migrate
 	if err != nil {
 		return err
 	}
-	g.gitRepo, err = git.OpenRepository(r.RepoPath())
+	g.gitRepo, err = git.Service.OpenRepository(r.RepoPath())
 	return err
 }
 
@@ -806,7 +807,7 @@ func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
 			patchBuf := new(bytes.Buffer)
 			if err := git.GetRepoRawDiffForFile(g.gitRepo, pr.MergeBase, headCommitID, git.RawDiffNormal, comment.TreePath, patchBuf); err != nil {
 				// We should ignore the error since the commit maybe removed when force push to the pull request
-				log.Warn("GetRepoRawDiffForFile failed when migrating [%s, %s, %s, %s]: %v", g.gitRepo.Path, pr.MergeBase, headCommitID, comment.TreePath, err)
+				log.Warn("GetRepoRawDiffForFile failed when migrating [%s, %s, %s, %s]: %v", g.gitRepo.Path(), pr.MergeBase, headCommitID, comment.TreePath, err)
 			} else {
 				patch = git.CutDiffAroundLine(patchBuf, int64((&models.Comment{Line: int64(line + comment.Position - 1)}).UnsignedLine()), line < 0, setting.UI.CodeCommentLines)
 			}
