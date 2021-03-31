@@ -6,6 +6,7 @@
 package repo
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -16,15 +17,16 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitgraph"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/gitdiff"
 )
 
 const (
-	tplCommits    base.TplName = "repo/commits"
+	tplCommits    base.TplName = "repo/commits/commits"
 	tplGraph      base.TplName = "repo/graph"
 	tplGraphDiv   base.TplName = "repo/graph/div"
-	tplCommitPage base.TplName = "repo/commit_page"
+	tplCommitPage base.TplName = "repo/commits/commit_page"
 )
 
 // RefCommits render commits page
@@ -313,6 +315,38 @@ func Diff(ctx *context.Context) {
 		return
 	}
 
+	allComments, err := models.FindComments(models.FindCommentsOptions{
+		RepoID:    ctx.Repo.Repository.ID,
+		CommitSHA: commitID,
+		Type:      models.CommentTypeOnCommit,
+	})
+	if err != nil {
+		ctx.ServerError("FindComments", err)
+		return
+	}
+
+	if err := allComments.LoadPosters(); err != nil {
+		ctx.ServerError("LoadPosters", err)
+		return
+	}
+
+	var lineComments = make([]*models.Comment, 0, len(allComments))
+	var nonLineComments = make([]*models.Comment, 0, len(allComments))
+	for _, comment := range allComments {
+		comment.RenderedContent = string(markdown.Render([]byte(comment.Content), ctx.Repo.Repository.Link(),
+			ctx.Repo.Repository.ComposeMetas()))
+		if comment.TreePath != "" {
+			lineComments = append(lineComments, comment)
+		} else {
+			nonLineComments = append(nonLineComments, comment)
+		}
+	}
+
+	if err = diff.LoadComments(models.ConvertCodeComments(lineComments)); err != nil {
+		ctx.ServerError("LoadComments", err)
+		return
+	}
+
 	parents := make([]string, commit.ParentCount())
 	for i := 0; i < commit.ParentCount(); i++ {
 		sha, err := commit.ParentID(i)
@@ -351,6 +385,8 @@ func Diff(ctx *context.Context) {
 		ctx.ServerError("CalculateTrustStatus", err)
 		return
 	}
+
+	ctx.Data["Comments"] = nonLineComments
 
 	note := &git.Note{}
 	err = git.GetNote(ctx.Repo.GitRepo, commitID, note)
@@ -391,4 +427,27 @@ func RawDiff(ctx *context.Context) {
 		ctx.ServerError("GetRawDiff", err)
 		return
 	}
+}
+
+// CreateCommitComment creates comment on commit
+func CreateCommitComment(ctx *context.Context) {
+	commit, err := ctx.Repo.GitRepo.GetCommit(ctx.Params(":sha"))
+	if err != nil {
+		ctx.ServerError("GetCommit", err)
+		return
+	}
+
+	_, err = models.CreateComment(&models.CreateCommentOptions{
+		Type:      models.CommentTypeOnCommit,
+		Doer:      ctx.User,
+		Repo:      ctx.Repo.Repository,
+		CommitSHA: commit.ID.String(),
+		Content:   ctx.Query("content"),
+	})
+	if err != nil {
+		ctx.ServerError("GetCommit", err)
+		return
+	}
+
+	ctx.Redirect(fmt.Sprintf("%s/commit/%s", ctx.Repo.Repository.HTMLURL(), commit.ID.String()))
 }
