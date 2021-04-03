@@ -27,6 +27,7 @@ import (
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/repofiles"
 	"code.gitea.io/gitea/modules/setting"
 )
 
@@ -704,6 +705,40 @@ func renderCode(ctx *context.Context) {
 	ctx.Data["TreeLink"] = treeLink
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["BranchLink"] = branchLink
+
+	if ctx.Repo.BranchName != ctx.Repo.Repository.DefaultBranch {
+
+		divergence, err := repofiles.CountDivergingCommits(ctx.Repo.Repository, ctx.Repo.BranchName)
+		if err != nil {
+			ctx.ServerError("CountDivergingCommits", err)
+			return
+		}
+
+		var msg string
+
+		if divergence.Ahead == 0 && divergence.Behind == 0 {
+			msg = ctx.Tr("repo.commits.count.even", ctx.Repo.Repository.DefaultBranch)
+		}
+
+		if divergence.Ahead > 0 {
+			if divergence.Ahead == 1 {
+				msg = ctx.Tr("repo.commits.count.ahead_1", ctx.Repo.Repository.DefaultBranch)
+			} else {
+				msg = ctx.Tr("repo.commits.count.ahead_n", divergence.Ahead, ctx.Repo.Repository.DefaultBranch)
+			}
+		}
+
+		if divergence.Behind > 0 {
+			if divergence.Behind == 1 {
+				msg = ctx.Tr("repo.commits.count.behind_1", ctx.Repo.Repository.DefaultBranch)
+			} else {
+				msg = ctx.Tr("repo.commits.count.behind_n", divergence.Behind, ctx.Repo.Repository.DefaultBranch)
+			}
+		}
+
+		ctx.Flash.Info(msg)
+	}
+
 	ctx.HTML(200, tplRepoHome)
 }
 
