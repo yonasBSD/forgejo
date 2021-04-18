@@ -5,6 +5,7 @@
 package models
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -18,15 +19,16 @@ import (
 
 // GenerateRepoOptions contains the template units to generate
 type GenerateRepoOptions struct {
-	Name        string
-	Description string
-	Private     bool
-	GitContent  bool
-	Topics      bool
-	GitHooks    bool
-	Webhooks    bool
-	Avatar      bool
-	IssueLabels bool
+	Name             string
+	Description      string
+	Private          bool
+	GitContent       bool
+	Topics           bool
+	GitHooks         bool
+	Webhooks         bool
+	Avatar           bool
+	IssueLabels      bool
+	BranchProtection bool
 }
 
 // IsValid checks whether at least one option is chosen for generation
@@ -164,5 +166,51 @@ func GenerateIssueLabels(ctx DBContext, templateRepo, generateRepo *Repository) 
 			return err
 		}
 	}
+	return nil
+}
+
+// GenerateBranchProtection generates branch protection from a template repository
+func GenerateBranchProtection(ctx DBContext, doer *User, templateRepo, generateRepo *Repository) error {
+	branches, err := templateRepo.getProtectedBranches(ctx.e)
+	if err != nil {
+		return err
+	}
+
+	for _, branch := range branches {
+		// Create the branches (other than default, which exists already)
+		if !strings.EqualFold(generateRepo.DefaultBranch, branch.BranchName) {
+			if err := git.Push(generateRepo.RepoPath(), git.PushOptions{
+				Remote: generateRepo.RepoPath(),
+				Branch: fmt.Sprintf("%s:%s%s", generateRepo.DefaultBranch, git.BranchPrefix, branch.BranchName),
+				Env:    InternalPushingEnvironment(doer, generateRepo),
+			}); err != nil {
+				if git.IsErrPushOutOfDate(err) || git.IsErrPushRejected(err) {
+					return err
+				}
+				return fmt.Errorf("push: %v", err)
+			}
+		}
+
+		// Copy protections
+		protectBranch := &ProtectedBranch{
+			RepoID:                        generateRepo.ID,
+			BranchName:                    branch.BranchName,
+			CanPush:                       branch.CanPush,
+			EnableStatusCheck:             branch.EnableStatusCheck,
+			StatusCheckContexts:           branch.StatusCheckContexts,
+			RequiredApprovals:             branch.RequiredApprovals,
+			BlockOnRejectedReviews:        branch.BlockOnRejectedReviews,
+			BlockOnOfficialReviewRequests: branch.BlockOnOfficialReviewRequests,
+			BlockOnOutdatedBranch:         branch.BlockOnOutdatedBranch,
+			DismissStaleApprovals:         branch.DismissStaleApprovals,
+			RequireSignedCommits:          branch.RequireSignedCommits,
+			ProtectedFilePatterns:         branch.ProtectedFilePatterns,
+		}
+
+		if err := updateProtectBranch(ctx.e, generateRepo, protectBranch, WhitelistOptions{}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
