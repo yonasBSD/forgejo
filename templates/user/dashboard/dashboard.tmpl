@@ -5,6 +5,7 @@
 		{{template "base/alert" .}}
 		<div class="ui mobile reversed stackable grid">
 			<div class="ui container ten wide column">
+				{{template "user/recently_pushed_branches" .}}
 				{{template "user/heatmap" .}}
 				{{template "user/dashboard/feeds" .}}
 			</div>
