@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -371,6 +372,26 @@ func repoAssignment(ctx *Context, repo *models.Repository) {
 	ctx.Repo.Repository = repo
 	ctx.Data["RepoName"] = ctx.Repo.Repository.Name
 	ctx.Data["IsEmptyRepo"] = ctx.Repo.Repository.IsEmpty
+
+	// load custom repo buttons
+	if err := ctx.Repo.Repository.LoadCustomRepoButton(); err != nil {
+		ctx.ServerError("LoadCustomRepoButton", err)
+		return
+	}
+
+	for index, btn := range repo.CustomRepoButtons {
+		if btn.IsLink() {
+			continue
+		}
+
+		if repo.CustomRepoButtons[index].RenderedContent, err = markdown.RenderString(&markup.RenderContext{
+			URLPrefix: ctx.Repo.Repository.Link(),
+			Metas:     ctx.Repo.Repository.ComposeMetas(),
+		}, btn.Content); err != nil {
+			ctx.ServerError("LoadCustomRepoButton", err)
+			return
+		}
+	}
 }
 
 // RepoIDAssignment returns a handler which assigns the repo to the context.
