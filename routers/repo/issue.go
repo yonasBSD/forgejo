@@ -180,6 +180,8 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption uti
 			ReviewRequestedID: reviewRequestedID,
 			IsPull:            isPullOption,
 			IssueIDs:          issueIDs,
+			Doer:              ctx.User,
+			Confidential:      true,
 		})
 		if err != nil {
 			ctx.ServerError("GetIssueStats", err)
@@ -232,6 +234,8 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption uti
 			LabelIDs:          labelIDs,
 			SortType:          sortType,
 			IssueIDs:          issueIDs,
+			Doer:              ctx.User,
+			Confidential:      true,
 		})
 		if err != nil {
 			ctx.ServerError("Issues", err)

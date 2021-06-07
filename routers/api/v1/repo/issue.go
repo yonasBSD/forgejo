@@ -188,6 +188,8 @@ func SearchIssues(ctx *context.APIContext) {
 			SortType:           "priorityrepo",
 			PriorityRepoID:     ctx.QueryInt64("priority_repo_id"),
 			IsPull:             isPull,
+			Doer:               ctx.User,
+			Confidential:       true,
 			UpdatedBeforeUnix:  before,
 			UpdatedAfterUnix:   since,
 		}
@@ -367,6 +369,8 @@ func ListIssues(ctx *context.APIContext) {
 			LabelIDs:     labelIDs,
 			MilestoneIDs: mileIDs,
 			IsPull:       isPull,
+			Doer:         ctx.User,
+			Confidential: true,
 		}
 
 		if issues, err = models.Issues(issuesOpt); err != nil {
@@ -428,6 +432,16 @@ func GetIssue(ctx *context.APIContext) {
 		}
 		return
 	}
+
+	if allowed, err := models.UserAllowedToLookAtConfidentialIssue(ctx.User, issue); err != nil || !allowed {
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "UserAllowedToLookAtConfidentialIssue", err)
+		} else {
+			ctx.Status(http.StatusForbidden)
+		}
+		return
+	}
+
 	ctx.JSON(http.StatusOK, convert.ToAPIIssue(issue))
 }
 
@@ -611,6 +625,15 @@ func EditIssue(ctx *context.APIContext) {
 		return
 	}
 
+	if allowed, err := models.UserAllowedToLookAtConfidentialIssue(ctx.User, issue); err != nil || !allowed {
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "UserAllowedToLookAtConfidentialIssue", err)
+		} else {
+			ctx.Status(http.StatusForbidden)
+		}
+		return
+	}
+
 	oldTitle := issue.Title
 	if len(form.Title) > 0 {
 		issue.Title = form.Title
@@ -757,6 +780,15 @@ func UpdateIssueDeadline(ctx *context.APIContext) {
 
 	if !ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
 		ctx.Error(http.StatusForbidden, "", "Not repo writer")
+		return
+	}
+
+	if allowed, err := models.UserAllowedToLookAtConfidentialIssue(ctx.User, issue); err != nil || !allowed {
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "UserAllowedToLookAtConfidentialIssue", err)
+		} else {
+			ctx.Status(http.StatusForbidden)
+		}
 		return
 	}
 

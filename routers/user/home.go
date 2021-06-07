@@ -421,9 +421,11 @@ func buildIssueOverview(ctx *context.Context, unitType models.UnitType) {
 
 	isPullList := unitType == models.UnitTypePullRequests
 	opts := &models.IssuesOptions{
-		IsPull:     util.OptionalBoolOf(isPullList),
-		SortType:   sortType,
-		IsArchived: util.OptionalBoolFalse,
+		IsPull:       util.OptionalBoolOf(isPullList),
+		SortType:     sortType,
+		IsArchived:   util.OptionalBoolFalse,
+		Doer:         ctx.User,
+		Confidential: true,
 	}
 
 	// Get repository IDs where User/Org/Team has access.

@@ -43,6 +43,7 @@ type Issue struct {
 	Milestone        *Milestone `xorm:"-"`
 	Project          *Project   `xorm:"-"`
 	Priority         int
+	Confidential     bool
 	AssigneeID       int64        `xorm:"-"`
 	Assignee         *User        `xorm:"-"`
 	IsClosed         bool         `xorm:"INDEX"`
@@ -1120,6 +1121,8 @@ type IssuesOptions struct {
 	IssueIDs           []int64
 	UpdatedAfterUnix   int64
 	UpdatedBeforeUnix  int64
+	Confidential       bool
+	Doer               *User
 	// prioritize issues from this repo
 	PriorityRepoID int64
 	IsArchived     util.OptionalBool
@@ -1248,6 +1251,11 @@ func (opts *IssuesOptions) setupSession(sess *xorm.Session) {
 	if len(opts.ExcludedLabelNames) > 0 {
 		sess.And(builder.NotIn("issue.id", BuildLabelNamesIssueIDsCondition(opts.ExcludedLabelNames)))
 	}
+	if !opts.Confidential || opts.Doer == nil {
+		sess.And("issue.confidential = ?", false)
+	} else {
+		//sess.And("issue.confidential = ?", true)
+	}
 }
 
 func applyReposCondition(sess *xorm.Session, repoIDs []int64) *xorm.Session {
@@ -1345,7 +1353,8 @@ func Issues(opts *IssuesOptions) ([]*Issue, error) {
 		return nil, fmt.Errorf("LoadAttributes: %v", err)
 	}
 
-	return issues, nil
+	issues, _, err := FilterConfidentialIssue(opts.Doer, issues)
+	return issues, err
 }
 
 // CountIssues number return of issues by given conditions.
@@ -1449,6 +1458,8 @@ type IssueStatsOptions struct {
 	ReviewRequestedID int64
 	IsPull            util.OptionalBool
 	IssueIDs          []int64
+	Doer              *User
+	Confidential      bool
 }
 
 // GetIssueStats returns issue statistic information by given conditions.
