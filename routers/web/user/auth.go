@@ -174,7 +174,7 @@ func SignInPost(ctx *context.Context) {
 	}
 
 	form := web.GetForm(ctx).(*forms.SignInForm)
-	u, err := models.UserSignIn(form.UserName, form.Password)
+	u, err := models.UserSignIn(ctx, form.UserName, form.Password)
 	if err != nil {
 		if models.IsErrUserNotExist(err) {
 			ctx.RenderWithErr(ctx.Tr("form.username_password_incorrect"), tplSignIn, &form)
@@ -901,7 +901,7 @@ func LinkAccountPostSignIn(ctx *context.Context) {
 		return
 	}
 
-	u, err := models.UserSignIn(signInForm.UserName, signInForm.Password)
+	u, err := models.UserSignIn(ctx, signInForm.UserName, signInForm.Password)
 	if err != nil {
 		if models.IsErrUserNotExist(err) {
 			ctx.Data["user_exists"] = true
@@ -1231,7 +1231,7 @@ func createAndHandleCreatedUser(ctx *context.Context, tpl base.TplName, form int
 // createUserInContext creates a user and handles errors within a given context.
 // Optionally a template can be specified.
 func createUserInContext(ctx *context.Context, tpl base.TplName, form interface{}, u *models.User, gothUser *goth.User, allowLink bool) (ok bool) {
-	if err := models.CreateUser(u); err != nil {
+	if err := models.CreateUser(ctx, u); err != nil {
 		if allowLink && (models.IsErrUserAlreadyExist(err) || models.IsErrEmailAlreadyUsed(err)) {
 			if setting.OAuth2Client.AccountLinking == setting.OAuth2AccountLinkingAuto {
 				var user *models.User
@@ -1403,7 +1403,7 @@ func ActivatePost(ctx *context.Context) {
 			ctx.HTML(http.StatusOK, TplActivate)
 			return
 		}
-		if !user.ValidatePassword(password) {
+		if !user.ValidatePassword(ctx, password) {
 			ctx.Data["IsActivateFailed"] = true
 			ctx.HTML(http.StatusOK, TplActivate)
 			return
@@ -1669,7 +1669,7 @@ func ResetPasswdPost(ctx *context.Context) {
 		ctx.ServerError("UpdateUser", err)
 		return
 	}
-	if err = u.SetPassword(passwd); err != nil {
+	if err = u.SetPassword(ctx, passwd); err != nil {
 		ctx.ServerError("UpdateUser", err)
 		return
 	}
@@ -1743,7 +1743,7 @@ func MustChangePasswordPost(ctx *context.Context) {
 	}
 
 	var err error
-	if err = u.SetPassword(form.Password); err != nil {
+	if err = u.SetPassword(ctx, form.Password); err != nil {
 		ctx.ServerError("UpdateUser", err)
 		return
 	}

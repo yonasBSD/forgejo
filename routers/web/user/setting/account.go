@@ -52,7 +52,7 @@ func AccountPost(ctx *context.Context) {
 
 	if len(form.Password) < setting.MinPasswordLength {
 		ctx.Flash.Error(ctx.Tr("auth.password_too_short", setting.MinPasswordLength))
-	} else if ctx.User.IsPasswordSet() && !ctx.User.ValidatePassword(form.OldPassword) {
+	} else if ctx.User.IsPasswordSet() && !ctx.User.ValidatePassword(ctx, form.OldPassword) {
 		ctx.Flash.Error(ctx.Tr("settings.password_incorrect"))
 	} else if form.Password != form.Retype {
 		ctx.Flash.Error(ctx.Tr("form.password_not_match"))
@@ -67,7 +67,7 @@ func AccountPost(ctx *context.Context) {
 		ctx.Flash.Error(errMsg)
 	} else {
 		var err error
-		if err = ctx.User.SetPassword(form.Password); err != nil {
+		if err = ctx.User.SetPassword(ctx, form.Password); err != nil {
 			ctx.ServerError("UpdateUser", err)
 			return
 		}
@@ -227,7 +227,7 @@ func DeleteAccount(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("settings")
 	ctx.Data["PageIsSettingsAccount"] = true
 
-	if _, err := models.UserSignIn(ctx.User.Name, ctx.Query("password")); err != nil {
+	if _, err := models.UserSignIn(ctx, ctx.User.Name, ctx.Query("password")); err != nil {
 		if models.IsErrUserNotExist(err) {
 			loadAccountData(ctx)
 

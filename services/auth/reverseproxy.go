@@ -115,7 +115,7 @@ func (r *ReverseProxy) newUser(req *http.Request) *models.User {
 		Email:    email,
 		IsActive: true,
 	}
-	if err := models.CreateUser(user); err != nil {
+	if err := models.CreateUser(req.Context(), user); err != nil {
 		// FIXME: should I create a system notice?
 		log.Error("CreateUser: %v", err)
 		return nil
