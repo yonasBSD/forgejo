@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"code.gitea.io/gitea/modules/auth/hash"
 	"code.gitea.io/gitea/modules/auth/ldap"
 	"code.gitea.io/gitea/modules/auth/oauth2"
 	"code.gitea.io/gitea/modules/auth/pam"
@@ -834,7 +835,7 @@ func UserSignIn(username, password string) (*User, error) {
 			if user.IsPasswordSet() && user.ValidatePassword(password) {
 
 				// Update password hash if server password hash algorithm have changed
-				if user.PasswdHashAlgo != setting.PasswordHashAlgo {
+				if hash.DefaultHasher.PasswordNeedUpdate(user.PasswdHashAlgo) {
 					if err = user.SetPassword(password); err != nil {
 						return nil, err
 					}
