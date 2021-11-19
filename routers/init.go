@@ -39,9 +39,10 @@ import (
 	"code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
 	"code.gitea.io/gitea/services/cron"
+	"code.gitea.io/gitea/services/imap"
 	"code.gitea.io/gitea/services/mailer"
 	repo_migrations "code.gitea.io/gitea/services/migrations"
-	mirror_service "code.gitea.io/gitea/services/mirror"
+	"code.gitea.io/gitea/services/mirror"
 	pull_service "code.gitea.io/gitea/services/pull"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/services/task"
@@ -118,6 +119,7 @@ func GlobalInit(ctx context.Context) {
 
 	InitGitServices()
 	mailer.NewContext()
+	imap.NewContext()
 	mustInit(cache.NewContext)
 	notification.NewContext()
 	mustInit(archiver.Init)
@@ -145,7 +147,7 @@ func GlobalInit(ctx context.Context) {
 	code_indexer.Init()
 	mustInit(stats_indexer.Init)
 
-	mirror_service.InitSyncMirrors()
+	mirror.InitSyncMirrors()
 	webhook.InitDeliverHooks()
 	mustInit(pull_service.Init)
 	mustInit(task.Init)

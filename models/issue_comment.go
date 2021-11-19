@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/references"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
@@ -713,6 +714,43 @@ func (c *Comment) LoadPushCommits() (err error) {
 	}
 
 	return err
+}
+
+// ReplyReference returns tokenized address to use for email reply headers
+func (c *Comment) ReplyReference(key string) string {
+	if err := c.LoadIssue(); err != nil {
+		log.Error("comment.LoadIssue(): %v", err)
+		return ""
+	}
+
+	if err := c.Issue.LoadRepo(); err != nil {
+		log.Error("Issue.LoadRepo(): %v", err)
+		return ""
+	}
+
+	var path string
+	if c.Issue.IsPull {
+		path = "pulls"
+	} else {
+		path = "issues"
+	}
+
+	if len(key) > 0 {
+		return fmt.Sprintf("%s/%s/%d/comment/%d/%s@%s",
+			c.Issue.Repo.FullName(),
+			path,
+			c.Issue.Index,
+			c.ID,
+			key,
+			setting.Domain)
+	}
+
+	return fmt.Sprintf("%s/%s/%d/comment/%d@%s",
+		c.Issue.Repo.FullName(),
+		path,
+		c.Issue.Index,
+		c.ID,
+		setting.Domain)
 }
 
 func createComment(e db.Engine, opts *CreateCommentOptions) (_ *Comment, err error) {

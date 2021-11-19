@@ -12,6 +12,7 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/updatechecker"
+	"code.gitea.io/gitea/services/imap"
 	repo_service "code.gitea.io/gitea/services/repository"
 	user_service "code.gitea.io/gitea/services/user"
 )
@@ -134,6 +135,16 @@ func registerDeleteOldActions() {
 	})
 }
 
+func registerImapFetchUnreadMails() {
+	RegisterTaskFatal("imap_fetch_mails", &BaseConfig{
+		Enabled:    setting.MailRecieveService != nil,
+		RunAtStart: false,
+		Schedule:   "@every 5m",
+	}, func(ctx context.Context, _ *models.User, _ Config) error {
+		return imap.FetchAllUnreadMails()
+	})
+}
+
 func registerUpdateGiteaChecker() {
 	type UpdateCheckerConfig struct {
 		BaseConfig
@@ -164,4 +175,5 @@ func initExtendedTasks() {
 	registerRemoveRandomAvatars()
 	registerDeleteOldActions()
 	registerUpdateGiteaChecker()
+	registerImapFetchUnreadMails()
 }
