@@ -139,6 +139,10 @@ func WebhooksNew(ctx *context.Context) {
 		ctx.Data["PageIsSettingsHooksNew"] = true
 	}
 
+	if orCtx.OrgID > 0 {
+		ctx.Data["PageIsOrgHooks"] = true
+	}
+
 	hookType := checkHookType(ctx)
 	ctx.Data["HookType"] = hookType
 	if ctx.Written() {
@@ -180,6 +184,9 @@ func ParseHookEvent(form forms.WebhookForm) *webhook.HookEvent {
 			PullRequestReview:    form.PullRequestReview,
 			PullRequestSync:      form.PullRequestSync,
 			Repository:           form.Repository,
+			Organization:         form.Organization,
+			Team:                 form.Team,
+			TeamMember:           form.TeamMember,
 		},
 		BranchFilter: form.BranchFilter,
 	}
@@ -738,6 +745,10 @@ func WebHooksEdit(ctx *context.Context) {
 		return
 	}
 	ctx.Data["Webhook"] = w
+
+	if orCtx.OrgID > 0 {
+		ctx.Data["PageIsOrgHooks"] = true
+	}
 
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }

@@ -237,6 +237,9 @@ type WebhookForm struct {
 	PullRequestSync      bool
 	Repository           bool
 	Active               bool
+	Organization         bool
+	Team                 bool
+	TeamMember           bool
 	BranchFilter         string `binding:"GlobPattern"`
 }
 

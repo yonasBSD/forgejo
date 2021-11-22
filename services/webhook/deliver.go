@@ -232,15 +232,26 @@ func DeliverHooks(ctx context.Context) {
 			log.Trace("DeliverHooks [repo_id: %v]", repoIDStr)
 			hookQueue.Remove(repoIDStr)
 
-			repoID, err := strconv.ParseInt(repoIDStr, 10, 64)
+			keyID, err := strconv.ParseInt(repoIDStr, 10, 64)
 			if err != nil {
 				log.Error("Invalid repo ID: %s", repoIDStr)
 				continue
 			}
 
-			tasks, err := webhook_model.FindRepoUndeliveredHookTasks(repoID)
+			// keyID > 0 : repo id
+			// keyID < 0 : org id
+			// keyID = 0 : system only (not used now)
+			var tasks []*webhook_model.HookTask
+
+			if keyID < 0 {
+				orgID := -keyID
+				tasks, err = webhook_model.FindOrgUndeliveredHookTasks(orgID)
+			} else {
+				repoID := keyID
+				tasks, err = webhook_model.FindRepoUndeliveredHookTasks(repoID)
+			}
 			if err != nil {
-				log.Error("Get repository [%d] hook tasks: %v", repoID, err)
+				log.Error("Get [%d] hook tasks: %v", keyID, err)
 				continue
 			}
 			for _, t := range tasks {

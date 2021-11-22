@@ -118,6 +118,9 @@ type HookEvents struct {
 	PullRequestSync      bool `json:"pull_request_sync"`
 	Repository           bool `json:"repository"`
 	Release              bool `json:"release"`
+	Organization         bool `json:"organization"`
+	Team                 bool `json:"team"`
+	TeamMember           bool `json:"membership"`
 }
 
 // HookEvent represents events that will delivery hook.
@@ -322,6 +325,33 @@ func (w *Webhook) HasRepositoryEvent() bool {
 		(w.ChooseEvents && w.HookEvents.Repository)
 }
 
+// HasOrgEvent returns if hook enabled org event.
+func (w *Webhook) HasOrgEvent() bool {
+	if w.RepoID != 0 {
+		return false
+	}
+	return w.SendEverything ||
+		(w.ChooseEvents && w.HookEvents.Organization)
+}
+
+// HasTeamEvent returns if hook enabled team event.
+func (w *Webhook) HasTeamEvent() bool {
+	if w.RepoID != 0 {
+		return false
+	}
+	return w.SendEverything ||
+		(w.ChooseEvents && w.HookEvents.Team)
+}
+
+// HasTeamMemberEvent returns if hook enabled team member event.
+func (w *Webhook) HasTeamMemberEvent() bool {
+	if w.RepoID != 0 {
+		return false
+	}
+	return w.SendEverything ||
+		(w.ChooseEvents && w.HookEvents.TeamMember)
+}
+
 // EventCheckers returns event checkers
 func (w *Webhook) EventCheckers() []struct {
 	Has  func() bool
@@ -351,6 +381,9 @@ func (w *Webhook) EventCheckers() []struct {
 		{w.HasPullRequestSyncEvent, HookEventPullRequestSync},
 		{w.HasRepositoryEvent, HookEventRepository},
 		{w.HasReleaseEvent, HookEventRelease},
+		{w.HasOrgEvent, HookEventOrg},
+		{w.HasTeamEvent, HookEventTeam},
+		{w.HasTeamMemberEvent, HookEventTeamMember},
 	}
 }
 
@@ -579,4 +612,26 @@ func CopyDefaultWebhooksToRepo(ctx context.Context, repoID int64) error {
 		}
 	}
 	return nil
+}
+
+// HookEventLevel leve of a hook event
+type HookEventLevel int64
+
+const (
+	// HookEventLevelRepo all hook types can be used
+	HookEventLevelRepo HookEventLevel = iota + 1
+	// HookEventLevelOrg org and system hook can be used
+	HookEventLevelOrg
+	// HookEventLevelSys only system hook can be used (not used now)
+	// HookEventLevelSys
+)
+
+// EventLevel got last leve of this event
+func (h HookEventType) EventLevel() HookEventLevel {
+	if h == HookEventOrg ||
+		h == HookEventTeam ||
+		h == HookEventTeamMember {
+		return HookEventLevelOrg
+	}
+	return HookEventLevelRepo
 }

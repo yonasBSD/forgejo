@@ -49,6 +49,9 @@ const (
 	HookEventPullRequestSync           HookEventType = "pull_request_sync"
 	HookEventRepository                HookEventType = "repository"
 	HookEventRelease                   HookEventType = "release"
+	HookEventOrg                       HookEventType = "organization"
+	HookEventTeam                      HookEventType = "team"
+	HookEventTeamMember                HookEventType = "membership"
 )
 
 // Event returns the HookEventType as an event string
@@ -79,6 +82,12 @@ func (h HookEventType) Event() string {
 		return "repository"
 	case HookEventRelease:
 		return "release"
+	case HookEventOrg:
+		return "organization"
+	case HookEventTeam:
+		return "team"
+	case HookEventTeamMember:
+		return "membership"
 	}
 	return ""
 }
@@ -101,6 +110,7 @@ type HookResponse struct {
 type HookTask struct {
 	ID              int64 `xorm:"pk autoincr"`
 	RepoID          int64 `xorm:"INDEX"`
+	OrgID           int64 `xorm:"INDEX NOT NULL DEFAULT 0"`
 	HookID          int64
 	UUID            string
 	api.Payloader   `xorm:"-"`
@@ -208,6 +218,15 @@ func FindUndeliveredHookTasks() ([]*HookTask, error) {
 func FindRepoUndeliveredHookTasks(repoID int64) ([]*HookTask, error) {
 	tasks := make([]*HookTask, 0, 5)
 	if err := db.GetEngine(db.DefaultContext).Where("repo_id=? AND is_delivered=?", repoID, false).Find(&tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+// FindOrgUndeliveredHookTasks  finds the undelivered hook tasks of an organisation
+func FindOrgUndeliveredHookTasks(orgID int64) ([]*HookTask, error) {
+	tasks := make([]*HookTask, 0, 5)
+	if err := db.GetEngine(db.DefaultContext).Where("org_id=? AND is_delivered=?", orgID, false).Find(&tasks); err != nil {
 		return nil, err
 	}
 	return tasks, nil

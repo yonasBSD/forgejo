@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/notification"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/utils"
 	"code.gitea.io/gitea/services/forms"
@@ -65,7 +66,17 @@ func TeamsAction(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
+		isOrgMember, err2 := models.IsOrganizationMember(ctx.Org.Organization.ID, ctx.User.ID)
+		if err2 != nil {
+			log.Error("IsOrganizationMember: %v", err2)
+		}
 		err = ctx.Org.Team.AddMember(ctx.User.ID)
+		if err == nil {
+			notification.NotifyAddTeamMember(ctx.User, ctx.Org.Organization, ctx.User, ctx.Org.Team)
+			if !isOrgMember {
+				notification.NotifyAddOrgMember(ctx.User, ctx.Org.Organization, ctx.User)
+			}
+		}
 	case "leave":
 		err = ctx.Org.Team.RemoveMember(ctx.User.ID)
 		if err != nil {
@@ -80,6 +91,10 @@ func TeamsAction(ctx *context.Context) {
 				return
 			}
 		}
+		notification.NotifyRemoveTeamMember(ctx.User, ctx.Org.Organization, ctx.User, ctx.Org.Team)
+		if isOrgMember, err := models.IsOrganizationMember(ctx.Org.Organization.ID, ctx.User.ID); err == nil && !isOrgMember {
+			notification.NotifyRemoveOrgMember(ctx.User, ctx.Org.Organization, ctx.User)
+		}
 		ctx.JSON(http.StatusOK,
 			map[string]interface{}{
 				"redirect": ctx.Org.OrgLink + "/teams/",
@@ -91,6 +106,15 @@ func TeamsAction(ctx *context.Context) {
 			return
 		}
 		err = ctx.Org.Team.RemoveMember(uid)
+		if err == nil {
+			u, err2 := models.GetUserByID(uid)
+			if err2 == nil {
+				notification.NotifyRemoveTeamMember(ctx.User, ctx.Org.Organization, u, ctx.Org.Team)
+				if isOrgMember, err3 := models.IsOrganizationMember(ctx.Org.Organization.ID, u.ID); err3 == nil && !isOrgMember {
+					notification.NotifyRemoveOrgMember(ctx.User, ctx.Org.Organization, u)
+				}
+			}
+		}
 		if err != nil {
 			if models.IsErrLastOrgOwner(err) {
 				ctx.Flash.Error(ctx.Tr("form.last_org_owner"))
@@ -132,10 +156,22 @@ func TeamsAction(ctx *context.Context) {
 			return
 		}
 
+		isOrgMember, err2 := models.IsOrganizationMember(ctx.Org.Organization.ID, u.ID)
+		if err2 != nil {
+			log.Error("IsOrganizationMember: %v", err2)
+		}
+
 		if ctx.Org.Team.IsMember(u.ID) {
 			ctx.Flash.Error(ctx.Tr("org.teams.add_duplicate_users"))
 		} else {
 			err = ctx.Org.Team.AddMember(u.ID)
+		}
+
+		if err == nil {
+			notification.NotifyAddTeamMember(ctx.User, ctx.Org.Organization, u, ctx.Org.Team)
+			if !isOrgMember {
+				notification.NotifyAddOrgMember(ctx.User, ctx.Org.Organization, u)
+			}
 		}
 
 		page = "team"
@@ -272,6 +308,7 @@ func NewTeamPost(ctx *context.Context) {
 		}
 		return
 	}
+	notification.NotifyAddOrgTeam(ctx.User, ctx.Org.Organization, t)
 	log.Trace("Team created: %s/%s", ctx.Org.Organization.Name, t.Name)
 	ctx.Redirect(ctx.Org.OrgLink + "/teams/" + url.PathEscape(t.LowerName))
 }
@@ -386,6 +423,7 @@ func DeleteTeam(ctx *context.Context) {
 		ctx.Flash.Success(ctx.Tr("org.teams.delete_team_success"))
 	}
 
+	notification.NotifyRemoveOrgTeam(ctx.User, ctx.Org.Organization, ctx.Org.Team)
 	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"redirect": ctx.Org.OrgLink + "/teams",
 	})
