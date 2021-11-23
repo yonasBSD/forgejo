@@ -791,6 +791,9 @@ func RegisterRoutes(m *web.Route) {
 					Get(repo.UploadFile).
 					Post(bindIgnErr(forms.UploadRepoFileForm{}), repo.UploadFilePost)
 			}, context.RepoRefByType(context.RepoRefBranch), repo.MustBeEditable)
+		}, context.RepoMustNotBeArchived(), reqRepoCodeWriter)
+
+		m.Group("", func() {
 			m.Group("", func() {
 				m.Post("/upload-file", repo.UploadFileToServer)
 				m.Post("/upload-remove", bindIgnErr(forms.RemoveUploadFileForm{}), repo.RemoveUploadFileFromServer)

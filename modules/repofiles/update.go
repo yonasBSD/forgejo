@@ -131,9 +131,11 @@ func CreateOrUpdateRepoFile(repo *models.Repository, doer *models.User, opts *Up
 		opts.NewBranch = opts.OldBranch
 	}
 
-	// oldBranch must exist for this operation
-	if _, err := repo_module.GetBranch(repo, opts.OldBranch); err != nil {
-		return nil, err
+	if !repo.IsEmpty {
+		// oldBranch must exist for this operation
+		if _, err := repo_module.GetBranch(repo, opts.OldBranch); err != nil {
+			return nil, err
+		}
 	}
 
 	// A NewBranch can be specified for the file to be created/updated in a new branch.
@@ -177,6 +179,19 @@ func CreateOrUpdateRepoFile(repo *models.Repository, doer *models.User, opts *Up
 
 	author, committer := GetAuthorAndCommitterUsers(opts.Author, opts.Committer, doer)
 
+	if repo.IsEmpty {
+		err := repo_module.CheckInitRepository(repo.OwnerName, repo.Name)
+		if err != nil && !models.IsErrRepoFilesAlreadyExist(err) {
+			return nil, err
+		}
+
+		repo.IsEmpty = false
+		repo.DefaultBranch = opts.OldBranch
+		if err := models.UpdateRepository(repo, false); err != nil {
+			return nil, err
+		}
+	}
+
 	t, err := NewTemporaryUploadRepository(repo)
 	if err != nil {
 		log.Error("%v", err)
@@ -204,7 +219,6 @@ func CreateOrUpdateRepoFile(repo *models.Repository, doer *models.User, opts *Up
 			return nil, fmt.Errorf("DeleteRepoFile: Invalid last commit ID: %v", err)
 		}
 		opts.LastCommitID = lastCommitID.String()
-
 	}
 
 	encoding := "UTF-8"
