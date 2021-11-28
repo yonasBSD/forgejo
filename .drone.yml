@@ -230,6 +230,20 @@ steps:
       GITHUB_READ_TOKEN:
         from_secret: github_read_token
 
+  - name: unit-test-mysql
+    image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
+    user: gitea
+    commands:
+      - make test-backend
+    environment:
+      GOPROXY: off
+      TAGS: bindata sqlite sqlite_unlock_notify
+      RACE_ENABLED: true
+      GITEA_UNIT_TESTS_DB_TYPE: mysql
+      GITEA_UNIT_TESTS_DB_CONNSTR: root:@tcp(mysql:3306)/gitea_test?charset=utf8mb4
+      GITHUB_READ_TOKEN:
+        from_secret: github_read_token
+
   - name: unit-test-gogit
     pull: always
     image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
