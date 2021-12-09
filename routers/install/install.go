@@ -65,12 +65,7 @@ func Init(next http.Handler) http.Handler {
 		var locale = middleware.Locale(resp, req)
 		var startTime = time.Now()
 		var ctx = context.Context{
-			Resp:    context.NewResponse(resp),
-			Flash:   &middleware.Flash{},
-			Locale:  locale,
-			Render:  rnd,
-			Session: session.GetSession(req),
-			Data: map[string]interface{}{
+			BaseContext: context.NewBaseContext(resp, req, map[string]interface{}{
 				"Title":         locale.Tr("install.install"),
 				"PageIsInstall": true,
 				"DbTypeNames":   getDbTypeNames(),
@@ -84,7 +79,11 @@ func Init(next http.Handler) http.Handler {
 					return time.Since(startTime).String()
 				},
 				"PasswordHashAlgorithms": user_model.AvailableHashAlgorithms,
-			},
+			}),
+			Flash:   &middleware.Flash{},
+			Locale:  locale,
+			Render:  rnd,
+			Session: session.GetSession(req),
 		}
 		for _, lang := range translation.AllLangs() {
 			if lang.Lang == locale.Language() {
@@ -249,12 +248,12 @@ func SubmitInstall(ctx *context.Context) {
 	ctx.Data["CurDbType"] = form.DbType
 
 	if ctx.HasError() {
-		if ctx.HasValue("Err_SMTPUser") {
+		if ctx.HasDataKey("Err_SMTPUser") {
 			ctx.Data["Err_SMTP"] = true
 		}
-		if ctx.HasValue("Err_AdminName") ||
-			ctx.HasValue("Err_AdminPasswd") ||
-			ctx.HasValue("Err_AdminEmail") {
+		if ctx.HasDataKey("Err_AdminName") ||
+			ctx.HasDataKey("Err_AdminPasswd") ||
+			ctx.HasDataKey("Err_AdminEmail") {
 			ctx.Data["Err_Admin"] = true
 		}
 
