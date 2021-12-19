@@ -2264,6 +2264,65 @@ func DeleteComment(ctx *context.Context) {
 	ctx.Status(200)
 }
 
+// HideComment hides comment of issue
+func HideComment(ctx *context.Context) {
+	comment, err := models.GetCommentByID(ctx.ParamsInt64(":id"))
+	action := ctx.FormString("action")
+	var resolveReason models.ResolveReason
+
+	if err != nil {
+		ctx.NotFoundOrServerError("GetCommentByID", models.IsErrCommentNotExist, err)
+		return
+	}
+
+	if action != "Resolve" && action != "UnResolve" {
+		ctx.Error(http.StatusBadRequest)
+		return
+	}
+
+	//if action is resolve, get resolve reason from form
+	if action == "Resolve" {
+		intResolveReason, err := strconv.Atoi(ctx.FormString("reason"))
+		if err != nil {
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+
+		resolveReason = models.ResolveReason(intResolveReason)
+		//Can't have a reason set to none if resolving
+		if resolveReason == models.ResolveReasonNone {
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+		err = resolveReason.IsValid()
+		if err != nil {
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if err := comment.LoadIssue(); err != nil {
+		ctx.NotFoundOrServerError("LoadIssue", models.IsErrIssueNotExist, err)
+		return
+	}
+
+	if !ctx.IsSigned || (ctx.User.ID != comment.PosterID && !ctx.Repo.CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
+		ctx.Error(http.StatusForbidden)
+		return
+	} else if comment.Type != models.CommentTypeComment && comment.Type != models.CommentTypeCode {
+		ctx.Error(http.StatusNoContent)
+		return
+	}
+
+	err = models.ResolveComment(ctx.User, comment, action == "Resolve", resolveReason)
+	if err != nil {
+		ctx.ServerError("ResolveComment", err)
+		return
+	}
+
+	ctx.Status(200)
+}
+
 // ChangeIssueReaction create a reaction for issue
 func ChangeIssueReaction(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.ReactionForm)

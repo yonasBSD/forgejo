@@ -180,3 +180,50 @@ func TestAPIDeleteComment(t *testing.T) {
 
 	unittest.AssertNotExistsBean(t, &models.Comment{ID: comment.ID})
 }
+
+func TestAPIHideComment(t *testing.T) {
+	defer prepareTestEnv(t)()
+
+	comment := unittest.AssertExistsAndLoadBean(t, &models.Comment{},
+		unittest.Cond("type = ?", models.CommentTypeComment)).(*models.Comment)
+	issue := unittest.AssertExistsAndLoadBean(t, &models.Issue{ID: comment.IssueID}).(*models.Issue)
+	repo := unittest.AssertExistsAndLoadBean(t, &models.Repository{ID: issue.RepoID}).(*models.Repository)
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID}).(*user_model.User)
+
+	session := loginUser(t, repoOwner.Name)
+
+	urlStr := fmt.Sprintf("/%s/%s/issues/%d", repoOwner.Name, repo.Name, issue.ID)
+	csrf := GetCSRF(t, session, urlStr)
+	reqURL := fmt.Sprintf("/%s/%s/comments/%d/hide", repoOwner.Name, repo.Name, comment.ID)
+	req := NewRequestWithValues(t, "POST", reqURL, map[string]string{
+		"_csrf":  csrf,
+		"action": "Resolve",
+		"reason": "1",
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+
+	unittest.AssertExistsAndLoadBean(t, &models.Comment{ID: comment.ID, IssueID: issue.ID, Content: comment.Content, ResolveDoerID: repoOwner.ID, ResolveReason: 1})
+
+	req = NewRequestWithValues(t, "POST", reqURL, map[string]string{
+		"_csrf":  csrf,
+		"action": "UnResolve",
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+	unittest.AssertExistsAndLoadBean(t, &models.Comment{ID: comment.ID, IssueID: issue.ID, Content: comment.Content, ResolveDoerID: 0, ResolveReason: 0})
+
+	req = NewRequestWithValues(t, "POST", reqURL, map[string]string{
+		"_csrf":  csrf,
+		"action": "Resolve",
+		"reason": "0",
+	})
+	session.MakeRequest(t, req, http.StatusBadRequest)
+	unittest.AssertExistsAndLoadBean(t, &models.Comment{ID: comment.ID, IssueID: issue.ID, Content: comment.Content, ResolveDoerID: 0, ResolveReason: 0})
+
+	req = NewRequestWithValues(t, "POST", reqURL, map[string]string{
+		"_csrf":  csrf,
+		"action": "Resolve",
+		"reason": "20",
+	})
+	session.MakeRequest(t, req, http.StatusBadRequest)
+	unittest.AssertExistsAndLoadBean(t, &models.Comment{ID: comment.ID, IssueID: issue.ID, Content: comment.Content, ResolveDoerID: 0, ResolveReason: 0})
+}
