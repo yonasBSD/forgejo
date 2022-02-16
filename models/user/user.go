@@ -827,7 +827,43 @@ func validateUser(u *User) error {
 	return ValidateEmail(u.Email)
 }
 
+// updateUserAllowed is used to block updating selected user fields when local user managemement is disabled.
+func updateUserAllowed(u *User) error {
+	// Don't allow changes of selected user fields if local user management is disabled.
+	if setting.Service.DisableLocalUserManagement && u.Type == UserTypeIndividual {
+		if currUser, err := GetUserByID(u.ID); err == nil {
+			if currUser.Name != u.Name {
+				return fmt.Errorf("cannot change user %s username; local user management disabled", u.Name)
+			}
+			if (currUser.LoginSource != u.LoginSource) || (currUser.LoginName != u.LoginName) {
+				return fmt.Errorf("cannot change user %s login; local user management disabled", u.Name)
+			}
+			if currUser.FullName != u.FullName {
+				return fmt.Errorf("cannot change user %s full name; local user management disabled", u.Name)
+			}
+			if currUser.Email != u.Email {
+				return fmt.Errorf("cannot change user %s e-mail; local user management disabled", u.Name)
+			}
+			if (currUser.Passwd != u.Passwd) || (currUser.PasswdHashAlgo != u.PasswdHashAlgo) {
+				return fmt.Errorf("cannot change user %s password; local user management disabled", u.Name)
+			}
+			if currUser.IsActive != u.IsActive {
+				return fmt.Errorf("cannot change user %s activity; local user management disabled", u.Name)
+			}
+			if currUser.IsAdmin != u.IsAdmin {
+				return fmt.Errorf("cannot change user %s admin permission; local user management disabled", u.Name)
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func updateUser(ctx context.Context, u *User, changePrimaryEmail bool) error {
+	if err := updateUserAllowed(u); err != nil {
+		return err
+	}
 	if err := validateUser(u); err != nil {
 		return err
 	}
@@ -873,15 +909,25 @@ func UpdateUser(u *User, emailChanged bool) error {
 
 // UpdateUserCols update user according special columns
 func UpdateUserCols(ctx context.Context, u *User, cols ...string) error {
-	return updateUserCols(db.GetEngine(ctx), u, cols...)
+	return updateUserCols(db.GetEngine(ctx), u, false, cols...)
+}
+
+// UpdateForceUserCols force update user according special columns.
+func UpdateForceUserCols(ctx context.Context, u *User, cols ...string) error {
+	return updateUserCols(db.GetEngine(ctx), u, true, cols...)
 }
 
 // UpdateUserColsEngine update user according special columns
 func UpdateUserColsEngine(e db.Engine, u *User, cols ...string) error {
-	return updateUserCols(e, u, cols...)
+	return updateUserCols(e, u, false, cols...)
 }
 
-func updateUserCols(e db.Engine, u *User, cols ...string) error {
+func updateUserCols(e db.Engine, u *User, force bool, cols ...string) error {
+	if !force {
+		if err := updateUserAllowed(u); err != nil {
+			return err
+		}
+	}
 	if err := validateUser(u); err != nil {
 		return err
 	}

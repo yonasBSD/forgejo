@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	user_service "code.gitea.io/gitea/services/user"
 )
 
@@ -141,7 +142,8 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 				(len(source.RestrictedFilter) > 0 && usr.IsRestricted != su.IsRestricted) ||
 				!strings.EqualFold(usr.Email, su.Mail) ||
 				usr.FullName != fullName ||
-				!usr.IsActive {
+				!usr.IsActive ||
+				usr.ProhibitLogin != (usr.ProhibitLogin && !setting.Service.DisableLocalUserManagement) {
 
 				log.Trace("SyncExternalUsers[%s]: Updating user %s", source.authSource.Name, usr.Name)
 
@@ -156,8 +158,10 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 					usr.IsRestricted = su.IsRestricted
 				}
 				usr.IsActive = true
+				// When local user management is disabled, active user is allowed to login.
+				usr.ProhibitLogin = usr.ProhibitLogin && !setting.Service.DisableLocalUserManagement
 
-				err = user_model.UpdateUserCols(db.DefaultContext, usr, "full_name", "email", "is_admin", "is_restricted", "is_active")
+				err = user_model.UpdateForceUserCols(db.DefaultContext, usr, "full_name", "email", "is_admin", "is_restricted", "is_active", "prohibit_login")
 				if err != nil {
 					log.Error("SyncExternalUsers[%s]: Error updating user %s: %v", source.authSource.Name, usr.Name, err)
 				}
@@ -201,7 +205,7 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 				log.Trace("SyncExternalUsers[%s]: Deactivating user %s", source.authSource.Name, usr.Name)
 
 				usr.IsActive = false
-				err = user_model.UpdateUserCols(db.DefaultContext, usr, "is_active")
+				err = user_model.UpdateForceUserCols(db.DefaultContext, usr, "is_active")
 				if err != nil {
 					log.Error("SyncExternalUsers[%s]: Error deactivating user %s: %v", source.authSource.Name, usr.Name, err)
 				}

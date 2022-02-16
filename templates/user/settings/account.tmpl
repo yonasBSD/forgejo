@@ -3,6 +3,7 @@
 	{{template "user/settings/navbar" .}}
 	<div class="ui container">
 		{{template "base/alert" .}}
+{{if not DisableLocalUserManagement}}
 		<h4 class="ui top attached header">
 			{{.i18n.Tr "settings.password"}}
 		</h4>
@@ -38,6 +39,7 @@
 			{{end}}
 		</div>
 
+{{end}}
 		<h4 class="ui top attached header">
 			{{.i18n.Tr "settings.manage_emails"}}
 		</h4>
@@ -70,6 +72,7 @@
 					</form>
 				</div>
 				{{range .Emails}}
+				{{if not DisableLocalUserManagement}}
 					<div class="item">
 						{{if not .IsPrimary}}
 							<div class="right floated content">
@@ -115,8 +118,10 @@
 						</div>
 					</div>
 				{{end}}
+				{{end}}
 			</div>
 		</div>
+{{if not DisableLocalUserManagement}}
 		<div class="ui attached bottom segment">
 			<form class="ui form" action="{{AppSubUrl}}/user/settings/account/email" method="post">
 				{{.CsrfTokenHtml}}
@@ -155,6 +160,7 @@
 				</div>
 			</form>
 		</div>
+{{end}}
 	</div>
 </div>
 
