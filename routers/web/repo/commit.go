@@ -365,11 +365,16 @@ func Diff(ctx *context.Context) {
 		ctx.Data["NoteAuthor"] = user_model.ValidateCommitWithEmail(note.Commit)
 	}
 
-	ctx.Data["BranchName"], err = commit.GetBranchName()
+	branchName, err := commit.GetBranchName()
 	if err != nil {
 		ctx.ServerError("commit.GetBranchName", err)
 		return
 	}
+	if strings.HasPrefix(branchName, "pull/") || strings.HasPrefix(branchName, "for/") {
+		ctx.Flash.Warning(ctx.Tr("warn.no_branch_or_tag"), true)
+	}
+
+	ctx.Data["BranchName"] = branchName
 
 	ctx.Data["TagName"], err = commit.GetTagName()
 	if err != nil {
