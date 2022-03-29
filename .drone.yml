@@ -313,6 +313,7 @@ steps:
     image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
     user: gitea
     commands:
+      - "rm -rf integrations; mkdir integrations; sudo mount -t tmpfs tmpfs integrations; sudo chown $USER: -R integrations; git checkout -f -- integrations/"
       - make test-mysql-migration integration-test-coverage
     environment:
       GOPROXY: https://goproxy.io
@@ -330,6 +331,7 @@ steps:
     image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
     user: gitea
     commands:
+      - "rm -rf integrations; mkdir integrations; sudo mount -t tmpfs tmpfs integrations; sudo chown $USER: -R integrations; git checkout -f -- integrations/"
       - timeout -s ABRT 40m make test-mysql8-migration test-mysql8
     environment:
       GOPROXY: https://goproxy.io
@@ -346,6 +348,7 @@ steps:
     image: gitea/test_env:linux-amd64  # https://gitea.com/gitea/test-env
     user: gitea
     commands:
+      - "rm -rf integrations; mkdir integrations; sudo mount -t tmpfs tmpfs integrations; sudo chown $USER: -R integrations; git checkout -f -- integrations/"
       - make test-mssql-migration test-mssql
     environment:
       GOPROXY: https://goproxy.io
@@ -467,6 +470,7 @@ steps:
     image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
     user: gitea
     commands:
+      - "rm -rf integrations; mkdir integrations; sudo mount -t tmpfs tmpfs integrations; sudo chown $USER: -R integrations; git checkout -f -- integrations/"
       - timeout -s ABRT 40m make test-sqlite-migration test-sqlite
     environment:
       GOPROXY: https://goproxy.io
@@ -483,6 +487,7 @@ steps:
     image: gitea/test_env:linux-arm64  # https://gitea.com/gitea/test-env
     user: gitea
     commands:
+      - "rm -rf integrations; mkdir integrations; sudo mount -t tmpfs tmpfs integrations; sudo chown $USER: -R integrations; git checkout -f -- integrations/"
       - timeout -s ABRT 40m make test-pgsql-migration test-pgsql
     environment:
       GOPROXY: https://goproxy.io
