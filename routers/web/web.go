@@ -279,6 +279,14 @@ func RegisterRoutes(m *web.Route) {
 		}
 	}
 
+	// reverseProxyAuthDisabled requires reverse proxy authentication to be disabled by admin.
+	reverseProxyAuthDisabled := func(ctx *context.Context) {
+		if setting.Service.EnableReverseProxyAuth {
+			ctx.Error(http.StatusForbidden)
+			return
+		}
+	}
+
 	// FIXME: not all routes need go through same middleware.
 	// Especially some AJAX requests, we can reduce middleware number to improve performance.
 	// Routers.
@@ -314,8 +322,8 @@ func RegisterRoutes(m *web.Route) {
 
 	// ***** START: User *****
 	m.Group("/user", func() {
-		m.Get("/login", auth.SignIn)
-		m.Post("/login", bindIgnErr(forms.SignInForm{}), auth.SignInPost)
+		m.Get("/login", reverseProxyAuthDisabled, auth.SignIn)
+		m.Post("/login", reverseProxyAuthDisabled, bindIgnErr(forms.SignInForm{}), auth.SignInPost)
 		m.Group("", func() {
 			m.Combo("/login/openid").
 				Get(auth.SignInOpenID).
