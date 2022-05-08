@@ -98,8 +98,15 @@ func FindLFSFile(repo *git.Repository, hash git.SHA1) ([]*LFSResult, error) {
 	sort.Sort(lfsResultSlice(results))
 
 	// Should really use a go-git function here but name-rev is not completed and recapitulating it is not simple
-	shasToNameReader, shasToNameWriter := io.Pipe()
-	nameRevStdinReader, nameRevStdinWriter := io.Pipe()
+	pipes, err := git.NewPipePairs(2)
+	if err != nil {
+		return nil, err
+	}
+	defer pipes.Close()
+
+	shasToNameReader, shasToNameWriter := pipes[0].ReaderWriter()
+	nameRevStdinReader, nameRevStdinWriter := pipes[1].ReaderWriter()
+
 	errChan := make(chan error, 1)
 	wg := sync.WaitGroup{}
 	wg.Add(3)

@@ -22,9 +22,28 @@ import (
 func SearchPointerBlobs(ctx context.Context, repo *git.Repository, pointerChan chan<- PointerBlob, errChan chan<- error) {
 	basePath := repo.Path
 
-	catFileCheckReader, catFileCheckWriter := io.Pipe()
-	shasToBatchReader, shasToBatchWriter := io.Pipe()
-	catFileBatchReader, catFileBatchWriter := io.Pipe()
+	// We will need to run batch-check on all the objects in the repository
+	// in Git 2.6.0+ we can use `git cat-file --batch-check --batch-all-objects`
+	// However in earlier versions we'll need to use rev-list to get the objects.
+	gitHasBatchCheckAllObjects := git.CheckGitVersionAtLeast("2.6.0") == nil
+
+	numPipesRequired := 3
+	if !gitHasBatchCheckAllObjects {
+		numPipesRequired += 2
+	}
+
+	pipes, err := git.NewPipePairs(numPipesRequired)
+	if err != nil {
+		errChan <- err
+		close(pointerChan)
+		close(errChan)
+		return
+	}
+	defer pipes.Close()
+
+	catFileCheckReader, catFileCheckWriter := pipes[0].ReaderWriter()
+	shasToBatchReader, shasToBatchWriter := pipes[1].ReaderWriter()
+	catFileBatchReader, catFileBatchWriter := pipes[2].ReaderWriter()
 
 	wg := sync.WaitGroup{}
 	wg.Add(4)
@@ -42,9 +61,10 @@ func SearchPointerBlobs(ctx context.Context, repo *git.Repository, pointerChan c
 	go pipeline.BlobsLessThan1024FromCatFileBatchCheck(catFileCheckReader, shasToBatchWriter, &wg)
 
 	// 1. Run batch-check on all objects in the repository
-	if git.CheckGitVersionAtLeast("2.6.0") != nil {
-		revListReader, revListWriter := io.Pipe()
-		shasToCheckReader, shasToCheckWriter := io.Pipe()
+	if !gitHasBatchCheckAllObjects {
+		revListReader, revListWriter := pipes[3].ReaderWriter()
+		shasToCheckReader, shasToCheckWriter := pipes[4].ReaderWriter()
+
 		wg.Add(2)
 		go pipeline.CatFileBatchCheck(ctx, shasToCheckReader, catFileCheckWriter, &wg, basePath)
 		go pipeline.BlobsFromRevListObjects(revListReader, shasToCheckWriter, &wg)
@@ -58,7 +78,8 @@ func SearchPointerBlobs(ctx context.Context, repo *git.Repository, pointerChan c
 	close(errChan)
 }
 
-func createPointerResultsFromCatFileBatch(ctx context.Context, catFileBatchReader *io.PipeReader, wg *sync.WaitGroup, pointerChan chan<- PointerBlob) {
+// createPointerResultsFromCatFileBatch does not call git
+func createPointerResultsFromCatFileBatch(ctx context.Context, catFileBatchReader git.ReadCloserError, wg *sync.WaitGroup, pointerChan chan<- PointerBlob) {
 	defer wg.Done()
 	defer catFileBatchReader.Close()
 

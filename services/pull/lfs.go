@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/git/pipeline"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
@@ -26,11 +27,19 @@ func LFSPush(ctx context.Context, tmpBasePath, mergeHeadSHA, mergeBaseSHA string
 	// ensure only blobs and <=1k size then pass in to git cat-file --batch
 	// to read each sha and check each as a pointer
 	// Then if they are lfs -> add them to the baseRepo
-	revListReader, revListWriter := io.Pipe()
-	shasToCheckReader, shasToCheckWriter := io.Pipe()
-	catFileCheckReader, catFileCheckWriter := io.Pipe()
-	shasToBatchReader, shasToBatchWriter := io.Pipe()
-	catFileBatchReader, catFileBatchWriter := io.Pipe()
+
+	pipes, err := git.NewPipePairs(5)
+	if err != nil {
+		return err
+	}
+	defer pipes.Close()
+
+	revListReader, revListWriter := pipes[0].ReaderWriter()
+	shasToCheckReader, shasToCheckWriter := pipes[1].ReaderWriter()
+	catFileCheckReader, catFileCheckWriter := pipes[2].ReaderWriter()
+	shasToBatchReader, shasToBatchWriter := pipes[3].ReaderWriter()
+	catFileBatchReader, catFileBatchWriter := pipes[4].ReaderWriter()
+
 	errChan := make(chan error, 1)
 	wg := sync.WaitGroup{}
 	wg.Add(6)
@@ -67,7 +76,7 @@ func LFSPush(ctx context.Context, tmpBasePath, mergeHeadSHA, mergeBaseSHA string
 	return nil
 }
 
-func createLFSMetaObjectsFromCatFileBatch(catFileBatchReader *io.PipeReader, wg *sync.WaitGroup, pr *models.PullRequest) {
+func createLFSMetaObjectsFromCatFileBatch(catFileBatchReader git.ReadCloserError, wg *sync.WaitGroup, pr *models.PullRequest) {
 	defer wg.Done()
 	defer catFileBatchReader.Close()
 
