@@ -491,8 +491,42 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	isShowClosed := ctx.FormString("state") == "closed"
 	opts.IsClosed = util.OptionalBoolOf(isShowClosed)
 
+	// Get IDs for labels (a filter option for issues/pulls).
+	// Required for IssuesOptions.
+	var labelIDs []int64
+	selectedLabels := ctx.FormString("labels")
+	if len(selectedLabels) > 0 && selectedLabels != "0" {
+		labelIDs, err = base.StringsToInt64s(strings.Split(selectedLabels, ","))
+		if err != nil {
+			ctx.ServerError("StringsToInt64s", err)
+			return
+		}
+	}
+	opts.LabelIDs = labelIDs
+
+	// Labels can also be search for by name. Add them to the LabelID query.
+	labelNameList := ctx.FormString("label-names")
+	if len(labelNameList) != 0 {
+		labelNames := strings.Split(labelNameList, ",")
+		if len(labelNameList) > 0 {
+			labelIDs, err = models.GetAccessibleLabelIDsByName(labelNames, ctx.Doer.ID)
+			if err != nil {
+				ctx.ServerError("GetAccessibleLabelIDsByName", err)
+				return
+			}
+		}
+		opts.LabelIDs = append(opts.LabelIDs, labelIDs...)
+	}
+
+	// Parse ctx.FormString("repos") and remember matched repo IDs for later.
+	// Gets set when clicking filters on the issues overview page.
+	repoIDs := getRepoIDs(ctx.FormString("repos"))
+	if len(repoIDs) > 0 {
+		opts.RepoCond = builder.In("issue.repo_id", repoIDs)
+	}
+
 	// Filter repos and count issues in them. Count will be used later.
-	// USING NON-FINAL STATE OF opts FOR A QUERY.
+	// NOTE: this needs to run before pagination is applied to opts!
 	var issueCountByRepo map[int64]int64
 	if !forceEmpty {
 		issueCountByRepo, err = models.CountIssuesByRepo(opts)
@@ -509,26 +543,6 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	}
 	opts.Page = page
 	opts.PageSize = setting.UI.IssuePagingNum
-
-	// Get IDs for labels (a filter option for issues/pulls).
-	// Required for IssuesOptions.
-	var labelIDs []int64
-	selectedLabels := ctx.FormString("labels")
-	if len(selectedLabels) > 0 && selectedLabels != "0" {
-		labelIDs, err = base.StringsToInt64s(strings.Split(selectedLabels, ","))
-		if err != nil {
-			ctx.ServerError("StringsToInt64s", err)
-			return
-		}
-	}
-	opts.LabelIDs = labelIDs
-
-	// Parse ctx.FormString("repos") and remember matched repo IDs for later.
-	// Gets set when clicking filters on the issues overview page.
-	repoIDs := getRepoIDs(ctx.FormString("repos"))
-	if len(repoIDs) > 0 {
-		opts.RepoCond = builder.In("issue.repo_id", repoIDs)
-	}
 
 	// ------------------------------
 	// Get issues as defined by opts.
@@ -660,6 +674,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	ctx.Data["RepoIDs"] = repoIDs
 	ctx.Data["IsShowClosed"] = isShowClosed
 	ctx.Data["SelectLabels"] = selectedLabels
+	ctx.Data["SelectLabelNames"] = labelNameList
 
 	if isShowClosed {
 		ctx.Data["State"] = "closed"
@@ -679,6 +694,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	pager.AddParam(ctx, "sort", "SortType")
 	pager.AddParam(ctx, "state", "State")
 	pager.AddParam(ctx, "labels", "SelectLabels")
+	pager.AddParam(ctx, "label-names", "SelectLabelNames")
 	pager.AddParam(ctx, "milestone", "MilestoneID")
 	pager.AddParam(ctx, "assignee", "AssigneeID")
 	ctx.Data["Page"] = pager
