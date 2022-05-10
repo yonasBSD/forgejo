@@ -37,21 +37,27 @@ func ToAPIIssue(issue *models.Issue) *api.Issue {
 		return &api.Issue{}
 	}
 
+	assets := make([]*api.Attachment, 0, len(issue.Attachments))
+	for _, att := range issue.Attachments {
+		assets = append(assets, ToAttachment(att))
+	}
+
 	apiIssue := &api.Issue{
-		ID:       issue.ID,
-		URL:      issue.APIURL(),
-		HTMLURL:  issue.HTMLURL(),
-		Index:    issue.Index,
-		Poster:   ToUser(issue.Poster, nil),
-		Title:    issue.Title,
-		Body:     issue.Content,
-		Ref:      issue.Ref,
-		Labels:   ToLabelList(issue.Labels, issue.Repo, issue.Repo.Owner),
-		State:    issue.State(),
-		IsLocked: issue.IsLocked,
-		Comments: issue.NumComments,
-		Created:  issue.CreatedUnix.AsTime(),
-		Updated:  issue.UpdatedUnix.AsTime(),
+		ID:          issue.ID,
+		URL:         issue.APIURL(),
+		HTMLURL:     issue.HTMLURL(),
+		Index:       issue.Index,
+		Poster:      ToUser(issue.Poster, nil),
+		Title:       issue.Title,
+		Body:        issue.Content,
+		Attachments: assets,
+		Ref:         issue.Ref,
+		Labels:      ToLabelList(issue.Labels, issue.Repo, issue.Repo.Owner),
+		State:       issue.State(),
+		IsLocked:    issue.IsLocked,
+		Comments:    issue.NumComments,
+		Created:     issue.CreatedUnix.AsTime(),
+		Updated:     issue.UpdatedUnix.AsTime(),
 	}
 
 	apiIssue.Repo = &api.RepositoryMeta{

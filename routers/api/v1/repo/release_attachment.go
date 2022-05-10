@@ -66,7 +66,7 @@ func GetReleaseAttachment(ctx *context.APIContext) {
 		return
 	}
 	// FIXME Should prove the existence of the given repo, but results in unnecessary database requests
-	ctx.JSON(http.StatusOK, convert.ToReleaseAttachment(attach))
+	ctx.JSON(http.StatusOK, convert.ToAttachment(attach))
 }
 
 // ListReleaseAttachments lists all attachments of the release
@@ -184,7 +184,12 @@ func CreateReleaseAttachment(ctx *context.APIContext) {
 	}
 
 	// Create a new attachment and save the file
-	attach, err := attachment.UploadAttachment(file, ctx.Doer.ID, release.RepoID, releaseID, filename, setting.Repository.Release.AllowedTypes)
+	attach, err := attachment.UploadAttachment(file, setting.Repository.Release.AllowedTypes, &repo_model.Attachment{
+		Name:       filename,
+		UploaderID: ctx.Doer.ID,
+		RepoID:     release.RepoID,
+		ReleaseID:  releaseID,
+	})
 	if err != nil {
 		if upload.IsErrFileTypeForbidden(err) {
 			ctx.Error(http.StatusBadRequest, "DetectContentType", err)
@@ -194,7 +199,7 @@ func CreateReleaseAttachment(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, convert.ToReleaseAttachment(attach))
+	ctx.JSON(http.StatusCreated, convert.ToAttachment(attach))
 }
 
 // EditReleaseAttachment updates the given attachment
@@ -257,10 +262,10 @@ func EditReleaseAttachment(ctx *context.APIContext) {
 		attach.Name = form.Name
 	}
 
-	if err := repo_model.UpdateAttachment(attach); err != nil {
+	if err := repo_model.UpdateAttachmentCtx(ctx, attach); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateAttachment", attach)
 	}
-	ctx.JSON(http.StatusCreated, convert.ToReleaseAttachment(attach))
+	ctx.JSON(http.StatusCreated, convert.ToAttachment(attach))
 }
 
 // DeleteReleaseAttachment delete a given attachment

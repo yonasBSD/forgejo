@@ -14,15 +14,20 @@ import (
 
 // ToComment converts a models.Comment to the api.Comment format
 func ToComment(c *models.Comment) *api.Comment {
+	assets := make([]*api.Attachment, 0, len(c.Attachments))
+	for _, att := range c.Attachments {
+		assets = append(assets, ToAttachment(att))
+	}
 	return &api.Comment{
-		ID:       c.ID,
-		Poster:   ToUser(c.Poster, nil),
-		HTMLURL:  c.HTMLURL(),
-		IssueURL: c.IssueURL(),
-		PRURL:    c.PRURL(),
-		Body:     c.Content,
-		Created:  c.CreatedUnix.AsTime(),
-		Updated:  c.UpdatedUnix.AsTime(),
+		ID:          c.ID,
+		Poster:      ToUser(c.Poster, nil),
+		HTMLURL:     c.HTMLURL(),
+		IssueURL:    c.IssueURL(),
+		PRURL:       c.PRURL(),
+		Body:        c.Content,
+		Attachments: assets,
+		Created:     c.CreatedUnix.AsTime(),
+		Updated:     c.UpdatedUnix.AsTime(),
 	}
 }
 
