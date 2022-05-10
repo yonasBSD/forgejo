@@ -612,6 +612,8 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 
 	Cfg.NameMapper = ini.SnackCase
 
+	json.SelectDefaultJSONHandler(Cfg.Section("").Key("JSON_LIBRARY").MustString(json.DefaultJSONHandlerType))
+
 	homeDir, err := util.HomeDir()
 	if err != nil {
 		log.Fatal("Failed to get home directory: %v", err)
