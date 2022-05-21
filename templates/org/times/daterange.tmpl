@@ -1,0 +1,15 @@
+<div class="ui form">
+	<div class="field">
+		<label>{{$.i18n.Tr "Start date"}}</label>
+		<div class="ui calendar">
+			<input type="date" id="rangefrom" name="from" value="{{.RangeFrom}}">
+		</div>
+	</div>
+	<div class="field">
+		<label>{{$.i18n.Tr "End date"}}</label>
+		<div class="ui calendar">
+			<input type="date" id="rangeto" name="to" value="{{.RangeTo}}">
+		</div>
+	</div>
+	<button class="ui primary button">{{$.i18n.Tr "Update"}}</button>
+</div>
