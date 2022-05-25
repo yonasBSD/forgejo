@@ -6,9 +6,9 @@
 package org
 
 import (
+	"errors"
 	"net/http"
 	"time"
-	"errors"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/base"
