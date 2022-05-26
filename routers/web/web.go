@@ -666,9 +666,6 @@ func RegisterRoutes(m *web.Route) {
 			m.Get("/milestones", reqMilestonesDashboardPageEnabled, user.Milestones)
 			m.Get("/milestones/{team}", reqMilestonesDashboardPageEnabled, user.Milestones)
 			m.Get("/members", org.Members)
-			m.Get("/times/by_repos", org.TimesByRepos)
-			m.Get("/times/by_members", org.TimesByMembers)
-			m.Get("/times/by_milestones", org.TimesByMilestones)
 			m.Post("/members/action/{action}", org.MembersAction)
 			m.Get("/teams", org.Teams)
 		}, context.OrgAssignment(true, false, true))
@@ -687,6 +684,10 @@ func RegisterRoutes(m *web.Route) {
 			m.Get("/teams/{team}/edit", org.EditTeam)
 			m.Post("/teams/{team}/edit", bindIgnErr(forms.CreateTeamForm{}), org.EditTeamPost)
 			m.Post("/teams/{team}/delete", org.DeleteTeam)
+
+			m.Get("/times/by_repos", org.TimesByRepos)
+			m.Get("/times/by_members", org.TimesByMembers)
+			m.Get("/times/by_milestones", org.TimesByMilestones)
 
 			m.Group("/settings", func() {
 				m.Combo("").Get(org.Settings).

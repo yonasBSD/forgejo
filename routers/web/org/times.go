@@ -6,7 +6,6 @@
 package org
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -25,13 +24,6 @@ const (
 // parseTimes contains functionality that is required in all these functions,
 // like parsing the date from the request, setting default dates, etc.
 func parseTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
-	// Permissions check: only owners are allowed
-	if !ctx.Org.IsOwner {
-		ctx.Error(http.StatusUnauthorized)
-		err = errors.New("must be repo owner to see worktimes")
-		return
-	}
-
 	// View variables
 	ctx.Data["PageIsOrgTimes"] = true
 	ctx.Data["AppSubURL"] = setting.AppSubURL
