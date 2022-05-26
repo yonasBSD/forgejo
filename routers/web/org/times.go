@@ -13,6 +13,8 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+
+	"xorm.io/builder"
 )
 
 const (
@@ -76,21 +78,23 @@ func TimesByRepos(ctx *context.Context) {
 		Name    string `xorm:"name"`
 		SumTime int64  `xorm:"sumtime"`
 	}
+	sql, args, err := builder.Select("repository.name", "SUM(tracked_time.time) AS sumtime").
+		From("tracked_time").
+		InnerJoin("issue", "tracked_time.issue_id = issue.id").
+		InnerJoin("repository", "issue.repo_id = repository.id").
+		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
+		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
+		And(builder.Lt{"tracked_time.created_unix": unixto}).
+		GroupBy("repository.id").
+		OrderBy("repository.name").
+		ToSQL()
+	if err != nil {
+		ctx.ServerError("TimesError", err)
+		return
+	}
 	var results []result
-	err = db.GetEngine(ctx).SQL(`SELECT
-		repository.name,
-		SUM(tracked_time.time) AS sumtime
-		FROM tracked_time
-		JOIN issue ON tracked_time.issue_id = issue.id
-		JOIN repository ON issue.repo_id = repository.id
-		WHERE repository.owner_id = ?
-		AND tracked_time.deleted = 0
-		AND tracked_time.created_unix >= ?
-		AND tracked_time.created_unix < ?
-		GROUP BY repository.id
-		ORDER BY repository.name`,
-		ctx.Org.Organization.ID,
-		unixfrom, unixto).Find(&results)
+	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
@@ -120,24 +124,24 @@ func TimesByMilestones(ctx *context.Context) {
 		SumTime      int64  `xorm:"sumtime"`
 		HideRepoName bool   `xorm:"-"`
 	}
+	sql, args, err := builder.Select("repository.name AS reponame", "milestone.name", "milestone.id", "SUM(tracked_time.time) AS sumtime").
+		From("tracked_time").
+		InnerJoin("issue", "tracked_time.issue_id = issue.id").
+		InnerJoin("repository", "issue.repo_id = repository.id").
+		LeftJoin("milestone", "issue.milestone_id = milestone.id").
+		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
+		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
+		And(builder.Lt{"tracked_time.created_unix": unixto}).
+		GroupBy("repository.id, milestone.id").
+		OrderBy("repository.name, milestone.deadline_unix, milestone.id").
+		ToSQL()
+	if err != nil {
+		ctx.ServerError("TimesError", err)
+		return
+	}
 	var results []result
-	err = db.GetEngine(ctx).SQL(`SELECT
-		repository.name as reponame,
-		milestone.name,
-		milestone.id,
-		SUM(tracked_time.time) AS sumtime
-		FROM tracked_time
-		JOIN issue ON tracked_time.issue_id = issue.id
-		JOIN repository ON issue.repo_id = repository.id
-		LEFT JOIN milestone ON issue.milestone_id = milestone.id
-		WHERE repository.owner_id = ?
-		AND tracked_time.deleted = 0
-		AND tracked_time.created_unix >= ?
-		AND tracked_time.created_unix < ?
-		GROUP BY repository.id, milestone.id
-		ORDER BY repository.name, milestone.deadline_unix, milestone.id`,
-		ctx.Org.Organization.ID,
-		unixfrom, unixto).Find(&results)
+	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
@@ -176,22 +180,24 @@ func TimesByMembers(ctx *context.Context) {
 		Name    string `xorm:"name"`
 		SumTime int64  `xorm:"sumtime"`
 	}
+	sql, args, err := builder.Select("user.name", "SUM(tracked_time.time) AS sumtime").
+		From("tracked_time").
+		InnerJoin("issue", "tracked_time.issue_id = issue.id").
+		InnerJoin("repository", "issue.repo_id = repository.id").
+		InnerJoin("user", "tracked_time.user_id = user.id").
+		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
+		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
+		And(builder.Lt{"tracked_time.created_unix": unixto}).
+		GroupBy("user.id").
+		OrderBy("sumtime DESC").
+		ToSQL()
+	if err != nil {
+		ctx.ServerError("TimesError", err)
+		return
+	}
 	var results []result
-	err = db.GetEngine(ctx).SQL(`SELECT
-		user.name,
-		SUM(tracked_time.time) AS sumtime
-		FROM tracked_time
-		JOIN issue ON tracked_time.issue_id = issue.id
-		JOIN repository ON issue.repo_id = repository.id
-		JOIN user ON tracked_time.user_id = user.id
-		WHERE repository.owner_id = ?
-		AND tracked_time.deleted = 0
-		AND tracked_time.created_unix >= ?
-		AND tracked_time.created_unix < ?
-		GROUP BY user.id
-		ORDER BY sumtime DESC`,
-		ctx.Org.Organization.ID,
-		unixfrom, unixto).Find(&results)
+	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
