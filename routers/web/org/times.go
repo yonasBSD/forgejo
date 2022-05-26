@@ -83,7 +83,7 @@ func TimesByRepos(ctx *context.Context) {
 		InnerJoin("issue", "tracked_time.issue_id = issue.id").
 		InnerJoin("repository", "issue.repo_id = repository.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
-		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("repository.id").
@@ -130,7 +130,7 @@ func TimesByMilestones(ctx *context.Context) {
 		InnerJoin("repository", "issue.repo_id = repository.id").
 		LeftJoin("milestone", "issue.milestone_id = milestone.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
-		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("repository.id, milestone.id").
@@ -186,7 +186,7 @@ func TimesByMembers(ctx *context.Context) {
 		InnerJoin("repository", "issue.repo_id = repository.id").
 		InnerJoin("user", "tracked_time.user_id = user.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
-		And(builder.Eq{"tracked_time.deleted": 0}).
+		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("user.id").
