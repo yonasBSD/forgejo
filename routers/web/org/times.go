@@ -78,23 +78,19 @@ func TimesByRepos(ctx *context.Context) {
 		Name    string `xorm:"name"`
 		SumTime int64  `xorm:"sumtime"`
 	}
-	sql, args, err := builder.Select("repository.name", "SUM(tracked_time.time) AS sumtime").
-		From("tracked_time").
-		InnerJoin("issue", "tracked_time.issue_id = issue.id").
-		InnerJoin("repository", "issue.repo_id = repository.id").
+	var results []result
+	err = db.GetEngine(ctx).
+		Select("repository.name, SUM(tracked_time.time) AS sumtime").
+		Table("tracked_time").
+		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
+		Join("INNER", "repository", "issue.repo_id = repository.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
 		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("repository.id").
 		OrderBy("repository.name").
-		ToSQL()
-	if err != nil {
-		ctx.ServerError("TimesError", err)
-		return
-	}
-	var results []result
-	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
+		Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
@@ -124,24 +120,20 @@ func TimesByMilestones(ctx *context.Context) {
 		SumTime      int64  `xorm:"sumtime"`
 		HideRepoName bool   `xorm:"-"`
 	}
-	sql, args, err := builder.Select("repository.name AS reponame", "milestone.name", "milestone.id", "SUM(tracked_time.time) AS sumtime").
-		From("tracked_time").
-		InnerJoin("issue", "tracked_time.issue_id = issue.id").
-		InnerJoin("repository", "issue.repo_id = repository.id").
-		LeftJoin("milestone", "issue.milestone_id = milestone.id").
+	var results []result
+	err = db.GetEngine(ctx).
+		Select("repository.name AS reponame, milestone.name, milestone.id, SUM(tracked_time.time) AS sumtime").
+		Table("tracked_time").
+		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
+		Join("INNER", "repository", "issue.repo_id = repository.id").
+		Join("LEFT", "milestone", "issue.milestone_id = milestone.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
 		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("repository.id, milestone.id").
 		OrderBy("repository.name, milestone.deadline_unix, milestone.id").
-		ToSQL()
-	if err != nil {
-		ctx.ServerError("TimesError", err)
-		return
-	}
-	var results []result
-	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
+		Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
@@ -180,24 +172,20 @@ func TimesByMembers(ctx *context.Context) {
 		Name    string `xorm:"name"`
 		SumTime int64  `xorm:"sumtime"`
 	}
-	sql, args, err := builder.Select("user.name", "SUM(tracked_time.time) AS sumtime").
-		From("tracked_time").
-		InnerJoin("issue", "tracked_time.issue_id = issue.id").
-		InnerJoin("repository", "issue.repo_id = repository.id").
-		InnerJoin("user", "tracked_time.user_id = user.id").
+	var results []result
+	err = db.GetEngine(ctx).
+		Select("user.name, SUM(tracked_time.time) AS sumtime").
+		Table("tracked_time").
+		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
+		Join("INNER", "repository", "issue.repo_id = repository.id").
+		Join("INNER", "user", "tracked_time.user_id = user.id").
 		Where(builder.Eq{"repository.owner_id": ctx.Org.Organization.ID}).
 		And(builder.Eq{"tracked_time.deleted": false}).
 		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
 		And(builder.Lt{"tracked_time.created_unix": unixto}).
 		GroupBy("user.id").
 		OrderBy("sumtime DESC").
-		ToSQL()
-	if err != nil {
-		ctx.ServerError("TimesError", err)
-		return
-	}
-	var results []result
-	err = db.GetEngine(ctx).SQL(sql, args...).Find(&results)
+		Find(&results)
 	if err != nil {
 		ctx.ServerError("TimesError", err)
 		return
