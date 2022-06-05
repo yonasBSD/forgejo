@@ -21,7 +21,7 @@ import (
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/install"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	ini "gopkg.in/ini.v1"
 )
 
@@ -33,26 +33,28 @@ var CmdWeb = cli.Command{
 and it takes care of all the other things for you`,
 	Action: runWeb,
 	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "port, p",
-			Value: "3000",
-			Usage: "Temporary port number to prevent conflict",
+		&cli.StringFlag{
+			Name:    "port",
+			Aliases: []string{"p"},
+			Value:   "3000",
+			Usage:   "Temporary port number to prevent conflict",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "install-port",
 			Value: "3000",
 			Usage: "Temporary port number to run the install page on to prevent conflict",
 		},
-		cli.StringFlag{
-			Name:  "pid, P",
-			Value: setting.PIDFile,
-			Usage: "Custom pid file path",
+		&cli.StringFlag{
+			Name:    "pid",
+			Aliases: []string{"P"},
+			Value:   setting.PIDFile,
+			Usage:   "Custom pid file path",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "quiet, q",
 			Usage: "Only display Fatal logging errors until logging is set-up",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "verbose",
 			Usage: "Set initial logging to TRACE level until logging is properly set-up",
 		},
