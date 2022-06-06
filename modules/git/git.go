@@ -12,9 +12,10 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
-	"code.gitea.io/gitea/modules/process"
+	git_cmd "code.gitea.io/gitea/modules/git/cmd"
 	"code.gitea.io/gitea/modules/setting"
 
 	"github.com/hashicorp/go-version"
@@ -26,10 +27,6 @@ var (
 	// or bypass the check, they still have a chance to edit this variable manually.
 	// If everything works fine, the code for git 1.x could be removed in a separate PR before 1.17 frozen.
 	GitVersionRequired = "2.0.0"
-
-	// GitExecutable is the command name of git
-	// Could be updated to an absolute path while initialization
-	GitExecutable = "git"
 
 	// DefaultContext is the default context to run git commands in
 	// will be overwritten by Init with HammerContext
@@ -81,19 +78,9 @@ func LoadGitVersion() error {
 	return err
 }
 
-// SetExecutablePath changes the path of git executable and checks the file permission and version.
-func SetExecutablePath(path string) error {
-	// If path is empty, we use the default value of GitExecutable "git" to search for the location of git.
-	if path != "" {
-		GitExecutable = path
-	}
-	absPath, err := exec.LookPath(GitExecutable)
-	if err != nil {
-		return fmt.Errorf("git not found: %w", err)
-	}
-	GitExecutable = absPath
-
-	err = LoadGitVersion()
+// checkGitVersion checks the file permission and version.
+func checkGitVersion() error {
+	err := LoadGitVersion()
 	if err != nil {
 		return fmt.Errorf("unable to load git version: %w", err)
 	}
@@ -135,11 +122,7 @@ func VersionInfo() string {
 func Init(ctx context.Context) error {
 	DefaultContext = ctx
 
-	if setting.Git.Timeout.Default > 0 {
-		defaultCommandExecutionTimeout = time.Duration(setting.Git.Timeout.Default) * time.Second
-	}
-
-	if err := SetExecutablePath(setting.Git.Path); err != nil {
+	if err := checkGitVersion(); err != nil {
 		return err
 	}
 
@@ -159,11 +142,6 @@ func Init(ctx context.Context) error {
 	// By default partial clones are disabled, enable them from git v2.22
 	if !setting.Git.DisablePartialClone && CheckGitVersionAtLeast("2.22") == nil {
 		globalCommandArgs = append(globalCommandArgs, "-c", "uploadpack.allowfilter=true", "-c", "uploadpack.allowAnySHA1InWant=true")
-	}
-
-	// Save current git version on init to gitVersion otherwise it would require an RWMutex
-	if err := LoadGitVersion(); err != nil {
-		return err
 	}
 
 	// Git requires setting user.name and user.email in order to commit changes - if they're not set just add some defaults
@@ -235,48 +213,70 @@ func CheckGitVersionAtLeast(atLeast string) error {
 	return nil
 }
 
+var gitConfigLock sync.Mutex
+
+// checkAndSetConfig to avoid config conflict, only allow one go routine call at the same time
 func checkAndSetConfig(key, defaultValue string, forceToDefault bool) error {
-	stdout, stderr, err := process.GetManager().Exec("git.Init(get setting)", GitExecutable, "config", "--get", key)
-	if err != nil {
-		perr, ok := err.(*process.Error)
-		if !ok {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
-		}
-		eerr, ok := perr.Err.(*exec.ExitError)
+	gitConfigLock.Lock()
+	defer gitConfigLock.Unlock()
+
+	stdout := strings.Builder{}
+	stderr := strings.Builder{}
+	if err := NewCommand(DefaultContext, "config", "--get", key).
+		SetDescription("git.Init(get setting)").
+		Run(&git_cmd.RunOpts{
+			Stdout: &stdout,
+			Stderr: &stderr,
+		}); err != nil {
+		eerr, ok := err.(*exec.ExitError)
 		if !ok || eerr.ExitCode() != 1 {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
+			return fmt.Errorf("failed to get git %s(%v) errType %T: %s", key, err, err, stderr.String())
 		}
 	}
 
-	currValue := strings.TrimSpace(stdout)
-
+	currValue := strings.TrimSpace(stdout.String())
 	if currValue == defaultValue || (!forceToDefault && len(currValue) > 0) {
 		return nil
 	}
 
-	if _, stderr, err = process.GetManager().Exec(fmt.Sprintf("git.Init(set %s)", key), "git", "config", "--global", key, defaultValue); err != nil {
-		return fmt.Errorf("Failed to set git %s(%s): %s", key, err, stderr)
+	stderr.Reset()
+
+	if err := NewCommand(DefaultContext, "config", "--global", key, defaultValue).
+		SetDescription(fmt.Sprintf("git.Init(set %s)", key)).
+		Run(&git_cmd.RunOpts{
+			Stderr: &stderr,
+		}); err != nil {
+		return fmt.Errorf("failed to set git %s(%s): %s", key, err, stderr.String())
 	}
 
 	return nil
 }
 
 func checkAndAddConfig(key, value string) error {
-	_, stderr, err := process.GetManager().Exec("git.Init(get setting)", GitExecutable, "config", "--get", key, value)
-	if err != nil {
-		perr, ok := err.(*process.Error)
-		if !ok {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
-		}
-		eerr, ok := perr.Err.(*exec.ExitError)
+	gitConfigLock.Lock()
+	defer gitConfigLock.Unlock()
+
+	stdout := strings.Builder{}
+	stderr := strings.Builder{}
+	if err := NewCommand(DefaultContext, "config", "--get", key).
+		SetDescription("git.Init(get setting)").
+		Run(&git_cmd.RunOpts{
+			Stdout: &stdout,
+			Stderr: &stderr,
+		}); err != nil {
+		eerr, ok := err.(*exec.ExitError)
 		if !ok || eerr.ExitCode() != 1 {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
+			return fmt.Errorf("failed to get git %s(%v) errType %T: %s", key, err, err, stderr.String())
 		}
 		if eerr.ExitCode() == 1 {
-			if _, stderr, err = process.GetManager().Exec(fmt.Sprintf("git.Init(set %s)", key), "git", "config", "--global", "--add", key, value); err != nil {
-				return fmt.Errorf("Failed to set git %s(%s): %s", key, err, stderr)
+			stderr.Reset()
+			if err := NewCommand(DefaultContext, "config", "--global", "--add", key, value).
+				SetDescription(fmt.Sprintf("git.Init(set %s)", key)).
+				Run(&git_cmd.RunOpts{
+					Stderr: &stderr,
+				}); err != nil {
+				return fmt.Errorf("failed to set git %s(%s): %s", key, err, stderr.String())
 			}
-			return nil
 		}
 	}
 
@@ -284,23 +284,31 @@ func checkAndAddConfig(key, value string) error {
 }
 
 func checkAndRemoveConfig(key, value string) error {
-	_, stderr, err := process.GetManager().Exec("git.Init(get setting)", GitExecutable, "config", "--get", key, value)
-	if err != nil {
-		perr, ok := err.(*process.Error)
-		if !ok {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
-		}
-		eerr, ok := perr.Err.(*exec.ExitError)
+	gitConfigLock.Lock()
+	defer gitConfigLock.Unlock()
+
+	stderr := strings.Builder{}
+	if err := NewCommand(DefaultContext, "config", "--get", key, value).
+		SetDescription("git.Init(get setting)").
+		Run(&git_cmd.RunOpts{
+			Stderr: &stderr,
+		}); err != nil {
+		eerr, ok := err.(*exec.ExitError)
 		if !ok || eerr.ExitCode() != 1 {
-			return fmt.Errorf("Failed to get git %s(%v) errType %T: %s", key, err, err, stderr)
+			return fmt.Errorf("failed to get git %s(%v) errType %T: %s", key, err, err, stderr.String())
 		}
 		if eerr.ExitCode() == 1 {
 			return nil
 		}
 	}
 
-	if _, stderr, err = process.GetManager().Exec(fmt.Sprintf("git.Init(set %s)", key), "git", "config", "--global", "--unset-all", key, value); err != nil {
-		return fmt.Errorf("Failed to set git %s(%s): %s", key, err, stderr)
+	stderr.Reset()
+	if err := NewCommand(DefaultContext, "config", "--global", "--unset-all", key, value).
+		SetDescription(fmt.Sprintf("git.Init(set %s)", key)).
+		Run(&git_cmd.RunOpts{
+			Stderr: &stderr,
+		}); err != nil {
+		return fmt.Errorf("failed to set git %s(%s): %s", key, err, stderr.String())
 	}
 
 	return nil

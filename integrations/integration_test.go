@@ -174,10 +174,13 @@ func initIntegrationTest() {
 	setting.LoadForTest()
 	setting.Repository.DefaultBranch = "master" // many test code still assume that default branch is called "master"
 	_ = util.RemoveAll(repo_module.LocalCopyPath())
+
+	os.MkdirAll(setting.RepoRootPath, os.ModePerm)
+
 	git.CheckLFSVersion()
 	setting.InitDBConfig()
 	if err := storage.Init(); err != nil {
-		fmt.Printf("Init storage failed: %v", err)
+		fmt.Printf("Init storage failed: %v\n", err)
 		os.Exit(1)
 	}
 
