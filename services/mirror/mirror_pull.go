@@ -215,6 +215,19 @@ func runSync(ctx context.Context, m *repo_model.Mirror) ([]*mirrorSyncResult, bo
 		log.Error("SyncMirrors [repo: %-v]: GetRemoteAddress Error %v", m.Repo, remoteErr)
 	}
 
+	if m.EnableSafeMirror {
+		// detect can safe mirror
+		canUpdate, err := detectCanUpdateMirror(ctx, m, gitArgs)
+		if err != nil {
+			log.Error("CheckRepositoryCanSafeMirrorError: %v", err)
+		}
+		// can not safe mirror
+		if !canUpdate {
+			log.Error("CheckSyncMirrors [repo: %-v]: cannot sync safe mirror...", m.Repo)
+			return nil, false
+		}
+	}
+
 	stdoutBuilder := strings.Builder{}
 	stderrBuilder := strings.Builder{}
 	if err := git.NewCommand(ctx, gitArgs...).
