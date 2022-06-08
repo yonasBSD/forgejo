@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,6 +32,7 @@ import (
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/uri"
+	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/services/pull"
 
 	gouuid "github.com/google/uuid"
@@ -502,7 +504,14 @@ func (g *GiteaLocalUploader) updateGitForPullRequest(pr *base.PullRequest) (head
 		if pr.PatchURL == "" {
 			return nil
 		}
-		// pr.PatchURL maybe a local file
+		// validate pr.PatchURL
+		u, err := url.Parse(pr.PatchURL)
+		if err != nil {
+			return err
+		}
+		if u.Scheme == "" || u.Scheme == "file" {
+			return fmt.Errorf("local path not allowed")
+		}
 		ret, err := uri.Open(pr.PatchURL)
 		if err != nil {
 			return err
@@ -543,10 +552,23 @@ func (g *GiteaLocalUploader) updateGitForPullRequest(pr *base.PullRequest) (head
 	if pr.IsForkPullRequest() && pr.State != "closed" {
 		if pr.Head.OwnerName != "" {
 			remote := pr.Head.OwnerName
+			ref := pr.Head.Ref
+			cloneURL := pr.Head.CloneURL
+
+			// validate cloneURL, remote, ref
+			if validation.GitRefNamePatternInvalid.MatchString(ref) ||
+				!validation.CheckGitRefAdditionalRulesValid(ref) ||
+				!validation.RemoteAddr(cloneURL, "", "") ||
+				validation.AlphaDashDotPattern.MatchString(remote) {
+				log.Error("migrating pull failed, invalid pattern: ref[%s], cloneURL[%s], remote[%s]", ref, cloneURL, remote)
+				return head, nil
+			}
+
 			_, ok := g.prHeadCache[remote]
+
 			if !ok {
 				// git remote add
-				err := g.gitRepo.AddRemote(remote, pr.Head.CloneURL, true)
+				err := g.gitRepo.AddRemote(remote, cloneURL, true)
 				if err != nil {
 					log.Error("AddRemote failed: %s", err)
 				} else {
@@ -556,11 +578,11 @@ func (g *GiteaLocalUploader) updateGitForPullRequest(pr *base.PullRequest) (head
 			}
 
 			if ok {
-				_, _, err = git.NewCommand(g.ctx, "fetch", "--no-tags", "--", remote, pr.Head.Ref).RunStdString(&git.RunOpts{Dir: g.repo.RepoPath()})
+				_, _, err = git.NewCommand(g.ctx, "fetch", "--no-tags", "--", remote, ref).RunStdString(&git.RunOpts{Dir: g.repo.RepoPath()})
 				if err != nil {
-					log.Error("Fetch branch from %s failed: %v", pr.Head.CloneURL, err)
+					log.Error("Fetch branch from %s failed: %v", cloneURL, err)
 				} else {
-					headBranch := filepath.Join(g.repo.RepoPath(), "refs", "heads", pr.Head.OwnerName, pr.Head.Ref)
+					headBranch := filepath.Join(g.repo.RepoPath(), "refs", "heads", remote, ref)
 					if err := os.MkdirAll(filepath.Dir(headBranch), os.ModePerm); err != nil {
 						return "", err
 					}
@@ -573,7 +595,7 @@ func (g *GiteaLocalUploader) updateGitForPullRequest(pr *base.PullRequest) (head
 					if err != nil {
 						return "", err
 					}
-					head = pr.Head.OwnerName + "/" + pr.Head.Ref
+					head = remote + "/" + ref
 				}
 			}
 		}
