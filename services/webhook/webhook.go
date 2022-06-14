@@ -66,6 +66,10 @@ var webhooks = map[webhook_model.HookType]*webhook{
 		name:           webhook_model.PACKAGIST,
 		payloadCreator: GetPackagistPayload,
 	},
+	webhook_model.CUSTOM: {
+		name:           webhook_model.CUSTOM,
+		payloadCreator: GetCustomPayload,
+	},
 }
 
 // RegisterWebhook registers a webhook

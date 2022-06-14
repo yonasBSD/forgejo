@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	_ "net/http/pprof" // Used for debugging if enabled and a web server is running
@@ -18,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/routers/install"
 
@@ -156,6 +158,10 @@ func runWeb(ctx *cli.Context) error {
 	// Perform global initialization
 	setting.LoadFromExisting()
 	routers.GlobalInitInstalled(graceful.GetManager().HammerContext())
+
+	if err := webhook.Init(filepath.Join(setting.CustomPath, "webhooks")); err != nil {
+		log.Fatal("Could not load custom webhooks: %v", err)
+	}
 
 	// We check that AppDataPath exists here (it should have been created during installation)
 	// We can't check it in `GlobalInitInstalled`, because some integration tests
