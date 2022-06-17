@@ -5,6 +5,8 @@ go 1.18
 require (
 	code.gitea.io/gitea-vet v0.2.2-0.20220122151748-48ebc902541b
 	code.gitea.io/sdk/gitea v0.15.1
+	gitea.com/gitea/gliderlabs-ssh v0.0.0-20220325210844-b53dd11d9536
+	gitea.com/gitea/go-crypto v0.0.0-20220325193035-0bf7b22f0acf
 	gitea.com/go-chi/binding v0.0.0-20220309004920-114340dabecb
 	gitea.com/go-chi/cache v0.2.0
 	gitea.com/go-chi/captcha v0.0.0-20211013065431-70641c1a35d5
@@ -26,7 +28,6 @@ require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.4.4
 	github.com/emirpasic/gods v1.18.1
 	github.com/ethantkoenig/rupture v1.0.1
-	github.com/gliderlabs/ssh v0.3.4
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-enry/go-enry/v2 v2.8.2

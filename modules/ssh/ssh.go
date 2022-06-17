@@ -4,6 +4,7 @@
 
 package ssh
 
+// Allow "gitea.com/gitea/go-crypto/ssh" import.
 import (
 	"bytes"
 	"context"
@@ -29,8 +30,8 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 
-	"github.com/gliderlabs/ssh"
-	gossh "golang.org/x/crypto/ssh"
+	ssh "gitea.com/gitea/gliderlabs-ssh"
+	gossh "gitea.com/gitea/go-crypto/ssh"
 )
 
 type contextKey string
