@@ -32,6 +32,7 @@ import (
 	"code.gitea.io/gitea/services/forms"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
+	user_service "code.gitea.io/gitea/services/user"
 )
 
 const (
@@ -292,6 +293,22 @@ func Action(ctx *context.Context) {
 		err = repo_model.StarRepo(ctx.Doer.ID, ctx.Repo.Repository.ID, true)
 	case "unstar":
 		err = repo_model.StarRepo(ctx.Doer.ID, ctx.Repo.Repository.ID, false)
+	case "pin":
+		if user_service.CanPin(ctx, ctx.Doer, ctx.Repo.Repository) {
+			err = user_model.PinRepos(ctx.Repo.Owner.ID, ctx.Repo.Repository.ID)
+			if _, ok := err.(*user_model.TooManyPinnedReposError); ok {
+				ctx.Error(http.StatusBadRequest, err.Error())
+				return
+			}
+		} else {
+			err = errors.New("user does not have permission to pin")
+		}
+	case "unpin":
+		if user_service.CanPin(ctx, ctx.Doer, ctx.Repo.Repository) {
+			err = user_model.UnpinRepos(ctx.Repo.Owner.ID, ctx.Repo.Repository.ID)
+		} else {
+			err = errors.New("user does not have permission to unpin")
+		}
 	case "accept_transfer":
 		err = acceptOrRejectRepoTransfer(ctx, true)
 	case "reject_transfer":

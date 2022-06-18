@@ -10,9 +10,12 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/organization"
+	access "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
@@ -149,8 +152,41 @@ func Home(ctx *context.Context) {
 		return
 	}
 
+	pinnedRepoIDs, err := user_model.GetPinnedRepositoryIDs(org.ID)
+	if err != nil {
+		ctx.ServerError("GetPinnedRepositoryIDs", err)
+		return
+	}
+	pinnedRepos := make([]*repo_model.Repository, 0, len(pinnedRepoIDs))
+	for _, id := range pinnedRepoIDs {
+		repo, err := repo_model.GetRepositoryByID(id)
+		if err != nil {
+			ctx.ServerError("GetRepositoryByID", err)
+			return
+		}
+		if err = repo.LoadAttributes(ctx); err != nil {
+			ctx.ServerError("LoadAttributes", err)
+			return
+		}
+		if repo.OwnerID != org.ID {
+			log.Warn("Ignoring pinned repo %v because it's not owned by %v", repo.FullName(), org.Name)
+		} else {
+			perm, err := access.GetUserRepoPermission(ctx, repo, ctx.Doer)
+			if err != nil {
+				ctx.ServerError("GetUserRepoPermission", err)
+				return
+			}
+			if !perm.HasAccess() {
+				log.Info("Ignoring pinned repo %v because user %v has no access to it.", repo.FullName(), ctx.Doer)
+			} else {
+				pinnedRepos = append(pinnedRepos, repo)
+			}
+		}
+	}
+
 	ctx.Data["Owner"] = org
 	ctx.Data["Repos"] = repos
+	ctx.Data["PinnedRepos"] = pinnedRepos
 	ctx.Data["Total"] = count
 	ctx.Data["MembersTotal"] = membersCount
 	ctx.Data["Members"] = members
