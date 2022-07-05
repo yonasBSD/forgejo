@@ -408,6 +408,14 @@ func SignUp(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	if err != nil {
+		ctx.ServerError("UserSignUp", err)
+		return
+	}
+
+	ctx.Data["OrderedOAuth2Names"] = orderedOAuth2Names
+	ctx.Data["OAuth2Providers"] = oauth2Providers
 	ctx.Data["EnableCaptcha"] = setting.Service.EnableCaptcha
 	ctx.Data["RecaptchaURL"] = setting.Service.RecaptchaURL
 	ctx.Data["Captcha"] = context.GetImageCaptcha()
@@ -429,6 +437,14 @@ func SignUpPost(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
+	orderedOAuth2Names, oauth2Providers, err := oauth2.GetActiveOAuth2Providers()
+	if err != nil {
+		ctx.ServerError("UserSignUp", err)
+		return
+	}
+
+	ctx.Data["OrderedOAuth2Names"] = orderedOAuth2Names
+	ctx.Data["OAuth2Providers"] = oauth2Providers
 	ctx.Data["EnableCaptcha"] = setting.Service.EnableCaptcha
 	ctx.Data["RecaptchaURL"] = setting.Service.RecaptchaURL
 	ctx.Data["Captcha"] = context.GetImageCaptcha()
