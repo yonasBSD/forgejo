@@ -25,14 +25,12 @@ func SecToHour(duration int64) string {
 	hours := (duration / 3600)
 	minutes := (duration / 60) % 60
 
-	// Extract only the relevant information of the time
-	switch {
-	case hours > 0:
+	// Show hours if any
+	if hours > 0 {
 		formattedTime = formatTime(hours, "hour", formattedTime)
-		formattedTime = formatTime(minutes, "minute", formattedTime)
-	default:
-		formattedTime = formatTime(minutes, "minute", formattedTime)
 	}
+	// Show minutes always
+	formattedTime = formatTime(minutes, "minute", formattedTime)
 
 	// The formatTime() function always appends a space at the end. This will be trimmed
 	return strings.TrimRight(formattedTime, " ")
