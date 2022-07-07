@@ -80,7 +80,7 @@ func parseTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
 	}
 	// Humans expect that we include the ending day too
 	unixto = to2.Add(1440*time.Minute - 1*time.Second).Unix()
-	return
+	return unixfrom, unixto, err
 }
 
 // TimesByRepos renders worktime by repositories.
@@ -120,7 +120,7 @@ func getTimesByRepos(unixfrom, unixto, orgid int64) (results []resultTimesByRepo
 		GroupBy("repository.id").
 		OrderBy("repository.name").
 		Find(&results)
-	return
+	return results, err
 }
 
 // TimesByMilestones renders work time by milestones.
@@ -174,7 +174,7 @@ func getTimesByMilestones(unixfrom, unixto, orgid int64) (results []resultTimesB
 		prevreponame = res.RepoName
 	}
 
-	return
+	return results, err
 }
 
 // TimesByMembers renders worktime by project member persons.
@@ -214,5 +214,5 @@ func getTimesByMembers(unixfrom, unixto, orgid int64) (results []resultTimesByMe
 		GroupBy("user.id").
 		OrderBy("sum_time DESC").
 		Find(&results)
-	return
+	return results, err
 }
