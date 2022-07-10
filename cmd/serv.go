@@ -199,7 +199,13 @@ func runServ(c *cli.Context) error {
 
 	rr := strings.SplitN(repoPath, "/", 2)
 	if len(rr) != 2 {
-		return fail("Invalid repository path", "Invalid repository path: %v", repoPath)
+		if len(setting.SSH.RedirectPath) > 0 {
+			rr = []string{setting.SSH.RedirectPath, repoPath}
+			// build new repoPath used in gitcmd
+			repoPath = setting.SSH.RedirectPath + "/" + repoPath
+		} else {
+			return fail("Invalid repository path", "Invalid repository path: %s", repoPath)
+		}
 	}
 
 	username := strings.ToLower(rr[0])
