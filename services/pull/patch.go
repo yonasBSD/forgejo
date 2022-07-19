@@ -295,13 +295,16 @@ func checkConflicts(ctx context.Context, pr *issues_model.PullRequest, gitRepo *
 		var treeHash string
 		treeHash, _, err = git.NewCommand(ctx, "write-tree").RunStdString(&git.RunOpts{Dir: tmpBasePath})
 		if err != nil {
+			log.Debug("Unable to write unconflicted tree for PR[%d] %s/%s#%d. Error: %v", pr.ID, pr.BaseRepo.OwnerName, pr.BaseRepo.Name, pr.Index, err)
 			return false, err
 		}
 		treeHash = strings.TrimSpace(treeHash)
 		baseTree, err := gitRepo.GetTree("base")
 		if err != nil {
+			log.Debug("Unable to get base tree for PR[%d] %s/%s#%d. Error: %v", pr.ID, pr.BaseRepo.OwnerName, pr.BaseRepo.Name, pr.Index, err)
 			return false, err
 		}
+
 		if treeHash == baseTree.ID.String() {
 			log.Debug("PullRequest[%d]: Patch is empty - ignoring", pr.ID)
 			pr.Status = issues_model.PullRequestStatusEmpty

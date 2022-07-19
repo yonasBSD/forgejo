@@ -166,7 +166,7 @@ func Init() {
 			return unhandled
 		}
 
-		indexerQueue = queue.CreateUniqueQueue("code_indexer", handler, &IndexerData{})
+		indexerQueue = queue.CreateUniqueQueue(queue.CodeIndexerQueueName, handler, &IndexerData{})
 		if indexerQueue == nil {
 			log.Fatal("Unable to create codes indexer queue")
 		}
