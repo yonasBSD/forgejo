@@ -172,7 +172,7 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 		}
 
 		// OK not cached - serve!
-		if err := common.ServeData(ctx.Context, ctx.Repo.TreePath, blob.Size(), bytes.NewReader(buf)); err != nil {
+		if err := common.ServeLargeFile(ctx.Context, ctx.Repo.TreePath, lastModified, bytes.NewReader(buf)); err != nil {
 			ctx.ServerError("ServeBlob", err)
 		}
 		return
@@ -188,7 +188,7 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 			return
 		}
 
-		if err := common.ServeData(ctx.Context, ctx.Repo.TreePath, blob.Size(), bytes.NewReader(buf)); err != nil {
+		if err := common.ServeLargeFile(ctx.Context, ctx.Repo.TreePath, lastModified, bytes.NewReader(buf)); err != nil {
 			ctx.ServerError("ServeBlob", err)
 		}
 		return
@@ -218,7 +218,7 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 	}
 	defer lfsDataRc.Close()
 
-	if err := common.ServeData(ctx.Context, ctx.Repo.TreePath, meta.Size, lfsDataRc); err != nil {
+	if err := common.ServeLargeFile(ctx.Context, ctx.Repo.TreePath, lastModified, lfsDataRc); err != nil {
 		ctx.ServerError("ServeData", err)
 	}
 }

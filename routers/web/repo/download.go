@@ -72,7 +72,7 @@ func ServeBlobOrLFS(ctx *context.Context, blob *git.Blob, lastModified time.Time
 				log.Error("ServeBlobOrLFS: Close: %v", err)
 			}
 		}()
-		return common.ServeData(ctx, ctx.Repo.TreePath, meta.Size, lfsDataRc)
+		return common.ServeLargeFile(ctx, ctx.Repo.TreePath, meta.CreatedUnix.AsTime(), lfsDataRc)
 	}
 	if err = dataRc.Close(); err != nil {
 		log.Error("ServeBlobOrLFS: Close: %v", err)
