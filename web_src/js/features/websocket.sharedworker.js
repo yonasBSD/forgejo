@@ -3,8 +3,8 @@ const sourcesByPort = {};
 
 class Source {
   constructor(url) {
-    this.url = url;
-    this.eventSource = new EventSource(url);
+    this.url = url.replace(/^http/, 'ws');
+    this.webSocket = new WebSocket(this.url);
     this.listening = {};
     this.clients = [];
     this.listen('open');
@@ -13,6 +13,33 @@ class Source {
     this.listen('notification-count');
     this.listen('stopwatches');
     this.listen('error');
+    this.webSocket.addEventListener('error', (error) => {
+      this.lastError = error;
+    });
+    this.webSocket.addEventListener('message', (event) => {
+      const message = JSON.parse(event.data);
+      if (!message) {
+        return;
+      }
+      if (this.listening[message.Name]) {
+        this.notifyClients({
+          type: message.Name,
+          data: message.Data
+        });
+      }
+    });
+    this.webSocket.addEventListener('close', (event) => {
+      if (!this.webSocket) {
+        return;
+      }
+      const oldWebSocket = this.webSocket;
+      this.webSocket = null;
+      this.notifyClients({
+        type: 'close',
+        data: event
+      });
+      oldWebSocket.close();
+    });
   }
 
   register(port) {
@@ -24,6 +51,20 @@ class Source {
       type: 'status',
       message: `registered to ${this.url}`,
     });
+
+    if (!this.webSocket) {
+      if (this.lastError) {
+        port.postMessage({
+          type: 'error',
+          message: `websocket disconnected: ${this.lastError}`
+        });
+      } else {
+        port.postMessage({
+          type: 'error',
+          message: 'websocket disconnected'
+        });
+      }
+    }
   }
 
   deregister(port) {
@@ -36,25 +77,15 @@ class Source {
   }
 
   close() {
-    if (!this.eventSource) return;
-
-    this.eventSource.close();
-    this.eventSource = null;
+    if (!this.webSocket) return;
+    const oldWebSocket = this.webSocket;
+    this.webSocket = null;
+    oldWebSocket.close();
   }
 
   listen(eventType) {
     if (this.listening[eventType]) return;
     this.listening[eventType] = true;
-    this.eventSource.addEventListener(eventType, (event) => {
-      let data;
-      if (event.data) {
-        data = JSON.parse(event.data);
-      }
-      this.notifyClients({
-        type: eventType,
-        data
-      });
-    });
   }
 
   notifyClients(event) {
@@ -66,7 +97,7 @@ class Source {
   status(port) {
     port.postMessage({
       type: 'status',
-      message: `url: ${this.url} readyState: ${this.eventSource.readyState}`,
+      message: `url: ${this.url} readyState: ${this.webSocket.readyState}`,
     });
   }
 }
@@ -79,13 +110,16 @@ self.addEventListener('connect', (e) => {
         if (sourcesByUrl[url]) {
           // we have a Source registered to this url
           const source = sourcesByUrl[url];
-          source.register(port);
-          sourcesByPort[port] = source;
-          return;
+          if (source.webSocket) {
+            source.register(port);
+            sourcesByPort[port] = source;
+            return;
+          }
+          sourcesByUrl[url] = null;
         }
         let source = sourcesByPort[port];
         if (source) {
-          if (source.eventSource && source.url === url) return;
+          if (source.webSocket && source.url === url) return;
 
           // How this has happened I don't understand...
           // deregister from that source

@@ -24,21 +24,17 @@ export function initNotificationsTable() {
   });
 }
 
-async function receiveUpdateCount(event) {
+async function receiveUpdateCount(data, document) {
   try {
-    const data = JSON.parse(event.data);
-
-    const notificationCount = document.querySelector('.notification_count');
-    if (data.Count > 0) {
-      notificationCount.classList.remove('hidden');
-    } else {
-      notificationCount.classList.add('hidden');
+    const notificationCounts = document.querySelectorAll('.notification_count');
+    for (const count of notificationCounts) {
+      count.classList.toggle('hidden', data.Count === 0);
+      count.textContent = `${data.Count}`;
     }
 
-    notificationCount.textContent = `${data.Count}`;
     await updateNotificationTable();
   } catch (error) {
-    console.error(error, event);
+    console.error(error, data);
   }
 }
 
@@ -49,26 +45,39 @@ export function initNotificationCount() {
     return;
   }
 
-  if (notificationSettings.EventSourceUpdateTime > 0 && !!window.EventSource && window.SharedWorker) {
+  let worker;
+  let workerUrl;
+
+  if (notificationSettings.EventSourceUpdateTime > 0 && !!window.WebSocket && window.SharedWorker) {
     // Try to connect to the event source via the shared worker first
-    const worker = new SharedWorker(`${__webpack_public_path__}js/eventsource.sharedworker.js`, 'notification-worker');
+    worker = new SharedWorker(`${__webpack_public_path__}js/websocket.sharedworker.js`, 'notification-worker');
+    workerUrl = `${window.location.origin}${appSubUrl}/user/websocket`;
+  } else if (notificationSettings.EventSourceUpdateTime > 0 && !!window.EventSource && window.SharedWorker) {
+    // Try to connect to the event source via the shared worker first
+    worker = new SharedWorker(`${__webpack_public_path__}js/eventsource.sharedworker.js`, 'notification-worker');
+    workerUrl = `${window.location.origin}${appSubUrl}/user/events`;
+  }
+
+  const currentDocument = document;
+
+  if (worker) {
     worker.addEventListener('error', (event) => {
-      console.error(event);
+      console.error('error from listener: ', event);
     });
     worker.port.addEventListener('messageerror', () => {
       console.error('Unable to deserialize message');
     });
     worker.port.postMessage({
       type: 'start',
-      url: `${window.location.origin}${appSubUrl}/user/events`,
+      url: workerUrl,
     });
     worker.port.addEventListener('message', (event) => {
       if (!event.data || !event.data.type) {
-        console.error(event);
+        console.error('Unexpected event:', event);
         return;
       }
       if (event.data.type === 'notification-count') {
-        const _promise = receiveUpdateCount(event.data);
+        const _promise = receiveUpdateCount(event.data.data, currentDocument);
       } else if (event.data.type === 'error') {
         console.error(event.data);
       } else if (event.data.type === 'logout') {
