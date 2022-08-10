@@ -689,7 +689,7 @@ func RegisterRoutes(m *web.Route) {
 				m.Get("/by_repos", org.TimesByRepos)
 				m.Get("/by_members", org.TimesByMembers)
 				m.Get("/by_milestones", org.TimesByMilestones)
-			}, context.OrgAssignment(true, true))
+			}, context.OrgAssignment(false, true))
 
 			m.Group("/settings", func() {
 				m.Combo("").Get(org.Settings).
