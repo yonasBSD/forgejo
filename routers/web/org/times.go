@@ -9,12 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
-
-	"xorm.io/builder"
 )
 
 const (
@@ -22,27 +19,6 @@ const (
 	tplByMembers    base.TplName = "org/times/times_by_members"
 	tplByMilestones base.TplName = "org/times/times_by_milestones"
 )
-
-// resultTimesByRepos is a struct for DB query results
-type resultTimesByRepos struct {
-	Name    string
-	SumTime int64
-}
-
-// resultTimesByMilestones is a struct for DB query results
-type resultTimesByMilestones struct {
-	RepoName     string
-	Name         string
-	ID           string
-	SumTime      int64
-	HideRepoName bool
-}
-
-// resultTimesByMembers is a struct for DB query results
-type resultTimesByMembers struct {
-	Name    string
-	SumTime int64
-}
 
 // parseOrgTimes contains functionality that is required in all these functions,
 // like parsing the date from the request, setting default dates, etc.
@@ -94,7 +70,7 @@ func TimesByRepos(ctx *context.Context) {
 	// Set submenu tab
 	ctx.Data["TabIsByRepos"] = true
 
-	results, err := getTimesByRepos(unixfrom, unixto, ctx.Org.Organization.ID)
+	results, err := ctx.Org.Organization.GetTimesByRepos(unixfrom, unixto)
 	if err != nil {
 		ctx.ServerError("getTimesByRepos", err)
 		return
@@ -103,24 +79,6 @@ func TimesByRepos(ctx *context.Context) {
 
 	// Reply with view
 	ctx.HTML(http.StatusOK, tplByRepos)
-}
-
-// getTimesByRepos fetches data from DB to serve TimesByRepos.
-func getTimesByRepos(unixfrom, unixto, orgid int64) (results []resultTimesByRepos, err error) {
-	// Get the data from the DB
-	err = db.GetEngine(db.DefaultContext).
-		Select("repository.name, SUM(tracked_time.time) AS sum_time").
-		Table("tracked_time").
-		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
-		Join("INNER", "repository", "issue.repo_id = repository.id").
-		Where(builder.Eq{"repository.owner_id": orgid}).
-		And(builder.Eq{"tracked_time.deleted": false}).
-		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
-		And(builder.Lte{"tracked_time.created_unix": unixto}).
-		GroupBy("repository.id").
-		OrderBy("repository.name").
-		Find(&results)
-	return results, err
 }
 
 // TimesByMilestones renders work time by milestones.
@@ -139,7 +97,7 @@ func TimesByMilestones(ctx *context.Context) {
 	ctx.Data["TabIsByMilestones"] = true
 
 	// Get the data from the DB
-	results, err := getTimesByMilestones(unixfrom, unixto, ctx.Org.Organization.ID)
+	results, err := ctx.Org.Organization.GetTimesByMilestones(unixfrom, unixto)
 	if err != nil {
 		ctx.ServerError("getTimesByMilestones", err)
 		return
@@ -162,25 +120,6 @@ func TimesByMilestones(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplByMilestones)
 }
 
-// getTimesByMilestones gets the actual data from the DB to serve TimesByMilestones.
-func getTimesByMilestones(unixfrom, unixto, orgid int64) (results []resultTimesByMilestones, err error) {
-	err = db.GetEngine(db.DefaultContext).
-		Select("repository.name AS repo_name, milestone.name, milestone.id, SUM(tracked_time.time) AS sum_time").
-		Table("tracked_time").
-		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
-		Join("INNER", "repository", "issue.repo_id = repository.id").
-		Join("LEFT", "milestone", "issue.milestone_id = milestone.id").
-		Where(builder.Eq{"repository.owner_id": orgid}).
-		And(builder.Eq{"tracked_time.deleted": false}).
-		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
-		And(builder.Lte{"tracked_time.created_unix": unixto}).
-		GroupBy("repository.id, milestone.id").
-		OrderBy("repository.name, milestone.deadline_unix, milestone.id").
-		Find(&results)
-
-	return results, err
-}
-
 // TimesByMembers renders worktime by project member persons.
 func TimesByMembers(ctx *context.Context) {
 	// Run common functionality
@@ -197,7 +136,7 @@ func TimesByMembers(ctx *context.Context) {
 	ctx.Data["TabIsByMembers"] = true
 
 	// Get the data from the DB
-	results, err := getTimesByMembers(unixfrom, unixto, ctx.Org.Organization.ID)
+	results, err := ctx.Org.Organization.GetTimesByMembers(unixfrom, unixto)
 	if err != nil {
 		ctx.ServerError("getTimesByMembers", err)
 		return
@@ -205,22 +144,4 @@ func TimesByMembers(ctx *context.Context) {
 	ctx.Data["results"] = results
 
 	ctx.HTML(http.StatusOK, tplByMembers)
-}
-
-// getTimesByMembers gets the actual data from the DB to serve TimesByMembers.
-func getTimesByMembers(unixfrom, unixto, orgid int64) (results []resultTimesByMembers, err error) {
-	err = db.GetEngine(db.DefaultContext).
-		Select("user.name, SUM(tracked_time.time) AS sum_time").
-		Table("tracked_time").
-		Join("INNER", "issue", "tracked_time.issue_id = issue.id").
-		Join("INNER", "repository", "issue.repo_id = repository.id").
-		Join("INNER", "user", "tracked_time.user_id = user.id").
-		Where(builder.Eq{"repository.owner_id": orgid}).
-		And(builder.Eq{"tracked_time.deleted": false}).
-		And(builder.Gte{"tracked_time.created_unix": unixfrom}).
-		And(builder.Lte{"tracked_time.created_unix": unixto}).
-		GroupBy("user.id").
-		OrderBy("sum_time DESC").
-		Find(&results)
-	return results, err
 }
