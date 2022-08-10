@@ -145,6 +145,16 @@ func TimesByMilestones(ctx *context.Context) {
 		return
 	}
 
+	// Show only the first RepoName, for nicer output.
+	prevreponame := ""
+	for i := 0; i < len(results); i++ {
+		res := &results[i]
+		if prevreponame == res.RepoName {
+			res.HideRepoName = true
+		}
+		prevreponame = res.RepoName
+	}
+
 	// Send results to view
 	ctx.Data["results"] = results
 
@@ -167,16 +177,6 @@ func getTimesByMilestones(unixfrom, unixto, orgid int64) (results []resultTimesB
 		GroupBy("repository.id, milestone.id").
 		OrderBy("repository.name, milestone.deadline_unix, milestone.id").
 		Find(&results)
-
-	// Show only the first RepoName, for nicer output.
-	prevreponame := ""
-	for i := 0; i < len(results); i++ {
-		res := &results[i]
-		if prevreponame == res.RepoName {
-			res.HideRepoName = true
-		}
-		prevreponame = res.RepoName
-	}
 
 	return results, err
 }
