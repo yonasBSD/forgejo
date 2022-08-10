@@ -47,10 +47,6 @@ type resultTimesByMembers struct {
 // parseOrgTimes contains functionality that is required in all these functions,
 // like parsing the date from the request, setting default dates, etc.
 func parseOrgTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
-	// View variables
-	ctx.Data["PageIsOrgTimes"] = true
-	ctx.Data["AppSubURL"] = setting.AppSubURL
-
 	// Time range from request, if any
 	from := ctx.FormString("from")
 	to := ctx.FormString("to")
@@ -91,6 +87,10 @@ func TimesByRepos(ctx *context.Context) {
 		return
 	}
 
+	// View variables
+	ctx.Data["PageIsOrgTimes"] = true
+	ctx.Data["AppSubURL"] = setting.AppSubURL
+
 	// Set submenu tab
 	ctx.Data["TabIsByRepos"] = true
 
@@ -130,6 +130,10 @@ func TimesByMilestones(ctx *context.Context) {
 	if err != nil {
 		return
 	}
+
+	// View variables
+	ctx.Data["PageIsOrgTimes"] = true
+	ctx.Data["AppSubURL"] = setting.AppSubURL
 
 	// Set submenu tab
 	ctx.Data["TabIsByMilestones"] = true
@@ -184,6 +188,10 @@ func TimesByMembers(ctx *context.Context) {
 	if err != nil {
 		return
 	}
+
+	// View variables
+	ctx.Data["PageIsOrgTimes"] = true
+	ctx.Data["AppSubURL"] = setting.AppSubURL
 
 	// Set submenu tab
 	ctx.Data["TabIsByMembers"] = true
