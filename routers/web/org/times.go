@@ -44,9 +44,9 @@ type resultTimesByMembers struct {
 	SumTime int64
 }
 
-// parseTimes contains functionality that is required in all these functions,
+// parseOrgTimes contains functionality that is required in all these functions,
 // like parsing the date from the request, setting default dates, etc.
-func parseTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
+func parseOrgTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
 	// View variables
 	ctx.Data["PageIsOrgTimes"] = true
 	ctx.Data["AppSubURL"] = setting.AppSubURL
@@ -86,7 +86,7 @@ func parseTimes(ctx *context.Context) (unixfrom, unixto int64, err error) {
 // TimesByRepos renders worktime by repositories.
 func TimesByRepos(ctx *context.Context) {
 	// Run common functionality
-	unixfrom, unixto, err := parseTimes(ctx)
+	unixfrom, unixto, err := parseOrgTimes(ctx)
 	if err != nil {
 		return
 	}
@@ -126,7 +126,7 @@ func getTimesByRepos(unixfrom, unixto, orgid int64) (results []resultTimesByRepo
 // TimesByMilestones renders work time by milestones.
 func TimesByMilestones(ctx *context.Context) {
 	// Run common functionality
-	unixfrom, unixto, err := parseTimes(ctx)
+	unixfrom, unixto, err := parseOrgTimes(ctx)
 	if err != nil {
 		return
 	}
@@ -180,7 +180,7 @@ func getTimesByMilestones(unixfrom, unixto, orgid int64) (results []resultTimesB
 // TimesByMembers renders worktime by project member persons.
 func TimesByMembers(ctx *context.Context) {
 	// Run common functionality
-	unixfrom, unixto, err := parseTimes(ctx)
+	unixfrom, unixto, err := parseOrgTimes(ctx)
 	if err != nil {
 		return
 	}
