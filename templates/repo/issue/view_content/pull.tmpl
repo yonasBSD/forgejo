@@ -130,6 +130,33 @@
 		{{template "repo/pulls/status" .}}
 		{{$canAutoMerge := false}}
 		<div class="ui attached merge-section segment {{if not $.LatestCommitStatus}}no-header{{end}}">
+			{{$canUpdatePull := false }}
+			{{if (eq .Issue.PullRequest.Flow 0) }}
+				{{$canUpdatePull = (and (not .Issue.IsClosed) (or .HasIssuesOrPullsWritePermission .IsIssuePoster)) }}
+			{{else}}
+				{{$canUpdatePull = (and (not .Issue.IsClosed) .IsIssuePoster) }}
+			{{end}}
+			{{if $canUpdatePull }}
+				{{if eq .Issue.PullRequest.Flow 0}}
+					{{$headRepoFullName := printf "%s/%s" .Issue.PullRequest.HeadRepo.OwnerName .Issue.PullRequest.HeadRepo.Name }}
+					{{$headBranchHref := printf "<a href=\"%s\">%s</a>" $.HeadBranchHTMLURL .Issue.PullRequest.HeadBranch }}
+					{{$headRepoHref := printf "<a href=\"%s\">%s</a>" .PullRequest.HeadRepo.HTMLURL $headRepoFullName }}
+					<div class="item text">
+						{{svg "octicon-dot-fill"}}
+						{{$.locale.Tr "repo.pulls.update_pull_help" $headBranchHref $headRepoHref | Safe}}
+					</div>
+				{{else}}
+					<div class="item text">
+						{{svg "octicon-dot-fill"}}
+						{{$.locale.Tr "repo.pulls.update_agit_pull_help_1" .Issue.PullRequest.HeadBranch }}
+					</div>
+					<div class="item text">
+						{{svg "octicon-dot-fill"}}
+						{{$.locale.Tr "repo.pulls.update_agit_pull_help_2" .Issue.PullRequest.BaseBranch .Issue.PullRequest.HeadBranch | Safe }}
+					</div>
+				{{end}}
+
+			{{end}}
 			{{if .Issue.PullRequest.HasMerged}}
 				<div class="item text">
 					{{if .Issue.PullRequest.MergedCommitID}}
