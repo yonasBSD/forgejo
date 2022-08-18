@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/metrics"
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/queue"
 	"code.gitea.io/gitea/modules/setting"
@@ -123,12 +124,25 @@ func updateSystemStatus() {
 	sysStatus.NumGC = m.NumGC
 }
 
+func getStatistics() *models.Statistic {
+	if setting.UI.Admin.StatisticTTL > 0 {
+		select {
+		case stats := <-metrics.GetStatistic(setting.UI.Admin.StatisticTTL, false):
+			return stats
+		case <-time.After(1 * time.Second):
+			return nil
+		}
+	}
+
+	return <-metrics.GetStatistic(setting.UI.Admin.StatisticTTL, false)
+}
+
 // Dashboard show admin panel dashboard
 func Dashboard(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.dashboard")
 	ctx.Data["PageIsAdmin"] = true
 	ctx.Data["PageIsAdminDashboard"] = true
-	ctx.Data["Stats"] = models.GetStatistic()
+	ctx.Data["Stats"] = getStatistics()
 	ctx.Data["NeedUpdate"] = updatechecker.GetNeedUpdate()
 	ctx.Data["RemoteVersion"] = updatechecker.GetRemoteVersion()
 	// FIXME: update periodically
@@ -144,7 +158,7 @@ func DashboardPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.dashboard")
 	ctx.Data["PageIsAdmin"] = true
 	ctx.Data["PageIsAdminDashboard"] = true
-	ctx.Data["Stats"] = models.GetStatistic()
+	ctx.Data["Stats"] = getStatistics()
 	updateSystemStatus()
 	ctx.Data["SysStatus"] = sysStatus
 
