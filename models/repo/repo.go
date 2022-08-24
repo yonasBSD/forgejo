@@ -516,12 +516,18 @@ func (repo *Repository) CanCreateBranch() bool {
 
 // CanEnablePulls returns true if repository meets the requirements of accepting pulls.
 func (repo *Repository) CanEnablePulls() bool {
-	return !repo.IsMirror && !repo.IsEmpty
+	return !repo.IsEmpty
 }
 
 // AllowsPulls returns true if repository meets the requirements of accepting pulls and has them enabled.
 func (repo *Repository) AllowsPulls() bool {
-	return repo.CanEnablePulls() && repo.UnitEnabled(unit.TypePullRequests)
+	return repo.CanEnablePulls() && !repo.IsMirror && repo.UnitEnabled(unit.TypePullRequests)
+}
+
+// AllowsIssues returns true if repository meets the requirements of accepting issues and has them enabled.
+func (repo *Repository) AllowsIssues() bool {
+	// TODO: disable only when issues are synced
+	return !repo.IsMirror && repo.UnitEnabled(unit.TypePullRequests)
 }
 
 // CanEnableEditor returns true if repository meets the requirements of web editor.

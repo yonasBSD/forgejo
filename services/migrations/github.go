@@ -383,89 +383,7 @@ func (g *GithubDownloaderV3) GetReleases() ([]*base.Release, error) {
 
 // GetIssues returns issues according start and limit
 func (g *GithubDownloaderV3) GetIssues(page, perPage int) ([]*base.Issue, bool, error) {
-	if perPage > g.maxPerPage {
-		perPage = g.maxPerPage
-	}
-	opt := &github.IssueListByRepoOptions{
-		Sort:      "created",
-		Direction: "asc",
-		State:     "all",
-		ListOptions: github.ListOptions{
-			PerPage: perPage,
-			Page:    page,
-		},
-	}
-
-	allIssues := make([]*base.Issue, 0, perPage)
-	g.waitAndPickClient()
-	issues, resp, err := g.getClient().Issues.ListByRepo(g.ctx, g.repoOwner, g.repoName, opt)
-	if err != nil {
-		return nil, false, fmt.Errorf("error while listing repos: %v", err)
-	}
-	log.Trace("Request get issues %d/%d, but in fact get %d", perPage, page, len(issues))
-	g.setRate(&resp.Rate)
-	for _, issue := range issues {
-		if issue.IsPullRequest() {
-			continue
-		}
-
-		labels := make([]*base.Label, 0, len(issue.Labels))
-		for _, l := range issue.Labels {
-			labels = append(labels, convertGithubLabel(l))
-		}
-
-		// get reactions
-		var reactions []*base.Reaction
-		if !g.SkipReactions {
-			for i := 1; ; i++ {
-				g.waitAndPickClient()
-				res, resp, err := g.getClient().Reactions.ListIssueReactions(g.ctx, g.repoOwner, g.repoName, issue.GetNumber(), &github.ListOptions{
-					Page:    i,
-					PerPage: perPage,
-				})
-				if err != nil {
-					return nil, false, err
-				}
-				g.setRate(&resp.Rate)
-				if len(res) == 0 {
-					break
-				}
-				for _, reaction := range res {
-					reactions = append(reactions, &base.Reaction{
-						UserID:   reaction.User.GetID(),
-						UserName: reaction.User.GetLogin(),
-						Content:  reaction.GetContent(),
-					})
-				}
-			}
-		}
-
-		var assignees []string
-		for i := range issue.Assignees {
-			assignees = append(assignees, issue.Assignees[i].GetLogin())
-		}
-
-		allIssues = append(allIssues, &base.Issue{
-			Title:        *issue.Title,
-			Number:       int64(*issue.Number),
-			PosterID:     issue.GetUser().GetID(),
-			PosterName:   issue.GetUser().GetLogin(),
-			PosterEmail:  issue.GetUser().GetEmail(),
-			Content:      issue.GetBody(),
-			Milestone:    issue.GetMilestone().GetTitle(),
-			State:        issue.GetState(),
-			Created:      issue.GetCreatedAt(),
-			Updated:      issue.GetUpdatedAt(),
-			Labels:       labels,
-			Reactions:    reactions,
-			Closed:       issue.ClosedAt,
-			IsLocked:     issue.GetLocked(),
-			Assignees:    assignees,
-			ForeignIndex: int64(*issue.Number),
-		})
-	}
-
-	return allIssues, len(issues) < perPage, nil
+	return g.getIssuesSince(page, perPage, time.Time{}) // set since to empty to get all issues
 }
 
 // SupportGetRepoComments return true if it supports get repo comments
@@ -475,11 +393,11 @@ func (g *GithubDownloaderV3) SupportGetRepoComments() bool {
 
 // GetComments returns comments according issueNumber
 func (g *GithubDownloaderV3) GetComments(commentable base.Commentable) ([]*base.Comment, bool, error) {
-	comments, err := g.getComments(commentable)
+	comments, err := g.getCommentsSince(commentable, nil)
 	return comments, false, err
 }
 
-func (g *GithubDownloaderV3) getComments(commentable base.Commentable) ([]*base.Comment, error) {
+func (g *GithubDownloaderV3) getCommentsSince(commentable base.Commentable, since *time.Time) ([]*base.Comment, error) {
 	var (
 		allComments = make([]*base.Comment, 0, g.maxPerPage)
 		created     = "created"
@@ -488,6 +406,7 @@ func (g *GithubDownloaderV3) getComments(commentable base.Commentable) ([]*base.
 	opt := &github.IssueListCommentsOptions{
 		Sort:      &created,
 		Direction: &asc,
+		Since:     since,
 		ListOptions: github.ListOptions{
 			PerPage: g.maxPerPage,
 		},
@@ -548,6 +467,10 @@ func (g *GithubDownloaderV3) getComments(commentable base.Commentable) ([]*base.
 
 // GetAllComments returns repository comments according page and perPageSize
 func (g *GithubDownloaderV3) GetAllComments(page, perPage int) ([]*base.Comment, bool, error) {
+	return g.getAllCommentsSince(page, perPage, nil)
+}
+
+func (g *GithubDownloaderV3) getAllCommentsSince(page, perPage int, since *time.Time) ([]*base.Comment, bool, error) {
 	var (
 		allComments = make([]*base.Comment, 0, perPage)
 		created     = "created"
@@ -559,6 +482,7 @@ func (g *GithubDownloaderV3) GetAllComments(page, perPage int) ([]*base.Comment,
 	opt := &github.IssueListCommentsOptions{
 		Sort:      &created,
 		Direction: &asc,
+		Since:     since,
 		ListOptions: github.ListOptions{
 			Page:    page,
 			PerPage: perPage,
@@ -641,74 +565,11 @@ func (g *GithubDownloaderV3) GetPullRequests(page, perPage int) ([]*base.PullReq
 	log.Trace("Request get pull requests %d/%d, but in fact get %d", perPage, page, len(prs))
 	g.setRate(&resp.Rate)
 	for _, pr := range prs {
-		labels := make([]*base.Label, 0, len(pr.Labels))
-		for _, l := range pr.Labels {
-			labels = append(labels, convertGithubLabel(l))
+		basePR, err := g.convertGithubPullRequest(pr, perPage)
+		if err != nil {
+			return nil, false, err
 		}
-
-		// get reactions
-		var reactions []*base.Reaction
-		if !g.SkipReactions {
-			for i := 1; ; i++ {
-				g.waitAndPickClient()
-				res, resp, err := g.getClient().Reactions.ListIssueReactions(g.ctx, g.repoOwner, g.repoName, pr.GetNumber(), &github.ListOptions{
-					Page:    i,
-					PerPage: perPage,
-				})
-				if err != nil {
-					return nil, false, err
-				}
-				g.setRate(&resp.Rate)
-				if len(res) == 0 {
-					break
-				}
-				for _, reaction := range res {
-					reactions = append(reactions, &base.Reaction{
-						UserID:   reaction.User.GetID(),
-						UserName: reaction.User.GetLogin(),
-						Content:  reaction.GetContent(),
-					})
-				}
-			}
-		}
-
-		// download patch and saved as tmp file
-		g.waitAndPickClient()
-
-		allPRs = append(allPRs, &base.PullRequest{
-			Title:          pr.GetTitle(),
-			Number:         int64(pr.GetNumber()),
-			PosterID:       pr.GetUser().GetID(),
-			PosterName:     pr.GetUser().GetLogin(),
-			PosterEmail:    pr.GetUser().GetEmail(),
-			Content:        pr.GetBody(),
-			Milestone:      pr.GetMilestone().GetTitle(),
-			State:          pr.GetState(),
-			Created:        pr.GetCreatedAt(),
-			Updated:        pr.GetUpdatedAt(),
-			Closed:         pr.ClosedAt,
-			Labels:         labels,
-			Merged:         pr.MergedAt != nil,
-			MergeCommitSHA: pr.GetMergeCommitSHA(),
-			MergedTime:     pr.MergedAt,
-			IsLocked:       pr.ActiveLockReason != nil,
-			Head: base.PullRequestBranch{
-				Ref:       pr.GetHead().GetRef(),
-				SHA:       pr.GetHead().GetSHA(),
-				OwnerName: pr.GetHead().GetUser().GetLogin(),
-				RepoName:  pr.GetHead().GetRepo().GetName(),
-				CloneURL:  pr.GetHead().GetRepo().GetCloneURL(),
-			},
-			Base: base.PullRequestBranch{
-				Ref:       pr.GetBase().GetRef(),
-				SHA:       pr.GetBase().GetSHA(),
-				RepoName:  pr.GetBase().GetRepo().GetName(),
-				OwnerName: pr.GetBase().GetUser().GetLogin(),
-			},
-			PatchURL:     pr.GetPatchURL(),
-			Reactions:    reactions,
-			ForeignIndex: int64(*pr.Number),
-		})
+		allPRs = append(allPRs, basePR)
 	}
 
 	return allPRs, len(prs) < perPage, nil
@@ -842,4 +703,222 @@ func (g *GithubDownloaderV3) GetReviews(reviewable base.Reviewable) ([]*base.Rev
 		opt.Page = resp.NextPage
 	}
 	return allReviews, nil
+}
+
+// GetNewIssues returns new issues updated after the given time according start and limit
+func (g *GithubDownloaderV3) GetNewIssues(page, perPage int, updatedAfter time.Time) ([]*base.Issue, bool, error) {
+	return g.getIssuesSince(page, perPage, updatedAfter)
+}
+
+// getIssuesSince returns issues given page, perPage and since
+func (g *GithubDownloaderV3) getIssuesSince(page, perPage int, since time.Time) ([]*base.Issue, bool, error) {
+	if perPage > g.maxPerPage {
+		perPage = g.maxPerPage
+	}
+	opt := &github.IssueListByRepoOptions{
+		Sort:      "created",
+		Direction: "asc",
+		State:     "all",
+		Since:     since,
+		ListOptions: github.ListOptions{
+			PerPage: perPage,
+			Page:    page,
+		},
+	}
+
+	allIssues := make([]*base.Issue, 0, perPage)
+	g.waitAndPickClient()
+	issues, resp, err := g.getClient().Issues.ListByRepo(g.ctx, g.repoOwner, g.repoName, opt)
+	if err != nil {
+		return nil, false, fmt.Errorf("error while listing repos: %v", err)
+	}
+	log.Trace("Request get issues %d/%d, but in fact get %d", perPage, page, len(issues))
+	g.setRate(&resp.Rate)
+	for _, issue := range issues {
+		if issue.IsPullRequest() {
+			continue
+		}
+
+		labels := make([]*base.Label, 0, len(issue.Labels))
+		for _, l := range issue.Labels {
+			labels = append(labels, convertGithubLabel(l))
+		}
+
+		// get reactions
+		reactions, err := g.getIssueReactions(issue.GetNumber(), perPage)
+		if err != nil {
+			return nil, false, err
+		}
+
+		var assignees []string
+		for i := range issue.Assignees {
+			assignees = append(assignees, issue.Assignees[i].GetLogin())
+		}
+
+		allIssues = append(allIssues, &base.Issue{
+			Title:        *issue.Title,
+			Number:       int64(*issue.Number),
+			PosterID:     issue.GetUser().GetID(),
+			PosterName:   issue.GetUser().GetLogin(),
+			PosterEmail:  issue.GetUser().GetEmail(),
+			Content:      issue.GetBody(),
+			Milestone:    issue.GetMilestone().GetTitle(),
+			State:        issue.GetState(),
+			Created:      issue.GetCreatedAt(),
+			Updated:      issue.GetUpdatedAt(),
+			Labels:       labels,
+			Reactions:    reactions,
+			Closed:       issue.ClosedAt,
+			IsLocked:     issue.GetLocked(),
+			Assignees:    assignees,
+			ForeignIndex: int64(*issue.Number),
+		})
+	}
+
+	return allIssues, len(issues) < perPage, nil
+}
+
+// GetNewComments returns comments of an issue or PR after the given time
+func (g GithubDownloaderV3) GetNewComments(commentable base.Commentable, updatedAfter time.Time) ([]*base.Comment, bool, error) {
+	comments, err := g.getCommentsSince(commentable, &updatedAfter)
+	return comments, false, err
+}
+
+// GetAllNewComments returns paginated comments after the given time
+func (g GithubDownloaderV3) GetAllNewComments(page, perPage int, updatedAfter time.Time) ([]*base.Comment, bool, error) {
+	return g.getAllCommentsSince(page, perPage, &updatedAfter)
+}
+
+// GetNewPullRequests returns pull requests after the given time according page and perPage
+func (g *GithubDownloaderV3) GetNewPullRequests(page, perPage int, updatedAfter time.Time) ([]*base.PullRequest, bool, error) {
+	// Every pull request is an issue, and only Issues API provides parameter `since`,
+	// So we should get issues IDs first and then get pull requests
+	if perPage > g.maxPerPage {
+		perPage = g.maxPerPage
+	}
+	opt := &github.IssueListByRepoOptions{
+		Sort:      "created",
+		Direction: "asc",
+		State:     "all",
+		Since:     updatedAfter,
+		ListOptions: github.ListOptions{
+			PerPage: perPage,
+			Page:    page,
+		},
+	}
+
+	allPRs := make([]*base.PullRequest, 0, perPage)
+	g.waitAndPickClient()
+	issues, resp, err := g.getClient().Issues.ListByRepo(g.ctx, g.repoOwner, g.repoName, opt)
+	if err != nil {
+		return nil, false, fmt.Errorf("error while listing repos: %v", err)
+	}
+	log.Trace("Request get issues %d/%d, but in fact get %d", perPage, page, len(issues))
+	g.setRate(&resp.Rate)
+	for _, issue := range issues {
+		if !issue.IsPullRequest() {
+			continue
+		}
+
+		pr, resp, err := g.getClient().PullRequests.Get(g.ctx, g.repoOwner, g.repoName, issue.GetNumber())
+		if err != nil {
+			return nil, false, fmt.Errorf("error while getting repo pull request: %v", err)
+		}
+		g.setRate(&resp.Rate)
+		basePR, err := g.convertGithubPullRequest(pr, perPage)
+		if err != nil {
+			return nil, false, err
+		}
+		allPRs = append(allPRs, basePR)
+	}
+
+	return allPRs, len(issues) < perPage, nil
+}
+
+// GetNewReviews returns new pull requests review after the given time
+func (g GithubDownloaderV3) GetNewReviews(reviewable base.Reviewable, updatedAfter time.Time) ([]*base.Review, error) {
+	// Github does not support since parameter for reviews, so we need to get all reviews
+	return g.GetReviews(reviewable)
+}
+
+func (g *GithubDownloaderV3) convertGithubPullRequest(pr *github.PullRequest, perPage int) (*base.PullRequest, error) {
+	labels := make([]*base.Label, 0, len(pr.Labels))
+	for _, l := range pr.Labels {
+		labels = append(labels, convertGithubLabel(l))
+	}
+
+	// get reactions
+	reactions, err := g.getIssueReactions(pr.GetNumber(), perPage)
+	if err != nil {
+		return nil, err
+	}
+
+	// download patch and saved as tmp file
+	g.waitAndPickClient()
+
+	return &base.PullRequest{
+		Title:          pr.GetTitle(),
+		Number:         int64(pr.GetNumber()),
+		PosterID:       pr.GetUser().GetID(),
+		PosterName:     pr.GetUser().GetLogin(),
+		PosterEmail:    pr.GetUser().GetEmail(),
+		Content:        pr.GetBody(),
+		Milestone:      pr.GetMilestone().GetTitle(),
+		State:          pr.GetState(),
+		Created:        pr.GetCreatedAt(),
+		Updated:        pr.GetUpdatedAt(),
+		Closed:         pr.ClosedAt,
+		Labels:         labels,
+		Merged:         pr.MergedAt != nil,
+		MergeCommitSHA: pr.GetMergeCommitSHA(),
+		MergedTime:     pr.MergedAt,
+		IsLocked:       pr.ActiveLockReason != nil,
+		Head: base.PullRequestBranch{
+			Ref:       pr.GetHead().GetRef(),
+			SHA:       pr.GetHead().GetSHA(),
+			OwnerName: pr.GetHead().GetUser().GetLogin(),
+			RepoName:  pr.GetHead().GetRepo().GetName(),
+			CloneURL:  pr.GetHead().GetRepo().GetCloneURL(),
+		},
+		Base: base.PullRequestBranch{
+			Ref:       pr.GetBase().GetRef(),
+			SHA:       pr.GetBase().GetSHA(),
+			RepoName:  pr.GetBase().GetRepo().GetName(),
+			OwnerName: pr.GetBase().GetUser().GetLogin(),
+		},
+		PatchURL:     pr.GetPatchURL(),
+		Reactions:    reactions,
+		ForeignIndex: int64(*pr.Number),
+	}, nil
+}
+
+func (g *GithubDownloaderV3) getIssueReactions(number, perPage int) ([]*base.Reaction, error) {
+	if g.SkipReactions {
+		return nil, nil
+	}
+
+	var reactions []*base.Reaction
+
+	for i := 1; ; i++ {
+		g.waitAndPickClient()
+		res, resp, err := g.getClient().Reactions.ListIssueReactions(g.ctx, g.repoOwner, g.repoName, number, &github.ListOptions{
+			Page:    i,
+			PerPage: perPage,
+		})
+		if err != nil {
+			return nil, err
+		}
+		g.setRate(&resp.Rate)
+		if len(res) == 0 {
+			break
+		}
+		for _, reaction := range res {
+			reactions = append(reactions, &base.Reaction{
+				UserID:   reaction.User.GetID(),
+				UserName: reaction.User.GetLogin(),
+				Content:  reaction.GetContent(),
+			})
+		}
+	}
+	return reactions, nil
 }
