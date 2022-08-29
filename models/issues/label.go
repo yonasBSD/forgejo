@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"html/template"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/label"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
 
@@ -69,9 +69,6 @@ func (err ErrLabelNotExist) Error() string {
 	return fmt.Sprintf("label does not exist [label_id: %d]", err.LabelID)
 }
 
-// LabelColorPattern is a regexp witch can validate LabelColor
-var LabelColorPattern = regexp.MustCompile("^#?(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$")
-
 // Label represents a label of repository for issues.
 type Label struct {
 	ID              int64 `xorm:"pk autoincr"`
@@ -79,7 +76,8 @@ type Label struct {
 	OrgID           int64 `xorm:"INDEX"`
 	Name            string
 	Description     string
-	Color           string `xorm:"VARCHAR(7)"`
+	Color           string         `xorm:"VARCHAR(7)"`
+	Priority        label.Priority `xorm:"VARCHAR(20)"`
 	NumIssues       int
 	NumClosedIssues int
 	CreatedUnix     timeutil.TimeStamp `xorm:"INDEX created"`
@@ -99,12 +97,12 @@ func init() {
 }
 
 // CalOpenIssues sets the number of open issues of a label based on the already stored number of closed issues.
-func (label *Label) CalOpenIssues() {
-	label.NumOpenIssues = label.NumIssues - label.NumClosedIssues
+func (l *Label) CalOpenIssues() {
+	l.NumOpenIssues = l.NumIssues - l.NumClosedIssues
 }
 
 // CalOpenOrgIssues calculates the open issues of a label for a specific repo
-func (label *Label) CalOpenOrgIssues(repoID, labelID int64) {
+func (l *Label) CalOpenOrgIssues(repoID, labelID int64) {
 	counts, _ := CountIssuesByRepo(&IssuesOptions{
 		RepoID:   repoID,
 		LabelIDs: []int64{labelID},
@@ -112,21 +110,21 @@ func (label *Label) CalOpenOrgIssues(repoID, labelID int64) {
 	})
 
 	for _, count := range counts {
-		label.NumOpenRepoIssues += count
+		l.NumOpenRepoIssues += count
 	}
 }
 
 // LoadSelectedLabelsAfterClick calculates the set of selected labels when a label is clicked
-func (label *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64) {
+func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64) {
 	var labelQuerySlice []string
 	labelSelected := false
-	labelID := strconv.FormatInt(label.ID, 10)
+	labelID := strconv.FormatInt(l.ID, 10)
 	for _, s := range currentSelectedLabels {
-		if s == label.ID {
+		if s == l.ID {
 			labelSelected = true
-		} else if -s == label.ID {
+		} else if -s == l.ID {
 			labelSelected = true
-			label.IsExcluded = true
+			l.IsExcluded = true
 		} else if s != 0 {
 			labelQuerySlice = append(labelQuerySlice, strconv.FormatInt(s, 10))
 		}
@@ -134,18 +132,18 @@ func (label *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64) 
 	if !labelSelected {
 		labelQuerySlice = append(labelQuerySlice, labelID)
 	}
-	label.IsSelected = labelSelected
-	label.QueryString = strings.Join(labelQuerySlice, ",")
+	l.IsSelected = labelSelected
+	l.QueryString = strings.Join(labelQuerySlice, ",")
 }
 
 // BelongsToOrg returns true if label is an organization label
-func (label *Label) BelongsToOrg() bool {
-	return label.OrgID > 0
+func (l *Label) BelongsToOrg() bool {
+	return l.OrgID > 0
 }
 
 // BelongsToRepo returns true if label is a repository label
-func (label *Label) BelongsToRepo() bool {
-	return label.RepoID > 0
+func (l *Label) BelongsToRepo() bool {
+	return l.RepoID > 0
 }
 
 // SrgbToLinear converts a component of an sRGB color to its linear intensity
@@ -175,9 +173,9 @@ const LuminanceThreshold float64 = 0.179
 
 // ForegroundColor calculates the text color for labels based
 // on their background color.
-func (label *Label) ForegroundColor() template.CSS {
-	if strings.HasPrefix(label.Color, "#") {
-		if color, err := strconv.ParseUint(label.Color[1:], 16, 64); err == nil {
+func (l *Label) ForegroundColor() template.CSS {
+	if strings.HasPrefix(l.Color, "#") {
+		if color, err := strconv.ParseUint(l.Color[1:], 16, 64); err == nil {
 			// NOTE: see web_src/js/components/ContextPopup.vue for similar implementation
 			luminance := Luminance(uint32(color))
 
@@ -194,28 +192,31 @@ func (label *Label) ForegroundColor() template.CSS {
 }
 
 // NewLabel creates a new label
-func NewLabel(ctx context.Context, label *Label) error {
-	if !LabelColorPattern.MatchString(label.Color) {
-		return fmt.Errorf("bad color code: %s", label.Color)
+func NewLabel(ctx context.Context, l *Label) error {
+	if !label.ColorPattern.MatchString(l.Color) {
+		return fmt.Errorf("bad color code: %s", l.Color)
+	}
+	if !l.Priority.IsValid() {
+		return fmt.Errorf("invalid priority: %s", l.Priority)
 	}
 
 	// normalize case
-	label.Color = strings.ToLower(label.Color)
+	l.Color = strings.ToLower(l.Color)
 
 	// add leading hash
-	if label.Color[0] != '#' {
-		label.Color = "#" + label.Color
+	if l.Color[0] != '#' {
+		l.Color = "#" + l.Color
 	}
 
 	// convert 3-character shorthand into 6-character version
-	if len(label.Color) == 4 {
-		r := label.Color[1]
-		g := label.Color[2]
-		b := label.Color[3]
-		label.Color = fmt.Sprintf("#%c%c%c%c%c%c", r, r, g, g, b, b)
+	if len(l.Color) == 4 {
+		r := l.Color[1]
+		g := l.Color[2]
+		b := l.Color[3]
+		l.Color = fmt.Sprintf("#%c%c%c%c%c%c", r, r, g, g, b, b)
 	}
 
-	return db.Insert(ctx, label)
+	return db.Insert(ctx, l)
 }
 
 // NewLabels creates new labels
@@ -226,11 +227,14 @@ func NewLabels(labels ...*Label) error {
 	}
 	defer committer.Close()
 
-	for _, label := range labels {
-		if !LabelColorPattern.MatchString(label.Color) {
-			return fmt.Errorf("bad color code: %s", label.Color)
+	for _, l := range labels {
+		if !label.ColorPattern.MatchString(l.Color) {
+			return fmt.Errorf("bad color code: %s", l.Color)
 		}
-		if err := db.Insert(ctx, label); err != nil {
+		if !l.Priority.IsValid() {
+			return fmt.Errorf("invalid priority: %s", l.Priority)
+		}
+		if err := db.Insert(ctx, l); err != nil {
 			return err
 		}
 	}
@@ -239,15 +243,18 @@ func NewLabels(labels ...*Label) error {
 
 // UpdateLabel updates label information.
 func UpdateLabel(l *Label) error {
-	if !LabelColorPattern.MatchString(l.Color) {
+	if !label.ColorPattern.MatchString(l.Color) {
 		return fmt.Errorf("bad color code: %s", l.Color)
 	}
-	return updateLabelCols(db.DefaultContext, l, "name", "description", "color")
+	if !l.Priority.IsValid() {
+		return fmt.Errorf("invalid priority: %s", l.Priority)
+	}
+	return updateLabelCols(db.DefaultContext, l, "name", "color", "priority", "description")
 }
 
 // DeleteLabel delete a label
 func DeleteLabel(id, labelID int64) error {
-	label, err := GetLabelByID(db.DefaultContext, labelID)
+	l, err := GetLabelByID(db.DefaultContext, labelID)
 	if err != nil {
 		if IsErrLabelNotExist(err) {
 			return nil
@@ -263,10 +270,10 @@ func DeleteLabel(id, labelID int64) error {
 
 	sess := db.GetEngine(ctx)
 
-	if label.BelongsToOrg() && label.OrgID != id {
+	if l.BelongsToOrg() && l.OrgID != id {
 		return nil
 	}
-	if label.BelongsToRepo() && label.RepoID != id {
+	if l.BelongsToRepo() && l.RepoID != id {
 		return nil
 	}
 
