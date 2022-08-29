@@ -646,6 +646,11 @@ func NewIssueLabel(issue *Issue, label *Label, doer *user_model.User) (err error
 		return err
 	}
 
+	issue.CalculatePriority()
+	if err = UpdateIssueCols(ctx, issue, "priority"); err != nil {
+		return err
+	}
+
 	return committer.Commit()
 }
 
@@ -683,6 +688,11 @@ func NewIssueLabels(issue *Issue, labels []*Label, doer *user_model.User) (err e
 
 	issue.Labels = nil
 	if err = issue.LoadLabels(ctx); err != nil {
+		return err
+	}
+
+	issue.CalculatePriority()
+	if err = UpdateIssueCols(ctx, issue, "priority"); err != nil {
 		return err
 	}
 
@@ -724,7 +734,12 @@ func DeleteIssueLabel(ctx context.Context, issue *Issue, label *Label, doer *use
 	}
 
 	issue.Labels = nil
-	return issue.LoadLabels(ctx)
+	if err := issue.LoadLabels(ctx); err != nil {
+		return err
+	}
+
+	issue.CalculatePriority()
+	return UpdateIssueCols(ctx, issue, "priority")
 }
 
 // DeleteLabelsByRepoID  deletes labels of some repository

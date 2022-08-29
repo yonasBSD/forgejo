@@ -37,13 +37,18 @@ func (p Priority) Value() int {
 	return v
 }
 
-// IsValid checks if priority is valid
+// Valid checks if priority is valid
 func (p Priority) IsValid() bool {
-	if len(p) == 0 {
+	if p.IsEmpty() {
 		return true
 	}
 	_, ok := priorityValues[p]
 	return ok
+}
+
+// IsEmpty check if priority is not set
+func (p Priority) IsEmpty() bool {
+	return len(p) == 0
 }
 
 // GetPriorities returns list of priorities
