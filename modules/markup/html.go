@@ -5,7 +5,6 @@
 package markup
 
 import (
-	"bytes"
 	"io"
 	"net/url"
 	"path"
@@ -298,26 +297,36 @@ var (
 	nulCleaner = strings.NewReplacer("\000", "")
 )
 
+type cleanReader struct {
+	io.Reader
+}
+
+func (c cleanReader) Read(bs []byte) (int, error) {
+	original := make([]byte, len(bs))
+	n, err := c.Reader.Read(original)
+	if err != nil {
+		return n, err
+	}
+	n = copy(bs, tagCleaner.ReplaceAll([]byte(nulCleaner.Replace(string(original[:n]))), []byte("&lt;$1")))
+	return n, nil
+}
+
+var _ io.Reader = cleanReader{}
+
 func postProcess(ctx *RenderContext, procs []processor, input io.Reader, output io.Writer) error {
 	defer ctx.Cancel()
-	// FIXME: don't read all content to memory
-	rawHTML, err := io.ReadAll(input)
-	if err != nil {
-		return err
-	}
 
-	res := bytes.NewBuffer(make([]byte, 0, len(rawHTML)+50))
 	// prepend "<html><body>"
-	_, _ = res.WriteString("<html><body>")
+	htmlTagPrefix := strings.NewReader("<html><body>")
 
 	// Strip out nuls - they're always invalid
-	_, _ = res.Write(tagCleaner.ReplaceAll([]byte(nulCleaner.Replace(string(rawHTML))), []byte("&lt;$1")))
+	body := cleanReader{input}
 
 	// close the tags
-	_, _ = res.WriteString("</body></html>")
+	htmlTagSuffix := strings.NewReader("</body></html>")
 
 	// parse the HTML
-	node, err := html.Parse(res)
+	node, err := html.Parse(io.MultiReader(htmlTagPrefix, body, htmlTagSuffix))
 	if err != nil {
 		return &postProcessError{"invalid HTML", err}
 	}
