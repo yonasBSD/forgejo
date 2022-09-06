@@ -104,6 +104,7 @@ func main() {
 		cmd.CmdDumpRepository,
 		cmd.CmdRestoreRepository,
 		cmd.CmdActions,
+		cmd.CmdF3,
 	}
 
 	// default configuration flags
