@@ -99,6 +99,7 @@ func main() {
 		cmd.CmdKeys,
 		cmd.CmdConvert,
 		cmd.CmdDoctor,
+		cmd.CmdF3,
 		cmd.CmdManager,
 		cmd.CmdEmbedded,
 		cmd.CmdMigrateStorage,
