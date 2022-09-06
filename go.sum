@@ -42,11 +42,10 @@ cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9
 cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3fOKtUw0Xmo=
 code.gitea.io/actions-proto-go v0.2.1 h1:ToMN/8thz2q10TuCq8dL2d8mI+/pWpJcHCvG+TELwa0=
 code.gitea.io/actions-proto-go v0.2.1/go.mod h1:00ys5QDo1iHN1tHNvvddAcy2W/g+425hQya1cCSvq9A=
-code.gitea.io/gitea-vet v0.2.1/go.mod h1:zcNbT/aJEmivCAhfmkHOlT645KNOf9W2KnkLgFjGGfE=
 code.gitea.io/gitea-vet v0.2.2 h1:TEOV/Glf38iGmKzKP0EB++Z5OSL4zGg3RrAvlwaMuvk=
 code.gitea.io/gitea-vet v0.2.2/go.mod h1:zcNbT/aJEmivCAhfmkHOlT645KNOf9W2KnkLgFjGGfE=
-code.gitea.io/sdk/gitea v0.15.1 h1:WJreC7YYuxbn0UDaPuWIe/mtiNKTvLN8MLkaw71yx/M=
-code.gitea.io/sdk/gitea v0.15.1/go.mod h1:klY2LVI3s3NChzIk/MzMn7G1FHrfU7qd63iSMVoHRBA=
+code.gitea.io/sdk/gitea v0.15.1-0.20230419161926-24a404e5610c h1:Fii6iLyyhq49iJqzudOUgE1OfrhYTH+8/tD4ykNf35U=
+code.gitea.io/sdk/gitea v0.15.1-0.20230419161926-24a404e5610c/go.mod h1:ndkDk99BnfiUCCYEUhpNzi0lpmApXlwRFqClBlOlEBg=
 codeberg.org/gusted/mcaptcha v0.0.0-20220723083913-4f3072e1d570 h1:TXbikPqa7YRtfU9vS6QJBg77pUvbEb6StRdZO8t1bEY=
 codeberg.org/gusted/mcaptcha v0.0.0-20220723083913-4f3072e1d570/go.mod h1:IIAjsijsd8q1isWX8MACefDEgTQslQ4stk2AeeTt3kM=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
@@ -279,6 +278,8 @@ github.com/cupcake/rdb v0.0.0-20161107195141-43ba34106c76/go.mod h1:vYwsqCOLxGii
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davidmz/go-pageant v1.0.2 h1:bPblRCh5jGU+Uptpz6LgMZGD5hJoOt7otgT454WvHn0=
+github.com/davidmz/go-pageant v1.0.2/go.mod h1:P2EDDnMqIwG5Rrp05dTRITj9z2zpGcD9efWSkTNKLIE=
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d/go.mod h1:tmAIfUFEirG/Y8jhZ9M+h36obRZAk/1fcSpXwAVlfqE=
 github.com/denisenkom/go-mssqldb v0.10.0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
@@ -374,6 +375,7 @@ github.com/go-enry/go-enry/v2 v2.8.3 h1:BwvNrN58JqBJhyyVdZSl5QD3xoxEEGYUrRyPh31F
 github.com/go-enry/go-enry/v2 v2.8.3/go.mod h1:GVzIiAytiS5uT/QiuakK7TF1u4xDab87Y8V5EJRpsIQ=
 github.com/go-enry/go-oniguruma v1.2.1 h1:k8aAMuJfMrqm/56SG2lV9Cfti6tC4x8673aHCcBk+eo=
 github.com/go-enry/go-oniguruma v1.2.1/go.mod h1:bWDhYP+S6xZQgiRL7wlTScFYBe023B6ilRZbCAD5Hf4=
+github.com/go-fed/httpsig v1.1.0/go.mod h1:RCMrTZvN1bJYtofsG4rd5NaO5obxQ5xBkdiS7xsT7bM=
 github.com/go-fed/httpsig v1.1.1-0.20201223112313-55836744818e h1:oRq/fiirun5HqlEWMLIcDmLpIELlG4iGbd0s8iqgPi8=
 github.com/go-fed/httpsig v1.1.1-0.20201223112313-55836744818e/go.mod h1:RCMrTZvN1bJYtofsG4rd5NaO5obxQ5xBkdiS7xsT7bM=
 github.com/go-git/gcfg v1.5.0 h1:Q5ViNfGF8zFgyJWPqYwA7qGFoMTEiBmdlkcfRmpIMa4=
@@ -1309,6 +1311,7 @@ golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
 golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
+golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a/go.mod h1:P+XmwS30IXTQdn5tA2iutPOUgjI07+tq3H3K9MVA1s8=
 golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
@@ -1329,6 +1332,8 @@ golang.org/x/exp v0.0.0-20191227195350-da58074b4299/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u096TMicItID8zy7Y6sNkU49FU4=
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
+golang.org/x/exp v0.0.0-20220516143420-24438e51023a h1:tiLLxEjKNE6Hrah/Dp/cyHvsyjDLcMFSocOHO5XDmOM=
+golang.org/x/exp v0.0.0-20220516143420-24438e51023a/go.mod h1:lgLbSvA5ygNOMpwM/9anMpWVlVJ7Z+cHWq/eFuinpGE=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/image v0.7.0 h1:gzS29xtG1J5ybQlv0PuyfE3nmc6R4qB73m6LUUmvFuw=
@@ -1797,6 +1802,8 @@ honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWh
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
 honnef.co/go/tools v0.0.1-2020.1.3/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
 honnef.co/go/tools v0.0.1-2020.1.4/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
+lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230427084437-fabab01062d0 h1:5y3hSNZGWNUpyRpEGWAQVc1Y9BdHzMh9HSkklnXTAgM=
+lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230427084437-fabab01062d0/go.mod h1:hHO78jzN6POY88iXr2+kJFl7IHOaBsVS22bBbRCBwRQ=
 lukechampine.com/uint128 v1.1.1 h1:pnxCASz787iMf+02ssImqk6OLt+Z5QHMoZyUXR4z6JU=
 lukechampine.com/uint128 v1.1.1/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=
 modernc.org/cc/v3 v3.33.6/go.mod h1:iPJg1pkwXqAV16SNgFBVYmggfMg6xhs+2oiO0vclK3g=
