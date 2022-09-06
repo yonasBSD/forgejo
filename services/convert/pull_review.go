@@ -103,7 +103,7 @@ func ToPullReviewCommentList(ctx context.Context, review *issues_model.Review, d
 					Path:         comment.TreePath,
 					CommitID:     comment.CommitSHA,
 					OrigCommitID: comment.OldRef,
-					DiffHunk:     patch2diff(comment.Patch),
+					DiffHunk:     Patch2diff(comment.Patch),
 					HTMLURL:      comment.HTMLURL(ctx),
 					HTMLPullURL:  review.Issue.HTMLURL(),
 				}
@@ -120,7 +120,7 @@ func ToPullReviewCommentList(ctx context.Context, review *issues_model.Review, d
 	return apiComments, nil
 }
 
-func patch2diff(patch string) string {
+func Patch2diff(patch string) string {
 	split := strings.Split(patch, "\n@@")
 	if len(split) == 2 {
 		return "@@" + split[1]
