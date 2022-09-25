@@ -1,8 +1,15 @@
 <div class="{{TabSizeClass .Editorconfig .FileName}} non-diff-file-content">
 	{{- if .FileError}}
-		<div class="ui warning message">
+		<div class="ui error message">
 			<div class="text left">
 				<div>{{.FileError}}</div>
+			</div>
+		</div>
+	{{end}}
+	{{- if .FileWarning}}
+		<div class="ui warning message">
+			<div class="text left">
+				<div>{{.FileWarning}}</div>
 			</div>
 		</div>
 	{{end}}
