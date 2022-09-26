@@ -197,7 +197,7 @@ func runHTTPS(network, listenAddr, name, certFile, keyFile, caFile string, m htt
 		tlsConfig.ClientCAs = x509.NewCertPool()
 
 		if !tlsConfig.ClientCAs.AppendCertsFromPEM(caPEMBlock) {
-			log.Error("Failed to load https ca file %s into cert pool for %s:%s", caFile, network, listenAddr)
+			log.Fatal("Failed to load https ca file %s into cert pool for %s:%s", caFile, network, listenAddr)
 		}
 	}
 
