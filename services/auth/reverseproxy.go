@@ -39,7 +39,12 @@ type ReverseProxy struct{}
 func (r *ReverseProxy) getUserName(req *http.Request) string {
 	webAuthUser := strings.TrimSpace(req.Header.Get(setting.ReverseProxyAuthUser))
 	if len(webAuthUser) == 0 {
-		return ""
+		email := strings.TrimSpace(req.Header.Get(setting.ReverseProxyAuthEmail))
+		if !strings.Contains(email, "@") {
+			return ""
+		}
+		webAuthUser := strings.Split(email, "@")[0]
+		return webAuthUser
 	}
 	return webAuthUser
 }
