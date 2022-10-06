@@ -236,6 +236,31 @@ func (issue *Issue) LoadLabels(ctx context.Context) (err error) {
 	return nil
 }
 
+// CalculatePriority calculates priority value of an issue based on its labels
+func (issue *Issue) CalculatePriority() {
+	// If no labels are set then set default priority
+	if issue.Labels == nil {
+		issue.Priority = 0
+		return
+	}
+	// Use only the labels that has priority set
+	p := -10000000
+	for _, label := range issue.Labels {
+		if label.Priority.IsEmpty() {
+			continue
+		}
+		if pv := label.Priority.Value(); p < pv {
+			p = pv
+		}
+	}
+	// If no label has priority use default
+	if p == -10000000 {
+		issue.Priority = 0
+	} else {
+		issue.Priority = p
+	}
+}
+
 // LoadPoster loads poster
 func (issue *Issue) LoadPoster() error {
 	return issue.loadPoster(db.DefaultContext)
@@ -560,11 +585,12 @@ func ClearIssueLabels(issue *Issue, doer *user_model.User) (err error) {
 		return err
 	}
 
-	if err = committer.Commit(); err != nil {
-		return fmt.Errorf("Commit: %v", err)
+	issue.Priority = 0
+	if err = UpdateIssueCols(ctx, issue, "priority"); err != nil {
+		return err
 	}
 
-	return nil
+	return committer.Commit()
 }
 
 type labelSorter []*Label
@@ -643,6 +669,11 @@ func ReplaceIssueLabels(issue *Issue, labels []*Label, doer *user_model.User) (e
 
 	issue.Labels = nil
 	if err = issue.LoadLabels(ctx); err != nil {
+		return err
+	}
+
+	issue.CalculatePriority()
+	if err = UpdateIssueCols(ctx, issue, "priority"); err != nil {
 		return err
 	}
 
@@ -1036,6 +1067,16 @@ func NewIssueWithIndex(ctx context.Context, doer *user_model.User, opts NewIssue
 				return fmt.Errorf("addLabel [id: %d]: %v", label.ID, err)
 			}
 		}
+
+		opts.Issue.Labels = nil
+		if err = opts.Issue.LoadLabels(ctx); err != nil {
+			return err
+		}
+
+		opts.Issue.CalculatePriority()
+		if err = UpdateIssueCols(ctx, opts.Issue, "priority"); err != nil {
+			return err
+		}
 	}
 
 	if err = NewIssueUsers(ctx, opts.Repo, opts.Issue); err != nil {
@@ -1089,11 +1130,7 @@ func NewIssue(repo *repo_model.Repository, issue *Issue, labelIDs []int64, uuids
 		return fmt.Errorf("newIssue: %v", err)
 	}
 
-	if err = committer.Commit(); err != nil {
-		return fmt.Errorf("Commit: %v", err)
-	}
-
-	return nil
+	return committer.Commit()
 }
 
 // GetIssueByIndex returns raw issue without loading attributes by index in a repository.

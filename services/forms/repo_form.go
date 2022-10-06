@@ -559,8 +559,9 @@ func (f *CreateMilestoneForm) Validate(req *http.Request, errs binding.Errors) b
 type CreateLabelForm struct {
 	ID          int64
 	Title       string `binding:"Required;MaxSize(50)" locale:"repo.issues.label_title"`
-	Description string `binding:"MaxSize(200)" locale:"repo.issues.label_description"`
 	Color       string `binding:"Required;MaxSize(7)" locale:"repo.issues.label_color"`
+	Priority    string `binding:"MaxSize(20);In(critical,high,medium,low)" locale:"repo.issues.label_priority"`
+	Description string `binding:"MaxSize(200)" locale:"repo.issues.label_description"`
 }
 
 // Validate validates the fields

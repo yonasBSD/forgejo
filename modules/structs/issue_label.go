@@ -11,7 +11,9 @@ type Label struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 	// example: 00aabb
-	Color       string `json:"color"`
+	Color string `json:"color"`
+	// enum: critical,high,medium,low
+	Priority    string `json:"priority"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
 }
@@ -22,14 +24,18 @@ type CreateLabelOption struct {
 	Name string `json:"name" binding:"Required"`
 	// required:true
 	// example: #00aabb
-	Color       string `json:"color" binding:"Required"`
+	Color string `json:"color" binding:"Required"`
+	// enum: critical,high,medium,low
+	Priority    string `json:"priority"`
 	Description string `json:"description"`
 }
 
 // EditLabelOption options for editing a label
 type EditLabelOption struct {
-	Name        *string `json:"name"`
-	Color       *string `json:"color"`
+	Name  *string `json:"name"`
+	Color *string `json:"color"`
+	// enum: critical,high,medium,low
+	Priority    *string `json:"priority"`
 	Description *string `json:"description"`
 }
 

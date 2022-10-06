@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/label"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/web"
@@ -30,6 +31,7 @@ func Labels(ctx *context.Context) {
 	ctx.Data["PageIsLabels"] = true
 	ctx.Data["RequireTribute"] = true
 	ctx.Data["LabelTemplates"] = repo_module.LabelTemplates
+	ctx.Data["LabelPriorities"] = label.GetPriorities()
 	ctx.HTML(http.StatusOK, tplLabels)
 }
 
@@ -42,8 +44,8 @@ func InitializeLabels(ctx *context.Context) {
 	}
 
 	if err := repo_module.InitializeLabels(ctx, ctx.Repo.Repository.ID, form.TemplateName, false); err != nil {
-		if repo_module.IsErrIssueLabelTemplateLoad(err) {
-			originalErr := err.(repo_module.ErrIssueLabelTemplateLoad).OriginalError
+		if label.IsErrTemplateLoad(err) {
+			originalErr := err.(label.ErrTemplateLoad).OriginalError
 			ctx.Flash.Error(ctx.Tr("repo.issues.label_templates.fail_to_load_file", form.TemplateName, originalErr))
 			ctx.Redirect(ctx.Repo.RepoLink + "/labels")
 			return
@@ -114,8 +116,9 @@ func NewLabel(ctx *context.Context) {
 	l := &issues_model.Label{
 		RepoID:      ctx.Repo.Repository.ID,
 		Name:        form.Title,
-		Description: form.Description,
+		Priority:    label.Priority(form.Priority),
 		Color:       form.Color,
+		Description: form.Description,
 	}
 	if err := issues_model.NewLabel(ctx, l); err != nil {
 		ctx.ServerError("NewLabel", err)
@@ -139,8 +142,10 @@ func UpdateLabel(ctx *context.Context) {
 	}
 
 	l.Name = form.Title
-	l.Description = form.Description
 	l.Color = form.Color
+	l.Priority = label.Priority(form.Priority)
+	l.Description = form.Description
+
 	if err := issues_model.UpdateLabel(l); err != nil {
 		ctx.ServerError("UpdateLabel", err)
 		return

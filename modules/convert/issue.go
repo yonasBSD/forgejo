@@ -183,6 +183,7 @@ func ToLabel(label *issues_model.Label, repo *repo_model.Repository, org *user_m
 		ID:          label.ID,
 		Name:        label.Name,
 		Color:       strings.TrimLeft(label.Color, "#"),
+		Priority:    string(label.Priority),
 		Description: label.Description,
 	}
 
