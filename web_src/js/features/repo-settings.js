@@ -90,3 +90,18 @@ export function initRepoSettingBranches() {
     });
   }
 }
+
+function togglePushMirrorFields(disable) {
+  const els = document.querySelectorAll('#push_mirror_password, #push_mirror_username');
+  for (const el of els || []) {
+    el.classList.toggle('disabled', disable);
+  }
+}
+export function initRepoSettingMirror() {
+  const checkbox = document.getElementById('push_mirror_use_ssh');
+  if (!checkbox) return;
+  togglePushMirrorFields(checkbox.checked);
+  checkbox.addEventListener('change', () => {
+    togglePushMirrorFields(checkbox.checked);
+  });
+}

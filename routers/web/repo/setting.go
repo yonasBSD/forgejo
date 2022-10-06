@@ -24,6 +24,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/crypto"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/indexer/stats"
@@ -345,6 +346,12 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
+		if form.PushMirrorUseSSH && (form.PushMirrorUsername != "" || form.PushMirrorPassword != "") {
+			ctx.Data["Err_PushMirrorUseSSH"] = true
+			ctx.RenderWithErr(ctx.Tr("repo.mirror_denied_combination"), tplSettingsOptions, &form)
+			return
+		}
+
 		address, err := forms.ParseRemoteAddr(form.PushMirrorAddress, form.PushMirrorUsername, form.PushMirrorPassword)
 		if err == nil {
 			err = migrations.IsMigrateURLAllowed(address, ctx.Doer)
@@ -368,6 +375,17 @@ func SettingsPost(ctx *context.Context) {
 			SyncOnCommit: form.PushMirrorSyncOnCommit,
 			Interval:     interval,
 		}
+
+		if form.PushMirrorUseSSH {
+			publicKey, privateKey, err := crypto.GenerateEd25519Keypair()
+			if err != nil {
+				ctx.ServerError("GenerateEd25519Keypair", err)
+				return
+			}
+			m.PrivateKey = string(privateKey)
+			m.PublicKey = string(publicKey)
+		}
+
 		if err := repo_model.InsertPushMirror(ctx, m); err != nil {
 			ctx.ServerError("InsertPushMirror", err)
 			return

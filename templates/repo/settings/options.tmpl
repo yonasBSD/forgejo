@@ -84,6 +84,7 @@
 							<th style="width:40%">{{$.locale.Tr "repo.settings.mirror_settings.mirrored_repository"}}</th>
 							<th>{{$.locale.Tr "repo.settings.mirror_settings.direction"}}</th>
 							<th>{{$.locale.Tr "repo.settings.mirror_settings.last_update"}}</th>
+							<th>{{$.locale.Tr "repo.mirror_public_key"}}</th>
 							<th></th>
 						</tr>
 					</thead>
@@ -172,7 +173,8 @@
 							<td>{{$address.Address}}</td>
 							<td>{{$.locale.Tr "repo.settings.mirror_settings.direction.push"}}</td>
 							<td>{{if .LastUpdateUnix}}{{.LastUpdateUnix.AsTime}}{{else}}{{$.locale.Tr "never"}}{{end}} {{if .LastError}}<div class="ui red label tooltip" data-content="{{.LastError}}">{{$.locale.Tr "error"}}</div>{{end}}</td>
-							<td class="right aligned">
+							<td><a data-clipboard-text="{{.GetPublicKey}}">{{$.locale.Tr "repo.settings.mirror_settings.push_mirror.copy_public_key"}}</a></td>
+							<td class="right aligned df">
 								<form method="post" style="display: inline-block">
 									{{$.CsrfTokenHtml}}
 									<input type="hidden" name="action" value="push-mirror-remove">
@@ -211,11 +213,18 @@
 											<div class="p-2">
 												<div class="inline field {{if .Err_PushMirrorAuth}}error{{end}}">
 													<label for="push_mirror_username">{{.locale.Tr "username"}}</label>
-													<input id="push_mirror_username" name="push_mirror_username" value="{{.push_mirror_username}}">
+													<input id="push_mirror_username" class="field" name="push_mirror_username" value="{{.push_mirror_username}}">
 												</div>
 												<div class="inline field {{if .Err_PushMirrorAuth}}error{{end}}">
 													<label for="push_mirror_password">{{.locale.Tr "password"}}</label>
-													<input id="push_mirror_password" name="push_mirror_password" type="password" value="{{.push_mirror_password}}" autocomplete="off">
+													<input id="push_mirror_password" class="field" name="push_mirror_password" type="password" value="{{.push_mirror_password}}" autocomplete="off">
+												</div>
+												<div class="inline field {{if .Err_PushMirrorUseSSH}}error{{end}}">
+													<div class="ui checkbox df ac">
+														<input id="push_mirror_use_ssh" name="push_mirror_use_ssh" type="checkbox" {{if .push_mirror_use_ssh}}checked{{end}}>
+														<label for="push_mirror_use_ssh">{{.locale.Tr "repo.mirror_use_ssh"}}</label>
+														<span class="tooltip" data-content="{{.locale.Tr "repo.mirror_use_ssh_tooltip"}}">{{svg "octicon-question" 16 "ml-3"}}</span>
+													</div>
 												</div>
 											</div>
 										</details>

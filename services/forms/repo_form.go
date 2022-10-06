@@ -6,8 +6,10 @@
 package forms
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"code.gitea.io/gitea/models"
@@ -92,6 +94,9 @@ func (f *MigrateRepoForm) Validate(req *http.Request, errs binding.Errors) bindi
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
 
+// scpRegex matches the SCP-like addresses used by Git to access repositories over SSH.
+var scpRegex = regexp.MustCompile(`^([a-zA-Z0-9_]+)@([a-zA-Z0-9._-]+):(.*)$`)
+
 // ParseRemoteAddr checks if given remote address is valid,
 // and returns composed URL with needed username and password.
 func ParseRemoteAddr(remoteAddr, authUsername, authPassword string) (string, error) {
@@ -107,7 +112,15 @@ func ParseRemoteAddr(remoteAddr, authUsername, authPassword string) (string, err
 		if len(authUsername)+len(authPassword) > 0 {
 			u.User = url.UserPassword(authUsername, authPassword)
 		}
-		remoteAddr = u.String()
+		return u.String(), nil
+	}
+
+	// Detect SCP-like remote addresses and return host.
+	if m := scpRegex.FindStringSubmatch(remoteAddr); m != nil {
+		// Match SCP-like syntax and convert it to a URL.
+		// Eg, "git@gitea.com:user/repo" becomes
+		// "ssh://git@gitea.com/user/repo".
+		return fmt.Sprintf("ssh://%s@%s/%s", url.User(m[1]), m[2], m[3]), nil
 	}
 
 	return remoteAddr, nil
@@ -128,8 +141,9 @@ type RepoSettingForm struct {
 	PushMirrorAddress      string
 	PushMirrorUsername     string
 	PushMirrorPassword     string
-	PushMirrorSyncOnCommit bool
 	PushMirrorInterval     string
+	PushMirrorUseSSH       bool
+	PushMirrorSyncOnCommit bool
 	Private                bool
 	Template               bool
 	EnablePrune            bool

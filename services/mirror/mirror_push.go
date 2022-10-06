@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -156,11 +157,37 @@ func runPushSync(ctx context.Context, m *repo_model.PushMirror) error {
 
 		log.Trace("Pushing %s mirror[%d] remote %s", path, m.ID, m.RemoteName)
 
+		var initArgs []string
+
+		// OpenSSH isn't very intuitive when you want to specify a specific keypair.
+		// Therefore, we need to create a temporary file that stores the private key, so that OpenSSH can use it.
+		// We delete the the temporary file afterwards.
+		if m.PublicKey != "" {
+			f, err := os.CreateTemp(os.TempDir(), m.RemoteName)
+			if err != nil {
+				log.Error("CreateTemp: %v", err)
+				return errors.New("unexpected error")
+			}
+			defer func() {
+				f.Close()
+				if err := os.Remove(f.Name()); err != nil {
+					log.Error("os.Remove: %v", err)
+				}
+			}()
+
+			if _, err := f.Write([]byte(m.PrivateKey)); err != nil {
+				log.Error("f.Write: %v", err)
+				return errors.New("unexpected error")
+			}
+
+			initArgs = append(initArgs, "-c", fmt.Sprintf("core.sshcommand=ssh -i %q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no", f.Name()))
+		}
 		if err := git.Push(ctx, path, git.PushOptions{
-			Remote:  m.RemoteName,
-			Force:   true,
-			Mirror:  true,
-			Timeout: timeout,
+			Remote:   m.RemoteName,
+			Force:    true,
+			Mirror:   true,
+			Timeout:  timeout,
+			InitArgs: initArgs,
 		}); err != nil {
 			log.Error("Error pushing %s mirror[%d] remote %s: %v", path, m.ID, m.RemoteName, err)
 
