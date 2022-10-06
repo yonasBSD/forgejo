@@ -413,6 +413,8 @@ var migrations = []Migration{
 	NewMigration("Add badges to users", createUserBadgesTable),
 	// v225 -> v226
 	NewMigration("Alter gpg_key/public_key content TEXT fields to MEDIUMTEXT", alterPublicGPGKeyContentFieldsToMediumText),
+	// v226 -> 227
+	NewMigration("Rename project boards to columns", renameProjectBoardsToColumns),
 }
 
 // GetCurrentDBVersion returns the current db version
@@ -1013,4 +1015,40 @@ func modifyColumn(x *xorm.Engine, tableName string, col *schemas.Column) error {
 		return err
 	}
 	return nil
+}
+
+func renameTable(sess *xorm.Session, old, new string) error {
+	dialect := sess.Engine().Dialect().URI().DBType
+
+	switch dialect {
+	case schemas.MYSQL:
+		_, err := sess.Exec(fmt.Sprintf("RENAME TABLE `%s` TO `%s`;", old, new))
+		return err
+	case schemas.POSTGRES, schemas.SQLITE:
+		_, err := sess.Exec(fmt.Sprintf("ALTER TABLE `%s` RENAME TO `%s`;", old, new))
+		return err
+	case schemas.MSSQL:
+		_, err := sess.Exec(fmt.Sprintf("sp_rename `%s`,`%s`", old, new))
+		return err
+	default:
+		return fmt.Errorf("dialect '%s' not supported", dialect)
+	}
+}
+
+func renameColumn(sess *xorm.Session, table, old, new string) error {
+	dialect := sess.Engine().Dialect().URI().DBType
+
+	switch dialect {
+	case schemas.MYSQL:
+		_, err := sess.Exec("ALTER TABLE `task` CHANGE errors message text")
+		return err
+	case schemas.POSTGRES, schemas.SQLITE:
+		_, err := sess.Exec("ALTER TABLE `task` RENAME COLUMN errors TO message")
+		return err
+	case schemas.MSSQL:
+		_, err := sess.Exec("sp_rename 'task.errors', 'message', 'COLUMN'")
+		return err
+	default:
+		return fmt.Errorf("dialect '%s' not supported", dialect)
+	}
 }

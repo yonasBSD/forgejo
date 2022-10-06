@@ -4,12 +4,12 @@ const {csrfToken} = window.config;
 
 function updateIssueCount(cards) {
   const parent = cards.parentElement;
-  const cnt = parent.getElementsByClassName('board-card').length;
-  parent.getElementsByClassName('board-card-cnt')[0].innerText = cnt;
+  const cnt = parent.getElementsByClassName('project-column-card').length;
+  parent.getElementsByClassName('column-card-cnt')[0].innerText = cnt;
 }
 
 function moveIssue({item, from, to, oldIndex}) {
-  const columnCards = to.getElementsByClassName('board-card');
+  const columnCards = to.getElementsByClassName('project-column-card');
   updateIssueCount(from);
   updateIssueCount(to);
 
@@ -35,24 +35,24 @@ function moveIssue({item, from, to, oldIndex}) {
 }
 
 async function initRepoProjectSortable() {
-  const els = document.querySelectorAll('#project-board > .board');
+  const els = document.querySelectorAll('#project-board > .project-board');
   if (!els.length) return;
 
   const {Sortable} = await import(/* webpackChunkName: "sortable" */'sortablejs');
 
-  // the HTML layout is: #project-board > .board > .board-column .board.cards > .board-card.card .content
+  // the HTML layout is: #project-board > .project-board > .project-column .project-column-cards > .project-column-card .content
   const mainBoard = els[0];
-  let boardColumns = mainBoard.getElementsByClassName('board-column');
+  let columns = mainBoard.getElementsByClassName('project-column');
   new Sortable(mainBoard, {
-    group: 'board-column',
-    draggable: '.board-column',
+    group: 'project-column',
+    draggable: '.project-column',
     filter: '[data-id="0"]',
     animation: 150,
     ghostClass: 'card-ghost',
     onSort: () => {
-      boardColumns = mainBoard.getElementsByClassName('board-column');
-      for (let i = 0; i < boardColumns.length; i++) {
-        const column = boardColumns[i];
+      columns = mainBoard.getElementsByClassName('project-column');
+      for (let i = 0; i < columns.length; i++) {
+        const column = columns[i];
         if (parseInt($(column).data('sorting')) !== i) {
           $.ajax({
             url: $(column).data('url'),
@@ -68,12 +68,12 @@ async function initRepoProjectSortable() {
     },
   });
 
-  for (const boardColumn of boardColumns) {
-    const boardCardList = boardColumn.getElementsByClassName('board')[0];
-    new Sortable(boardCardList, {
+  for (const column of columns) {
+    const cardList = column.getElementsByClassName('project-column-cards')[0];
+    new Sortable(cardList, {
       group: 'shared',
       animation: 150,
-      ghostClass: 'card-ghost',
+      ghostClass: 'project-column-card-ghost',
       onAdd: moveIssue,
       onUpdate: moveIssue,
     });
@@ -87,17 +87,17 @@ export default function initRepoProject() {
 
   const _promise = initRepoProjectSortable();
 
-  $('.edit-project-board').each(function () {
-    const projectHeader = $(this).closest('.board-column-header');
-    const projectTitleLabel = projectHeader.find('.board-label');
+  $('.edit-project-column').each(function () {
+    const projectHeader = $(this).closest('.column-header');
+    const projectTitleLabel = projectHeader.find('.column-label');
     const projectTitleInput = $(this).find(
-      '.content > .form > .field > .project-board-title',
+      '.content > .form > .field > .project-column-title',
     );
-    const projectColorInput = $(this).find('.content > .form > .field  #new_board_color');
-    const boardColumn = $(this).closest('.board-column');
+    const projectColorInput = $(this).find('.content > .form > .field  #new_column_color');
+    const column = $(this).closest('.project-column');
 
-    if (boardColumn.css('backgroundColor')) {
-      setLabelColor(projectHeader, rgbToHex(boardColumn.css('backgroundColor')));
+    if (column.css('backgroundColor')) {
+      setLabelColor(projectHeader, rgbToHex(column.css('backgroundColor')));
     }
 
     $(this)
@@ -119,13 +119,13 @@ export default function initRepoProject() {
           if (projectColorInput.val()) {
             setLabelColor(projectHeader, projectColorInput.val());
           }
-          boardColumn.attr('style', `background: ${projectColorInput.val()}!important`);
+          column.attr('style', `background: ${projectColorInput.val()}!important`);
           $('.ui.modal').modal('hide');
         });
       });
   });
 
-  $(document).on('click', '.set-default-project-board', async function (e) {
+  $(document).on('click', '.set-default-project-column', async function (e) {
     e.preventDefault();
 
     await $.ajax({
@@ -140,7 +140,7 @@ export default function initRepoProject() {
     window.location.reload();
   });
 
-  $('.delete-project-board').each(function () {
+  $('.delete-project-column').each(function () {
     $(this).click(function (e) {
       e.preventDefault();
 
@@ -157,22 +157,22 @@ export default function initRepoProject() {
     });
   });
 
-  $('#new_board_submit').click(function (e) {
+  $('#new_column_submit').click(function (e) {
     e.preventDefault();
 
-    const boardTitle = $('#new_board');
-    const projectColorInput = $('#new_board_color_picker');
+    const columnTitle = $('#new_column');
+    const projectColorInput = $('#new_column_color_picker');
 
     $.ajax({
       url: $(this).data('url'),
-      data: JSON.stringify({title: boardTitle.val(), color: projectColorInput.val()}),
+      data: JSON.stringify({title: columnTitle.val(), color: projectColorInput.val()}),
       headers: {
         'X-Csrf-Token': csrfToken,
       },
       contentType: 'application/json',
       method: 'POST',
     }).done(() => {
-      boardTitle.closest('form').removeClass('dirty');
+      columnTitle.closest('form').removeClass('dirty');
       window.location.reload();
     });
   });
