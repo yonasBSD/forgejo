@@ -25,7 +25,7 @@ require (
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/duo-labs/webauthn v0.0.0-20220815211337-00c9fb5711f5
 	github.com/dustin/go-humanize v1.0.0
-	github.com/editorconfig/editorconfig-core-go/v2 v2.4.6-0.20220925122445-b4aa58621469
+	github.com/editorconfig/editorconfig-core-go/v2 v2.5.1
 	github.com/emirpasic/gods v1.18.1
 	github.com/ethantkoenig/rupture v1.0.1
 	github.com/felixge/fgprof v0.9.3
