@@ -150,3 +150,23 @@ func TestGetFileHistory(t *testing.T) {
 	assert.Equal(t, "f27c2b2b03dcab38beaf89b0ab4ff61f6de63441", apiData[0].CommitMeta.SHA)
 	compareCommitFiles(t, []string{"readme.md"}, apiData[0].Files)
 }
+
+func TestAPIReposGitMergeCommitFiles(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	// Login as User2.
+	session := loginUser(t, user.Name)
+	token := getTokenForLoggedInUser(t, session)
+
+	// Test getting commits (Page=1, Branch=good-sign)
+	req := NewRequestf(t, "GET", "/api/v1/repos/%s/repo16/git/commits/9ae8971fe4e4dc83c2e7f386af04879b11de8b49?token="+token, user.Name)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	var apiData api.Commit
+	DecodeJSON(t, resp, &apiData)
+
+	assert.Equal(t, "9ae8971fe4e4dc83c2e7f386af04879b11de8b49", apiData.SHA)
+	assert.Len(t, apiData.Files, 1)
+	assert.Equal(t, "new-file-to-merge.txt", apiData.Files[0].Filename)
+	compareCommitFiles(t, []string{"readme.md"}, apiData[0].Files)
+}
