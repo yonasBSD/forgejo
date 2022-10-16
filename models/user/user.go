@@ -82,7 +82,7 @@ type User struct {
 	FullName  string
 	// Email is the primary email address (to be used for communication)
 	Email                        string `xorm:"NOT NULL"`
-	KeepEmailPrivate             bool
+	KeepEmailPrivate             bool   `xorm:"NOT NULL DEFAULT false"`
 	EmailNotificationsPreference string `xorm:"VARCHAR(20) NOT NULL DEFAULT 'enabled'"`
 	Passwd                       string `xorm:"NOT NULL"`
 	PasswdHashAlgo               string `xorm:"NOT NULL DEFAULT 'argon2'"`
@@ -113,16 +113,16 @@ type User struct {
 
 	// IsActive true: primary email is activated, user can access Web UI and Git SSH.
 	// false: an inactive user can only log in Web UI for account operations (ex: activate the account by email), no other access.
-	IsActive bool `xorm:"INDEX"`
+	IsActive bool `xorm:"INDEX NOT NULL DEFAULT false"`
 	// the user is a Gitea admin, who can access all repositories and the admin pages.
-	IsAdmin bool
+	IsAdmin bool `xorm:"NOT NULL DEFAULT false"`
 	// true: the user is only allowed to see organizations/repositories that they has explicit rights to.
 	// (ex: in private Gitea instances user won't be allowed to see even organizations/repositories that are set as public)
 	IsRestricted bool `xorm:"NOT NULL DEFAULT false"`
 
-	AllowGitHook            bool
-	AllowImportLocal        bool // Allow migrate repository by local path
-	AllowCreateOrganization bool `xorm:"DEFAULT true"`
+	AllowGitHook            bool `xorm:"NOT NULL DEFAULT false"`
+	AllowImportLocal        bool `xorm:"NOT NULL DEFAULT false"` // Allow migrate repository by local path
+	AllowCreateOrganization bool `xorm:"NOT NULL DEFAULT true"`
 
 	// true: the user is not allowed to log in Web UI. Git/SSH access could still be allowed (please refer to Git/SSH access related code/documents)
 	ProhibitLogin bool `xorm:"NOT NULL DEFAULT false"`
@@ -130,17 +130,17 @@ type User struct {
 	// Avatar
 	Avatar          string `xorm:"VARCHAR(2048) NOT NULL"`
 	AvatarEmail     string `xorm:"NOT NULL"`
-	UseCustomAvatar bool
+	UseCustomAvatar bool   `xorm:"NOT NULL DEFAULT false"`
 
 	// Counters
-	NumFollowers int
+	NumFollowers int `xorm:"NOT NULL DEFAULT 0"`
 	NumFollowing int `xorm:"NOT NULL DEFAULT 0"`
-	NumStars     int
-	NumRepos     int
+	NumStars     int `xorm:"NOT NULL DEFAULT 0"`
+	NumRepos     int `xorm:"NOT NULL DEFAULT 0"`
 
 	// For organization
-	NumTeams                  int
-	NumMembers                int
+	NumTeams                  int                 `xorm:"NOT NULL DEFAULT 0"`
+	NumMembers                int                 `xorm:"NOT NULL DEFAULT 0"`
 	Visibility                structs.VisibleType `xorm:"NOT NULL DEFAULT 0"`
 	RepoAdminChangeTeamAccess bool                `xorm:"NOT NULL DEFAULT false"`
 
