@@ -39,7 +39,7 @@
 			<div class="ten wide right aligned column">
 				<div class="ui secondary filter stackable menu labels">
 					<!-- Label -->
-					<div class="ui {{if not .Labels}}disabled{{end}} dropdown jump item label-filter" style="margin-left: auto">
+					<div class="ui {{if not .Labels}}disabled{{end}} dropdown jump item label-filter" style="margin-left: auto" keybinding-shortcut="L">
 						<span class="text">
 							{{.locale.Tr "repo.issues.filter_label"}}
 							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
@@ -58,7 +58,7 @@
 					</div>
 
 					<!-- Milestone -->
-					<div class="ui {{if not .Milestones}}disabled{{end}} dropdown jump item">
+					<div class="ui {{if not .Milestones}}disabled{{end}} dropdown jump item" keybinding-shortcut="M">
 						<span class="text">
 							{{.locale.Tr "repo.issues.filter_milestone"}}
 							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
@@ -76,7 +76,7 @@
 					</div>
 
 					<!-- Author -->
-					<div class="ui {{if not .Posters}}disabled{{end}} dropdown jump item">
+					<div class="ui {{if not .Posters}}disabled{{end}} dropdown jump item" keybinding-shortcut="U">
 						<span class="text">
 							{{.locale.Tr "repo.issues.filter_poster"}}
 							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
@@ -96,7 +96,7 @@
 					</div>
 
 					<!-- Assignee -->
-					<div class="ui {{if not .Assignees}}disabled{{end}} dropdown jump item">
+					<div class="ui {{if not .Assignees}}disabled{{end}} dropdown jump item" keybinding-shortcut="A">
 						<span class="text">
 							{{.locale.Tr "repo.issues.filter_assignee"}}
 							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
