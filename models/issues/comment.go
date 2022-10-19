@@ -46,6 +46,10 @@ func (err ErrCommentNotExist) Error() string {
 	return fmt.Sprintf("comment does not exist [id: %d, issue_id: %d]", err.ID, err.IssueID)
 }
 
+func (err ErrCommentNotExist) Unwrap() error {
+	return util.ErrNotExist
+}
+
 // CommentType defines whether a comment is just a simple comment, an action (like close) or a reference.
 type CommentType int
 
