@@ -503,7 +503,7 @@ func GetCommitFileStatus(ctx context.Context, repoPath, commitID string) (*Commi
 	}()
 
 	stderr := new(bytes.Buffer)
-	args := []string{"log", "--name-status", "-c", "--pretty=format:", "--parents", "--no-renames", "-z", "-1", commitID}
+	args := []string{"log", "--name-status", "-c", "--pretty=format:", "--parents", "--no-renames", "-m", "-z", "-1", commitID}
 
 	err := NewCommand(ctx, args...).Run(&RunOpts{
 		Dir:    repoPath,
