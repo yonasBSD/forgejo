@@ -651,6 +651,8 @@ func DumpRepository(ctx context.Context, baseDir, ownerName string, opts base.Mi
 	if err != nil {
 		return err
 	}
+	defer downloader.CleanUp()
+
 	uploader, err := NewRepositoryDumper(ctx, baseDir, ownerName, opts.RepoName, opts)
 	if err != nil {
 		return err
@@ -710,11 +712,13 @@ func RestoreRepository(ctx context.Context, baseDir, ownerName, repoName string,
 	if err != nil {
 		return err
 	}
-	uploader := NewGiteaLocalUploader(ctx, doer, ownerName, repoName)
+
 	downloader, err := NewRepositoryRestorer(ctx, baseDir, ownerName, repoName, validation)
 	if err != nil {
 		return err
 	}
+	defer downloader.CleanUp()
+
 	opts, err := downloader.getRepoOptions()
 	if err != nil {
 		return err
@@ -728,6 +732,7 @@ func RestoreRepository(ctx context.Context, baseDir, ownerName, repoName string,
 		return err
 	}
 
+	uploader := NewGiteaLocalUploader(ctx, doer, ownerName, repoName)
 	if err = migrateRepository(doer, downloader, uploader, migrateOpts, nil); err != nil {
 		if err1 := uploader.Rollback(); err1 != nil {
 			log.Error("rollback failed: %v", err1)
@@ -735,4 +740,33 @@ func RestoreRepository(ctx context.Context, baseDir, ownerName, repoName string,
 		return err
 	}
 	return updateMigrationPosterIDByGitService(ctx, structs.GitServiceType(tp))
+}
+
+// RestoreFromGithubExportedData restore a repository from the disk directory
+func RestoreFromGithubExportedData(ctx context.Context, baseDir, ownerName, repoName string, units []string) error {
+	doer, err := user_model.GetAdminUser()
+	if err != nil {
+		return err
+	}
+	downloader, err := NewGithubExportedDataRestorer(ctx, baseDir, ownerName, repoName)
+	if err != nil {
+		return err
+	}
+	defer downloader.CleanUp()
+
+	migrateOpts := base.MigrateOptions{
+		GitServiceType: structs.GithubService,
+	}
+	if err := updateOptionsUnits(&migrateOpts, units); err != nil {
+		return err
+	}
+
+	uploader := NewGiteaLocalUploader(ctx, doer, ownerName, repoName)
+	if err = migrateRepository(doer, downloader, uploader, migrateOpts, nil); err != nil {
+		if err1 := uploader.Rollback(); err1 != nil {
+			log.Error("rollback failed: %v", err1)
+		}
+		return err
+	}
+	return updateMigrationPosterIDByGitService(ctx, migrateOpts.GitServiceType)
 }

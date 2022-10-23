@@ -24,6 +24,15 @@ var CmdRestoreRepository = cli.Command{
 	Action:      runRestoreRepository,
 	Flags: []cli.Flag{
 		cli.StringFlag{
+			Name:  "data_type, d",
+			Value: "gitea",
+			Usage: "The data type that will be imported, default is gitea, options are gitea, github",
+		},
+		cli.StringFlag{
+			Name:  "repo_filepath, f",
+			Usage: "Repository compressed data path to restore from",
+		},
+		cli.StringFlag{
 			Name:  "repo_dir, r",
 			Value: "./data",
 			Usage: "Repository dir path to restore from",
@@ -62,6 +71,8 @@ func runRestoreRepository(c *cli.Context) error {
 	}
 	statusCode, errStr := private.RestoreRepo(
 		ctx,
+		c.String("data_type"),
+		c.String("repo_filepath"),
 		c.String("repo_dir"),
 		c.String("owner_name"),
 		c.String("repo_name"),
