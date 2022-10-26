@@ -485,9 +485,14 @@ func SubmitReview(doer *user_model.User, issue *Issue, reviewType ReviewType, co
 
 // GetReviewOptions represent filter options for GetReviews
 type GetReviewOptions struct {
-	IssueID    int64
-	ReviewerID int64
-	Dismissed  util.OptionalBool
+	db.ListOptions
+	IssueID        int64
+	ReviewerID     int64
+	ReviewerTeamID int64
+	Official       util.OptionalBool
+	Stale          util.OptionalBool
+	Dismissed      util.OptionalBool
+	LatestOnly     bool
 }
 
 // GetReviews return reviews based on GetReviewOptions
@@ -497,6 +502,10 @@ func GetReviews(ctx context.Context, opts *GetReviewOptions) ([]*Review, error) 
 	}
 
 	sess := db.GetEngine(ctx)
+	if opts.ListOptions.Page != -1 {
+		opts.SetDefaultValues()
+		sess = db.SetEnginePagination(sess, opts)
+	}
 
 	if opts.IssueID != 0 {
 		sess = sess.Where("issue_id=?", opts.IssueID)
@@ -504,39 +513,50 @@ func GetReviews(ctx context.Context, opts *GetReviewOptions) ([]*Review, error) 
 	if opts.ReviewerID != 0 {
 		sess = sess.Where("reviewer_id=?", opts.ReviewerID)
 	}
+	if opts.ReviewerTeamID != 0 {
+		sess = sess.Where("reviewerTeam_id=?", opts.ReviewerTeamID)
+	}
+	if !opts.Official.IsNone() {
+		sess = sess.Where("official=?", opts.Official.IsTrue())
+	}
+	if !opts.Stale.IsNone() {
+		sess = sess.Where("stale=?", opts.Stale.IsTrue())
+	}
 	if !opts.Dismissed.IsNone() {
 		sess = sess.Where("dismissed=?", opts.Dismissed.IsTrue())
 	}
 
-	reviews := make([]*Review, 0, 4)
+	if opts.LatestOnly {
+		// Get latest review of each reviewer, sorted in order they were made
+		sess = sess.Where(builder.In("review.id",
+			builder.Select("max(id)").From("review").
+				Where(builder.Eq{
+					"issue_id":           opts.IssueID,
+					"original_author_id": 0,
+					"reviewer_team_id":   0,
+					"dismissed":          opts.Dismissed.IsTrue(),
+				}.And(builder.In(
+					"type",
+					ReviewTypeApprove, ReviewTypeReject, ReviewTypeRequest,
+				))).
+				GroupBy("issue_id, reviewer_id").
+				OrderBy("review.updated_unix ASC")).
+			// Get latest review of each review-team, sorted in order they were made
+			Or(builder.In("review.id",
+				builder.Select("max(id)").From("review").
+					Where(builder.Eq{
+						"issue_id":           opts.IssueID,
+						"original_author_id": 0,
+						"reviewer_id":        0,
+					}.And(builder.Neq{
+						"reviewer_team_id": 0,
+					})).
+					GroupBy("issue_id, reviewer_team_id").
+					OrderBy("review.updated_unix ASC"))))
+	}
+
+	reviews := make([]*Review, 0, opts.PageSize)
 	return reviews, sess.Find(&reviews)
-}
-
-// GetReviewersByIssueID gets the latest review of each reviewer for a pull request
-func GetReviewersByIssueID(issueID int64) ([]*Review, error) {
-	reviews := make([]*Review, 0, 10)
-
-	sess := db.GetEngine(db.DefaultContext)
-
-	// Get latest review of each reviewer, sorted in order they were made
-	if err := sess.SQL("SELECT * FROM review WHERE id IN (SELECT max(id) as id FROM review WHERE issue_id = ? AND reviewer_team_id = 0 AND type in (?, ?, ?) AND dismissed = ? AND original_author_id = 0 GROUP BY issue_id, reviewer_id) ORDER BY review.updated_unix ASC",
-		issueID, ReviewTypeApprove, ReviewTypeReject, ReviewTypeRequest, false).
-		Find(&reviews); err != nil {
-		return nil, err
-	}
-
-	teamReviewRequests := make([]*Review, 0, 5)
-	if err := sess.SQL("SELECT * FROM review WHERE id IN (SELECT max(id) as id FROM review WHERE issue_id = ? AND reviewer_team_id <> 0 AND original_author_id = 0 GROUP BY issue_id, reviewer_team_id) ORDER BY review.updated_unix ASC",
-		issueID).
-		Find(&teamReviewRequests); err != nil {
-		return nil, err
-	}
-
-	if len(teamReviewRequests) > 0 {
-		reviews = append(reviews, teamReviewRequests...)
-	}
-
-	return reviews, nil
 }
 
 // GetReviewersFromOriginalAuthorsByIssueID gets the latest review of each original authors for a pull request
@@ -604,6 +624,7 @@ func MarkReviewsAsNotStale(issueID int64, commitID string) (err error) {
 }
 
 // DismissReview change the dismiss status of a review
+// only if dismiss status changed and type is either approve or reject
 func DismissReview(review *Review, isDismiss bool) (err error) {
 	if review.Dismissed == isDismiss || (review.Type != ReviewTypeApprove && review.Type != ReviewTypeReject) {
 		return nil

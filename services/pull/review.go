@@ -275,7 +275,7 @@ func SubmitReview(ctx context.Context, doer *user_model.User, gitRepo *git.Repos
 func DismissReview(ctx context.Context, reviewID, repoID int64, message string, doer *user_model.User, isDismiss, dismissPriors bool) (comment *issues_model.Comment, err error) {
 	review, err := issues_model.GetReviewByID(ctx, reviewID)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if review.Type != issues_model.ReviewTypeApprove && review.Type != issues_model.ReviewTypeReject {
@@ -293,7 +293,7 @@ func DismissReview(ctx context.Context, reviewID, repoID int64, message string, 
 	}
 
 	if err = issues_model.DismissReview(review, isDismiss); err != nil {
-		return
+		return nil, err
 	}
 
 	if dismissPriors {
@@ -316,11 +316,11 @@ func DismissReview(ctx context.Context, reviewID, repoID int64, message string, 
 		return nil, nil
 	}
 
-	if err = review.Issue.LoadPullRequest(); err != nil {
+	if err = review.Issue.LoadPullRequestCtx(ctx); err != nil {
 		return
 	}
 	if err = review.Issue.LoadAttributes(ctx); err != nil {
-		return
+		return nil, err
 	}
 
 	comment, err = issues_model.CreateComment(&issues_model.CreateCommentOptions{
