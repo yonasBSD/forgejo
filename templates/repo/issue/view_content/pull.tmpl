@@ -348,6 +348,8 @@
 									'baseLink': {{.Link}},
 									'textCancel': {{$.locale.Tr "cancel"}},
 									'textDeleteBranch': {{$.locale.Tr "repo.branch.delete" .HeadTarget}},
+									'textTagName': {{.locale.Tr "repo.release.tag_name"}},
+									'textTagCreate': {{$.locale.Tr "repo.tag.create_tag_operation"}},
 									'textAutoMergeButtonWhenSucceed': {{$.locale.Tr "repo.pulls.auto_merge_button_when_succeed"}},
 									'textAutoMergeWhenSucceed': {{$.locale.Tr "repo.pulls.auto_merge_when_succeed"}},
 									'textAutoMergeCancelSchedule': {{$.locale.Tr "repo.pulls.auto_merge_cancel_schedule"}},
@@ -359,8 +361,8 @@
 									'isPullBranchDeletable': {{.IsPullBranchDeletable}},
 									'defaultMergeStyle': {{.MergeStyle}},
 									'defaultDeleteBranchAfterMerge': {{$prUnit.PullRequestsConfig.DefaultDeleteBranchAfterMerge}},
+									'isAllowCreateTag': {{$prUnit.PullRequestsConfig.AllowCreateTag}},
 									'mergeMessageFieldPlaceHolder': {{$.locale.Tr "repo.editor.commit_message_desc"}},
-
 									'hasPendingPullRequestMerge': {{.HasPendingPullRequestMerge}},
 									'hasPendingPullRequestMergeTip': {{$hasPendingPullRequestMergeTip}},
 								};

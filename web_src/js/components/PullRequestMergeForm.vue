@@ -43,6 +43,14 @@
           <input name="delete_branch_after_merge" type="checkbox" v-model="deleteBranchAfterMerge" id="delete-branch-after-merge">
           <label for="delete-branch-after-merge">{{ mergeForm.textDeleteBranch }}</label>
         </div>
+        <br>
+        <div class="ui checkbox ml-2" v-if="mergeForm.isAllowCreateTag && !autoMergeWhenSucceed">
+          <input name="tag_after_merge" type="checkbox" v-model="addTagAfterMerge" id="tag-after-merge">
+          <label for="tag-after-merge">{{ mergeForm.textTagCreate }}</label>
+        </div>
+        <div class="ui input ml-2" v-if="mergeForm.isAllowCreateTag && !autoMergeWhenSucceed">
+          <input id="tag-name" name="tag_name" type="text" v-model="tagName" :placeholder="mergeForm.textTagName">
+        </div>
       </form>
     </div>
 
@@ -115,6 +123,7 @@ export default {
     mergeTitleFieldValue: '',
     mergeMessageFieldValue: '',
     deleteBranchAfterMerge: false,
+    addTagAfterMerge: false,
     autoMergeWhenSucceed: false,
 
     mergeStyle: '',
@@ -167,6 +176,7 @@ export default {
       this.showActionForm = show;
       if (!show) return;
       this.deleteBranchAfterMerge = this.mergeForm.defaultDeleteBranchAfterMerge;
+      this.addTagAfterMerge = this.mergeForm.defaultAddTagAfterMerge;
       this.mergeTitleFieldValue = this.mergeStyleDetail.mergeTitleFieldText;
       this.mergeMessageFieldValue = this.mergeStyleDetail.mergeMessageFieldText;
     },

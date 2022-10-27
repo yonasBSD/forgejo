@@ -155,6 +155,7 @@ type RepoSettingForm struct {
 	PullsAllowSquash                      bool
 	PullsAllowManualMerge                 bool
 	PullsDefaultMergeStyle                string
+	PullsAllowCreateTag                   bool
 	EnableAutodetectManualMerge           bool
 	PullsAllowRebaseUpdate                bool
 	DefaultDeleteBranchAfterMerge         bool
@@ -600,6 +601,8 @@ type MergePullRequestForm struct {
 	ForceMerge             *bool  `json:"force_merge,omitempty"`
 	MergeWhenChecksSucceed bool   `json:"merge_when_checks_succeed,omitempty"`
 	DeleteBranchAfterMerge bool   `json:"delete_branch_after_merge,omitempty"`
+	TagAfterMerge          bool   `json:"tag_after_merge,omitempty"`
+	TagName                string `json:"tag_name,omitempty"`
 }
 
 // Validate validates the fields

@@ -135,6 +135,8 @@ const (
 	CommentTypePRScheduledToAutoMerge
 	// 35 pr was un scheduled to auto merge when checks succeed
 	CommentTypePRUnScheduledToAutoMerge
+	// 36 tag PR commit
+	CommentTypeTagPRCommit
 )
 
 var commentStrings = []string{
@@ -251,6 +253,7 @@ type Comment struct {
 	NewTitle         string
 	OldRef           string
 	NewRef           string
+	Tag              string
 	DependentIssueID int64
 	DependentIssue   *Issue `xorm:"-"`
 
@@ -819,6 +822,7 @@ func CreateCommentCtx(ctx context.Context, opts *CreateCommentOptions) (_ *Comme
 		NewTitle:         opts.NewTitle,
 		OldRef:           opts.OldRef,
 		NewRef:           opts.NewRef,
+		Tag:              opts.Tag,
 		DependentIssueID: opts.DependentIssueID,
 		TreePath:         opts.TreePath,
 		ReviewID:         opts.ReviewID,
@@ -999,6 +1003,7 @@ type CreateCommentOptions struct {
 	RefIsPull        bool
 	IsForcePush      bool
 	Invalidated      bool
+	Tag              string
 }
 
 // CreateComment creates comment of issue or commit.
