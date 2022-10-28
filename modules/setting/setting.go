@@ -112,6 +112,7 @@ var (
 	OfflineMode                bool
 	CertFile                   string
 	KeyFile                    string
+	CAFile                     string
 	StaticRootPath             string
 	StaticCacheTime            time.Duration
 	EnableGzip                 bool
@@ -709,6 +710,10 @@ func loadFromConf(allowEmpty bool, extraConfig string) {
 			}
 			if len(KeyFile) > 0 && !filepath.IsAbs(KeyFile) {
 				KeyFile = filepath.Join(CustomPath, KeyFile)
+			}
+			CAFile = sec.Key("CA_FILE").String()
+			if len(CAFile) > 0 && !filepath.IsAbs(CAFile) {
+				CAFile = filepath.Join(CustomPath, CAFile)
 			}
 		}
 		SSLMinimumVersion = sec.Key("SSL_MIN_VERSION").MustString("")
