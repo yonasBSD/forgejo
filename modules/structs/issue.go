@@ -153,6 +153,10 @@ type IssueTemplate struct {
 	FileName string            `json:"file_name" yaml:"-"`
 }
 
+type IssueConfig struct {
+	BlankIssuesEnabled bool `json:"blank_issues_enabled" yaml:"blank_issues_enabled"`
+}
+
 // IssueTemplateType defines issue template type
 type IssueTemplateType string
 

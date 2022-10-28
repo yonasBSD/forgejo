@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -34,6 +35,7 @@ import (
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
+	"gopkg.in/yaml.v2"
 )
 
 // IssueTemplateDirCandidates issue templates directory
@@ -46,6 +48,17 @@ var IssueTemplateDirCandidates = []string{
 	".github/issue_template",
 	".gitlab/ISSUE_TEMPLATE",
 	".gitlab/issue_template",
+}
+
+var IssueConfigCanidates = []string{
+	".gitea/ISSUE_TEMPLATE/config.yaml",
+	".gitea/ISSUE_TEMPLATE/config.yml",
+	".gitea/issue_template/config.yaml",
+	".gitea/issue_template/config.yml",
+	".github/ISSUE_TEMPLATE/config.yaml",
+	".github/ISSUE_TEMPLATE/config.yml",
+	".github/issue_template/config.yaml",
+	".github/issue_template/config.yml",
 }
 
 // PullRequest contains information to make a pull request
@@ -1080,6 +1093,9 @@ func (ctx *Context) IssueTemplatesErrorsFromDefaultBranch() ([]*api.IssueTemplat
 			return issueTemplates, nil
 		}
 		for _, entry := range entries {
+			if entry.Name() == "config.yaml" || entry.Name() == "config.yml" {
+				continue
+			}
 			if !template.CouldBe(entry.Name()) {
 				continue
 			}
@@ -1092,4 +1108,55 @@ func (ctx *Context) IssueTemplatesErrorsFromDefaultBranch() ([]*api.IssueTemplat
 		}
 	}
 	return issueTemplates, invalidFiles
+}
+
+func ExtractIssueConfigFromYaml(configContent []byte) (api.IssueConfig, error) {
+	config := api.IssueConfig{
+		BlankIssuesEnabled: true,
+	}
+
+	err := yaml.Unmarshal(configContent, &config)
+	if err != nil {
+		return api.IssueConfig{}, err
+	}
+
+	return config, nil
+}
+
+func (ctx *Context) IssueConfigFromDefaultBranch() (api.IssueConfig, error) {
+	defaultIssueConfig := api.IssueConfig{
+		BlankIssuesEnabled: true,
+	}
+
+	commit, err := ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.Repository.DefaultBranch)
+	if err != nil {
+		return defaultIssueConfig, wee
+	}
+
+	for _, configName := range IssueConfigCanidates {
+		entry, err := commit.GetTreeEntryByPath(configName)
+		if err != nil {
+			continue
+		}
+
+		r, err := entry.Blob().DataAsync()
+		if err != nil {
+			log.Debug("DataAsync: %v", err)
+			return defaultIssueConfig, nil
+		}
+
+		configContent, err := io.ReadAll(r)
+		if err != nil {
+			return defaultIssueConfig, err
+		}
+
+		issueConfig, err := ExtractIssueConfigFromYaml(configContent)
+		if err != nil {
+			return defaultIssueConfig, err
+		}
+
+		return issueConfig, nil
+	}
+
+	return defaultIssueConfig, nil
 }
