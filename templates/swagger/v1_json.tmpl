@@ -11760,6 +11760,35 @@
             "$ref": "#/responses/User"
           }
         }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Delete the authenticated user",
+        "operationId": "userDeleteCurrent",
+        "parameters": [
+          {
+            "type": "boolean",
+            "description": "Purge user, all their repositories, organizations and comments",
+            "name": "purge",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
       }
     },
     "/user/applications/oauth2": {
