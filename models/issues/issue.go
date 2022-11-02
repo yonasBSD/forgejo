@@ -1289,7 +1289,7 @@ func (opts *IssuesOptions) setupSessionNoLimit(sess *xorm.Session) {
 		sess.And("issue.is_closed=?", opts.IsClosed.IsTrue())
 	}
 
-	if opts.AssigneeID > 0 {
+	if opts.AssigneeID != 0 {
 		applyAssigneeCondition(sess, opts.AssigneeID)
 	}
 
@@ -1310,7 +1310,11 @@ func (opts *IssuesOptions) setupSessionNoLimit(sess *xorm.Session) {
 	}
 
 	if len(opts.MilestoneIDs) > 0 {
-		sess.In("issue.milestone_id", opts.MilestoneIDs)
+		if opts.MilestoneIDs[0] > 0 {
+			sess.In("issue.milestone_id", opts.MilestoneIDs)
+		} else if opts.MilestoneIDs[0] == -1 {
+			sess.And("issue.milestone_id = 0")
+		}
 	}
 
 	if opts.UpdatedAfterUnix != 0 {
@@ -1345,13 +1349,22 @@ func (opts *IssuesOptions) setupSessionNoLimit(sess *xorm.Session) {
 	}
 
 	if opts.LabelIDs != nil {
+		var noLabelsIDs []int64
+		hasNoLabel := false
 		for i, labelID := range opts.LabelIDs {
 			if labelID > 0 {
 				sess.Join("INNER", fmt.Sprintf("issue_label il%d", i),
 					fmt.Sprintf("issue.id = il%[1]d.issue_id AND il%[1]d.label_id = %[2]d", i, labelID))
-			} else {
-				sess.Where("issue.id not in (select issue_id from issue_label where label_id = ?)", -labelID)
+			} else if labelID < 0 {
+				noLabelsIDs = append(noLabelsIDs, -labelID)
+				hasNoLabel = true
 			}
+		}
+		if hasNoLabel {
+			sess.NotIn("issue.id",
+				builder.Select("issue_id").
+					From("issue_label").
+					Where(builder.In("label_id", noLabelsIDs)))
 		}
 	}
 
@@ -1450,6 +1463,11 @@ func issuePullAccessibleRepoCond(repoIDstr string, userID int64, org *organizati
 }
 
 func applyAssigneeCondition(sess *xorm.Session, assigneeID int64) *xorm.Session {
+	if assigneeID == -1 {
+		return sess.Join("LEFT", "issue_assignees", "issue.id = issue_assignees.issue_id").
+			And(builder.IsNull{"issue_assignees.issue_id"})
+	}
+
 	return sess.Join("INNER", "issue_assignees", "issue.id = issue_assignees.issue_id").
 		And("issue_assignees.assignee_id = ?", assigneeID)
 }
@@ -1703,27 +1721,35 @@ func getIssueStatsChunk(opts *IssueStatsOptions, issueIDs []int64) (*IssueStats,
 			sess.In("issue.id", issueIDs)
 		}
 
-		if len(opts.Labels) > 0 && opts.Labels != "0" {
+		if len(opts.Labels) > 0 {
 			labelIDs, err := base.StringsToInt64s(strings.Split(opts.Labels, ","))
 			if err != nil {
 				log.Warn("Malformed Labels argument: %s", opts.Labels)
 			} else {
+				var noLabelsIDs []int64
+				hasNoLabel := false
 				for i, labelID := range labelIDs {
 					if labelID > 0 {
 						sess.Join("INNER", fmt.Sprintf("issue_label il%d", i),
 							fmt.Sprintf("issue.id = il%[1]d.issue_id AND il%[1]d.label_id = %[2]d", i, labelID))
-					} else {
-						sess.Where("issue.id NOT IN (SELECT issue_id FROM issue_label WHERE label_id = ?)", -labelID)
+					} else if labelID < 0 {
+						noLabelsIDs = append(noLabelsIDs, -labelID)
+						hasNoLabel = true
 					}
+				}
+				if hasNoLabel {
+					sess.NotIn("issue.id", builder.Select("issue_id").From("issue_label").Where(builder.In("label_id", noLabelsIDs)))
 				}
 			}
 		}
 
 		if opts.MilestoneID > 0 {
 			sess.And("issue.milestone_id = ?", opts.MilestoneID)
+		} else if opts.MilestoneID == -1 {
+			sess.And("issue.milestone_id = 0")
 		}
 
-		if opts.AssigneeID > 0 {
+		if opts.AssigneeID != 0 {
 			applyAssigneeCondition(sess, opts.AssigneeID)
 		}
 

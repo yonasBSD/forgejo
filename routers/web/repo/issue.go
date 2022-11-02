@@ -238,7 +238,7 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption uti
 	pager := context.NewPagination(total, setting.UI.IssuePagingNum, page, 5)
 
 	var mileIDs []int64
-	if milestoneID > 0 {
+	if milestoneID != 0 {
 		mileIDs = []int64{milestoneID}
 	}
 

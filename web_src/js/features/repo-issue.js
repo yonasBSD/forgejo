@@ -150,6 +150,45 @@ export function initRepoIssueList() {
       }
     }
   });
+
+  $('.menu a.nolabels').on('click', () => {
+    let labelurl = 'labels=', labelpos = [...document.querySelectorAll('.label-filter-item')].map((i) => { return i.getAttribute('data-label-id') }).join(',-');
+    const nolabelids = `-${labelpos}`;
+    if ((labelpos = window.location.search.indexOf(labelurl)) !== -1) {
+      labelurl = window.location.search.slice(labelpos);
+      if ((labelpos = labelurl.indexOf('&')) !== -1) {
+        return window.location.search = window.location.search.replace(labelurl.slice(0, labelpos), `labels=${nolabelids}`);
+      }
+      return window.location.search = window.location.search.replace(labelurl, `labels=${nolabelids}`);
+    }
+    return window.location.search += (!window.location.search.includes('?') ? '?' : '&') + labelurl + nolabelids;
+  });
+
+  $('.menu a.nomilestones').on('click', () => {
+    let milestoneurl = 'milestone=', milestonepos;
+    if ((milestonepos = window.location.search.indexOf(milestoneurl)) !== -1) {
+      milestoneurl = window.location.search.slice(milestonepos);
+      if ((milestonepos = milestoneurl.indexOf('&')) !== -1) {
+        return window.location.search = window.location.search.replace(milestoneurl.slice(0, milestonepos), 'milestone=-1');
+      }
+      return window.location.search = window.location.search.replace(milestoneurl, 'milestone=-1');
+    }
+    milestonepos = (!window.location.search.includes('?') ? '?' : '&');
+    return window.location.search += `${milestonepos}${milestoneurl}-1`;
+  });
+
+  $('.menu a.noassignees').on('click', () => {
+    let assigneeurl = 'assignee=', assigneepos;
+    if ((assigneepos = window.location.search.indexOf(assigneeurl)) !== -1) {
+      assigneeurl = window.location.search.slice(assigneepos);
+      if ((assigneepos = assigneeurl.indexOf('&')) !== -1) {
+        return window.location.search = window.location.search.replace(assigneeurl.slice(0, assigneepos), `assignee=-1`);
+      }
+      return window.location.search = window.location.search.replace(assigneeurl, `assignee=-1`);
+    }
+    assigneepos = (!window.location.search.includes('?') ? '?' : '&');
+    return window.location.search += `${assigneepos}${assigneeurl}-1`;
+  });
 }
 
 export function initRepoIssueCommentDelete() {
