@@ -466,13 +466,35 @@ func (g *GiteaLocalUploader) CreateComments(comments ...*base.Comment) error {
 		if comment.Updated.IsZero() {
 			comment.Updated = comment.Created
 		}
-
+		if comment.CommentType == 0 {
+			// if type field is missing, then assume a normal comment
+			comment.CommentType = int64(issues_model.CommentTypeComment)
+		}
 		cm := issues_model.Comment{
 			IssueID:     issue.ID,
-			Type:        issues_model.CommentTypeComment,
+			Type:        issues_model.CommentType(comment.CommentType),
 			Content:     comment.Content,
 			CreatedUnix: timeutil.TimeStamp(comment.Created.Unix()),
 			UpdatedUnix: timeutil.TimeStamp(comment.Updated.Unix()),
+		}
+
+		switch issues_model.CommentType(comment.CommentType) {
+		case issues_model.CommentTypeLabel:
+			cm.LabelID = comment.Meta["LabelID"].(int64)
+			// Note: if you want to add a label, you'll need to set content to value "1"
+		case issues_model.CommentTypeAssignees:
+			cm.AssigneeID = comment.Meta["AssigneeID"].(int64)
+			if comment.Meta["RemovedAssigneeID"] != nil {
+				cm.RemovedAssignee = true
+			}
+		case issues_model.CommentTypeChangeTitle:
+			if comment.Meta["OldTitle"] != nil {
+				cm.OldTitle = fmt.Sprintf("%s", comment.Meta["OldTitle"])
+			}
+			if comment.Meta["NewTitle"] != nil {
+				cm.NewTitle = fmt.Sprintf("%s", comment.Meta["NewTitle"])
+			}
+		default:
 		}
 
 		if err := g.remapUser(comment, &cm); err != nil {
