@@ -435,6 +435,8 @@ var migrations = []Migration{
 	NewMigration("Add index for hook_task", v1_19.AddIndexForHookTask),
 	// v232 -> v233
 	NewMigration("Alter package_version.metadata_json to LONGTEXT", v1_19.AlterPackageVersionMetadataToLongText),
+	// v233 -> v234
+	NewMigration("Add package cleanup rule table", v1_19.CreatePackageCleanupRuleTable),
 }
 
 // GetCurrentDBVersion returns the current db version
