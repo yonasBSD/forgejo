@@ -1,29 +1,36 @@
 import $ from 'jquery';
+import {getAttachedEasyMDE} from './EasyMDE.js';
 
-const {csrfToken} = window.config;
-
-async function uploadFile(file, uploadUrl) {
-  const formData = new FormData();
-  formData.append('file', file, file.name);
-
-  const res = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {'X-Csrf-Token': csrfToken},
-    body: formData,
-  });
-  return await res.json();
+/**
+ * @param editor{EasyMDE}
+ * @param fileUuid
+ */
+export function removeUploadedFileFromEditor(editor, fileUuid) {
+  // the raw regexp is: /!\[[^\]]*]\(\/attachments\/{uuid}\)/ for remove file text in textarea
+  if (editor && editor.editor) {
+    const re = new RegExp(`(!|)\\[[^\\]]*]\\(/attachments/${fileUuid}\\)`);
+    if (editor.editor.setValue) {
+      editor.editor.setValue(editor.editor.getValue().replace(re, '')); // at the moment, we assume the editor is an EasyMDE
+    } else {
+      editor.editor.value = editor.editor.value.replace(re, '');
+    }
+  }
 }
 
-function clipboardPastedImages(e) {
-  if (!e.clipboardData) return [];
+function clipboardPastedFiles(e) {
+  const data = e.clipboardData || e.dataTransfer;
+  if (!data) return [];
 
   const files = [];
-  for (const item of e.clipboardData.items || []) {
-    if (!item.type || !item.type.startsWith('image/')) continue;
-    files.push(item.getAsFile());
+  const datafiles = e.clipboardData?.items || e.dataTransfer?.files;
+  for (const item of datafiles || []) {
+    const file = e.clipboardData ? item.getAsFile() : item;
+    if (file === null || !item.type) continue;
+    files.push(file);
   }
   return files;
 }
+
 
 class TextareaEditor {
   constructor(editor) {
@@ -87,15 +94,16 @@ class CodeMirrorEditor {
   }
 }
 
+export function initEasyMDEFilePaste(easyMDE, $dropzone) {
+  if ($dropzone.length !== 1) throw new Error('invalid dropzone binding for editor');
 
-export function initEasyMDEImagePaste(easyMDE, $dropzone) {
   const uploadUrl = $dropzone.attr('data-upload-url');
   const $files = $dropzone.find('.files');
 
   if (!uploadUrl || !$files.length) return;
 
   const uploadClipboardImage = async (editor, e) => {
-    const pastedImages = clipboardPastedImages(e);
+    const pastedImages = clipboardPastedFiles(e);
     if (!pastedImages || pastedImages.length === 0) {
       return;
     }
@@ -103,15 +111,8 @@ export function initEasyMDEImagePaste(easyMDE, $dropzone) {
     e.stopPropagation();
 
     for (const img of pastedImages) {
-      const name = img.name.slice(0, img.name.lastIndexOf('.'));
-
-      const placeholder = `![${name}](uploading ...)`;
-      editor.insertPlaceholder(placeholder);
-      const data = await uploadFile(img, uploadUrl);
-      editor.replacePlaceholder(placeholder, `![${name}](/attachments/${data.uuid})`);
-
-      const $input = $(`<input name="files" type="hidden">`).attr('id', data.uuid).val(data.uuid);
-      $files.append($input);
+      img.editor = editor;
+      $dropzone[0].dropzone.addFile(img);
     }
   };
 
@@ -119,7 +120,32 @@ export function initEasyMDEImagePaste(easyMDE, $dropzone) {
     return uploadClipboardImage(new CodeMirrorEditor(easyMDE.codemirror), e);
   });
 
-  $(easyMDE.element).on('paste', async (e) => {
+  easyMDE.codemirror.on('drop', async (_, e) => {
+    return uploadClipboardImage(new CodeMirrorEditor(easyMDE.codemirror), e);
+  });
+
+  $(easyMDE.element).on('paste drop', async (e) => {
     return uploadClipboardImage(new TextareaEditor(easyMDE.element), e.originalEvent);
   });
+}
+
+export async function addUploadedFileToEditor(file) {
+  if (!file.editor) {
+    const form = file.previewElement.closest('div.comment');
+    if (form) {
+      const editor = getAttachedEasyMDE(form.querySelector('textarea'));
+      if (editor) {
+        if (editor.codemirror) {
+          file.editor = new CodeMirrorEditor(editor.codemirror);
+        } else {
+          file.editor = new TextareaEditor(editor);
+        }
+      }
+      if (file.editor) {
+        const name = file.name.slice(0, file.name.lastIndexOf('.'));
+        const placeholder = `![${name}](uploading ...)`;
+        file.editor.insertPlaceholder(placeholder);
+      }
+    }
+  }
 }
