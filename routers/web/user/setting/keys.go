@@ -6,6 +6,7 @@
 package setting
 
 import (
+	"fmt"
 	"net/http"
 
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
@@ -20,6 +21,13 @@ import (
 
 const (
 	tplSettingsKeys base.TplName = "user/settings/keys"
+
+	UserPasswordKey    = "password"
+	UserGPGKeysKey     = "gpg keys"
+	UserDeletionKey    = "deletion"
+	UserSecurityKey    = "security"
+	UserApplicationKey = "applications"
+	UserOrganizations  = "organizations"
 )
 
 // Keys render user's SSH/GPG public keys page
@@ -78,6 +86,11 @@ func KeysPost(ctx *context.Context) {
 		ctx.Flash.Success(ctx.Tr("settings.add_principal_success", form.Content))
 		ctx.Redirect(setting.AppSubURL + "/user/settings/keys")
 	case "gpg":
+		if !setting.User.Enabled(UserGPGKeysKey) {
+			ctx.NotFound("Not Found", fmt.Errorf("gpg keys setting are not allowed"))
+			return
+		}
+
 		token := asymkey_model.VerificationToken(ctx.Doer, 1)
 		lastToken := asymkey_model.VerificationToken(ctx.Doer, 0)
 
@@ -217,6 +230,10 @@ func KeysPost(ctx *context.Context) {
 func DeleteKey(ctx *context.Context) {
 	switch ctx.FormString("type") {
 	case "gpg":
+		if !setting.User.Enabled(UserGPGKeysKey) {
+			ctx.NotFound("Not Found", fmt.Errorf("gpg keys setting are not allowed"))
+			return
+		}
 		if err := asymkey_model.DeleteGPGKey(ctx.Doer, ctx.FormInt64("id")); err != nil {
 			ctx.Flash.Error("DeleteGPGKey: " + err.Error())
 		} else {

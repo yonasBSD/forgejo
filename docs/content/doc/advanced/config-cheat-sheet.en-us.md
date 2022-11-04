@@ -1228,6 +1228,10 @@ PROXY_URL = socks://127.0.0.1:1080
 PROXY_HOSTS = *.github.com
 ```
 
+## User (`user`)
+
+- `USER_SETTING_DISABLED_MODULES`:**** Disabled modules from user settings, could be a copmosite of `password`, `deletion`, `security`, `applications`, `gpg keys`, `organizations` with a comma.
+
 ## Other (`other`)
 
 - `SHOW_FOOTER_BRANDING`: **false**: Show Gitea branding in the footer.
