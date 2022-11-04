@@ -936,6 +936,14 @@ func Routes(ctx gocontext.Context) *web.Route {
 							Get(repo.GetIssueReactions).
 							Post(reqToken(), bind(api.EditReactionOption{}), repo.PostIssueReaction).
 							Delete(reqToken(), bind(api.EditReactionOption{}), repo.DeleteIssueReaction)
+						m.Combo("/dependencies").
+							Get(repo.GetIssueDependencies).
+							Post(bind(api.IssueMeta{}), repo.CreateIssueDependency).
+							Delete(bind(api.IssueMeta{}), repo.RemoveIssueDependency)
+						m.Combo("/blocks").
+							Get(repo.GetIssueBlocks).
+							Post(bind(api.IssueMeta{}), repo.CreateIssueBlocking).
+							Delete(bind(api.IssueMeta{}), repo.RemoveIssueBlocking)
 					})
 				}, mustEnableIssuesOrPulls)
 				m.Group("/labels", func() {
