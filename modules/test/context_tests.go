@@ -99,12 +99,24 @@ func (l mockLocale) Language() string {
 	return "en"
 }
 
+func (l mockLocale) HasKey(_ string) bool {
+	return false
+}
+
 func (l mockLocale) Tr(s string, _ ...interface{}) string {
 	return s
 }
 
 func (l mockLocale) TrN(_cnt interface{}, key1, _keyN string, _args ...interface{}) string {
 	return key1
+}
+
+func (l mockLocale) TrPlural(_cnt interface{}, key string, _args ...interface{}) string {
+	return key
+}
+
+func (l mockLocale) TrOrdinal(_cnt interface{}, key string, _args ...interface{}) string {
+	return key
 }
 
 type mockResponseWriter struct {

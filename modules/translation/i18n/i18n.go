@@ -10,13 +10,6 @@ import (
 
 var DefaultLocales = NewLocaleStore()
 
-type Locale interface {
-	// Tr translates a given key and arguments for a language
-	Tr(trKey string, trArgs ...interface{}) string
-	// Has reports if a locale has a translation for a given key
-	Has(trKey string) bool
-}
-
 // LocaleStore provides the functions common to all locale stores
 type LocaleStore interface {
 	io.Closer
@@ -44,6 +37,11 @@ func ResetDefaultLocales() {
 		_ = DefaultLocales.Close()
 	}
 	DefaultLocales = NewLocaleStore()
+}
+
+// Tr use default locales to translate content to target language.
+func Tr(lang, trKey string, trArgs ...interface{}) string {
+	return DefaultLocales.Tr(lang, trKey, trArgs...)
 }
 
 // GetLocales returns the locale from the default locales

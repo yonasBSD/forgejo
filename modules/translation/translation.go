@@ -24,6 +24,8 @@ type Locale interface {
 	Language() string
 	Tr(string, ...interface{}) string
 	TrN(cnt interface{}, key1, keyN string, args ...interface{}) string
+	TrPlural(cnt interface{}, key string, args ...interface{}) string
+	TrOrdinal(cnt interface{}, key string, args ...interface{}) string
 }
 
 // LangType represents a lang type

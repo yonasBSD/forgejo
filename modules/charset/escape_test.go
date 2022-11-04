@@ -138,6 +138,9 @@ type nullLocale struct{}
 func (nullLocale) Language() string                                                   { return "" }
 func (nullLocale) Tr(key string, _ ...interface{}) string                             { return key }
 func (nullLocale) TrN(cnt interface{}, key1, keyN string, args ...interface{}) string { return "" }
+func (nullLocale) HasKey(_ string) bool                                               { return false }
+func (nullLocale) TrPlural(cnt interface{}, key string, args ...interface{}) string   { return key }
+func (nullLocale) TrOrdinal(cnt interface{}, key string, args ...interface{}) string  { return key }
 
 var _ (translation.Locale) = nullLocale{}
 
