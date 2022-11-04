@@ -120,7 +120,13 @@ type Package struct {
 
 // TryInsertPackage inserts a package. If a package exists already, ErrDuplicatePackage is returned
 func TryInsertPackage(ctx context.Context, p *Package) (*Package, error) {
-	e := db.GetEngine(ctx)
+	n, err := db.InsertOnConflictDoNothing(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	if n != 0 {
+		return p, nil
+	}
 
 	key := &Package{
 		OwnerID:   p.OwnerID,
@@ -128,17 +134,16 @@ func TryInsertPackage(ctx context.Context, p *Package) (*Package, error) {
 		LowerName: p.LowerName,
 	}
 
-	has, err := e.Get(key)
-	if err != nil {
-		return nil, err
-	}
+	has, err := db.GetEngine(ctx).Get(key)
 	if has {
-		return key, ErrDuplicatePackage
+		if n == 0 {
+			err = ErrDuplicatePackage
+		}
+		return key, err
+	} else if err == nil {
+		return TryInsertPackage(ctx, p)
 	}
-	if _, err = e.Insert(p); err != nil {
-		return nil, err
-	}
-	return p, nil
+	return nil, err
 }
 
 // DeletePackageByID deletes a package by id
