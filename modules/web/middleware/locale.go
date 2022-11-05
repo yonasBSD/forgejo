@@ -19,6 +19,9 @@ func Locale(resp http.ResponseWriter, req *http.Request) translation.Locale {
 	// 1. Check URL arguments.
 	lang := req.URL.Query().Get("lang")
 	changeLang := lang != ""
+	// If the request is sent from language menu by AJAX, then it should  only set the language but not run the real handler. 
+	// Otherwise the irrelevant code might be executed.
+	skipHandler := req.URL.Query().Get("lang_skip_handler") != ""
 
 	// 2. Get language information from cookies.
 	if len(lang) == 0 {
@@ -46,7 +49,15 @@ func Locale(resp http.ResponseWriter, req *http.Request) translation.Locale {
 		SetLocaleCookie(resp, lang, 1<<31-1)
 	}
 
-	return translation.NewLocale(lang)
+	err := translation.NewLocale(lang)
+	if err != nil {
+		return err
+	}
+
+	if skipHandler {
+		resp.WriteHeader(http.StatusNoContent)
+	}
+	return nil
 }
 
 // SetLocaleCookie convenience function to set the locale cookie consistently
