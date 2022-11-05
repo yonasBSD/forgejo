@@ -10,6 +10,8 @@ import (
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -78,14 +80,19 @@ func (err ErrProjectBoardNotExist) Unwrap() error {
 	return util.ErrNotExist
 }
 
+// List is a list of projects
+type List []*Project
+
 // Project represents a project board
 type Project struct {
-	ID          int64  `xorm:"pk autoincr"`
-	Title       string `xorm:"INDEX NOT NULL"`
-	Description string `xorm:"TEXT"`
-	RepoID      int64  `xorm:"INDEX"`
-	CreatorID   int64  `xorm:"NOT NULL"`
-	IsClosed    bool   `xorm:"INDEX"`
+	ID          int64                  `xorm:"pk autoincr"`
+	Title       string                 `xorm:"INDEX NOT NULL"`
+	Description string                 `xorm:"TEXT"`
+	RepoID      int64                  `xorm:"INDEX"`
+	Repo        *repo_model.Repository `xorm:"-"`
+	CreatorID   int64                  `xorm:"NOT NULL"`
+	Creator     *user_model.User       `xorm:"-"`
+	IsClosed    bool                   `xorm:"INDEX"`
 	BoardType   BoardType
 	Type        Type
 
@@ -337,6 +344,63 @@ func DeleteProjectByIDCtx(ctx context.Context, id int64) error {
 	}
 
 	return updateRepositoryProjectCount(ctx, p.RepoID)
+}
+
+// LoadRepo load repo of the project.
+func (p *Project) LoadRepo(ctx context.Context) (err error) {
+	if p.Repo == nil {
+		p.Repo, err = repo_model.GetRepositoryByIDCtx(ctx, p.RepoID)
+		if err != nil {
+			return fmt.Errorf("getRepositoryByID [%d]: %v", p.RepoID, err)
+		}
+	}
+	return nil
+}
+
+// LoadCreator load creator of the project.
+func (p *Project) LoadCreator(ctx context.Context) (err error) {
+	if p.Creator == nil {
+		p.Creator, err = user_model.GetUserByIDCtx(ctx, p.CreatorID)
+		if err != nil {
+			return fmt.Errorf("getUserByID [%d]: %v", p.CreatorID, err)
+		}
+	}
+	return nil
+}
+
+// LoadAttributes load repos and creators of projects.
+func (pl List) LoadAttributes(ctx context.Context) (err error) {
+	repos := make(map[int64]*repo_model.Repository)
+	creators := make(map[int64]*user_model.User)
+	var ok bool
+
+	for i := range pl {
+		if pl[i].Repo == nil {
+			pl[i].Repo, ok = repos[pl[i].RepoID]
+			if !ok {
+				repo, err := repo_model.GetRepositoryByIDCtx(ctx, pl[i].RepoID)
+				if err != nil {
+					return fmt.Errorf("getRepositoryByID [%d]: %v", pl[i].RepoID, err)
+				}
+				pl[i].Repo = repo
+				repos[pl[i].RepoID] = repo
+			}
+		}
+
+		if pl[i].Creator == nil {
+			pl[i].Creator, ok = creators[pl[i].CreatorID]
+			if !ok {
+				creator, err := user_model.GetUserByIDCtx(ctx, pl[i].CreatorID)
+				if err != nil {
+					return fmt.Errorf("getUserByID [%d]: %v", pl[i].CreatorID, err)
+				}
+				pl[i].Creator = creator
+				creators[pl[i].CreatorID] = creator
+			}
+		}
+	}
+
+	return nil
 }
 
 func DeleteProjectByRepoIDCtx(ctx context.Context, repoID int64) error {

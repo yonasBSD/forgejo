@@ -938,6 +938,11 @@ func Routes(ctx gocontext.Context) *web.Route {
 							Delete(reqToken(), bind(api.EditReactionOption{}), repo.DeleteIssueReaction)
 					})
 				}, mustEnableIssuesOrPulls)
+				m.Group("/projects", func() {
+					m.Combo("").
+						Get(reqToken(), repo.ListRepositoryProjects).
+						Post(reqToken(), mustNotBeArchived, bind(api.NewProjectPayload{}), repo.CreateRepositoryProject)
+				})
 				m.Group("/labels", func() {
 					m.Combo("").Get(repo.ListLabels).
 						Post(reqToken(), reqRepoWriter(unit.TypeIssues, unit.TypePullRequests), bind(api.CreateLabelOption{}), repo.CreateLabel)
@@ -1177,6 +1182,27 @@ func Routes(ctx gocontext.Context) *web.Route {
 
 		m.Group("/topics", func() {
 			m.Get("/search", repo.TopicSearch)
+		})
+
+		// Projects
+		m.Group("/projects", func() {
+			m.Group("/{id}", func() {
+				m.Combo("").
+					Get(reqToken(), repo.GetProject).
+					Patch(reqToken(), bind(api.UpdateProjectPayload{}), repo.UpdateProject).
+					Delete(reqToken(), repo.DeleteProject)
+
+				m.Combo("/boards").
+					Post(reqToken(), bind(api.NewProjectBoardPayload{}), repo.CreateProjectBoard).
+					Get(reqToken(), repo.ListProjectBoards)
+			})
+
+			m.Group("/boards", func() {
+				m.Combo("/{id}").
+					Get(reqToken(), repo.GetProjectBoard).
+					Patch(reqToken(), bind(api.UpdateProjectBoardPayload{}), repo.UpdateProjectBoard).
+					Delete(reqToken(), repo.DeleteProjectBoard)
+			})
 		})
 	}, sudo())
 

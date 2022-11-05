@@ -171,5 +171,17 @@ type swaggerParameterBodies struct {
 	CreateWikiPageOptions api.CreateWikiPageOptions
 
 	// in:body
+	NewProjectPayload api.NewProjectPayload
+
+	// in:body
+	UpdateProjectPayload api.UpdateProjectPayload
+
+	// in:body
+	NewProjectBoardPayload api.NewProjectBoardPayload
+
+	// in:body
+	UpdateProjectBoardPayload api.UpdateProjectBoardPayload
+
+	// in:body
 	CreatePushMirrorOption api.CreatePushMirrorOption
 }
