@@ -23,7 +23,7 @@ type Branch struct {
 
 // BranchProtection represents a branch protection for a repository
 type BranchProtection struct {
-	BranchName                    string   `json:"branch_name"`
+	RuleName                      string   `json:"branch_name"`
 	EnablePush                    bool     `json:"enable_push"`
 	EnablePushWhitelist           bool     `json:"enable_push_whitelist"`
 	PushWhitelistUsernames        []string `json:"push_whitelist_usernames"`
@@ -53,7 +53,7 @@ type BranchProtection struct {
 
 // CreateBranchProtectionOption options for creating a branch protection
 type CreateBranchProtectionOption struct {
-	BranchName                    string   `json:"branch_name"`
+	RuleName                      string   `json:"branch_name"` // it now in fact stores rule name not only branch name
 	EnablePush                    bool     `json:"enable_push"`
 	EnablePushWhitelist           bool     `json:"enable_push_whitelist"`
 	PushWhitelistUsernames        []string `json:"push_whitelist_usernames"`

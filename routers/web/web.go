@@ -815,10 +815,18 @@ func RegisterRoutes(m *web.Route) {
 			})
 
 			m.Group("/branches", func() {
-				m.Combo("").Get(repo.ProtectedBranch).Post(repo.ProtectedBranchPost)
-				m.Combo("/*").Get(repo.SettingsProtectedBranch).
+				m.Post("/", repo.SetDefaultBranchPost)
+			}, repo.MustBeNotEmpty)
+
+			m.Group("/branches", func() {
+				m.Get("/", repo.ProtectedBranchRules)
+				m.Combo("/new").Get(repo.SettingsProtectedBranch).
+					Post(bindIgnErr(forms.ProtectBranchForm{}), context.RepoMustNotBeArchived(), repo.SettingsProtectedBranchPost)
+				m.Post("/{id}/delete", repo.DeleteProtectedBranchRulePost)
+				m.Combo("/{id}").Get(repo.SettingsProtectedBranch).
 					Post(bindIgnErr(forms.ProtectBranchForm{}), context.RepoMustNotBeArchived(), repo.SettingsProtectedBranchPost)
 			}, repo.MustBeNotEmpty)
+
 			m.Post("/rename_branch", bindIgnErr(forms.RenameBranchForm{}), context.RepoMustNotBeArchived(), repo.RenameBranchPost)
 
 			m.Group("/tags", func() {

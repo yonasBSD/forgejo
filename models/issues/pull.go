@@ -165,9 +165,8 @@ type PullRequest struct {
 	HeadBranch          string
 	HeadCommitID        string `xorm:"-"`
 	BaseBranch          string
-	ProtectedBranch     *git_model.ProtectedBranch `xorm:"-"`
-	MergeBase           string                     `xorm:"VARCHAR(40)"`
-	AllowMaintainerEdit bool                       `xorm:"NOT NULL DEFAULT false"`
+	MergeBase           string `xorm:"VARCHAR(40)"`
+	AllowMaintainerEdit bool   `xorm:"NOT NULL DEFAULT false"`
 
 	HasMerged      bool               `xorm:"INDEX"`
 	MergedCommitID string             `xorm:"VARCHAR(40)"`
@@ -309,28 +308,6 @@ func (pr *PullRequest) LoadIssueCtx(ctx context.Context) (err error) {
 	pr.Issue, err = GetIssueByID(ctx, pr.IssueID)
 	if err == nil {
 		pr.Issue.PullRequest = pr
-	}
-	return err
-}
-
-// LoadProtectedBranch loads the protected branch of the base branch
-func (pr *PullRequest) LoadProtectedBranch() (err error) {
-	return pr.LoadProtectedBranchCtx(db.DefaultContext)
-}
-
-// LoadProtectedBranchCtx loads the protected branch of the base branch
-func (pr *PullRequest) LoadProtectedBranchCtx(ctx context.Context) (err error) {
-	if pr.ProtectedBranch == nil {
-		if pr.BaseRepo == nil {
-			if pr.BaseRepoID == 0 {
-				return nil
-			}
-			pr.BaseRepo, err = repo_model.GetRepositoryByIDCtx(ctx, pr.BaseRepoID)
-			if err != nil {
-				return
-			}
-		}
-		pr.ProtectedBranch, err = git_model.GetProtectedBranchBy(ctx, pr.BaseRepo.ID, pr.BaseBranch)
 	}
 	return err
 }

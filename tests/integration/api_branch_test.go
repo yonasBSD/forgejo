@@ -41,7 +41,7 @@ func testAPIGetBranchProtection(t *testing.T, branchName string, expectedHTTPSta
 	if resp.Code == http.StatusOK {
 		var branchProtection api.BranchProtection
 		DecodeJSON(t, resp, &branchProtection)
-		assert.EqualValues(t, branchName, branchProtection.BranchName)
+		assert.EqualValues(t, branchName, branchProtection.RuleName)
 	}
 }
 
@@ -49,14 +49,14 @@ func testAPICreateBranchProtection(t *testing.T, branchName string, expectedHTTP
 	session := loginUser(t, "user2")
 	token := getTokenForLoggedInUser(t, session)
 	req := NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/branch_protections?token="+token, &api.BranchProtection{
-		BranchName: branchName,
+		RuleName: branchName,
 	})
 	resp := session.MakeRequest(t, req, expectedHTTPStatus)
 
 	if resp.Code == http.StatusCreated {
 		var branchProtection api.BranchProtection
 		DecodeJSON(t, resp, &branchProtection)
-		assert.EqualValues(t, branchName, branchProtection.BranchName)
+		assert.EqualValues(t, branchName, branchProtection.RuleName)
 	}
 }
 
@@ -69,7 +69,7 @@ func testAPIEditBranchProtection(t *testing.T, branchName string, body *api.Bran
 	if resp.Code == http.StatusOK {
 		var branchProtection api.BranchProtection
 		DecodeJSON(t, resp, &branchProtection)
-		assert.EqualValues(t, branchName, branchProtection.BranchName)
+		assert.EqualValues(t, branchName, branchProtection.RuleName)
 	}
 }
 
@@ -176,8 +176,8 @@ func testAPICreateBranch(t testing.TB, session *TestSession, user, repo, oldBran
 func TestAPIBranchProtection(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	// Branch protection only on branch that exist
-	testAPICreateBranchProtection(t, "master/doesnotexist", http.StatusNotFound)
+	// Branch protection  on branch that not exist
+	testAPICreateBranchProtection(t, "master/doesnotexist", http.StatusCreated)
 	// Get branch protection on branch that exist but not branch protection
 	testAPIGetBranchProtection(t, "master", http.StatusNotFound)
 
