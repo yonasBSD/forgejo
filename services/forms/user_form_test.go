@@ -15,7 +15,7 @@ import (
 func TestRegisterForm_IsDomainAllowed_Empty(t *testing.T) {
 	_ = setting.Service
 
-	setting.Service.EmailDomainWhitelist = []string{}
+	setting.Service.EmailDomainWhitelist = setting.BuildEmailGlobs([]string{})
 
 	form := RegisterForm{}
 
@@ -25,7 +25,7 @@ func TestRegisterForm_IsDomainAllowed_Empty(t *testing.T) {
 func TestRegisterForm_IsDomainAllowed_InvalidEmail(t *testing.T) {
 	_ = setting.Service
 
-	setting.Service.EmailDomainWhitelist = []string{"gitea.io"}
+	setting.Service.EmailDomainWhitelist = setting.BuildEmailGlobs([]string{"gitea.io"})
 
 	tt := []struct {
 		email string
@@ -44,7 +44,7 @@ func TestRegisterForm_IsDomainAllowed_InvalidEmail(t *testing.T) {
 func TestRegisterForm_IsDomainAllowed_WhitelistedEmail(t *testing.T) {
 	_ = setting.Service
 
-	setting.Service.EmailDomainWhitelist = []string{"gitea.io"}
+	setting.Service.EmailDomainWhitelist = setting.BuildEmailGlobs([]string{"gitea.io", "*.gc.ca"})
 
 	tt := []struct {
 		email string
@@ -54,6 +54,7 @@ func TestRegisterForm_IsDomainAllowed_WhitelistedEmail(t *testing.T) {
 		{"security@gITea.io", true},
 		{"hdudhdd", false},
 		{"seee@example.com", false},
+		{"security@fishsauce.gc.ca", true},
 	}
 
 	for _, v := range tt {
@@ -66,8 +67,8 @@ func TestRegisterForm_IsDomainAllowed_WhitelistedEmail(t *testing.T) {
 func TestRegisterForm_IsDomainAllowed_BlocklistedEmail(t *testing.T) {
 	_ = setting.Service
 
-	setting.Service.EmailDomainWhitelist = []string{}
-	setting.Service.EmailDomainBlocklist = []string{"gitea.io"}
+	setting.Service.EmailDomainWhitelist = setting.BuildEmailGlobs([]string{})
+	setting.Service.EmailDomainBlocklist = setting.BuildEmailGlobs([]string{"gitea.io", "*.gov"})
 
 	tt := []struct {
 		email string
@@ -76,6 +77,7 @@ func TestRegisterForm_IsDomainAllowed_BlocklistedEmail(t *testing.T) {
 		{"security@gitea.io", false},
 		{"security@gitea.example", true},
 		{"hdudhdd", true},
+		{"security@fishsauce.gov", false},
 	}
 
 	for _, v := range tt {

@@ -16,6 +16,8 @@ import (
 	"code.gitea.io/gitea/modules/web/middleware"
 
 	"gitea.com/go-chi/binding"
+
+	"github.com/gobwas/glob"
 )
 
 // InstallForm form for installation page
@@ -108,7 +110,7 @@ func (f *RegisterForm) Validate(req *http.Request, errs binding.Errors) binding.
 
 // IsEmailDomainListed checks whether the domain of an email address
 // matches a list of domains
-func IsEmailDomainListed(list []string, email string) bool {
+func IsEmailDomainListed(list []glob.Glob, email string) bool {
 	if len(list) == 0 {
 		return false
 	}
@@ -120,8 +122,8 @@ func IsEmailDomainListed(list []string, email string) bool {
 
 	domain := strings.ToLower(email[n+1:])
 
-	for _, v := range list {
-		if strings.ToLower(v) == domain {
+	for _, l := range list {
+		if l.Match(domain) {
 			return true
 		}
 	}

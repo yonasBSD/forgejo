@@ -11,6 +11,8 @@ import (
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/structs"
+
+	"github.com/gobwas/glob"
 )
 
 // Service settings
@@ -25,8 +27,8 @@ var Service = struct {
 	ResetPwdCodeLives                       int
 	RegisterEmailConfirm                    bool
 	RegisterManualConfirm                   bool
-	EmailDomainWhitelist                    []string
-	EmailDomainBlocklist                    []string
+	EmailDomainWhitelist                    []glob.Glob
+	EmailDomainBlocklist                    []glob.Glob
 	DisableRegistration                     bool
 	AllowOnlyInternalRegistration           bool
 	AllowOnlyExternalRegistration           bool
@@ -103,6 +105,23 @@ func (a AllowedVisibility) ToVisibleTypeSlice() (result []structs.VisibleType) {
 	return result
 }
 
+// BuildEmailGlobs takes in an array of strings and
+// builds an array of compiled globs used to do
+// pattern matching in IsEmailDomainAllowed. A compiled list
+func BuildEmailGlobs(list []string) []glob.Glob {
+	var emaillist []glob.Glob
+
+	for _, s := range list {
+		if g, err := glob.Compile(s); err == nil {
+			emaillist = append(emaillist, g)
+		} else {
+			log.Warn("Invalid glob expression %q (skipped): %v", s, err)
+		}
+	}
+
+	return emaillist
+}
+
 func newService() {
 	sec := Cfg.Section("service")
 	Service.ActiveCodeLives = sec.Key("ACTIVE_CODE_LIVE_MINUTES").MustInt(180)
@@ -119,8 +138,8 @@ func newService() {
 	} else {
 		Service.RegisterManualConfirm = false
 	}
-	Service.EmailDomainWhitelist = sec.Key("EMAIL_DOMAIN_WHITELIST").Strings(",")
-	Service.EmailDomainBlocklist = sec.Key("EMAIL_DOMAIN_BLOCKLIST").Strings(",")
+	Service.EmailDomainWhitelist = BuildEmailGlobs(sec.Key("EMAIL_DOMAIN_WHITELIST").Strings(","))
+	Service.EmailDomainBlocklist = BuildEmailGlobs(sec.Key("EMAIL_DOMAIN_BLOCKLIST").Strings(","))
 	Service.ShowRegistrationButton = sec.Key("SHOW_REGISTRATION_BUTTON").MustBool(!(Service.DisableRegistration || Service.AllowOnlyExternalRegistration))
 	Service.ShowMilestonesDashboardPage = sec.Key("SHOW_MILESTONES_DASHBOARD_PAGE").MustBool(true)
 	Service.RequireSignInView = sec.Key("REQUIRE_SIGNIN_VIEW").MustBool()
