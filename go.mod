@@ -87,6 +87,7 @@ require (
 	github.com/tstranex/u2f v1.0.0
 	github.com/unrolled/render v1.5.0
 	github.com/urfave/cli v1.22.10
+	github.com/valyala/fastjson v1.6.3
 	github.com/xanzy/go-gitlab v0.73.1
 	github.com/yohcop/openid-go v1.0.0
 	github.com/yuin/goldmark v1.5.2
@@ -264,7 +265,6 @@ require (
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
-	github.com/valyala/fastjson v1.6.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.2 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
@@ -301,6 +301,8 @@ replace github.com/hashicorp/go-version => github.com/6543/go-version v1.3.1
 replace github.com/shurcooL/vfsgen => github.com/lunny/vfsgen v0.0.0-20220105142115-2c99e1ffdfa0
 
 replace github.com/satori/go.uuid v1.2.0 => github.com/gofrs/uuid v4.2.0+incompatible
+
+replace github.com/go-ap/activitypub => gitea.com/xy/activitypub v0.0.0-20220915153216-ee7ec91cd818
 
 exclude github.com/gofrs/uuid v3.2.0+incompatible
 

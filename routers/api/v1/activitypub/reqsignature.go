@@ -9,14 +9,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 
 	"code.gitea.io/gitea/modules/activitypub"
 	gitea_context "code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/httplib"
 	"code.gitea.io/gitea/modules/setting"
+	user_service "code.gitea.io/gitea/services/user"
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-fed/httpsig"
@@ -44,39 +43,28 @@ func getPublicKeyFromResponse(b []byte, keyID *url.URL) (p crypto.PublicKey, err
 	return p, err
 }
 
-func fetch(iri *url.URL) (b []byte, err error) {
-	req := httplib.NewRequest(iri.String(), http.MethodGet)
-	req.Header("Accept", activitypub.ActivityStreamsContentType)
-	req.Header("User-Agent", "Gitea/"+setting.AppVer)
-	resp, err := req.Response()
+func getKeyID(r *http.Request) (httpsig.Verifier, string, error) {
+	v, err := httpsig.NewVerifier(r)
 	if err != nil {
-		return
+		return nil, "", err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("url IRI fetch [%s] failed with status (%d): %s", iri, resp.StatusCode, resp.Status)
-		return
-	}
-	b, err = io.ReadAll(io.LimitReader(resp.Body, setting.Federation.MaxSize))
-	return b, err
+	return v, v.KeyId(), nil
 }
 
 func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, err error) {
 	r := ctx.Req
 
 	// 1. Figure out what key we need to verify
-	v, err := httpsig.NewVerifier(r)
+	v, ID, err := getKeyID(r)
 	if err != nil {
 		return
 	}
-	ID := v.KeyId()
 	idIRI, err := url.Parse(ID)
 	if err != nil {
 		return
 	}
 	// 2. Fetch the public key of the other actor
-	b, err := fetch(idIRI)
+	b, err := activitypub.Fetch(idIRI)
 	if err != nil {
 		return
 	}
@@ -87,6 +75,17 @@ func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, er
 	// 3. Verify the other actor's key
 	algo := httpsig.Algorithm(setting.Federation.Algorithms[0])
 	authenticated = v.Verify(pubKey, algo) == nil
+	if !authenticated {
+		return
+	}
+	// 4. Create a federated user for the actor
+	var person ap.Person
+	err = person.UnmarshalJSON(b)
+	if err != nil {
+		return
+	}
+
+	err = user_service.FederatedUserNew(ctx, &person)
 	return authenticated, err
 }
 

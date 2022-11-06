@@ -649,7 +649,18 @@ func Routes(ctx gocontext.Context) *web.Route {
 				m.Group("/user/{username}", func() {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
+					m.Get("/outbox", activitypub.PersonOutbox)
+					m.Get("/following", activitypub.PersonFollowing)
+					m.Get("/followers", activitypub.PersonFollowers)
+					m.Get("/liked", activitypub.PersonLiked)
 				}, context_service.UserAssignmentAPI())
+				m.Group("/repo/{username}/{reponame}", func() {
+					m.Get("", activitypub.Repo)
+					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepoInbox)
+					m.Get("/outbox", activitypub.RepoOutbox)
+					m.Get("/followers", activitypub.RepoFollowers)
+				}, repoAssignment())
+				m.Get("/ticket/{username}/{reponame}/{id}", repoAssignment(), activitypub.Ticket)
 			})
 		}
 		m.Get("/signing-key.gpg", misc.SigningKey)
