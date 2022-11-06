@@ -83,6 +83,7 @@ var (
 			DefaultMergeMessageOfficialApproversOnly bool
 			PopulateSquashCommentWithCommitMessages  bool
 			AddCoCommitterTrailers                   bool
+			RetargetChildsOnClose                    bool
 		} `ini:"repository.pull-request"`
 
 		// Issue Setting
@@ -205,6 +206,7 @@ var (
 			DefaultMergeMessageOfficialApproversOnly bool
 			PopulateSquashCommentWithCommitMessages  bool
 			AddCoCommitterTrailers                   bool
+			RetargetChildsOnClose                    bool
 		}{
 			WorkInProgressPrefixes: []string{"WIP:", "[WIP]"},
 			// Same as GitHub. See
