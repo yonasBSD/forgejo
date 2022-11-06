@@ -539,6 +539,7 @@ type EditProjectBoardForm struct {
 type CreateMilestoneForm struct {
 	Title    string `binding:"Required;MaxSize(50)"`
 	Content  string
+	LabelIDs string `form:"label_ids"`
 	Deadline string
 }
 
