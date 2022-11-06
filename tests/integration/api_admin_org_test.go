@@ -21,7 +21,7 @@ import (
 func TestAPIAdminOrgCreate(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		session := loginUser(t, "user1")
-		token := getTokenForLoggedInUser(t, session)
+		token := getTokenForLoggedInUser(t, session, "sudo")
 
 		org := api.CreateOrgOption{
 			UserName:    "user2_org",
@@ -55,7 +55,7 @@ func TestAPIAdminOrgCreate(t *testing.T) {
 func TestAPIAdminOrgCreateBadVisibility(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		session := loginUser(t, "user1")
-		token := getTokenForLoggedInUser(t, session)
+		token := getTokenForLoggedInUser(t, session, "sudo")
 
 		org := api.CreateOrgOption{
 			UserName:    "user2_org",
@@ -74,7 +74,6 @@ func TestAPIAdminOrgCreateNotAdmin(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	nonAdminUsername := "user2"
 	session := loginUser(t, nonAdminUsername)
-	token := getTokenForLoggedInUser(t, session)
 	org := api.CreateOrgOption{
 		UserName:    "user2_org",
 		FullName:    "User2's organization",
@@ -83,6 +82,6 @@ func TestAPIAdminOrgCreateNotAdmin(t *testing.T) {
 		Location:    "Shanghai",
 		Visibility:  "public",
 	}
-	req := NewRequestWithJSON(t, "POST", "/api/v1/admin/users/user2/orgs?token="+token, &org)
-	session.MakeRequest(t, req, http.StatusForbidden)
+	req := NewRequestWithJSON(t, "POST", "/api/v1/admin/users/user2/orgs", &org)
+	session.MakeRequest(t, req, http.StatusUnauthorized)
 }

@@ -151,10 +151,10 @@ func TestAPICreateFile(t *testing.T) {
 
 		// Get user2's token
 		session := loginUser(t, user2.Name)
-		token2 := getTokenForLoggedInUser(t, session)
+		token2 := getTokenForLoggedInUser(t, session, "repo")
 		// Get user4's token
 		session = loginUser(t, user4.Name)
-		token4 := getTokenForLoggedInUser(t, session)
+		token4 := getTokenForLoggedInUser(t, session, "repo")
 		session = emptyTestSession(t)
 
 		// Test creating a file in repo1 which user2 owns, try both with branch and empty branch
@@ -281,7 +281,7 @@ func TestAPICreateFile(t *testing.T) {
 		session.MakeRequest(t, req, http.StatusForbidden)
 
 		// Test creating a file in an empty repository
-		doAPICreateRepository(NewAPITestContext(t, "user2", "empty-repo"), true)(t)
+		doAPICreateRepository(NewAPITestContext(t, "user2", "empty-repo", "repo"), true)(t)
 		createFileOptions = getCreateFileOptions()
 		fileID++
 		treePath = fmt.Sprintf("new/file%d.txt", fileID)

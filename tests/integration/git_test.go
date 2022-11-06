@@ -43,11 +43,11 @@ func TestGit(t *testing.T) {
 
 func testGit(t *testing.T, u *url.URL) {
 	username := "user2"
-	baseAPITestContext := NewAPITestContext(t, username, "repo1")
+	baseAPITestContext := NewAPITestContext(t, username, "repo1", "repo", "write_public_key", "delete_repo")
 
 	u.Path = baseAPITestContext.GitPath()
 
-	forkedUserCtx := NewAPITestContext(t, "user4", "repo1")
+	forkedUserCtx := NewAPITestContext(t, "user4", "repo1", "repo")
 
 	t.Run("HTTP", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
@@ -358,7 +358,7 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 		t.Run("CreateBranchProtected", doGitCreateBranch(dstPath, "protected"))
 		t.Run("PushProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
 
-		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame)
+		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame, "repo")
 		t.Run("ProtectProtectedBranchNoWhitelist", doProtectBranch(ctx, "protected", "", ""))
 		t.Run("GenerateCommit", func(t *testing.T) {
 			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
@@ -602,7 +602,7 @@ func doAutoPRMerge(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
 	return func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame)
+		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame, "repo")
 
 		t.Run("CheckoutProtected", doGitCheckoutBranch(dstPath, "protected"))
 		t.Run("PullProtected", doGitPull(dstPath, "origin", "protected"))

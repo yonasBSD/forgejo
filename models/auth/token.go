@@ -67,6 +67,7 @@ type AccessToken struct {
 	TokenHash      string `xorm:"UNIQUE"` // sha256 of token
 	TokenSalt      string
 	TokenLastEight string `xorm:"token_last_eight"`
+	Scope          AccessTokenScope
 
 	CreatedUnix       timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix       timeutil.TimeStamp `xorm:"INDEX updated"`
