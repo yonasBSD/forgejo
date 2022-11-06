@@ -174,22 +174,30 @@ which will not be inherited from the `[log]` or relevant
 
 ## Log outputs
 
+Log outputs are the targets to which log messages will be sent.
+The content and the format of the log messages to be saved can be configured in these.
+
+Log outputs are also called subloggers.
+
 Gitea provides 4 possible log outputs:
 
 - `console` - Log to `os.Stdout` or `os.Stderr`
 - `file` - Log to a file
-- `conn` - Log to a keep-alive TCP connection
+- `conn` - Log to a socket (network or unix)
 - `smtp` - Log via email
+
+### Common configuration
 
 Certain configuration is common to all modes of log output:
 
+- `MODE` is the mode of the log output. It will default to the sublogger
+  name, thus `[log.console.router]` will default to `MODE = console`.
+  For mode specific confgurations read further.
 - `LEVEL` is the lowest level that this output will log. This value
   is inherited from `[log]` and in the case of the non-default loggers
   from `[log.sublogger]`.
 - `STACKTRACE_LEVEL` is the lowest level that this output will print
   a stacktrace. This value is inherited.
-- `MODE` is the mode of the log output. It will default to the sublogger
-  name. Thus `[log.console.router]` will default to `MODE = console`.
 - `COLORIZE` will default to `true` for `console` as
   described, otherwise it will default to `false`.
 
@@ -233,44 +241,56 @@ Possible values are:
 
 ### Console mode
 
+In this mode the logger will forward log messages to the stdout and
+stderr streams attached to the Gitea process.
+
 For loggers in console mode, `COLORIZE` will default to `true` if not
 on windows, or the windows terminal can be set into ANSI mode or is a
 cygwin or Msys pipe.
 
-If `STDERR` is set to `true` the logger will use `os.Stderr` instead of
-`os.Stdout`.
+Settings:
+- `STDERR`: **false**: Whether the logger should print to `stderr` instead of `stdout`.
 
 ### File mode
 
-The `FILE_NAME` defaults as described above. If set it will be relative
-to the provided `ROOT_PATH` in the master `[log]` section.
+In this mode the logger will save log messages to a file.
 
-Other values:
+The `FILE_NAME` defaults as described in the respective logger facilities.
+If unset, their own default will be used.
+If set it will be relative to the provided `ROOT_PATH` in the master `[log]` section.
 
-- `LOG_ROTATE`: **true**: Rotate the log files.
-- `MAX_SIZE_SHIFT`: **28**: Maximum size shift of a single file, 28 represents 256Mb.
-- `DAILY_ROTATE`: **true**: Rotate logs daily.
-- `MAX_DAYS`: **7**: Delete the log file after n days
-- `COMPRESS`: **true**: Compress old log files by default with gzip
-- `COMPRESSION_LEVEL`: **-1**: Compression level
+Settings:
+- `FILE_NAME`: The file to write the log events to. For details see above.
+- `MAX_SIZE_SHIFT`: **28**: Maximum size shift of a single file. 28 represents 256Mb. For details see here: TODO.
+- `LOG_ROTATE` **true**: Whether to rotate the log files. TODO: if false, will it delete instead on daily rotate, or do nothing?.
+- `DAILY_ROTATE`: **true**: Whether to rotate logs daily.
+- `MAX_DAYS`: **7**: Delete rotated log files after this number of days.
+- `COMPRESS`: **true**: Whether to compress old log files by default with gzip.
+- `COMPRESSION_LEVEL`: **-1**: Compression level.
 
 ### Conn mode
 
-- `RECONNECT_ON_MSG`: **false**: Reconnect host for every single message.
-- `RECONNECT`: **false**: Try to reconnect when connection is lost.
-- `PROTOCOL`: **tcp**: Set the protocol, either "tcp", "unix" or "udp".
+In this mode the logger will send log messages over a network socket.
+
+Settings:
 - `ADDR`: **:7020**: Sets the address to connect to.
+- `PROTOCOL`: **tcp**: Set the protocol, either "tcp", "unix" or "udp".
+- `RECONNECT`: **false**: Try to reconnect when connection is lost.
+- `RECONNECT_ON_MSG`: **false**: Reconnect host for every single message.
 
 ### SMTP mode
 
-It is not recommended to use this logger to send general logging
-messages. However, you could perhaps set this logger to work on `FATAL`.
+In this mode the logger will send log messages in email.
 
+It is not recommended to use this logger to send general logging
+messages. However, you could perhaps set this logger to work on `FATAL` messages only.
+
+Settings:
+- `HOST`: **127.0.0.1:25**: The SMTP host to connect to.
 - `USER`: User email address to send from.
 - `PASSWD`: Password for the smtp server.
-- `HOST`: **127.0.0.1:25**: The SMTP host to connect to.
 - `RECEIVERS`: Email addresses to send to.
-- `SUBJECT`: **Diagnostic message from Gitea**
+- `SUBJECT`: **Diagnostic message from Gitea**. The content of the email's subject field.
 
 ## Debugging problems
 
