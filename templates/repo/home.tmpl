@@ -124,11 +124,36 @@
 									<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefName}}.zip" rel="nofollow">{{svg "octicon-file-zip" 16 "mr-3"}}{{.locale.Tr "repo.download_zip"}}</a>
 									<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefName}}.tar.gz" rel="nofollow">{{svg "octicon-file-zip" 16 "mr-3"}}{{.locale.Tr "repo.download_tar"}}</a>
 									<a class="item archive-link" href="{{$.RepoLink}}/archive/{{PathEscapeSegments $.RefName}}.bundle" rel="nofollow">{{svg "octicon-package" 16 "mr-3"}}{{.locale.Tr "repo.download_bundle"}}</a>
+									{{if .CitiationExist}}
+										<a class="item" id="cite-repo-button">{{svg "octicon-cross-reference" 16 "mr-3"}}{{.locale.Tr "repo.cite_this_repo"}}</a>
+									{{end}}
 								{{end}}
 								<a class="item js-clone-url-vsc" href="vscode://vscode.git/clone?url={{.CloneButtonOriginLink.HTTPS}}">{{svg "gitea-vscode" 16 "mr-3"}}{{.locale.Tr "repo.clone_in_vsc"}}</a>
 							</div>
 						</button>
 						{{template "repo/clone_script" .}}{{/* the script will update `.js-clone-url` and related elements */}}
+					</div>
+					<div class="ui tiny modal" id="cite-repo-modal">
+						<div class="header">
+							{{.locale.Tr "repo.cite_this_repo"}}
+						</div>
+						<div class="content">
+							<div class="ui stackable secondary menu mobile--margin-between-items mobile--no-negative-margins no-vertical-tabs">
+								<div class="fitted item">
+									<div class="ui action input" id="citation-panel">
+										{{template "repo/citation_buttons" .}}
+										<a id="goto-citation-btn" class="ui basic jump icon button tooltip" href="{{$.RepoLink}}/src/{{$.BranchName}}/CITATION.cff" data-position="top right" data-content="{{.locale.Tr "repo.find_file.go_to_file"}}">
+											{{svg "octicon-file-moved"}}
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="actions">
+							<div class="ui black deny button">
+								{{.locale.Tr "cancel"}}
+							</div>
+						</div>
 					</div>
 				{{end}}
 				{{if and (ne $n 0) (not .IsViewFile) (not .IsBlame)}}
