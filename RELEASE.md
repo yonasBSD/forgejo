@@ -16,7 +16,7 @@ A GPG master key with no expiration date is created and shared with members of t
 
 ## Subkey creation and renewal
 
-* gpg --edit-key EB114F5E6C0DC2BCDD183550A4B61A2DC5923710
+* gpg --expert --edit-key EB114F5E6C0DC2BCDD183550A4B61A2DC5923710
 * addkey
 * key type: ECC (signature only)
 * key validity: one year
