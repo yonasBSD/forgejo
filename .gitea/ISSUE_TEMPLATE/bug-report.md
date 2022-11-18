@@ -4,7 +4,7 @@ about: "Found something you weren't expecting? Report it here!"
 title: "[BUG] "
 ---
 <!--
-NOTE: If your issue is a security concern, please email security@forgejo.org (GPG: C5923710) instead of opening a public issue.
+NOTE: If your issue is a security concern, please email security@forgejo.org (GPG: A4676E79) instead of opening a public issue.
 
 1. Please speak English, as this is the language all maintainers can
    speak and write.
