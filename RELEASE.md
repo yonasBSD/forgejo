@@ -1,5 +1,11 @@
 Release management documentation.
 
+# Shared user: release-team
+
+The [release-team](https://codeberg.org/release-team) user authors and signs all releases. The associated email is release@forgejo.org.
+
+The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <contact@forgejo.org>`
+
 # Release signing keys management
 
 A GPG master key with no expiration date is created and shared with members of the Owners team via encrypted email. A subkey with a one year expiration date is created and stored in the secrets repository, to be used by the CI pipeline. The public master key is stored in the secrets repository and published where relevant.
