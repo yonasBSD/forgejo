@@ -6,6 +6,15 @@ The [release-team](https://codeberg.org/release-team) user authors and signs all
 
 The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <contact@forgejo.org>`
 
+# Release process
+
+* Reset the vX.Y/forgejo-integration branch to the Gitea tag vX.Y.Z
+* Merge all feature branches into the vX.Y/forgejo-integration branch
+* If the CI passes reset the vX.Y/forgejo branch to the tip of vX.Y/forgejo-integration
+* Set the vX.Y.Z tag to the tip of the vX.Y/forgejo branch
+* [Binaries](https://codeberg.org/forgejo/forgejo/releases) are built, signed and uploaded by the CI.
+* [Container images](https://codeberg.org/forgejo/-/packages/container/forgejo/versions) are built and uploaded by the CI.
+
 # Release signing keys management
 
 A GPG master key with no expiration date is created and shared with members of the Owners team via encrypted email. A subkey with a one year expiration date is created and stored in the secrets repository, to be used by the CI pipeline. The public master key is stored in the secrets repository and published where relevant.
