@@ -4,7 +4,7 @@ Release management documentation.
 
 The [release-team](https://codeberg.org/release-team) user authors and signs all releases. The associated email is release@forgejo.org.
 
-The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <contact@forgejo.org>`
+The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <release@forgejo.org>`
 
 # Release process
 
