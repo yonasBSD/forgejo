@@ -2,13 +2,13 @@
 
 Hi there! Tired of big platforms playing monopoly?
 Providing Git hosting for your project, friends, company or community?
-Forgejo (Esperanto: forge) has you covered with it's intuitive interface,
+**Forgejo** (\ˈfor.d͡ʒe.jo\ – the Esperanto word for *forge*) has you covered with its intuitive interface,
 light and easy hosting and a lot of builtin functionality.
 
 Forgejo was forked from the well-known [Gitea](https://gitea.io) project in 2022,
 because we think that the project should be owned by an independent community instead of a for-profit company.
 If you second that, then Forgejo is for you!
-Our promise: Independent Free/Libre Software forever!
+Our promise: **Independent Free/Libre Software forever!**
 
 
 ## What does Forgejo offer?
@@ -22,7 +22,7 @@ If you like any of the following, Forgejo is literally meant for you:
 - Lightweight: Forgejo can easily be hosted on nearly **every machine**.
   Running on a Raspberry? Small cloud instance? No problem!
 - Intuitive: We aim for a user experience that is **friendly** to newcomers and **productive** for power users.
-- Project management: Next to Git hosting, Forgejo offers issues,
+- Project management: Besides Git hosting, Forgejo offers issues,
   pull requests, wikis, kanban boards and much more to **coordinate with your team**.
 - Publishing: Have something to share? Use **releases** to host your software for download,
   or use the **package registry** to publish it for docker, npm and many other package managers.
@@ -30,6 +30,7 @@ If you like any of the following, Forgejo is literally meant for you:
   There are many **config switches** to make Forgejo work exactly like you want.
 - Powerful: Organizations & team permissions, CI integration, Code Search, LDAP, OAuth and much more.
   If you have **advanced needs**, Forgejo has you covered.
+- Privacy: From update checker to default settings: Forgejo is built to be **privacy first** for you and your crew.
 - Federation: (WIP) We are actively working to connect software forges with each other through **ActivityPub**,
   and create a collaborative network of personal instances.
   Interested? [Read more below](#Status-of-federation)
