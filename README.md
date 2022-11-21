@@ -35,6 +35,11 @@ If you like any of the following, Forgejo is literally meant for you:
   and create a collaborative network of personal instances.
   Interested? [Read more below](#Status-of-federation)
 
+## Learn more
+
+We're still working on our website.
+In the meantime, you can <a href="https://floss.social/@forgejo" rel="me">find us on the Fediverse</a> or hop into [our Matrix room](https://matrix.to/#/#forgejo-chat:matrix.org) if you have any questions or want to get involved.
+
 
 ## Getting started
 
