@@ -77,12 +77,25 @@ The [release-team](https://codeberg.org/release-team) user authors and signs all
 
 The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <release@forgejo.org>`
 
+## Release numbering
+
+The Forgejo release numbers are composed of the Gitea release number followed by a dash and a serial number. For instance:
+
+* Gitea **v1.18.0** will be Forgejo **v1.18.0-0**, **v1.18.0-1**, etc
+
+The Gitea release candidates are suffixed with **-rcN** which is handled as a special case for packaging: although **X.Y.Z** is lexicographically lower than **X.Y.Z-rc1** is is considered greater. The Forgejo serial number must therefore be inserted before the **-rcN** suffix to preserve the expected version ordering.
+
+* Gitea **v1.18.0-rc0** will be Forgejo **v1.18.0-0-rc0**, **v1.18.0-1-rc0**
+* Gitea **v1.18.0-rc1** will be Forgejo **v1.18.0-2-rc1**, **v1.18.0-3-rc1**, **v1.18.0-4-rc1**
+* Gitea **v1.18.0** will be Forgejo **v1.18.0-5**, **v1.18.0-6**, **v1.18.0-7**
+* etc.
+
 ## Release process
 
 * Reset the vX.Y/forgejo-integration branch to the Gitea tag vX.Y.Z
 * Merge all feature branches into the vX.Y/forgejo-integration branch
 * If the CI passes reset the vX.Y/forgejo branch to the tip of vX.Y/forgejo-integration
-* Set the vX.Y.Z tag to the tip of the vX.Y/forgejo branch
+* Set the vX.Y.Z-N tag to the tip of the vX.Y/forgejo branch
 * [Binaries](https://codeberg.org/forgejo/forgejo/releases) are built, signed and uploaded by the CI.
 * [Container images](https://codeberg.org/forgejo/-/packages/container/forgejo/versions) are built and uploaded by the CI.
 
