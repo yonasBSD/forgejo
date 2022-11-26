@@ -2,7 +2,7 @@
 
 Hi there! Tired of big platforms playing monopoly?
 Providing Git hosting for your project, friends, company or community?
-**Forgejo** (\ˈfor.d͡ʒe.jo\ – the Esperanto word for *forge*) has you covered with its intuitive interface,
+**Forgejo** (inspired by forĝejo \ˈfor.d͡ʒe.jo\ – the Esperanto word for *forge*) has you covered with its intuitive interface,
 light and easy hosting and a lot of builtin functionality.
 
 Forgejo was forked from the well-known [Gitea](https://gitea.io) project in 2022,
