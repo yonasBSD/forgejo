@@ -48,11 +48,15 @@ When a tag is set to a *Stable* *Forgejo* branch, the CI pipeline creates and up
 
 All *Feature branches* are based on the \*forgejo-development branch which provides the Woodpecker CI configuration and other development tools.
 
-The purpose of each *Feature branch* is documented in CONTRIBUTING.md as follows:
+The purpose of each *Feature branch* is documented below:
 
-* Name of the *Feature branch* and name of the base *Feature branch* (for instance forgejo-federation based on forgejo-development)
-    * Backports: list of the versions in which this *Feature branch* is supported (for instance v1.18, v1.19)
-    * Description: explains what the focus of the *Feature branch* is (for instance: forge federation features)
+* [forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-ci) based on [main](https://codeberg.org/forgejo/forgejo/src/branch/main)
+  Woodpecker CI configuration, including the release process.
+  * Backports: [v1.18/forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-ci)
+
+* [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development) based on [forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-ci)
+  Forgejo development tools and documentation.
+  * Backports: [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
 
 ## Contributing
 
