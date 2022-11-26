@@ -38,32 +38,9 @@ If you like any of the following, Forgejo is literally meant for you:
 ## Learn more
 
 We're still working on our website.
-In the meantime, you can <a href="https://floss.social/@forgejo" rel="me">find us on the Fediverse</a> or hop into [our Matrix room](https://matrix.to/#/#forgejo-chat:matrix.org) if you have any questions or want to get involved.
+In the meantime, you can <a href="https://floss.social/@Forgejo" rel="me">find us on the Fediverse</a> or hop into [our Matrix room](https://matrix.to/#/#Forgejo-chat:matrix.org) if you have any questions or want to get involved.
 
 
-## Getting started
+## Get involved
 
-We're working towards our first release.
-The download options will be published here.
-
-### Documentation
-
-...
-
-## Roadmap
-
-We're currently working on ... for the next release.
-
-
-### Status of Federation
-
-...
-
-
-## Contributing
-
-... 
-
-### Translating
-
-## Thanks to ...
+If you are interested in making Forgejo better, either by reporting a bug or by changing the governance, please [take a look at the contribution guide](CONTRIBUTING.md).
