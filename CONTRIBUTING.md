@@ -4,26 +4,20 @@ The Forgejo project is run by a community of people who are expected to follow t
 
 Sensitive security-related issues should be reported to [security@forgejo.org](mailto:security@forgejo.org) using [encryption](https://keyoxide.org/security@forgejo.org).
 
-# Table of Contents
+## For everyone involved
 
 - [Code of Conduct](CONTRIBUTING/COC.md)
-- [Bugs, features and discussions](#bugs-features-and-discussions)
-- [Developer Certificate of Origin (DCO)](#developer-certificate-of-origin-dco)
-- [Development workflow](CONTRIBUTING/WORKFLOW.md)
-- [Release management](CONTRIBUTING/RELEASE.md)
+- [Bugs, features, security and others discussions](CONTRIBUTING/DISCUSSIONS.md)
 - [Governance](CONTRIBUTING/GOVERNANCE.md)
-- [Secrets](CONTRIBUTING/SECRETS.md)
-- [Security](CONTRIBUTING/SECURITY.md)
 - [Funding](CONTRIBUTING/FUNDING.md)
 
-# Bugs, features and discussions
+## For contributors
 
-The [Forgejo issue tracker](https://codeberg.org/forgejo/forgejo/issues) is where bugs should be reported and features requested.
+- [Developer Certificate of Origin (DCO)](CONTRIBUTING/DCO.md)
+- [Development workflow](CONTRIBUTING/WORKFLOW.md)
 
-Discussions regarding all non technical aspects of Forgejo, such as the governance, [happen in the **meta** issue tracker](https://codeberg.org/forgejo/meta/issues).
+## For maintainers
 
-Other repositories in the [Forgejo organization](https://codeberg.org/forgejo) cover areas such as the [website](https://codeberg.org/forgejo/website), the [Code of Conduct](https://codeberg.org/forgejo/code-of-conduct) and more.
+- [Release management](CONTRIBUTING/RELEASE.md)
+- [Secrets](CONTRIBUTING/SECRETS.md)
 
-# Developer Certificate of Origin (DCO)
-
-Contributions to Forgejo, in all the repositories in the [Forgejo organization](https://codeberg.org/forgejo) are accepted provided the author agrees to the [Developer Certificate of Origin (DCO)](CONTRIBUTING/DCO.txt).
