@@ -48,6 +48,8 @@ The \*forgejo-development branch is based on the {vX.Y/,}forgejo-ci branch which
 
 The purpose of each *Feature branch* is documented below:
 
+### General purpose
+
 * [forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-ci) based on [main](https://codeberg.org/forgejo/forgejo/src/branch/main)
   Woodpecker CI configuration, including the release process.
   * Backports: [v1.18/forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-ci)
@@ -55,6 +57,11 @@ The purpose of each *Feature branch* is documented below:
 * [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development) based on [forgejo-ci](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-ci)
   Forgejo development tools and documentation.
   * Backports: [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
+
+### [Federation](https://codeberg.org/forgejo/forgejo/issues?labels=79349)
+
+* [forgejo-federation](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-federation) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
+  Federation support for Forgejo
 
 ## Pull requests and feature branches
 
