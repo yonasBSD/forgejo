@@ -77,3 +77,10 @@ Returning contributors can figure out which *Feature branch* to base their pull 
 *Feature branches* can contain a number of commits grouped together, for instance for branding the documentation, the landing page and the footer. It makes it convenient for people working on that topic to get the big picture without browsing multiple branches. Creating a new *Feature branch* for each individual commit, while possible, is likely to be difficult to work with.
 
 Observing the granularity of the existing *Feature branches* is the best way to figure out what works and what does not. It requires adjustments from time to time depending on the number of contributors and the complexity of the Forgejo codebase that sits on top of Gitea.
+
+## Mail based patches
+
+It is not required to have an account on Codeberg to contribute to Forgejo. Patches are accepted and reviewed via email at patch@forgejo.org. For more information see [email + git = <3](https://git-send-email.io/).
+
+Upon reception, the patch will be used to open a pull request for discussion. The link to the pull request will be sent back, to allow reading eventual comments. The comments can be addressed by sending other patches by email.
+
