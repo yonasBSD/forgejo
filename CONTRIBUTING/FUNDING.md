@@ -18,4 +18,4 @@
 * [A solution for sustaining Free Software forge development](https://blog.dachary.org/2022/11/05/a-solution-for-sustaining-forge-development/)
     * A French company delegates an employee for X month
     * The employee's time is paid for by [R&D incentive](https://fr.wikipedia.org/wiki/Cr%C3%A9dit_d%27imp%C3%B4t_recherche)
-* [Donations to Codeberg](https://codeberg.org/codename/meta/issues/26)
+* [Donations to Codeberg](https://codeberg.org/forgejo/meta/issues/26)

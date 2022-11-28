@@ -1,3 +1,8 @@
+# Developer Certificate of Origin (DCO)
+
+Contributions to Forgejo, in all the repositories in the [Forgejo organization](https://codeberg.org/forgejo) are accepted provided the author agrees to the following Developer Certificate of Origin (DCO).
+
+```
 By making a contribution to Forgejo, I certify that:
 
 (a) The contribution was created in whole or in part by me and I
@@ -21,3 +26,4 @@ By making a contribution to Forgejo, I certify that:
     personal information I submit with it, including my sign-off) is
     maintained indefinitely and may be redistributed consistent with
     this project or the Free Software license(s) involved.
+```
