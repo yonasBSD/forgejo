@@ -9,7 +9,7 @@ Sensitive security-related issues should be reported to [security@forgejo.org](m
 - [Code of Conduct](CONTRIBUTING/COC.md)
 - [Bugs, features, security and others discussions](CONTRIBUTING/DISCUSSIONS.md)
 - [Governance](CONTRIBUTING/GOVERNANCE.md)
-- [Funding](CONTRIBUTING/FUNDING.md)
+- [Sustainability and funding](CONTRIBUTING/SUSTAINABILITY.md)
 
 ## For contributors
 
