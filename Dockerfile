@@ -1,5 +1,5 @@
 #Build stage
-FROM codeberg.org/forgejo/golang:1.19-alpine3.16 AS build-env
+FROM codeberg.org/forgejo/golang:1.19-alpine3.17 AS build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -23,7 +23,7 @@ RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
 # Begin env-to-ini build
 RUN go build contrib/environment-to-ini/environment-to-ini.go
 
-FROM codeberg.org/forgejo/alpine:3.16.3
+FROM codeberg.org/forgejo/alpine:3.17.0
 LABEL maintainer="contact@forgejo.org"
 
 EXPOSE 22 3000
