@@ -38,6 +38,14 @@ pipeline:
       TAGS: bindata sqlite sqlite_unlock_notify
       DEBIAN_FRONTEND: noninteractive
 
+  verifyruns:
+    image: golang:1.19
+    commands:
+      - ./dist/release/forgejo-*-amd64 --version | grep 'built with'
+      - apt-get update
+      - apt-get install -y qemu-user-static wget
+      - /usr/bin/qemu-aarch64-static ./dist/release/forgejo-*-arm64 --version | grep 'built with'
+
   gpg-sign:
     image: plugins/gpgsign:1
     pull: true
