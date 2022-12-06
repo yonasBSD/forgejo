@@ -63,6 +63,9 @@ The purpose of each *Feature branch* is documented below:
 * [forgejo-federation](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-federation) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
   Federation support for Forgejo
 
+* [forgejo-f3](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-f3) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
+  [F3](https://lab.forgefriends.org/friendlyforgeformat/gof3) support for Forgejo
+
 ## Pull requests and feature branches
 
 Most people who are used to contributing will be familiar with the workflow of sending a pull request against the default branch. When that happens the reviewer should change the base branch to the appropriate *Feature branch* instead. If the pull request does not fit in any *Feature branch*, the reviewer needs to make decision to either:
