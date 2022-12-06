@@ -55,6 +55,7 @@ cpu.out
 
 /bin
 /dist
+/docker/bin
 /custom/*
 !/custom/conf
 /custom/conf/*

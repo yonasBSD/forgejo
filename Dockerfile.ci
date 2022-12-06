@@ -1,0 +1,53 @@
+FROM --platform=$BUILDPLATFORM codeberg.org/forgejo/alpine:3.17.0 as prep
+ARG BUILDPLATFORM
+
+COPY docker /docker/
+
+RUN chmod 755 /docker/root/usr/bin/entrypoint /docker/root/usr/local/bin/gitea /docker/root/etc/s6/gitea/* /docker/root/etc/s6/openssh/* /docker/root/etc/s6/.s6-svscan/*
+
+FROM codeberg.org/forgejo/alpine:3.17.0
+LABEL maintainer="contact@forgejo.org"
+
+ARG TARGETPLATFORM
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
+
+EXPOSE 22 3000
+
+#regrouped as updates to it should happen less frequently
+RUN addgroup \
+  -S -g 1000 \
+  git && \
+  adduser \
+  -S -H -D \
+  -h /data/git \
+  -s /bin/bash \
+  -u 1000 \
+  -G git \
+  git && \
+  echo "git:*" | chpasswd -e
+
+RUN apk --no-cache add \
+  bash \
+  ca-certificates \
+  curl \
+  gettext \
+  git \
+  linux-pam \
+  openssh \
+  s6 \
+  sqlite \
+  su-exec \
+  gnupg \
+  tzdata
+
+ENV USER git
+ENV GITEA_CUSTOM /data/gitea
+
+VOLUME ["/data"]
+
+ENTRYPOINT ["/usr/bin/entrypoint"]
+CMD ["/bin/s6-svscan", "/etc/s6"]
+
+COPY --from=prep /docker/root /
+COPY --chmod=755 ./docker/bin/$TARGETPLATFORM/* /app/gitea/
+RUN ln -s /app/gitea/environment-to-ini /usr/local/bin/environment-to-ini
