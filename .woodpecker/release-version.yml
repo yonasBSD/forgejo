@@ -1,45 +1,74 @@
 platform: linux/amd64
 
 depends_on:
-- testing-amd64
+  - compliance-and-tests
 
 workspace:
   base: /source
   path: /
 
+variables:
+  - &git_image 'docker:git'
+  - &golang_image 'golang:1.19'
+  - &node_image 'node:18'
+  - &xgo_image 'techknowlogick/xgo:go-1.19.x'
+  - &buildx_plugin_image 'woodpeckerci/plugin-docker-buildx'
+  - &gpgsign_plugin_image 'plugins/gpgsign:1'
+  # Docker and XGO platforms may vary in name (arm/v6/v7,...), please make sure,
+  # that all platforms listed in docker_platforms are also in make_platforms
+  # for the mapping look at docker/map-binaries.sh
+  - &make_platforms 'linux/amd64,linux/arm64'
+  #- &docker_platforms 'linux/amd64,linux/arm64'
+  # Just building docker for amd64, as codeberg.org/forge
+  - &docker_platforms 'linux/amd64,linux/arm64'
+
 pipeline:
   fetch-tags:
-    image: docker:git
+    image: *git_image
     pull: true
     commands:
      - git config --add safe.directory '*'
      - git fetch --tags --force
 
   deps-frontend:
-    image: node:18
+    image: *node_image
     pull: true
     commands:
       - make deps-frontend
 
   deps-backend:
-    image: golang:1.19
+    image: *golang_image
     pull: true
     commands:
-     - make deps-backend
+      - test "$${GOPROXY_OVERRIDE-}" != "" && export GOPROXY="$${GOPROXY_OVERRIDE}"
+      - make deps-backend
+    secrets:
+      - goproxy_override
 
-  static:
-    image: techknowlogick/xgo:go-1.19.x
+  build-static:
+    image: *xgo_image
     pull: true
     commands:
+      - test "$${GOPROXY_OVERRIDE-}" != "" && export GOPROXY="$${GOPROXY_OVERRIDE}"
+      - export WS_BASE="$(pwd)"
+      - echo "installing nodejs"
       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
       - export PATH=$PATH:$GOPATH/bin
-      - make CI=true LINUX_ARCHS=linux/amd64,linux/arm64 release
+      - echo "building forgejo"
+      - cd $WS_BASE
+      - make CI=true LINUX_ARCHS=$${LINUX_ARCHS} release
+      - echo "building environment-to-ini"
+      - cd $WS_BASE/contrib/environment-to-ini
+      - make CI=true LINUX_ARCHS=$${LINUX_ARCHS} release
     environment:
       TAGS: bindata sqlite sqlite_unlock_notify
       DEBIAN_FRONTEND: noninteractive
+      LINUX_ARCHS: *make_platforms
+    secrets:
+      - goproxy_override
 
   gpg-sign:
-    image: plugins/gpgsign:1
+    image: *gpgsign_plugin_image
     pull: true
     settings:
       detach_sign: true
@@ -49,9 +78,11 @@ pipeline:
         - "dist/release/*"
       key:
         from_secret: releaseteamgpg
+    when:
+      event: tag
 
   release:
-    image: golang:1.19
+    image: *golang_image
     commands:
     - curl -sL https://dl.gitea.io/tea/0.9.0/tea-0.9.0-linux-amd64 > /bin/tea && chmod +x /bin/tea
     - REMOTE=$(echo $CI_REPO_LINK | sed -e 's|.*://||' -e 's|/.*||')
@@ -63,3 +94,37 @@ pipeline:
     secrets:
       - releaseteamtoken
       - releaseteamuser
+
+  prep-multiarch-binaries:
+    image: *golang_image # image reuse to reduce pull times, go not required we just need bash
+    pull: true
+    # the fallback version-name used by make, defaults to main in the script use this if we change the default name
+    # environment:
+    #   defaulttagname: main
+    commands:
+      - ./docker/map-binaries.sh ./dist/binaries forgejo gitea ${CI_COMMIT_TAG##v}
+      - ./docker/map-binaries.sh ./dist/contrib environment-to-ini false ${CI_COMMIT_TAG##v}
+    when:
+      event: tag
+
+  build-docker:
+    image: *buildx_plugin_image
+    pull: true
+    settings:
+      dockerfile: Dockerfile.ci
+      no_cache: true
+      platforms: *docker_platforms
+      registry:
+        from_secret: domain
+      tag: ${CI_COMMIT_TAG##v}
+      repo: ${CI_REPO_LINK##https://}
+      build_args:
+       - CACHEBUST=${CI_PIPELINE_NUMBER}
+      build_args_from_env:
+       - CI_COMMIT_TAG
+      password:
+        from_secret: releaseteamtoken
+      username:
+        from_secret: releaseteamuser
+    when:
+      event: tag
