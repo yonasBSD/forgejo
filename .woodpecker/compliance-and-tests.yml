@@ -4,6 +4,7 @@ variables:
   - &golang_image 'golang:1.19'
   - &gitea_test_env_image 'gitea/test_env:linux-amd64'
   - &git_image 'docker:git'
+  - &drone_git_image 'drone/git'
 
 workspace:
   base: /go
@@ -57,7 +58,7 @@ pipeline:
     - git fetch --tags --force
 
   tag-pre-condition:
-    image: drone/git
+    image: *drone_git_image
     pull: true
     commands:
     - git update-ref refs/heads/tag_test ${CI_COMMIT_SHA}
