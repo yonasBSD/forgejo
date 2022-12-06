@@ -88,7 +88,10 @@ pipeline:
     - REMOTE=$(echo $CI_REPO_LINK | sed -e 's|.*://||' -e 's|/.*||')
     - GITEA_SERVER_URL=$CI_REPO_LINK GITEA_SERVER_TOKEN=$RELEASETEAMTOKEN tea login add --name $RELEASETEAMUSER --url $REMOTE
     - ASSETS=$(ls dist/release/* | sed -e 's/^/-a /')
-    - tea release create $ASSETS --tag $CI_COMMIT_TAG --title $CI_COMMIT_TAG
+    - echo "$${CI_COMMIT_TAG##v}" | grep -qi '\-rc' && export RELEASETYPE="--prerelease" && echo "Uploading as Pre-Release"
+    - echo "$${CI_COMMIT_TAG##v}" | grep -qi '\-test' && export RELEASETYPE="--draft" && echo "Uploading as Draft"
+    - test $${RELEASETYPE+false} || echo "Uploading as Stable"
+    - tea release create $ASSETS --tag $CI_COMMIT_TAG --title $CI_COMMIT_TAG  $${RELEASETYPE}
     when:
       event: tag
     secrets:
