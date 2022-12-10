@@ -1,5 +1,8 @@
 platform: linux/amd64
 
+branches:
+  exclude: [ main, release/*, doc-* ]
+
 depends_on:
 - compliance
 
