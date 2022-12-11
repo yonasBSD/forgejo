@@ -10,14 +10,12 @@ Discussions on how the workflow should evolve happen [in the isssue tracker](htt
 
 * Gitea: main
 * Forgejo: forgejo
-* Integration: forgejo-integration
 * Feature branches: forgejo-feature-name
 
 ### Stable
 
 * Gitea: release/vX.Y
 * Forgejo: vX.Y/forgejo
-* Integration: vX.Y/forgejo-integration
 * Feature branches: vX.Y/forgejo-feature-name
 
 ### Soft fork history
@@ -32,11 +30,11 @@ The *Gitea* branches are mirrored with the Gitea development and stable branches
 
 On a regular basis, each *Feature branch* is rebased against the base *Gitea* branch.
 
-### *Integration* and *Forgejo*
+### forgejo branch
 
-The latest *Gitea* branch resets the *Integration* branch and all *Feature branches* are merged into it. 
+The latest *Gitea* branch resets the *forgejo* branch and all *Feature branches* are merged into it.
 
-If tests pass, the *Forgejo* branch is reset to the tip of the *Integration* branch.
+If tests pass after pushing *forgejo* to the https://codeberg.org/forgejo-integration/forgejo repository, it can be pushed to the https://codeberg.org/forgejo/forgejo repository.
 
 If tests do not pass, an issue is filed to the *Feature branch* that fails the test. Once the issue is resolved, another round of rebasing starts.
 

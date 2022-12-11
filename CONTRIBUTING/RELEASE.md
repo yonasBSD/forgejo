@@ -17,10 +17,8 @@ The Gitea release candidates are suffixed with **-rcN** which is handled as a sp
 
 ### Integration
 
-* Reset the vX.Y/forgejo-integration branch to the Gitea tag vX.Y.Z
-* Merge all feature branches into the vX.Y/forgejo-integration branch
-* If the CI passes reset the vX.Y/forgejo branch to the tip of vX.Y/forgejo-integration
-* Set the vX.Y.Z-N tag to the tip of the vX.Y/forgejo branch
+* Reset the vX.Y/forgejo branch to the Gitea tag vX.Y.Z
+* Merge all feature branches into the vX.Y/forgejo branch
 
 ### Testing
 
