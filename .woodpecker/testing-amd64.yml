@@ -14,6 +14,13 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: yes
       MYSQL_DATABASE: testgitea
 
+  pgsql:
+    image: postgres:10
+    pull: true
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_PASSWORD: postgres
+
 workspace:
   base: /go
   path: src/codeberg/gitea
@@ -68,6 +75,16 @@ pipeline:
     image: gitea/test_env:linux-amd64
     commands:
       - su gitea -c 'timeout -s ABRT 50m make test-mysql8-migration test-mysql8'
+    environment:
+      - TAGS=bindata
+      - RACE_ENABLED=true
+      - USE_REPO_TEST_DIR=1
+
+  test-pgsql:
+    group: integration
+    image: gitea/test_env:linux-amd64
+    commands:
+      - su gitea -c 'timeout -s ABRT 50m make test-pgsql-migration test-pgsql'
     environment:
       - TAGS=bindata
       - RACE_ENABLED=true
