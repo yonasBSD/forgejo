@@ -20,6 +20,10 @@ Discussions on how the workflow should evolve happen [in the isssue tracker](htt
 * Integration: vX.Y/forgejo-integration
 * Feature branches: vX.Y/forgejo-feature-name
 
+### Soft fork history
+
+Before rebasing on top of Gitea, all branches are copied to `soft-fork/YYYY-MM-DD/<branch>` for safekeeping.
+
 ## Rebasing
 
 ### *Feature branch*
@@ -35,6 +39,22 @@ The latest *Gitea* branch resets the *Integration* branch and all *Feature branc
 If tests pass, the *Forgejo* branch is reset to the tip of the *Integration* branch.
 
 If tests do not pass, an issue is filed to the *Feature branch* that fails the test. Once the issue is resolved, another round of rebasing starts.
+
+### Cherry picking and rebasing
+
+Because Forgejo is a soft fork of Gitea, the commits in feature branches need to be cherry-picked on top of their base branch. They cannot be rebased using `git rebase`, because their base branch has been rebased.
+
+Here is how the commits in the `forgejo-f3` branch can be cherry-picked on top of the latest `forgejo-development` branch:
+
+```
+$ git fetch --all
+$ git remote get-url forgejo
+git@codeberg.org:forgejo/forgejo.git
+$ git checkout -b forgejo/forgejo-f3
+$ git reset --hard forgejo/forgejo-development
+$ git cherry-pick $(git rev-list --reverse forgejo/soft-fork/2022-12-10/forgejo-development..forgejo/soft-fork/2022-12-10/forgejo-f3)
+$ git push --force forgejo-f3 forgejo/forgejo-f3
+```
 
 ## Releasing
 
