@@ -6,6 +6,14 @@ branches:
 depends_on:
 - compliance
 
+services:
+  mysql8:
+    image: mysql:8
+    pull: true
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_DATABASE: testgitea
+
 workspace:
   base: /go
   path: src/codeberg/gitea
@@ -55,7 +63,18 @@ pipeline:
     commands:
     - su gitea -c 'make unit-test-coverage test-check'
 
+  test-mysql8:
+    group: integration
+    image: gitea/test_env:linux-amd64
+    commands:
+      - su gitea -c 'timeout -s ABRT 50m make test-mysql8-migration test-mysql8'
+    environment:
+      - TAGS=bindata
+      - RACE_ENABLED=true
+      - USE_REPO_TEST_DIR=1
+
   test-sqlite:
+    group: integration
     image: gitea/test_env:linux-amd64
     environment:
     - USE_REPO_TEST_DIR=1
