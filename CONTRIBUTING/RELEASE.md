@@ -65,7 +65,12 @@ A GPG master key with no expiration date is created and shared with members of t
 
 ### CI configuration
 
-The `releaseteamgpg` secret in the Woodpecker CI configuration is set with the subkey.
+In the Woodpecker CI configuration the following secrets must be set:
+
+* `releaseteamgpg` is the secret GPG key used to sign the releases
+* `releaseteamuser` is the user name to authenticate with the Forgejo API and publish the releases
+* `releaseteamtoken` is the token to authenticate `releaseteamuser` with the Forgejo API and publish the releases
+* `domain` is `codeberg.org`
 
 ## Users, organizations and repositories
 
