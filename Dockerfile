@@ -1,5 +1,5 @@
 #Build stage
-FROM codeberg.org/forgejo/golang:1.19-alpine3.17 AS build-env
+FROM golang:1.19-alpine3.17 AS build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -23,7 +23,7 @@ RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
 # Begin env-to-ini build
 RUN go build contrib/environment-to-ini/environment-to-ini.go
 
-FROM codeberg.org/forgejo/alpine:3.17.0
+FROM alpine:3.17
 LABEL maintainer="contact@forgejo.org"
 
 EXPOSE 22 3000
@@ -64,9 +64,5 @@ CMD ["/bin/s6-svscan", "/etc/s6"]
 COPY docker/root /
 COPY --from=build-env /go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
 COPY --from=build-env /go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
-#
-# s/755/775/ in the following is to avoid the corrupted layer 4f4fb700ef54
-# https://codeberg.org/Codeberg/Community/issues/800#issue-210309
-#
-RUN chmod 775 /usr/bin/entrypoint /app/gitea/gitea /usr/local/bin/gitea /usr/local/bin/environment-to-ini
-RUN chmod 775 /etc/s6/gitea/* /etc/s6/openssh/* /etc/s6/.s6-svscan/*
+RUN chmod 755 /usr/bin/entrypoint /app/gitea/gitea /usr/local/bin/gitea /usr/local/bin/environment-to-ini
+RUN chmod 755 /etc/s6/gitea/* /etc/s6/openssh/* /etc/s6/.s6-svscan/*
