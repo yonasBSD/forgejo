@@ -38,10 +38,14 @@ pipeline:
       - coredns -conf /etc/coredns/Corefile &
       - /usr/local/bin/dockerd --data-root /var/lib/docker --host=unix:///var/run/docker.sock --dns 172.17.0.3 &
       - for i in $$(seq 60) ; do DOCKER_HOST=unix:///var/run/docker.sock docker version && break ; sleep 1 ; done
-      - docker pull codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v}
+      - tag=${CI_COMMIT_TAG##v}
+      - short_tag=$${tag%.*-*}
+      - docker pull codeberg.org/forgejo-integration/forgejo':'$$tag
       - docker login -p "$RELEASETEAMTOKEN" -u "$RELEASETEAMUSER" $DOMAIN
-      - docker tag codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'${CI_COMMIT_TAG##v}
-      - docker push ${CI_REPO_LINK##https://}':'${CI_COMMIT_TAG##v}
+      - docker tag codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$tag
+      - docker push ${CI_REPO_LINK##https://}':'$$tag
+      - docker tag codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$short_tag
+      - docker push ${CI_REPO_LINK##https://}':'$$short_tag
 #    environment:
 #      - PLUGIN_DRY_RUN=true
 #      - PLUGIN_TAG=sometag
