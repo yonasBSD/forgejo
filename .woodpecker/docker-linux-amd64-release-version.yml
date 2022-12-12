@@ -8,6 +8,7 @@ depends_on:
 
 variables:
  - &git_image 'docker:git'
+ - &dind_image 'docker:20.10-dind'
  - &buildx_image 'woodpeckerci/plugin-docker-buildx'
  - &integration_image 'codeberg.org/forgejo-integration/forgejo'
 
@@ -36,7 +37,7 @@ pipeline:
       event: tag
 
   publish:
-    image: *buildx_image
+    image: *dind_image
     environment:
       INTEGRATION_IMAGE: *integration_image
     commands:

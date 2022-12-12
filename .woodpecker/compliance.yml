@@ -37,6 +37,7 @@ pipeline:
 
   checks-backend:
     image: *gitea_test_image
+    pull: true
     group: checks
     commands:
     - make --always-make checks-backend
