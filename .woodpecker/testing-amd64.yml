@@ -6,16 +6,23 @@ branches:
 depends_on:
 - compliance
 
+variables:
+ - &git_image 'docker:git'
+ - &golang_image 'golang:1.19'
+ - &gitea_test_image 'gitea/test_env:linux-amd64'
+ - &mysql_image 'mysql:8'
+ - &pgsql_image 'postgres:10'
+
 services:
   mysql8:
-    image: mysql:8
+    image: *mysql_image
     pull: true
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: yes
       MYSQL_DATABASE: testgitea
 
   pgsql:
-    image: postgres:10
+    image: *pgsql_image
     pull: true
     environment:
       POSTGRES_DB: test
@@ -27,32 +34,32 @@ workspace:
 
 pipeline:
   fetch-tags:
-    image: docker:git
+    image: *git_image
     pull: true
     commands:
     - git config --add safe.directory '*'
     - git fetch --tags --force
 
   deps-backend:
-    image: golang:1.19
+    image: *golang_image
     pull: true
     commands:
     - make deps-backend
 
   tag-pre-condition:
-    image: drone/git
+    image: *git_image
     pull: true
     commands:
     - git update-ref refs/heads/tag_test ${CI_COMMIT_SHA}
 
   prepare-test-env:
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     pull: true
     commands:
     - ./build/test-env-prepare.sh
 
   build:
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     environment:
     - GOSUMDB=sum.golang.org
     - TAGS=bindata sqlite sqlite_unlock_notify
@@ -61,7 +68,7 @@ pipeline:
     - su gitea -c 'make backend'
 
   unit-test:
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     environment:
     - TAGS=bindata sqlite sqlite_unlock_notify
     - RACE_ENABLED=true
@@ -72,7 +79,7 @@ pipeline:
 
   test-mysql8:
     group: integration
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     commands:
       - su gitea -c 'timeout -s ABRT 50m make test-mysql8-migration test-mysql8'
     environment:
@@ -82,7 +89,7 @@ pipeline:
 
   test-pgsql:
     group: integration
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     commands:
       - su gitea -c 'timeout -s ABRT 50m make test-pgsql-migration test-pgsql'
     environment:
@@ -92,7 +99,7 @@ pipeline:
 
   test-sqlite:
     group: integration
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
     environment:
     - USE_REPO_TEST_DIR=1
     - GOPROXY=off

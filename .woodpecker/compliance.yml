@@ -3,25 +3,31 @@ platform: linux/amd64
 branches:
   exclude: [ main, release/*, soft-fork/*/*, soft-fork/*/*/*, doc-* ]
 
+variables:
+ - &golang_image 'golang:1.19'
+ - &gitea_test_image 'gitea/test_env:linux-amd64'
+
 workspace:
   base: /go
   path: src/codeberg/gitea
 
 pipeline:
   deps-backend:
-    image: golang:1.19
+    image: *golang_image
     pull: true
     commands:
     - make deps-backend
 
   security-check:
-    image: golang:1.19
+    image: *golang_image
+    group: checks
     pull: true
     commands:
     - make security-check
 
   lint-backend:
-    image: gitea/test_env:linux-amd64
+    image: *gitea_test_image
+    group: checks
     pull: true
     environment:
     - TAGS=bindata sqlite sqlite_unlock_notify
@@ -30,6 +36,7 @@ pipeline:
     - make lint-backend
 
   checks-backend:
-    image: golang:1.19
+    image: *gitea_test_image
+    group: checks
     commands:
     - make --always-make checks-backend

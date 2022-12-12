@@ -6,23 +6,28 @@ branches:
 depends_on:
 - testing-amd64
 
+variables:
+ - &git_image 'docker:git'
+ - &buildx_image 'woodpeckerci/plugin-docker-buildx'
+ - &integration_image 'codeberg.org/forgejo-integration/forgejo'
+
 pipeline:
   fetch-tags:
-    image: docker:git
+    image: *git_image
     pull: true
     commands:
      - git config --add safe.directory '*'
      - git fetch --tags --force
 
   publish-integration:
-    image: woodpeckerci/plugin-docker-buildx
+    image: *buildx_image
     pull: true
     settings:
       platforms: linux/amd64
       registry:
         from_secret: domain
-      tags: ${CI_COMMIT_TAG##v}
-      repo: codeberg.org/forgejo-integration/forgejo
+      tag: ${CI_COMMIT_TAG##v}
+      repo: *integration_image
       password:
         from_secret: releaseteamtoken
       username:
@@ -31,7 +36,9 @@ pipeline:
       event: tag
 
   publish:
-    image: woodpeckerci/plugin-docker-buildx
+    image: *buildx_image
+    environment:
+      INTEGRATION_IMAGE: *integration_image
     commands:
       - apk --update --no-cache add coredns
       - ( echo ".:53 {" ; echo "  forward . /etc/resolv.conf"; echo "}" ) > /etc/coredns/Corefile
@@ -40,16 +47,12 @@ pipeline:
       - for i in $$(seq 60) ; do DOCKER_HOST=unix:///var/run/docker.sock docker version && break ; sleep 1 ; done
       - tag=${CI_COMMIT_TAG##v}
       - short_tag=$${tag%.*-*}
-      - docker pull codeberg.org/forgejo-integration/forgejo':'$$tag
+      - docker pull $${INTEGRATION_IMAGE}':'$$tag
       - docker login -p "$RELEASETEAMTOKEN" -u "$RELEASETEAMUSER" $DOMAIN
-      - docker tag codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$tag
+      - docker tag $${INTEGRATION_IMAGE}':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$tag
       - docker push ${CI_REPO_LINK##https://}':'$$tag
-      - docker tag codeberg.org/forgejo-integration/forgejo':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$short_tag
+      - docker tag $${INTEGRATION_IMAGE}':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$short_tag
       - docker push ${CI_REPO_LINK##https://}':'$$short_tag
-#    environment:
-#      - PLUGIN_DRY_RUN=true
-#      - PLUGIN_TAG=sometag
-#      - PLUGIN_DOCKERFILE=Dockerfile.noop
     secrets:
       - releaseteamtoken
       - releaseteamuser

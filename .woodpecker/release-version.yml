@@ -6,32 +6,43 @@ branches:
 depends_on:
 - testing-amd64
 
+variables:
+ - &git_image 'docker:git'
+ - &node_image 'node:18'
+ - &golang_image 'golang:1.19'
+ - &gpg_sign_image 'plugins/gpgsign:1'
+ - &xgo_image 'techknowlogick/xgo:go-1.19.x'
+ - &gpg_sign_image 'plugins/gpgsign:1'
+
 workspace:
   base: /source
   path: /
 
 pipeline:
   fetch-tags:
-    image: docker:git
+    image: *git_image
     pull: true
+    group: deps
     commands:
      - git config --add safe.directory '*'
      - git fetch --tags --force
 
   deps-frontend:
-    image: node:18
+    image: *node_image
     pull: true
+    group: deps
     commands:
       - make deps-frontend
 
   deps-backend:
-    image: golang:1.19
+    image: *golang_image
     pull: true
+    group: deps
     commands:
      - make deps-backend
 
   static:
-    image: techknowlogick/xgo:go-1.19.x
+    image: *xgo_image
     pull: true
     commands:
       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
@@ -42,7 +53,7 @@ pipeline:
       DEBIAN_FRONTEND: noninteractive
 
   verifyruns:
-    image: golang:1.19
+    image: *golang_image
     commands:
       - ./dist/release/forgejo-*-amd64 --version | grep 'built with'
       - apt-get update
@@ -50,7 +61,7 @@ pipeline:
       - /usr/bin/qemu-aarch64-static ./dist/release/forgejo-*-arm64 --version | grep 'built with'
 
   gpg-sign:
-    image: plugins/gpgsign:1
+    image: *gpg_sign_image
     pull: true
     settings:
       detach_sign: true
@@ -62,7 +73,7 @@ pipeline:
         from_secret: releaseteamgpg
 
   release:
-    image: golang:1.19
+    image: *golang_image
     commands:
     - curl -sL https://dl.gitea.io/tea/0.9.0/tea-0.9.0-linux-amd64 > /bin/tea && chmod +x /bin/tea
     - REMOTE=$(echo $CI_REPO_LINK | sed -e 's|.*://||' -e 's|/.*||')
