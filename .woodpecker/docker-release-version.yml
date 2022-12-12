@@ -24,11 +24,13 @@ pipeline:
     image: *buildx_image
     pull: true
     settings:
-      platforms: linux/amd64
+      platforms: linux/amd64,linux/arm64
       registry:
         from_secret: domain
       tag: ${CI_COMMIT_TAG##v}
       repo: *integration_image
+      build_args:
+        - GOPROXY=https://proxy.golang.org,direct
       password:
         from_secret: releaseteamtoken
       username:
@@ -47,13 +49,25 @@ pipeline:
       - /usr/local/bin/dockerd --data-root /var/lib/docker --host=unix:///var/run/docker.sock --dns 172.17.0.3 &
       - for i in $$(seq 60) ; do DOCKER_HOST=unix:///var/run/docker.sock docker version && break ; sleep 1 ; done
       - tag=${CI_COMMIT_TAG##v}
-      - short_tag=$${tag%.*-*}
-      - docker pull $${INTEGRATION_IMAGE}':'$$tag
       - docker login -p "$RELEASETEAMTOKEN" -u "$RELEASETEAMUSER" $DOMAIN
-      - docker tag $${INTEGRATION_IMAGE}':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$tag
-      - docker push ${CI_REPO_LINK##https://}':'$$tag
-      - docker tag $${INTEGRATION_IMAGE}':'${CI_COMMIT_TAG##v} ${CI_REPO_LINK##https://}':'$$short_tag
-      - docker push ${CI_REPO_LINK##https://}':'$$short_tag
+      - tagged_image=$${INTEGRATION_IMAGE}':'$$tag
+      - manifests=""
+      - for arch in arm64 amd64 ; do
+      -   arch_image=${CI_REPO_LINK##https://}':'$$tag-$$arch
+      -   docker pull --platform linux/$$arch $$tagged_image
+      -   docker run --platform linux/$$arch --rm $$tagged_image gitea --version | grep 'built with'
+      -   docker tag $$tagged_image $$arch_image
+      -   docker push $$arch_image
+      -   manifests="$$manifests $$arch_image"
+      -   docker image prune --all --force
+      - done
+      - published=${CI_REPO_LINK##https://}':'$$tag
+      - docker manifest create $$published $$manifests
+      - docker manifest push $$published
+      - short_tag=$${tag%.*-*}
+      - short_published=${CI_REPO_LINK##https://}':'$$short_tag
+      - docker manifest create $$short_published $$manifests
+      - docker manifest push $$short_published
     secrets:
       - releaseteamtoken
       - releaseteamuser
