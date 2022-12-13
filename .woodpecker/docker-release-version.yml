@@ -1,7 +1,7 @@
 platform: linux/amd64
 
-branches:
-  exclude: [ main, release/*, soft-fork/*/*, soft-fork/*/*/*, doc-* ]
+when:
+  event: tag
 
 depends_on:
 - testing-amd64
@@ -35,8 +35,6 @@ pipeline:
         from_secret: releaseteamtoken
       username:
         from_secret: releaseteamuser
-    when:
-      event: tag
 
   publish:
     image: *dind_image
@@ -72,5 +70,3 @@ pipeline:
       - releaseteamtoken
       - releaseteamuser
       - domain
-    when:
-      event: tag

@@ -1,7 +1,7 @@
 platform: linux/amd64
 
-branches:
-  exclude: [ main, release/*, soft-fork/*/*, soft-fork/*/*/*, doc-* ]
+when:
+  event: tag
 
 depends_on:
 - testing-amd64
@@ -83,8 +83,6 @@ pipeline:
     - echo "$${CI_COMMIT_TAG##v}" | grep -qi '\-test' && export RELEASETYPE="--draft" && echo "Uploading as Draft"
     - test $${RELEASETYPE+false} || echo "Uploading as Stable"
     - tea release create $ASSETS --tag $CI_COMMIT_TAG --title $CI_COMMIT_TAG $${RELEASETYPE}
-    when:
-      event: tag
     secrets:
       - releaseteamtoken
       - releaseteamuser
