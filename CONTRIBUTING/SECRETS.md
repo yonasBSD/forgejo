@@ -1,6 +1,6 @@
 # Secrets
 
-All Forgejo credentials are shared among the [secret keepers](https://codeberg.org/org/Forgejo/teams/owners) teams in a private repository with encrypted content.
+All Forgejo credentials are shared among the [secret keepers](https://codeberg.org/forgejo/meta/src/branch/readme/TEAMS.md#secrets-keeper) teams in a private repository with encrypted content.
 
 ## Get started
 
@@ -17,7 +17,7 @@ $ gopass recipients add
 > :warning: When installing on Ubuntu or Debian you can either download the deb package, install manually or build from source or use our APT repository ([github comment](https://github.com/gopasspw/gopass/issues/1849#issuecomment-802789285) with more information).
 4. Clone this repo using `gopass` (the name and email are for `git config`)
 ```
-$ gopass clone git@codeberg.org:Forgejo/gopass.git
+$ gopass clone git@codeberg.org:forgejo/gopass.git
 ```
 5. Check the consistency of the gopass storage
 ```
