@@ -13,6 +13,18 @@ variables:
  - &gpg_sign_image 'plugins/gpgsign:1'
  - &xgo_image 'techknowlogick/xgo:go-1.19.x'
  - &gpg_sign_image 'plugins/gpgsign:1'
+ - &goproxy_override ''
+ - &goproxy_setup |-
+      if [ -n "$${GOPROXY_OVERRIDE:-}" ]; then
+        export GOPROXY="$${GOPROXY_OVERRIDE}";
+        echo "Using goproxy from goproxy_override \"$${GOPROXY}\"";
+      elif [ -n "$${GOPROXY_DEFAULT:-}" ]; then
+        export GOPROXY="$${GOPROXY_DEFAULT}";
+        echo "Using goproxy from goproxy_default (secret) not displaying";
+      else
+        export GOPROXY="https://proxy.golang.org,direct";
+        echo "No goproxy overrides or defaults given, using \"$${GOPROXY}\"";
+      fi
 
 workspace:
   base: /source
@@ -38,19 +50,28 @@ pipeline:
     image: *golang_image
     pull: true
     group: deps
+    environment:
+      GOPROXY_OVERRIDE: *goproxy_override
+    secrets:
+      - goproxy_default
     commands:
-     - make deps-backend
+    - *goproxy_setup
+    - make deps-backend
 
   static:
     image: *xgo_image
     pull: true
     commands:
+      - *goproxy_setup
       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
       - export PATH=$PATH:$GOPATH/bin
       - make CI=true LINUX_ARCHS=linux/amd64,linux/arm64 release
     environment:
-      TAGS: bindata sqlite sqlite_unlock_notify
-      DEBIAN_FRONTEND: noninteractive
+      TAGS: 'bindata sqlite sqlite_unlock_notify'
+      DEBIAN_FRONTEND: 'noninteractive'
+      GOPROXY_OVERRIDE: *goproxy_override
+    secrets:
+      - goproxy_default
 
   verifyruns:
     image: *golang_image
