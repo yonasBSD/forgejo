@@ -7,16 +7,20 @@
 package main
 
 import (
-	"gopkg.in/ini.v1"
 	"io/ioutil"
 	"strings"
+
+	"gopkg.in/ini.v1"
 )
 
-const trimPrefix = "gitea_"
+const (
+	trimPrefix   = "gitea_"
+	sourceFolder = "options/locales/"
+)
 
 // returns list of locales, still containing the file extension!
 func generate_locale_list() []string {
-	localeFiles, _ := ioutil.ReadDir("options/locale")
+	localeFiles, _ := ioutil.ReadDir(sourceFolder)
 	locales := []string{}
 	for _, localeFile := range localeFiles {
 		if !localeFile.IsDir() && strings.HasPrefix(localeFile.Name(), trimPrefix) {
@@ -26,12 +30,12 @@ func generate_locale_list() []string {
 	return locales
 }
 
-func main () {
+func main() {
 	locales := generate_locale_list()
 	var err error
 	var localeFile *ini.File
 	for _, locale := range locales {
-		localeFile, err = ini.LooseLoad("options/locale/gitea_" + locale, "options/locale/forgejo_" + locale)
+		localeFile, err = ini.LooseLoad(sourceFolder+"gitea_"+locale, sourceFolder+"forgejo_"+locale)
 		if err != nil {
 			panic(err)
 		}
