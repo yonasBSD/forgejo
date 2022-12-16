@@ -9,7 +9,7 @@ depends_on:
 variables:
  - &git_image 'docker:git'
  - &dind_image 'docker:20.10-dind'
- - &buildx_image 'woodpeckerci/plugin-docker-buildx'
+ - &buildx_image 'woodpeckerci/plugin-docker-buildx:2.0.0'
  - &integration_image 'codeberg.org/forgejo-integration/forgejo'
 
 pipeline:
