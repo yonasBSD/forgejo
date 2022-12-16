@@ -65,7 +65,7 @@ pipeline:
       - *goproxy_setup
       - curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get -qqy install nodejs
       - export PATH=$PATH:$GOPATH/bin
-      - make CI=true LINUX_ARCHS=linux/amd64,linux/arm64 release
+      - make CI=true LINUX_ARCHS=linux/amd64,linux/arm64,linux/arm-6 release
     environment:
       TAGS: 'bindata sqlite sqlite_unlock_notify'
       DEBIAN_FRONTEND: 'noninteractive'
@@ -78,8 +78,9 @@ pipeline:
     commands:
       - ./dist/release/forgejo-*-amd64 --version | grep 'built with'
       - apt-get update
-      - apt-get install -y qemu-user-static wget
+      - apt-get install -y qemu-user-static
       - /usr/bin/qemu-aarch64-static ./dist/release/forgejo-*-arm64 --version | grep 'built with'
+      - /usr/bin/qemu-arm-static ./dist/release/forgejo-*-arm-6 --version | grep 'built with'
 
   gpg-sign:
     image: *gpg_sign_image
