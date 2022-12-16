@@ -60,9 +60,9 @@ When a tag is set to a *Stable* *Forgejo* branch, the CI pipeline creates and up
 
 ## Feature branches
 
-All *Feature branches* are based on the {vX.Y/,}forgejo-development branch which provides and other development tools and documenation.
+All *Feature branches* are based on the {vX.Y/,}forgejo-development branch which provides and other development tools and documentation.
 
-The \*forgejo-development branch is based on the {vX.Y/,}forgejo-ci branch which provides the Woodpecker CI configuration.
+The `forgejo-development` branch is based on the {vX.Y/,}forgejo-ci branch which provides the Woodpecker CI configuration.
 
 The purpose of each *Feature branch* is documented below:
 
