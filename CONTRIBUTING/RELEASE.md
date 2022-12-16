@@ -34,6 +34,12 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * [Binaries](https://codeberg.org/forgejo/forgejo/releases) are built, signed and uploaded by the CI.
 * [Container images](https://codeberg.org/forgejo/-/packages/container/forgejo/versions) are built and uploaded by the CI.
 
+### Website update
+
+* Restart the last CI build at https://codeberg.org/forgejo/website/src/branch/main/
+* Verify https://forgejo.org/download/ points to the expected release
+* Manually try the instructions to work
+
 ## Release signing keys management
 
 A GPG master key with no expiration date is created and shared with members of the Owners team via encrypted email. A subkey with a one year expiration date is created and stored in the secrets repository, to be used by the CI pipeline. The public master key is stored in the secrets repository and published where relevant.
