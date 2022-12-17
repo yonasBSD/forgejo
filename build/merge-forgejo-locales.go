@@ -7,7 +7,9 @@
 package main
 
 import (
+	"bufio"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -30,12 +32,35 @@ func generate_locale_list() []string {
 	return locales
 }
 
+// replace all occurrences of Gitea with Forgejo
+func renameGiteaForgejo(filename string) []byte {
+	file, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	out := make([]byte, 0, 1024)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			out = append(out, []byte("\n"+line+"\n")...)
+		} else if strings.Contains(line, "Gitea") {
+			out = append(out, []byte(strings.Replace(line, "Gitea", "Forgejo", -1)+"\n")...)
+		}
+	}
+	file.Close()
+	return out
+}
+
 func main() {
 	locales := generate_locale_list()
 	var err error
 	var localeFile *ini.File
 	for _, locale := range locales {
-		localeFile, err = ini.LooseLoad(sourceFolder+"gitea_"+locale, sourceFolder+"forgejo_"+locale)
+		giteaLocale := sourceFolder + "gitea_" + locale
+		localeFile, err = ini.Load(giteaLocale, renameGiteaForgejo(giteaLocale))
 		if err != nil {
 			panic(err)
 		}
