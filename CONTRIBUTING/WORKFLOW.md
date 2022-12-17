@@ -76,6 +76,11 @@ The purpose of each *Feature branch* is documented below:
   Forgejo development tools and documentation.
   * Backports: [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
 
+### Branding
+
+* [forgejo-branding](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-branding) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
+  Replacing upstream branding with Forgejo branding
+
 ### [Federation](https://codeberg.org/forgejo/forgejo/issues?labels=79349)
 
 * [forgejo-federation](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-federation) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
