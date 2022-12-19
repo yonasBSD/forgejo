@@ -1,0 +1,27 @@
+platform: linux/amd64
+
+branches:
+  include: [ forgejo-branding, wip-branding-* ]
+
+depends_on:
+- testing-amd64
+
+variables:
+ - &buildx_image 'woodpeckerci/plugin-docker-buildx:2.0.0'
+ - &integration_image 'codeberg.org/forgejo-integration/forgejo'
+
+pipeline:
+  publish-branding:
+    image: *buildx_image
+    pull: true
+    settings:
+      platforms: linux/amd64
+      registry: codeberg.org
+      tag: ${CI_COMMIT_BRANCH}
+      repo: *integration_image
+      build_args:
+        - GOPROXY=https://proxy.golang.org
+      password:
+        from_secret: releaseteamtoken
+      username:
+        from_secret: releaseteamuser
