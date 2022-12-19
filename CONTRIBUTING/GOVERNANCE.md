@@ -6,6 +6,8 @@ The Forgejo [domains](https://codeberg.org/forgejo/meta/issues/41) are owned by 
 
 ## Forgejo Governance
 
+See our [decision-making system](https://codeberg.org/forgejo/meta/src/branch/readme/DECISION-MAKING.md) (contains team agreements and guidelines).
+
 Forgejo was bootstraped in November 2022 and is in the process of [defining its governance](https://codeberg.org/forgejo/meta/issues/19). The [first meeting happened November 24th](https://codeberg.org/forgejo/meta/issues/19#issuecomment-694460) and everyone is welcome to participate.
 
 ## Interim Forgejo Governance
