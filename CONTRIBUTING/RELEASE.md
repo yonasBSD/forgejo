@@ -32,6 +32,12 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Verify the release is published in https://codeberg.org/forgejo-integration
 * Verify the release is published in https://codeberg.org/someuser
 
+### Release Notes
+
+* Add an entry in RELEASE-NOTES.md
+* Copy/paste the matching entry from CHANGELOG.md
+* Update the PR references prefixing them with https://github.com/go-gitea/gitea/pull/
+
 ### Publication
 
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/forgejo
