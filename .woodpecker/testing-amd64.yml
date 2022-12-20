@@ -1,7 +1,7 @@
 platform: linux/amd64
 
 branches:
-  exclude: [ main, release/*, soft-fork/*/*, soft-fork/*/*/*, doc-* ]
+  exclude: [ forgejo-development, main, release/*, soft-fork/*/*, soft-fork/*/*/* ]
 
 depends_on:
 - compliance
