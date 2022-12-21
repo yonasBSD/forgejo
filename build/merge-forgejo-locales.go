@@ -8,7 +8,6 @@ package main
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -22,7 +21,7 @@ const (
 
 // returns list of locales, still containing the file extension!
 func generate_locale_list() []string {
-	localeFiles, _ := ioutil.ReadDir(sourceFolder)
+	localeFiles, _ := os.ReadDir(sourceFolder)
 	locales := []string{}
 	for _, localeFile := range localeFiles {
 		if !localeFile.IsDir() && strings.HasPrefix(localeFile.Name(), trimPrefix) {
