@@ -13,6 +13,10 @@ The Gitea release candidates are suffixed with **-rcN** which is handled as a sp
 * Gitea **v1.18.0** will be Forgejo **v1.18.0-5**, **v1.18.0-6**, **v1.18.0-7**
 * etc.
 
+Because Forgejo is a soft fork of Gitea, it must retain the same release numbering scheme to be compatible with libraries and tools that depend on it. For instance, the tea CLI or the Gitea SDK will behave differently depending on the server version they connect to. If Forgejo had a different numbering scheme, it would no longer be compatible with the Gitea ecosystem.
+
+From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releases are [pre-releases](https://semver.org/#spec-item-9) because they are suffixed with a dash. They are syntactically correct but do not comply with the Semantic Versioning recommendations. Gitea is not compliant either and as long as Forgejo is a soft fork, it inherits this problem.
+
 ## Release process
 
 ### Integration
