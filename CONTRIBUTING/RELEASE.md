@@ -2,15 +2,15 @@
 
 ## Release numbering
 
-The Forgejo release numbers are composed of the Gitea release number followed by a dash and a serial number. For instance:
+The Forgejo release numbers look like Gitea release numbers but are compliant with [semver](https://semver.org/).
 
-* Gitea **v1.18.0** will be Forgejo **v1.18.0-0**, **v1.18.0-1**, etc
+* Gitea **v1.18.0** will be Forgejo **v118.0.0**, **v118.0.1**, etc.
 
-The Gitea release candidates are suffixed with **-rcN** which is handled as a special case for packaging: although **X.Y.Z** is lexicographically lower than **X.Y.Z-rc1** is is considered greater. The Forgejo serial number must therefore be inserted before the **-rcN** suffix to preserve the expected version ordering.
+The Gitea release candidates (or [pre-release](https://semver.org/#spec-item-9) in the semver parlance) are suffixed with **-rcN** which is handled as a special case for packaging: although **X.Y.Z** is lexicographically lower than **X.Y.Z-rc1** is is considered greater. The Forgejo release is appended after the **-rcN** suffix.
 
-* Gitea **v1.18.0-rc0** will be Forgejo **v1.18.0-0-rc0**, **v1.18.0-1-rc0**
-* Gitea **v1.18.0-rc1** will be Forgejo **v1.18.0-2-rc1**, **v1.18.0-3-rc1**, **v1.18.0-4-rc1**
-* Gitea **v1.18.0** will be Forgejo **v1.18.0-5**, **v1.18.0-6**, **v1.18.0-7**
+* Gitea **v1.18.0-rc0** will be Forgejo **v118.0.0-rc0.0**, **v118.0.0-rc0.1**, etc.
+* Gitea **v1.18.0-rc1** will be Forgejo **v118.0.0-rc1.0**, **v118.0.0-rc1.1**, **v118.0.0-rc1.2**, etc.
+* Gitea **v1.18.0** will be Forgejo **v118.0.0**, **v118.0.1**, **v118.0.2**, etc.
 * etc.
 
 ## Release process
@@ -24,13 +24,13 @@ The Gitea release candidates are suffixed with **-rcN** which is handled as a sp
 
 When Forgejo is released, artefacts (packages, binaries, etc.) are first published by the CI/CD pipelines in the https://codeberg.org/forgejo-integration organization, to be downloaded and verified to work. When modifying the CI/CD pipelines, there is a chance that these verification steps fail and that the published artefacts override previous ones or worse. During this debugging phase, a fork of Forgejo must be used.
 
-* Push the vX.Y.Z-N tag to a Forgejo fork (e.g. https://codeberg.org/someuser/forgejo)
+* Push the vX.Y.Z tag to a Forgejo fork (e.g. https://codeberg.org/someuser/forgejo)
 * Verify the release is published in https://codeberg.org/forgejo-integration
 * Verify the release is published in https://codeberg.org/someuser
 
 ### Publication
 
-* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/forgejo
+* Push the vX.Y.Z tag to https://codeberg.org/forgejo/forgejo
 * [Binaries](https://codeberg.org/forgejo/forgejo/releases) are built, signed and uploaded by the CI.
 * [Container images](https://codeberg.org/forgejo/-/packages/container/forgejo/versions) are built and uploaded by the CI.
 
