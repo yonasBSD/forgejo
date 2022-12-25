@@ -1,7 +1,8 @@
 platform: linux/amd64
 
-branches:
-  exclude: [ forgejo-development, main, release/*, soft-fork/*/*, soft-fork/*/*/* ]
+when:
+  branch:
+    exclude: [ forgejo-development, main, release/*, soft-fork/*/*, soft-fork/*/*/* ]
 
 variables:
  - &golang_image 'golang:1.19'

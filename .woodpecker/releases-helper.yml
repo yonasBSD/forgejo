@@ -1,7 +1,8 @@
 platform: linux/amd64
 
-branches:
-  includes: [ wip-ci-* ]
+when:
+  branch:
+    includes: [ wip-ci-* ]
 
 when:
   event: push
