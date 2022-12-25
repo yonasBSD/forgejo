@@ -1,7 +1,8 @@
 platform: linux/amd64
 
-branches:
-  include: [ forgejo-branding, wip-branding-* ]
+when:
+  branch: "*branding*"
+  event: push
 
 depends_on:
 - testing-amd64
