@@ -45,3 +45,5 @@ Subscribe to releases and blog post on [our website](https://forgejo.org), <a hr
 ## Get involved
 
 If you are interested in making Forgejo better, either by reporting a bug or by changing the governance, please [take a look at the contribution guide](CONTRIBUTING.md).
+
+a
