@@ -3,8 +3,6 @@ platform: linux/amd64
 when:
   branch:
     includes: [ wip-ci-* ]
-
-when:
   event: push
 
 variables:
