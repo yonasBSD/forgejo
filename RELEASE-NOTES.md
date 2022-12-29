@@ -4,7 +4,7 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.18.1 or v1.18.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## 1.18.0-0
+## 1.18.0-1
 
 This is the first Forgejo release.
 
