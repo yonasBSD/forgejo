@@ -223,6 +223,10 @@ Gitea instances fetch https://dl.gitea.io/gitea/version.json weekly by default, 
   * Update JS dependencies, adjust eslint (https://github.com/go-gitea/gitea/pull/20659)
   * Add more linters to improve code readability (https://github.com/go-gitea/gitea/pull/19989)
 
+## 1.18.0-0
+
+This release was replaced by 1.18.0-1 a few hours after being published because the release process [was interrupted](https://codeberg.org/forgejo/forgejo/issues/180).
+
 ## 1.18.0-rc1-2
 
 This is the first Forgejo release candidate.
