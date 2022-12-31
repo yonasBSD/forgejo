@@ -1,6 +1,7 @@
 platform: linux/amd64
 
 when:
+  event: [ push, pull_request ]
   branch:
     exclude: [ forgejo-development, main, release/*, soft-fork/*/*, soft-fork/*/*/* ]
 

@@ -2,9 +2,7 @@ platform: linux/amd64
 
 when:
   event: tag
-
-depends_on:
-- testing-amd64
+  tag: v*
 
 variables:
  - &git_image 'docker:git'
@@ -82,30 +80,10 @@ pipeline:
       - /usr/bin/qemu-aarch64-static ./dist/release/forgejo-*-arm64 --version | grep 'built with'
       - /usr/bin/qemu-arm-static ./dist/release/forgejo-*-arm-6 --version | grep 'built with'
 
-  gpg-sign:
-    image: *gpg_sign_image
-    pull: true
-    settings:
-      detach_sign: true
-      excludes:
-        - "dist/release/*.sha256"
-      files:
-        - "dist/release/*"
-      key:
-        from_secret: releaseteamgpg
-
-  release:
+  push-integration:
     image: *golang_image
     commands:
-    - curl -sL https://dl.gitea.io/tea/0.9.0/tea-0.9.0-linux-amd64 > /bin/tea && chmod +x /bin/tea
-    - REMOTE=$(echo $CI_REPO_LINK | sed -e 's|.*://||' -e 's|/.*||')
-    - GITEA_SERVER_URL=$CI_REPO_LINK GITEA_SERVER_TOKEN=$RELEASETEAMTOKEN tea login add --name $RELEASETEAMUSER --url $REMOTE
-    - ASSETS=$(ls dist/release/* | sed -e 's/^/-a /')
-    - echo "$${CI_COMMIT_TAG##v}" | grep -qi '\-rc' && export RELEASETYPE="--prerelease" && echo "Uploading as Pre-Release"
-    - echo "$${CI_COMMIT_TAG##v}" | grep -qi '\-test' && export RELEASETYPE="--draft" && echo "Uploading as Draft"
-    - test $${RELEASETYPE+false} || echo "Uploading as Stable"
-    - anchor=$(echo $CI_COMMIT_TAG | sed -e 's/^v//' -e 's/[^a-zA-Z0-9]/-/g')
-    - tea release create $ASSETS --note "See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#$${anchor}" --tag $CI_COMMIT_TAG --title $CI_COMMIT_TAG $${RELEASETYPE}
+      - PUSH_USER=$CI_REPO_OWNER releases/binaries-pull-push.sh push
     secrets:
       - releaseteamtoken
       - releaseteamuser

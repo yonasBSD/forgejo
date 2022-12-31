@@ -4,11 +4,18 @@ set -ex
 
 : ${DOCKER_HOST:=unix:///var/run/docker.sock}
 : ${ARCHS:=amd64 arm64}
-: ${INTEGRATION_USER:=forgejo-integration}
-: ${INTEGRATION_IMAGE:=codeberg.org/$INTEGRATION_USER/forgejo}
+: ${PULL_USER:=forgejo-integration}
+if test "$CI_REPO" = "forgejo/release" ; then
+    : ${PUSH_USER:=forgejo}
+else
+    : ${PUSH_USER:=forgejo-experimental}
+fi
+: ${INTEGRATION_IMAGE:=codeberg.org/$PULL_USER/forgejo}
 : ${TAG:=${CI_COMMIT_TAG##v}}
 : ${SHORT_TAG=${TAG%.*-*}}
 : ${DOMAIN:=codeberg.org}
+: ${TOKEN_HEADER:=/tmp/token$$}
+trap "rm -f ${TOKEN_HEADER}" EXIT
 
 : ${VERIFY:=true}
 VERIFY_COMMAND='gitea --version'
@@ -21,7 +28,7 @@ publish() {
 	    #
 	    # Get the image from the integration user
 	    #
-	    image=$(image_name $INTEGRATION_USER $suffix)
+	    image=$(image_name $PULL_USER $suffix)
 	    docker pull --platform linux/$arch $image
 	    #
 	    # Verify it is usable
@@ -32,7 +39,7 @@ publish() {
 	    #
 	    # Push the image with a tag reflecting the architecture to the repo owner
 	    #
-	    arch_image=$(arch_image_name $CI_REPO_OWNER $arch $suffix)
+	    arch_image=$(arch_image_name $PUSH_USER $arch $suffix)
 	    docker tag $image $arch_image
 	    docker push $arch_image
 	    images="$images $arch_image"
@@ -41,18 +48,18 @@ publish() {
 	#
 	# Push a manifest with all the architectures to the repo owner
 	#
-	manifest=$(image_name $CI_REPO_OWNER $suffix)
+	manifest=$(image_name $PUSH_USER $suffix)
 	docker manifest rm $manifest || true
 	docker manifest create $manifest $images
-	image_put $CI_REPO_OWNER $(image_tag $suffix) $manifest
-	image_put $CI_REPO_OWNER $(short_image_tag $suffix) $manifest
+	image_put $PUSH_USER $(image_tag $suffix) $manifest
+	image_put $PUSH_USER $(short_image_tag $suffix) $manifest
 	#
 	# Sanity check to ensure the manifest that are published can actualy
 	# be used.
 	#
 	for arch in $ARCHS ; do
-	    docker pull --platform linux/$arch $(image_name $CI_REPO_OWNER $suffix)
-	    docker pull --platform linux/$arch $(short_image_name $CI_REPO_OWNER $suffix)
+	    docker pull --platform linux/$arch $(image_name $PUSH_USER $suffix)
+	    docker pull --platform linux/$arch $(short_image_name $PUSH_USER $suffix)
 	done
     done
 }
@@ -74,12 +81,12 @@ boot() {
 
 authenticate() {
     echo "$RELEASETEAMTOKEN" | docker login --password-stdin --username "$RELEASETEAMUSER" $DOMAIN
-    token=$(curl -u$RELEASETEAMUSER:$RELEASETEAMTOKEN -sS https://$DOMAIN/v2/token | jq --raw-output .token)
+    curl -u$RELEASETEAMUSER:$RELEASETEAMTOKEN -sS https://$DOMAIN/v2/token | jq --raw-output '"Authorization: token \(.token)"' > $TOKEN_HEADER
 }
 
 image_put() {
     docker manifest inspect $3 > /tmp/manifest.json
-    curl -sS  -H "Authorization: token $token" -X PUT --data-binary @/tmp/manifest.json https://$DOMAIN/v2/$1/forgejo/manifests/$2
+    curl -sS -H @$TOKEN_HEADER -X PUT --data-binary @/tmp/manifest.json https://$DOMAIN/v2/$1/forgejo/manifests/$2
 }
 
 main() {
