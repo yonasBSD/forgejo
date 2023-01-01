@@ -19,18 +19,10 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 ## Release process
 
-### Integration
+### Merge all feature branches
 
 * Reset the vX.Y/forgejo branch to the Gitea tag vX.Y.Z
 * Merge all feature branches into the vX.Y/forgejo branch
-
-### Testing
-
-When Forgejo is released, artefacts (packages, binaries, etc.) are first published by the CI/CD pipelines in the https://codeberg.org/forgejo-integration organization, to be downloaded and verified to work. When modifying the CI/CD pipelines, there is a chance that these verification steps fail and that the published artefacts override previous ones or worse. During this debugging phase, a fork of Forgejo must be used.
-
-* Push the vX.Y.Z-N tag to a Forgejo fork (e.g. https://codeberg.org/someuser/forgejo)
-* Verify the release is published in https://codeberg.org/forgejo-integration
-* Verify the release is published in https://codeberg.org/someuser
 
 ### Release Notes
 
@@ -38,11 +30,23 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Copy/paste the matching entry from CHANGELOG.md
 * Update the PR references prefixing them with https://github.com/go-gitea/gitea/pull/
 
+### Testing
+
+When Forgejo is released, artefacts (packages, binaries, etc.) are first published by the CI/CD pipelines in the https://codeberg.org/forgejo-experimental organization, to be downloaded and verified to work.
+
+* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo-integration (if it fails for whatever reason, the tag and the release can be removed manually)
+  * Binaries are built and uploaded to https://codeberg.org/forgejo/forgejo-integration/releases
+  * Container images are built and uploaded to https://codeberg.org/forgejo-integration/-/packages/container/forgejo/versions
+* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/experimental
+  * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo-experimental
+  * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo-experimental
+* Reach out to packagers and users to manually verify the release works as expected
+
 ### Publication
 
-* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/forgejo
-* [Binaries](https://codeberg.org/forgejo/forgejo/releases) are built, signed and uploaded by the CI.
-* [Container images](https://codeberg.org/forgejo/-/packages/container/forgejo/versions) are built and uploaded by the CI.
+* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/release
+  * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo
+  * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo
 
 ### Website update
 
