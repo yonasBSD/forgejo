@@ -6,7 +6,7 @@ Contributions to Forgejo, in all the repositories in the [Forgejo organization](
 By making a contribution to Forgejo, I certify that:
 
 (a) The contribution was created in whole or in part by me and I
-    have the right to submit it under the Free Software
+    have the right to submit it under the Free Software license
     indicated in the file; or
 
 (b) The contribution is based upon previous work that, to the best
