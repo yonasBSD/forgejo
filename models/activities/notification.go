@@ -1,4 +1,5 @@
 // Copyright 2016 The Gitea Authors. All rights reserved.
+// Copyright 2022 Jamie Mansfield. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activities
@@ -462,6 +463,14 @@ func (n *Notification) HTMLURL() string {
 // APIURL formats a URL-string to the notification
 func (n *Notification) APIURL() string {
 	return setting.AppURL + "api/v1/notifications/threads/" + strconv.FormatInt(n.ID, 10)
+}
+
+// GetLastEventTimestamp retrieves the last notification timestamp.
+func (n *Notification) GetLastEventTimestamp() timeutil.TimeStamp {
+	if n.Comment != nil {
+		return n.Comment.UpdatedUnix
+	}
+	return n.Issue.GetLastEventTimestamp()
 }
 
 // NotificationList contains a list of notifications

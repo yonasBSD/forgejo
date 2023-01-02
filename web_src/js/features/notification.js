@@ -4,7 +4,7 @@ const {appSubUrl, csrfToken, notificationSettings, assetVersionEncoded} = window
 let notificationSequenceNumber = 0;
 
 export function initNotificationsTable() {
-  $('#notification_table .button').on('click', function () {
+  $('#notification_list .button').on('click', function () {
     (async () => {
       const data = await updateNotification(
         $(this).data('url'),
