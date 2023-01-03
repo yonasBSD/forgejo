@@ -94,17 +94,32 @@ In the Woodpecker CI configuration the following secrets must be set:
 
 ## Users, organizations and repositories
 
-## Shared user: release-team
+### Shared user: release-team
 
 The [release-team](https://codeberg.org/release-team) user publishes and signs all releases. The associated email is mailto:release@forgejo.org.
 
 The public GPG key used to sign the releases is [EB114F5E6C0DC2BCDD183550A4B61A2DC5923710](https://codeberg.org/release-team.gpg) `Forgejo Releases <release@forgejo.org>`
 
-## Integration organization
+### Shared user: forgejo-ci
 
-The https://codeberg.org/forgejo-integration organization is dedicated to integration testing. Its purpose is to ensure all artefacts can effectively be published and retrieved by the CI/CD pipelines. The `release-team` user as well as all Forgejo contributors working on the CI/CD pipeline should be owners of the `forgejo-integration` organization. Assuming `someuser` is such a user, they can use this organization to verify a modified CI/CD pipeline behaves as expected before actually trying to publish anything for real at https://codeberg.org/forgejo.
+The [forgejo-ci](https://codeberg.org/forgejo-ci) user is dedicated to https://forgejo-ci.codeberg.org/ and provides it with OAuth2 credentials it uses to run.
 
-* Modify files in the `.woodpecker` directory
-* Set a tag (e.g. v10.0.0)
-* Push the tag to `https://codeberg.org/someouser/forgejo`
-* After the CI/CD pipeline completes the artefacts (release, package, etc.) must be available and identical at https://codeberg.org/someouser/forgejo and https://codeberg.org/forgejo-integration/forgejo
+### Shared user: forgejo-experimental-ci
+
+The [forgejo-experimental-ci](https://codeberg.org/forgejo-experimental-ci) user is dedicated to provide the application tokens used by Woodpecker CI repositories to build releases and publish them to https://codeberg.org/forgejo-experimental. It does not (and must not) have permission to publish releases at https://codeberg.org/forgejo.
+
+### Integration and experimental organization
+
+The https://codeberg.org/forgejo-integration organization is dedicated to integration testing. Its purpose is to ensure all artefacts can effectively be published and retrieved by the CI/CD pipelines. 
+
+The https://codeberg.org/forgejo-experimental organization is dedicated to publishing experimental Forgejo releases. They are copied from the https://codeberg.org/forgejo-integration organization.
+
+The `forgejo-experimental-ci` user as well as all Forgejo contributors working on the CI/CD pipeline should be owners of both organizations.
+
+The https://codeberg.org/forgejo-integration/forgejo repository is coupled with a Woodpecker CI repository configured with the credentials provided by the https://codeberg.org/forgejo-experimental-ci user. It runs the pipelines found in `releases/woodpecker-build/*.yml` which builds and publishes an unsigned release in https://codeberg.org/forgejo-integration.
+
+### Experimental and release repositories
+
+The https://codeberg.org/forgejo/experimental private repository is coupled with a Woodpecker CI repository configured with the credentials provided by the https://codeberg.org/forgejo-experimental-ci user. It runs the pipelines found in `releases/woodpecker-publish/*.yml` which signs and copies a release from https://codeberg.org/forgejo-integration into https://codeberg.org/forgejo-experimental.
+
+The https://codeberg.org/forgejo/release private repository is coupled with a Woodpecker CI repository configured with the credentials provided by the https://codeberg.org/release-team user. It runs the pipelines found in `releases/woodpecker-publish/*.yml` which signs and copies a release from https://codeberg.org/forgejo-integration into https://codeberg.org/forgejo.
