@@ -38,6 +38,18 @@ func renameGiteaForgejo(filename string) []byte {
 		panic(err)
 	}
 
+	replacer := strings.NewReplacer(
+		"Gitea", "Forgejo",
+		"https://docs.gitea.io/en-us/install-from-binary/", "https://forgejo.org/download/#installation-from-binary",
+		"https://github.com/go-gitea/gitea/tree/master/docker", "https://forgejo.org/download/#container-image",
+		"https://docs.gitea.io/en-us/install-from-package/", "https://forgejo.org/download",
+		"https://code.gitea.io/gitea", "https://forgejo.org/download",
+		"code.gitea.io/gitea", "Forgejo",
+		`<a href="https://github.com/go-gitea/gitea/issues" target="_blank">GitHub</a>`, `<a href="https://codeberg.org/forgejo/forgejo/issues" target="_blank">Codeberg</a>`,
+		"https://github.com/go-gitea/gitea", "https://codeberg.org/forgejo/forgejo",
+		"https://blog.gitea.io", "https://forgejo.org/news",
+	)
+
 	out := make([]byte, 0, 1024)
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
@@ -46,17 +58,7 @@ func renameGiteaForgejo(filename string) []byte {
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			out = append(out, []byte("\n"+line+"\n")...)
 		} else {
-			out = append(out, []byte(strings.NewReplacer(
-				"Gitea", "Forgejo",
-				"https://docs.gitea.io/en-us/install-from-binary/", "https://forgejo.org/download/#installation-from-binary",
-				"https://github.com/go-gitea/gitea/tree/master/docker", "https://forgejo.org/download/#container-image",
-				"https://docs.gitea.io/en-us/install-from-package/", "https://forgejo.org/download",
-				"https://code.gitea.io/gitea", "https://forgejo.org/download",
-				"code.gitea.io/gitea", "Forgejo",
-				`<a href="https://github.com/go-gitea/gitea/issues" target="_blank">GitHub</a>`, `<a href="https://codeberg.org/forgejo/forgejo/issues" target="_blank">Codeberg</a>`,
-				"https://github.com/go-gitea/gitea", "https://codeberg.org/forgejo/forgejo",
-				"https://blog.gitea.io", "https://forgejo.org/news",
-			).Replace(line)+"\n")...)
+			out = append(out, []byte(replacer.Replace(line)+"\n")...)
 		}
 	}
 	file.Close()
