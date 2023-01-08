@@ -22,6 +22,10 @@ Discussions on how the workflow should evolve happen [in the isssue tracker](htt
 
 Before rebasing on top of Gitea, all branches are copied to `soft-fork/YYYY-MM-DD/<branch>` for safekeeping.
 
+### Tags
+
+Because the branches are rebased on top of Gitea, only the latest tag will be found in a given branch. For instance `v1.18.0-1` won't be found in the `v1.18/forgejo` branch after it is rebased.
+
 ## Rebasing
 
 ### *Feature branch*
@@ -53,10 +57,6 @@ $ git reset --hard forgejo/forgejo-development
 $ git cherry-pick $(git rev-list --reverse forgejo/soft-fork/2022-12-10/forgejo-development..forgejo/soft-fork/2022-12-10/forgejo-f3)
 $ git push --force forgejo-f3 forgejo/forgejo-f3
 ```
-
-## Releasing
-
-When a tag is set to a *Stable* *Forgejo* branch, the CI pipeline creates and uploads binaries and packages.
 
 ## Feature branches
 
