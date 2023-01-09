@@ -240,7 +240,7 @@ func generateLogConfig(sec *ini.Section, name string, defaults defaultLogOptions
 			sendTos[i] = strings.TrimSpace(address)
 		}
 		logConfig["sendTos"] = sendTos
-		logConfig["subject"] = sec.Key("SUBJECT").MustString("Diagnostic message from Gitea")
+		logConfig["subject"] = sec.Key("SUBJECT").MustString("Diagnostic message from Forgejo")
 	}
 
 	logConfig["colorize"] = sec.Key("COLORIZE").MustBool(false)
@@ -330,7 +330,7 @@ func initLogFrom(rootCfg ConfigProvider) {
 			Provider: provider,
 			Config:   config,
 		})
-		log.Info("Gitea Log Mode: %s(%s:%s)", util.ToTitleCase(name), util.ToTitleCase(provider), levelName)
+		log.Info("Forgejo Log Mode: %s(%s:%s)", util.ToTitleCase(name), util.ToTitleCase(provider), levelName)
 	}
 
 	AddLogDescription(log.DEFAULT, &description)
