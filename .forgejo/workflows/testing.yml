@@ -50,6 +50,7 @@ jobs:
         env:
           TAGS: bindata
       - run: |
+          su gitea -c 'go test contrib/environment-to-ini/environment-to-ini.go contrib/environment-to-ini/environment-to-ini_test.go'
           su gitea -c 'make unit-test-coverage test-check'
         timeout-minutes: 50
         env:
