@@ -75,19 +75,21 @@ func decodeEnvSectionKey(encoded string) (ok bool, section, key string) {
 
 // decodeEnvironmentKey decode the environment key to section and key
 // The environment key is in the form of GITEA__SECTION__KEY or GITEA__SECTION__KEY__FILE
-func decodeEnvironmentKey(prefixGitea, suffixFile, envKey string) (ok bool, section, key string, useFileValue bool) {
-	if !strings.HasPrefix(envKey, prefixGitea) {
-		return false, "", "", false
-	}
+func decodeEnvironmentKey(prefixRegexp *regexp.Regexp, suffixFile, envKey string) (ok bool, section, key string, useFileValue bool) {
 	if strings.HasSuffix(envKey, suffixFile) {
 		useFileValue = true
 		envKey = envKey[:len(envKey)-len(suffixFile)]
 	}
-	ok, section, key = decodeEnvSectionKey(envKey[len(prefixGitea):])
+	loc := prefixRegexp.FindStringIndex(envKey)
+	if loc == nil {
+		return false, "", "", false
+	}
+	ok, section, key = decodeEnvSectionKey(envKey[loc[1]:])
 	return ok, section, key, useFileValue
 }
 
 func EnvironmentToConfig(cfg ConfigProvider, prefixGitea, suffixFile string, envs []string) (changed bool) {
+	prefixRegexp := regexp.MustCompile(prefixGitea)
 	for _, kv := range envs {
 		idx := strings.IndexByte(kv, '=')
 		if idx < 0 {
@@ -97,7 +99,7 @@ func EnvironmentToConfig(cfg ConfigProvider, prefixGitea, suffixFile string, env
 		// parse the environment variable to config section name and key name
 		envKey := kv[:idx]
 		envValue := kv[idx+1:]
-		ok, sectionName, keyName, useFileValue := decodeEnvironmentKey(prefixGitea, suffixFile, envKey)
+		ok, sectionName, keyName, useFileValue := decodeEnvironmentKey(prefixRegexp, suffixFile, envKey)
 		if !ok {
 			continue
 		}
