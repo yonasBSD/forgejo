@@ -5,6 +5,7 @@ package main
 
 import (
 	"os"
+	"regexp"
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
@@ -14,21 +15,21 @@ import (
 )
 
 // EnvironmentPrefix environment variables prefixed with this represent ini values to write
-const EnvironmentPrefix = "GITEA"
+const EnvironmentPrefix = "^(FORGEJO|GITEA)"
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "environment-to-ini"
 	app.Usage = "Use provided environment to update configuration ini"
-	app.Description = `As a helper to allow docker users to update the gitea configuration
+	app.Description = `As a helper to allow docker users to update the Forgejo configuration
 	through the environment, this command allows environment variables to
 	be mapped to values in the ini.
 
-	Environment variables of the form "GITEA__SECTION_NAME__KEY_NAME"
+	Environment variables of the form "FORGEJO__SECTION_NAME__KEY_NAME"
 	will be mapped to the ini section "[section_name]" and the key
 	"KEY_NAME" with the value as provided.
 
-	Environment variables of the form "GITEA__SECTION_NAME__KEY_NAME__FILE"
+	Environment variables of the form "FORGEJO__SECTION_NAME__KEY_NAME__FILE"
 	will be mapped to the ini section "[section_name]" and the key
 	"KEY_NAME" with the value loaded from the specified file.
 
@@ -46,8 +47,8 @@ func main() {
 		...
 		"""
 
-	You would set the environment variables: "GITEA__LOG_0x2E_CONSOLE__COLORIZE=false"
-	and "GITEA__LOG_0x2E_CONSOLE__STDERR=false". Other examples can be found
+	You would set the environment variables: "FORGEJO__LOG_0x2E_CONSOLE__COLORIZE=false"
+	and "FORGEJO__LOG_0x2E_CONSOLE__STDERR=false". Other examples can be found
 	on the configuration cheat sheet.`
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -63,7 +64,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "work-path, w",
 			Value: setting.AppWorkPath,
-			Usage: "Set the gitea working path",
+			Usage: "Set the forgejo working path",
 		},
 		cli.StringFlag{
 			Name:  "out, o",
@@ -85,6 +86,19 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to run app with %s: %v", os.Args, err)
 	}
+}
+
+func splitEnvironmentVariable(prefixRegexp *regexp.Regexp, kv string) (string, string) {
+	idx := strings.IndexByte(kv, '=')
+	if idx < 0 {
+		return "", ""
+	}
+	k := kv[:idx]
+	loc := prefixRegexp.FindStringIndex(k)
+	if loc == nil {
+		return "", ""
+	}
+	return k[loc[1]:], kv[idx+1:]
 }
 
 func runEnvironmentToIni(c *cli.Context) error {
@@ -118,15 +132,13 @@ func runEnvironmentToIni(c *cli.Context) error {
 
 	// clear Gitea's specific environment variables if requested
 	if c.Bool("clear") {
+		prefixRegexp := regexp.MustCompile(prefixGitea)
 		for _, kv := range os.Environ() {
-			idx := strings.IndexByte(kv, '=')
-			if idx < 0 {
+			eKey, _ := splitEnvironmentVariable(prefixRegexp, kv)
+			if eKey == "" {
 				continue
 			}
-			eKey := kv[:idx]
-			if strings.HasPrefix(eKey, prefixGitea) {
-				_ = os.Unsetenv(eKey)
-			}
+			_ = os.Unsetenv(eKey)
 		}
 	}
 
