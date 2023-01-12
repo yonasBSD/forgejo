@@ -5,6 +5,7 @@ package setting
 
 import (
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,7 @@ func TestDecodeEnvSectionKey(t *testing.T) {
 }
 
 func TestDecodeEnvironmentKey(t *testing.T) {
-	prefix := "GITEA__"
+	prefix := regexp.MustCompile("^(FORGEJO|GITEA)__")
 	suffix := "__FILE"
 
 	ok, section, key, file := decodeEnvironmentKey(prefix, suffix, "SEC__KEY")
@@ -49,6 +50,12 @@ func TestDecodeEnvironmentKey(t *testing.T) {
 	assert.False(t, file)
 
 	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC__KEY")
+	assert.True(t, ok)
+	assert.Equal(t, "sec", section)
+	assert.Equal(t, "KEY", key)
+	assert.False(t, file)
+
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC__KEY")
 	assert.True(t, ok)
 	assert.Equal(t, "sec", section)
 	assert.Equal(t, "KEY", key)
@@ -72,7 +79,7 @@ func TestDecodeEnvironmentKey(t *testing.T) {
 func TestEnvironmentToConfig(t *testing.T) {
 	cfg, _ := NewConfigProviderFromData("")
 
-	changed := EnvironmentToConfig(cfg, "GITEA__", "__FILE", nil)
+	changed := EnvironmentToConfig(cfg, "^(FORGEJO|GITEA)__", "__FILE", nil)
 	assert.False(t, changed)
 
 	cfg, err := NewConfigProviderFromData(`
@@ -81,16 +88,16 @@ key = old
 `)
 	assert.NoError(t, err)
 
-	changed = EnvironmentToConfig(cfg, "GITEA__", "__FILE", []string{"GITEA__sec__key=new"})
+	changed = EnvironmentToConfig(cfg, "^(FORGEJO|GITEA)__", "__FILE", []string{"GITEA__sec__key=new"})
 	assert.True(t, changed)
 	assert.Equal(t, "new", cfg.Section("sec").Key("key").String())
 
-	changed = EnvironmentToConfig(cfg, "GITEA__", "__FILE", []string{"GITEA__sec__key=new"})
+	changed = EnvironmentToConfig(cfg, "^(FORGEJO|GITEA)__", "__FILE", []string{"GITEA__sec__key=new"})
 	assert.False(t, changed)
 
 	tmpFile := t.TempDir() + "/the-file"
 	_ = os.WriteFile(tmpFile, []byte("value-from-file"), 0o644)
-	changed = EnvironmentToConfig(cfg, "GITEA__", "__FILE", []string{"GITEA__sec__key__FILE=" + tmpFile})
+	changed = EnvironmentToConfig(cfg, "^(FORGEJO|GITEA)__", "__FILE", []string{"GITEA__sec__key__FILE=" + tmpFile})
 	assert.True(t, changed)
 	assert.Equal(t, "value-from-file", cfg.Section("sec").Key("key").String())
 }
