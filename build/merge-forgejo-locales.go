@@ -57,6 +57,9 @@ func renameGiteaForgejo(filename string) []byte {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			out = append(out, []byte("\n"+line+"\n")...)
+		} else if strings.HasPrefix(line, "settings.web_hook_name_gitea") {
+			out = append(out, []byte("\n"+line+"\n")...)
+			out = append(out, []byte("settings.web_hook_name_forgejo = Forgejo\n")...)
 		} else {
 			out = append(out, []byte(replacer.Replace(line)+"\n")...)
 		}
