@@ -32,6 +32,7 @@ func AddCacheControlToHeader(h http.Header, maxAge time.Duration, additionalDire
 
 		// to remind users they are using non-prod setting.
 		h.Add("X-Gitea-Debug", "RUN_MODE="+setting.RunMode)
+		h.Add("X-Forgejo-Debug", "RUN_MODE="+setting.RunMode)
 	}
 
 	h.Set("Cache-Control", strings.Join(append(directives, additionalDirectives...), ", "))
