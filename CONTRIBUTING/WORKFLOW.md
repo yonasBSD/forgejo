@@ -76,6 +76,12 @@ The purpose of each *Feature branch* is documented below:
   Forgejo development tools and documentation.
   * Backports: [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
 
+### Dependency
+
+* [forgejo-dependency](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-dependency) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
+  Each commit is prefixed with the name of dependency in uppercase, for instance **[GOTH]** or **[GITEA]**. They are standalone and implement either a bug fix or a feature that is in the process of being contributed to the dependency. It is better to contribute directly to the dependency instead of adding a commit to this branch but it is sometimes not possible, for instance when someone does not have a GitHub account. The author of the commit is responsible for rebasing and resolve conflicts. The ultimate goal of this branch is to be empty and it is expected that a continuous effort is made to reduce its content so that the technical debt it represents does not burden Forgejo long term.
+  * Backports: [v1.18/forgejo-dependency](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-dependency)
+
 ### [Privacy](https://codeberg.org/forgejo/forgejo/issues?labels=83271)
 
 * [forgejo-privacy](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-privacy) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
