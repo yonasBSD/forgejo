@@ -14,6 +14,9 @@ title: "[FEAT] "
    take a moment to check that your feature hasn't already been suggested.
 -->
 
+## Needs and benefits
+<!-- Please describe the needs this feature intends to address and the benefits it brings. -->
+
 ## Feature Description
 <!-- Please describe the feature you would like to see added as clearly and succinctly as possible. -->
 
