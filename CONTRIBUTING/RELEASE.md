@@ -19,10 +19,15 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 ## Release process
 
-### Merge all feature branches
+When publishing the vX.Y.Z-N release, the following steps must be followed.
 
-* Reset the vX.Y/forgejo branch to the Gitea tag vX.Y.Z
-* Merge all feature branches into the vX.Y/forgejo branch
+### Cherry pick the latest commits from Gitea
+
+The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WORKFLOW.md). The release happens in between rebase and it is worth checking of the matching Gitea branch, release/vX.Y contains commits that should be included in the release.
+
+* `cherry-pick -x` the commits
+* push the vX.Y/forgejo branch including the commits
+* verify the tests pass
 
 ### Release Notes
 
