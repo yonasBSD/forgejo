@@ -19,7 +19,7 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 ## Release process
 
-When publishing the vX.Y.Z-N release, the following steps must be followed.
+When publishing the vX.Y.Z-N release, the following steps must be followed:
 
 ### Cherry pick the latest commits from Gitea
 
@@ -27,7 +27,7 @@ The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WOR
 
 * `cherry-pick -x` the commits
 * push the vX.Y/forgejo branch including the commits
-* verify the tests pass
+* verify that the tests pass
 
 ### Release Notes
 
@@ -59,6 +59,14 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Restart the last CI build at https://codeberg.org/forgejo/website/src/branch/main/
 * Verify https://forgejo.org/download/ points to the expected release
 * Manually try the instructions to work
+
+### Standard toot
+
+The following toot can be re-used to announce a minor release at `https://floss.social/@forgejo`. For more significant releases it is best to consider a dedicated and non-standard toot.
+
+```
+#Forgejo vX.Y.Z-N was just released! This is a minor patch. Check out the release notes and download it at https://forgejo.org/releases/. If you experience any issues with this release, please report to https://codeberg.org/forgejo/forgejo/issues.
+```
 
 ## Release signing keys management
 
