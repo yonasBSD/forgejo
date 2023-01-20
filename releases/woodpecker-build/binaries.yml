@@ -71,6 +71,24 @@ pipeline:
     secrets:
       - goproxy_default
 
+  #
+  # See https://codeberg.org/forgejo/forgejo/issues/230 for a discussion on this
+  # compilation stage. The goal is just to verify the build does not break, not that
+  # the binary produced actually works.
+  #
+  freebsd:
+    image: *xgo_image
+    group: build
+    commands:
+      - *goproxy_setup
+      - export PATH=$PATH:$GOPATH/bin
+      - make CI=false release-freebsd
+    environment:
+      TAGS: 'bindata sqlite sqlite_unlock_notify'
+      GOPROXY_OVERRIDE: *goproxy_override
+    secrets:
+      - goproxy_default
+
   verifyruns:
     image: *golang_image
     commands:
