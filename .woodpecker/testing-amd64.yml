@@ -3,7 +3,9 @@ platform: linux/amd64
 when:
   event: [ push, pull_request ]
   branch:
-    exclude: [ forgejo-development, main, release/*, soft-fork/*/*, soft-fork/*/*/* ]
+    exclude: [ soft-fork/*/*, soft-fork/*/*/* ]
+  path:
+    exclude: [ '*.md', 'CONTRIBUTING/**' ]
 
 depends_on:
 - compliance
