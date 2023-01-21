@@ -50,6 +50,16 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 
 ### Publication
 
+#### Security releases
+
+This is done at least 48h in advance so people who asked to be members of this organization are given a chance to update and reduce the exposure of the Forgejo instance they run. Some steps are not documented to reduce the chances of exploiting the publicly documented process.
+
+* Push the vX.Y.Z-N tag to https://codeberg.org/forgejo-security/forgejo
+  * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo-security
+  * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo-security
+
+#### Releases without security patches
+
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/release
   * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo
   * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo
