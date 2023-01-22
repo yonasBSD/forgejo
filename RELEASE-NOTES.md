@@ -4,6 +4,20 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.18.1 or v1.18.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
+## 1.18.2-1
+
+This stable release includes a security fix. It was possible to reveal a user's email address, which is problematic because users can choose to hide their email address from everyone. This was possible because the notification email for a repository transfer request to an organization included every user's email address in the owner team. This has been fixed by sending individual emails instead and the code was refactored to prevent it from happening again.
+
+We **strongly recommend** that all installations are upgraded to the latest version as soon as possible.
+
+### Gitea
+
+* BUGFIXES
+  * When updating by rebase we need to set the environment for head repo (https://github.com/go-gitea/gitea/pull/22535) (https://github.com/go-gitea/gitea/pull/22536)
+  * Mute all links in issue timeline (https://github.com/go-gitea/gitea/pull/22534)
+  * Truncate commit summary on repo files table. (https://github.com/go-gitea/gitea/pull/22551) (https://github.com/go-gitea/gitea/pull/22552)
+  * Prevent multiple `To` recipients (https://github.com/go-gitea/gitea/pull/22566) (https://github.com/go-gitea/gitea/pull/22569)
+
 ## 1.18.2-0
 
 This stable release includes bug fixes.
