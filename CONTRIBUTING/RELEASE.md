@@ -45,7 +45,7 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/experimental
   * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo-experimental
   * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo-experimental
-* Fetch the Forgejo release as part of the [forgejo-ci](https://codeberg.org/Codeberg-Infrastructure/scripted-configuration/src/branch/main/hosts/forgejo-ci) test suite. Push the change to a branch of a repository enabled in https://woodpecker-local.forgejo.org/ ([read more...](https://codeberg.org/forgejo/forgejo/issues/208)). It will deploy the release and run high level integration tests.
+* Fetch the Forgejo release as part of the [forgejo-ci](https://codeberg.org/Codeberg-Infrastructure/scripted-configuration/src/branch/main/hosts/forgejo-ci) test suite. Push the change to a branch of a repository enabled in https://ci.dachary.org/ ([read more...](https://codeberg.org/forgejo/forgejo/issues/208)). It will deploy the release and run high level integration tests.
 * Reach out to packagers and users to manually verify the release works as expected
 
 ### Publication
