@@ -60,6 +60,10 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Verify https://forgejo.org/download/ points to the expected release
 * Manually try the instructions to work
 
+### DNS update
+
+* Update the `release.forgejo.org` TXT record that starts with `forgejo_versions=` to be `forgejo_versions=vX.Y.Z-N`
+
 ### Standard toot
 
 The following toot can be re-used to announce a minor release at `https://floss.social/@forgejo`. For more significant releases it is best to consider a dedicated and non-standard toot.
