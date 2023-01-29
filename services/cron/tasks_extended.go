@@ -156,7 +156,7 @@ func registerUpdateGiteaChecker() {
 			Schedule:   "@every 168h",
 		},
 		HTTPEndpoint:   "https://dl.gitea.io/gitea/version.json",
-		DomainEndpoint: "forgejo.org",
+		DomainEndpoint: "release.forgejo.org",
 	}, func(ctx context.Context, _ *user_model.User, config Config) error {
 		updateCheckerConfig := config.(*UpdateCheckerConfig)
 		return updatechecker.GiteaUpdateChecker(updateCheckerConfig.HTTPEndpoint, updateCheckerConfig.DomainEndpoint)

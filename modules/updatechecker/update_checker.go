@@ -46,7 +46,7 @@ func GiteaUpdateChecker(httpEndpoint, domainEndpoint string) error {
 }
 
 // getVersionDNS will request the TXT records for the domain. If a record starts
-// with "latest_version=" everything after that will be used as the latest
+// with "forgejo_versions=" everything after that will be used as the latest
 // version available.
 func getVersionDNS(domainEndpoint string) (version string, err error) {
 	records, err := net.LookupTXT(domainEndpoint)
@@ -59,8 +59,8 @@ func getVersionDNS(domainEndpoint string) (version string, err error) {
 	}
 
 	for _, record := range records {
-		if strings.HasPrefix(record, "latest_version=") {
-			return strings.TrimPrefix(record, "latest_version="), nil
+		if strings.HasPrefix(record, "forgejo_versions=") {
+			return strings.TrimPrefix(record, "forgejo_versions="), nil
 		}
 	}
 
