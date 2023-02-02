@@ -21,9 +21,16 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 When publishing the vX.Y.Z-N release, the following steps must be followed:
 
+### Create a milestone and a check list
+
+* Create a `Forgejo vX.X.Z-N` milestone set to the date of the release
+* Create an issue named `[RELEASE] Forgejo vX.Y.Z-N` with a description that includes a list of what needs to be done for the release with links to follow the progress
+* Set the milestone of this issue to `Forgejo vX.X.Z-N`
+* Close the milestone when the release is complete
+
 ### Cherry pick the latest commits from Gitea
 
-The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WORKFLOW.md). The release happens in between rebase and it is worth checking of the matching Gitea branch, release/vX.Y contains commits that should be included in the release.
+The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WORKFLOW.md). The release happens in between rebase and it is worth checking if the matching Gitea branch, release/vX.Y contains commits that should be included in the release.
 
 * `cherry-pick -x` the commits
 * push the vX.Y/forgejo branch including the commits
@@ -45,7 +52,7 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/experimental
   * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo-experimental
   * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo-experimental
-* Fetch the Forgejo release as part of the [forgejo-ci](https://codeberg.org/Codeberg-Infrastructure/scripted-configuration/src/branch/main/hosts/forgejo-ci) test suite. Push the change to a branch of a repository enabled in https://woodpecker-local.forgejo.org/ ([read more...](https://codeberg.org/forgejo/forgejo/issues/208)). It will deploy the release and run high level integration tests.
+* Fetch the Forgejo release as part of the [forgejo-ci](https://codeberg.org/Codeberg-Infrastructure/scripted-configuration/src/branch/main/hosts/forgejo-ci) test suite. Push the change to a branch of a repository enabled in https://ci.dachary.org/ ([read more...](https://codeberg.org/forgejo/forgejo/issues/208)). It will deploy the release and run high level integration tests.
 * Reach out to packagers and users to manually verify the release works as expected
 
 ### Publication
@@ -59,6 +66,10 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 * Restart the last CI build at https://codeberg.org/forgejo/website/src/branch/main/
 * Verify https://forgejo.org/download/ points to the expected release
 * Manually try the instructions to work
+
+### DNS update
+
+* Update the `release.forgejo.org` TXT record that starts with `forgejo_versions=` to be `forgejo_versions=vX.Y.Z-N`
 
 ### Standard toot
 
