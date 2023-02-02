@@ -21,6 +21,13 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 When publishing the vX.Y.Z-N release, the following steps must be followed:
 
+### Create a milestone and a check list
+
+* Create a `Forgejo vX.X.Z-N` milestone set to the date of the release
+* Create an issue named `[RELEASE] Forgejo vX.Y.Z-N` with a description that includes a list of what needs to be done for the release with links to follow the progress
+* Set the milestone of this issue to `Forgejo vX.X.Z-N`
+* Close the milestone when the release is complete
+
 ### Cherry pick the latest commits from Gitea
 
 The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WORKFLOW.md). The release happens in between rebase and it is worth checking if the matching Gitea branch, release/vX.Y contains commits that should be included in the release.
