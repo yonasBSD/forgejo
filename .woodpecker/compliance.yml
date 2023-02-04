@@ -9,7 +9,7 @@ when:
 
 variables:
  - &golang_image 'golang:1.19'
- - &gitea_test_image 'gitea/test_env:linux-amd64'
+ - &test_image 'codeberg.org/forgejo/test_env:main'
  - &goproxy_override ''
  - &goproxy_setup |-
       if [ -n "$${GOPROXY_OVERRIDE:-}" ]; then
@@ -52,7 +52,7 @@ pipeline:
     - make security-check
 
   lint-backend:
-    image: *gitea_test_image
+    image: *test_image
     pull: true
     group: checks
     environment:
@@ -66,7 +66,7 @@ pipeline:
     - make lint-backend
 
   checks-backend:
-    image: *gitea_test_image
+    image: *test_image
     group: checks
     environment:
       GOPROXY_OVERRIDE: *goproxy_override

@@ -13,7 +13,7 @@ depends_on:
 variables:
  - &git_image 'docker:git'
  - &golang_image 'golang:1.19'
- - &gitea_test_image 'gitea/test_env:linux-amd64'
+ - &test_image 'codeberg.org/forgejo/test_env:main'
  - &mysql_image 'mysql:8'
  - &pgsql_image 'postgres:10'
  - &goproxy_override ''
@@ -74,13 +74,13 @@ pipeline:
     - git update-ref refs/heads/tag_test ${CI_COMMIT_SHA}
 
   prepare-test-env:
-    image: *gitea_test_image
+    image: *test_image
     pull: true
     commands:
     - ./build/test-env-prepare.sh
 
   build:
-    image: *gitea_test_image
+    image: *test_image
     environment:
       GOSUMDB: sum.golang.org
       TAGS: bindata sqlite sqlite_unlock_notify
@@ -93,7 +93,7 @@ pipeline:
     - su gitea -c 'make backend'
 
   unit-test:
-    image: *gitea_test_image
+    image: *test_image
     environment:
       TAGS: 'bindata sqlite sqlite_unlock_notify'
       RACE_ENABLED: 'true'
@@ -107,7 +107,7 @@ pipeline:
 
   test-mysql8:
     group: integration
-    image: *gitea_test_image
+    image: *test_image
     commands:
       - *goproxy_setup
       - su gitea -c 'timeout -s ABRT 50m make test-mysql8-migration test-mysql8'
@@ -121,7 +121,7 @@ pipeline:
 
   test-pgsql:
     group: integration
-    image: *gitea_test_image
+    image: *test_image
     commands:
       - *goproxy_setup
       - su gitea -c 'timeout -s ABRT 50m make test-pgsql-migration test-pgsql'
@@ -135,7 +135,7 @@ pipeline:
 
   test-sqlite:
     group: integration
-    image: *gitea_test_image
+    image: *test_image
     environment:
     - USE_REPO_TEST_DIR=1
     - GOPROXY=off
