@@ -75,7 +75,6 @@ pipeline:
 
   prepare-test-env:
     image: *gitea_test_image
-    pull: true
     commands:
     - ./build/test-env-prepare.sh
 
