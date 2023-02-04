@@ -54,7 +54,6 @@ pipeline:
   lint-backend:
     image: *gitea_test_image
     group: checks
-    pull: true
     environment:
       GOPROXY_OVERRIDE: *goproxy_override
       TAGS: 'bindata sqlite sqlite_unlock_notify'
@@ -67,7 +66,6 @@ pipeline:
 
   checks-backend:
     image: *gitea_test_image
-    pull: true
     group: checks
     environment:
       GOPROXY_OVERRIDE: *goproxy_override
