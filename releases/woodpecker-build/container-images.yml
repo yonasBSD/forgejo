@@ -5,7 +5,7 @@ when:
   tag: v*
 
 variables:
- - &git_image 'docker:git'
+ - &golang_image 'golang:1.20'
  - &dind_image 'docker:20.10-dind'
  - &buildx_image 'woodpeckerci/plugin-docker-buildx:2.0.0'
  - &integration_image 'codeberg.org/forgejo-integration/forgejo'
@@ -22,7 +22,7 @@ variables:
 
 pipeline:
   fetch-tags:
-    image: *git_image
+    image: *golang_image
     pull: true
     commands:
      - git config --add safe.directory '*'
