@@ -63,10 +63,10 @@ func renameGiteaForgejo(filename string) []byte {
 			out = append(out, []byte("settings.web_hook_name_forgejo = Forgejo\n")...)
 		} else if strings.HasPrefix(line, "migrate.gitea.description") {
 			re := regexp.MustCompile(`(= ?.+Gitea)`)
-			out = append(out, []byte(re.ReplaceAllString(line,"${1}/Forgejo\n"))...)
+			out = append(out, []byte(re.ReplaceAllString(line, "${1}/Forgejo\n"))...)
 		} else if strings.HasPrefix(line, "enable_update_checker_helper") {
 			out = append(out, []byte(strings.NewReplacer(
-				"gitea.io","release.forgejo.org",
+				"gitea.io", "release.forgejo.org",
 			).Replace(line)+"\n")...)
 		} else {
 			out = append(out, []byte(replacer.Replace(line)+"\n")...)
