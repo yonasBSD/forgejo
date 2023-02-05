@@ -11,8 +11,7 @@ depends_on:
 - compliance
 
 variables:
- - &git_image 'docker:git'
- - &golang_image 'golang:1.19'
+ - &golang_image 'golang:1.20'
  - &test_image 'codeberg.org/forgejo/test_env:main'
  - &mysql_image 'mysql:8'
  - &pgsql_image 'postgres:10'
@@ -50,7 +49,7 @@ workspace:
 
 pipeline:
   fetch-tags:
-    image: *git_image
+    image: *golang_image
     pull: true
     commands:
     - git config --add safe.directory '*'
@@ -68,7 +67,7 @@ pipeline:
     - make deps-backend
 
   tag-pre-condition:
-    image: *git_image
+    image: *golang_image
     pull: true
     commands:
     - git update-ref refs/heads/tag_test ${CI_COMMIT_SHA}

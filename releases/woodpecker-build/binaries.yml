@@ -5,9 +5,8 @@ when:
   tag: v*
 
 variables:
- - &git_image 'docker:git'
  - &node_image 'node:18'
- - &golang_image 'golang:1.19'
+ - &golang_image 'golang:1.20'
  - &gpg_sign_image 'plugins/gpgsign:1'
  - &xgo_image 'techknowlogick/xgo:go-1.19.x'
  - &gpg_sign_image 'plugins/gpgsign:1'
@@ -30,7 +29,7 @@ workspace:
 
 pipeline:
   fetch-tags:
-    image: *git_image
+    image: *golang_image
     pull: true
     group: deps
     commands:

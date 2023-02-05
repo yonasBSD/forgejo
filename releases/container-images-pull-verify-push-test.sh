@@ -63,6 +63,7 @@ test_run() {
 }
 
 : ${CI_REPO_OWNER:=dachary}
+: ${PULL_USER:=$CI_REPO_OWNER}
 : ${PUSH_USER:=$CI_REPO_OWNER}
 : ${CI_COMMIT_TAG:=v17.1.42-2}
 
