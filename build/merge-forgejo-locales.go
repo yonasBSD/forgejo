@@ -9,6 +9,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"regexp"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -60,6 +61,9 @@ func renameGiteaForgejo(filename string) []byte {
 		} else if strings.HasPrefix(line, "settings.web_hook_name_gitea") {
 			out = append(out, []byte("\n"+line+"\n")...)
 			out = append(out, []byte("settings.web_hook_name_forgejo = Forgejo\n")...)
+		} else if strings.HasPrefix(line, "migrate.gitea.description") {
+			re := regexp.MustCompile(`(= ?.+Gitea)(.*)`)
+			out = append(out, []byte(re.ReplaceAllString(line, "${1}/Forgejo${2}\n"))...)
 		} else {
 			out = append(out, []byte(replacer.Replace(line)+"\n")...)
 		}
