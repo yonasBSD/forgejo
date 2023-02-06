@@ -96,6 +96,10 @@ The purpose of each *Feature branch* is documented below:
 * [forgejo-i18n](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-i18n) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
   Internationalization support for Forgejo with a workflow based on Weblate.
 
+### [Accessibility](https://codeberg.org/forgejo/forgejo/issues?labels=81214)
+* Backports only: [v1.18/forgejo-a11y](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-a11y) based on [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
+  Backport future upstream a11y improvements to the current release of Forgejo
+
 ### [Federation](https://codeberg.org/forgejo/forgejo/issues?labels=79349)
 
 * [forgejo-federation](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-federation) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
