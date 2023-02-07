@@ -37,3 +37,4 @@ components:
       properties:
         number:
           type: string
+

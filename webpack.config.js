@@ -59,7 +59,7 @@ export default {
       fileURLToPath(new URL('web_src/fomantic/build/semantic.css', import.meta.url)),
       fileURLToPath(new URL('web_src/less/index.less', import.meta.url)),
     ],
-    forgejoswagger: [
+    forgejoswagger: [ // Forgejo swagger is OpenAPI 3.0.0 and has specific parameters
 	fileURLToPath(new URL('web_src/js/standalone/forgejo-swagger.js', import.meta.url)),
 	fileURLToPath(new URL('web_src/less/standalone/swagger.less', import.meta.url)),
     ],
