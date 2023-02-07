@@ -163,6 +163,7 @@ func Routes(ctx gocontext.Context) *web.Route {
 	if setting.API.EnableSwagger {
 		// Note: The route is here but no in API routes because it renders a web page
 		routes.Get("/api/swagger", append(common, misc.Swagger)...) // Render V1 by default
+		routes.Get("/api/forgejo/swagger", append(common, misc.SwaggerForgejo)...)
 	}
 
 	// TODO: These really seem like things that could be folded into Contexter or as helper functions
