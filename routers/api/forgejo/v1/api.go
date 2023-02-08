@@ -12,6 +12,7 @@ import (
 func Routes(ctx gocontext.Context) *web.Route {
 	m := web.NewRoute()
 	forgejo := NewForgejo()
+	m.Get("", Root)
 	m.Get("/version", forgejo.GetVersion)
 	return m
 }
