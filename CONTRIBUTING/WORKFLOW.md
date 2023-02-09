@@ -20,7 +20,7 @@ Discussions on how the workflow should evolve happen [in the isssue tracker](htt
 
 ### Soft fork history
 
-Before rebasing on top of Gitea, all branches are copied to `soft-fork/YYYY-MM-DD/<branch>` for safekeeping.
+Before rebasing on top of Gitea, all branches are copied to `soft-fork/YYYY-MM-DD/<branch>` for safekeeping. Older `soft-fork/*/<branch>` branches are converted into references under the same name. Similar to how pull requests store their head, they do not clutter the list of branches but can be retrieved if needed with `git fetch +refs/soft-fork/*:refs/soft-fork/*`. Tooling to automate this archival process [is available](https://codeberg.org/forgejo-contrib/soft-fork-tools/src/branch/master/README.md#archive-branches).
 
 ### Tags
 
@@ -95,6 +95,10 @@ The purpose of each *Feature branch* is documented below:
 ### [Internationalization](https://codeberg.org/forgejo/forgejo/issues?labels=82637)
 * [forgejo-i18n](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-i18n) based on [forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/forgejo-development)
   Internationalization support for Forgejo with a workflow based on Weblate.
+
+### [Accessibility](https://codeberg.org/forgejo/forgejo/issues?labels=81214)
+* Backports only: [v1.18/forgejo-a11y](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-a11y) based on [v1.18/forgejo-development](https://codeberg.org/forgejo/forgejo/src/branch/v1.18/forgejo-development)
+  Backport future upstream a11y improvements to the current release of Forgejo
 
 ### [Federation](https://codeberg.org/forgejo/forgejo/issues?labels=79349)
 
