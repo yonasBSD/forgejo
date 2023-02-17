@@ -46,9 +46,12 @@ The vX.Y/forgejo branch is populated as part of the [rebase on top of Gitea](WOR
 
 When Forgejo is released, artefacts (packages, binaries, etc.) are first published by the CI/CD pipelines in the https://codeberg.org/forgejo-experimental organization, to be downloaded and verified to work.
 
+* Push the vX.Y/forgejo branch to https://codeberg.org/forgejo-integration/forgejo
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo-integration (if it fails for whatever reason, the tag and the release can be removed manually)
   * Binaries are built and uploaded to https://codeberg.org/forgejo/forgejo-integration/releases
   * Container images are built and uploaded to https://codeberg.org/forgejo-integration/-/packages/container/forgejo/versions
+* Push the vX.Y/forgejo branch to https://codeberg.org/forgejo-experimental/forgejo
+* Push the vX.Y/forgejo branch to https://codeberg.org/forgejo/experimental
 * Push the vX.Y.Z-N tag to https://codeberg.org/forgejo/experimental
   * Binaries are downloaded from https://codeberg.org/forgejo-integration, signed and copied to https://codeberg.org/forgejo-experimental
   * Container images are copied from https://codeberg.org/forgejo-integration to https://codeberg.org/forgejo-experimental

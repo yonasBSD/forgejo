@@ -26,8 +26,6 @@ COMMA := ,
 XGO_VERSION := go-1.20.x
 
 AIR_PACKAGE ?= github.com/cosmtrek/air@v1.40.4
-OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
-KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
 EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/cmd/editorconfig-checker@2.6.0
 ERRCHECK_PACKAGE ?= github.com/kisielk/errcheck@v1.6.2
 GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.4.0
@@ -306,6 +304,8 @@ ifneq "$(TAGS)" "$(shell cat $(TAGS_EVIDENCE) 2>/dev/null)"
 TAGS_PREREQ := $(TAGS_EVIDENCE)
 endif
 
+OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
 FORGEJO_API_SERVER = routers/api/forgejo/v1/generated.go
 
 .PHONY: generate-forgejo-api
