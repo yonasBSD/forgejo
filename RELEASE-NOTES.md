@@ -6,16 +6,18 @@ The Forgejo admin should carefully read the required manual actions before upgra
 
 ## 1.18.3-2
 
-This stable release includes bug fixes.
+This stable release includes a security fix for `git` and bug fixes.
 
-### Forgejo
+### Git
 
 Git [recently announced](https://github.blog/2023-02-14-git-security-vulnerabilities-announced-3/) new versions to address two CVEs ([CVE-2023-22490](https://cve.circl.lu/cve/CVE-2023-22490), [CVE-2023-23946](https://cve.circl.lu/cve/CVE-2023-23946)). On 14 Februrary 2023, Git published the maintenance release v2.39.2, together with releases for older maintenance tracks v2.38.4, v2.37.6, v2.36.5, v2.35.7, v2.34.7, v2.33.7, v2.32.6, v2.31.7, and v2.30.8. All major GNU/Linux distributions also provide updated packages via their security update channels.
 
-We **strongly recommend** that all installations running a version affected by the issues described below are upgraded to the latest version as soon as possible.
+We recommend that all installations running a version affected by the issues described below are upgraded to the latest version as soon as possible.
 
 * When using a Forgejo binary: upgrade the `git` package to a version greater or equal to v2.39.2, v2.38.4, v2.37.6, v2.36.5, v2.35.7, v2.34.7, v2.33.7, v2.32.6, v2.31.7 or v2.30.8
 * When using a Forgejo container image: `docker pull codeberg.org/forgejo/forgejo:1.18.3-2`
+
+### Forgejo
 
 * BUGFIXES
   * Use proxy for pull mirror (https://github.com/go-gitea/gitea/pull/22771) (https://github.com/go-gitea/gitea/pull/22772)
