@@ -96,9 +96,10 @@ else
 	endif
 endif
 
-FORGEJO_VERSION := v2.0.0 # SemVer
+# SemVer
+FORGEJO_VERSION := v2.0.0
 
-LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "api/forgejo/v1.ForgejoVersion=$(FORGEJO_VERSION)"
+LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "code.gitea.io/gitea/routers/api/forgejo/v1.ForgejoVersion=$(FORGEJO_VERSION)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
