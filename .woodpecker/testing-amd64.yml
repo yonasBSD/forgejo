@@ -46,12 +46,11 @@ workspace:
   path: src/codeberg/gitea
 
 pipeline:
-  fetch-tags:
+  git-safe:
     image: *golang_image
     pull: true
     commands:
     - git config --add safe.directory '*'
-    - git fetch --tags --force
 
   deps-backend:
     image: *golang_image
