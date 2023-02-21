@@ -1359,7 +1359,7 @@ PROXY_HOSTS = *.github.com
 ## Actions (`actions`)
 
 - `ENABLED`: **false**: Enable/Disable actions capabilities
-- `DEFAULT_ACTIONS_URL`: **https://gitea.com**: Default address to get action plugins, e.g. the default value means downloading from "<https://gitea.com/actions/checkout>" for "uses: actions/checkout@v3"
+- `DEFAULT_ACTIONS_URL`: **https://codeberg.org**: Default address to get action plugins, e.g. the default value means downloading from "<https://codeberg.org/actions/checkout>" for "uses: actions/checkout@v3"
 
 `DEFAULT_ACTIONS_URL` indicates where should we find the relative path action plugin. i.e. when use an action in a workflow file like
 
@@ -1379,14 +1379,14 @@ jobs:
 
 Now we need to know how to get actions/checkout, this configuration is the default git server to get it. That means we will get the repository via git clone ${DEFAULT_ACTIONS_URL}/actions/checkout and fetch tag v3.
 
-To help people who don't want to mirror these actions in their git instances, the default value is https://gitea.com
+To help people who don't want to mirror these actions in their git instances, the default value is https://codeberg.org
 To help people run actions totally in their network, they can change the value and copy all necessary action repositories into their git server.
 
 Of course we should support the form in future PRs like
 
 ```yaml
 steps:
-  - uses: gitea.com/actions/checkout@v3
+  - uses: codeberg.org/actions/checkout@v3
 ```
 
 although Github don't support this form.
