@@ -18,7 +18,6 @@ It has no power whatsover. The members are approved by the organization and trus
 - Do their best to defuse tensions.
 
 * https://codeberg.org/Gusted
-* https://codeberg.org/dachary
 
 ### Moderation
 
