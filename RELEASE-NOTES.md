@@ -12,7 +12,7 @@ This stable release contains an **important security fix** for Forgejo to raise 
 
 We **strongly recommend** that all Forgejo installations are upgraded to the latest version as soon as possible.
 
-If `PASSWORD_HASH_ALGO` is explicitly set in app.in, comment it out so that the stronger algorithm is used instead.
+If `PASSWORD_HASH_ALGO` is explicitly set in `app.ini`, comment it out so that the stronger algorithm is used instead.
 
 All password hashes stored with another algorithm will be updated to the new algorithm on the next usage of this password (e.g. a user provides the password to the Forgejo server when they login). It does not require manual intervention.
 
