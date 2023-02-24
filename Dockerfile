@@ -62,6 +62,7 @@ ENTRYPOINT ["/usr/bin/entrypoint"]
 CMD ["/bin/s6-svscan", "/etc/s6"]
 
 COPY docker/root /
+RUN cd /usr/local/bin ; ln -s gitea forgejo
 COPY --from=build-env /go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
 COPY --from=build-env /go/src/code.gitea.io/gitea/environment-to-ini /usr/local/bin/environment-to-ini
 RUN chmod 755 /usr/bin/entrypoint /app/gitea/gitea /usr/local/bin/gitea /usr/local/bin/environment-to-ini
