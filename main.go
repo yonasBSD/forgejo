@@ -36,11 +36,21 @@ func init() {
 	setting.AppStartTime = time.Now().UTC()
 }
 
+func forgejoEnv() {
+	for _, k := range []string{"CUSTOM", "WORK_DIR"} {
+		if v, ok := os.LookupEnv("FORGEJO_" + k); ok {
+			os.Setenv("GITEA_"+k, v)
+		}
+	}
+}
+
 func main() {
+	forgejoEnv()
 	app := cmd.NewMainApp()
-	app.Name = "Gitea"
-	app.Usage = "A painless self-hosted Git service"
-	app.Description = `By default, Gitea will start serving using the web-server with no argument, which can alternatively be run by running the subcommand "web".`
+	app.Name = "Forgejo"
+	app.Usage = "Beyond coding. We forge."
+	app.Description = `By default, forgejo will start serving using the web-server with no
+argument - which can alternatively be run by running the subcommand web.`
 	app.Version = Version + formatBuiltWith()
 
 	err := app.Run(os.Args)
