@@ -95,6 +95,10 @@ If a Forgejo instance has users or organizations named `forgejo-actions` and `gi
 
 ### Features
 
+### [Documentation](https://forgejo.org/docs/v1.19/)
+
+The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
+
 #### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
 
 * (description)
