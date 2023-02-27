@@ -2,7 +2,163 @@
 
 A Forgejo release is published shortly after a Gitea release is published and they have [matching release numbers](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/RELEASE.md#release-numbering). Additional Forgejo releases may be published to address urgent security issues or bug fixes. Forgejo release notes include all Gitea release notes.
 
-The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.18.1 or v1.18.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
+The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
+
+## DRAFT 1.19.0-0
+
+> **These are draft release notes for the upcoming `Forgejo v1.19.0-0` release. They are improved while release candidates are made available for testing in the https://codeberg.org/forgejo-experimental organization. Contributions are welcome!** [Read more...](https://forgejo.org/2023-02-27-release-v1/)
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.0-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/forgejo
+```
+
+### Breaking changes
+
+#### [Repositories: by default disable all units except code and pulls on forks](https://codeberg.org/forgejo/forgejo/commit/2741546be)
+
+When forking a repository, the fork will now have issues, projects, releases, packages and wiki disabled. These can be enabled in the repository settings afterwards. To change back to the previous default behavior, configure `DEFAULT_FORK_REPO_UNITS` to be the same value as `DEFAULT_REPO_UNITS`.
+
+#### [Remove ONLY_SHOW_RELEVANT_REPOS setting](https://codeberg.org/forgejo/forgejo/commit/4d20a4a1b)
+
+* (description)
+
+#### [Remove deprecated DSA host key from Docker Container](https://codeberg.org/forgejo/forgejo/commit/f17edfaf5a31ea3f4e9152424b75c2c4986acbe3)
+
+Since OpenSSH 7.0 and greater similarly disable the ssh-dss (DSA) public
+key algorithm, and recommend against its use. http://www.openssh.com/legacy.html
+
+#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
+
+* (why is it breaking?)
+
+#### Additional restrictions on valid user names
+
+The algorithm for validating user names was modified and some users may have invalid names. The command `forgejo doctor --run check-user-names` will list all of them so they can be renamed.
+
+If a Forgejo instance has users or organizations named `forgejo-actions` and `gitea-actions`, they will also need to be renamed before the upgrade. They are now reserved names for the experimental internal CI/CD named `Actions`.
+
+### Features
+
+#### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
+
+* (description)
+
+#### [Secrets](https://codeberg.org/forgejo/forgejo/commit/659055138b6d32492b20c9f4d1d5a3cdaa47188d)
+
+* (description)
+
+#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313) 
+
+Any webhook can now specify an `Authorization` header to be sent along every request.
+
+#### Packages registries
+
+* Add support for [Cargo](https://codeberg.org/forgejo/forgejo/commit/df789d962), [Conda](https://codeberg.org/forgejo/forgejo/commit/6ba9ff7b4) and [Chef](https://codeberg.org/forgejo/forgejo/commit/d987ac6bf) package registries
+* [Cleanup rules](https://codeberg.org/forgejo/forgejo/commit/32db62515)
+* [Quota limits](https://codeberg.org/forgejo/forgejo/commit/20674dd05)
+
+#### [Option to prohibit fork if user reached maximum limit of repositories](https://codeberg.org/forgejo/forgejo/commit/7cc7db73b)
+
+* (description)
+
+#### [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
+
+* (description)
+* [Allow setting access token scope by CLI](https://codeberg.org/forgejo/forgejo/commit/3f2e72137)
+
+#### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
+
+* (description)
+
+#### [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
+
+* (description)
+
+#### [RSS Feed for Releases and Tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
+
+* (description)
+
+#### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
+
+* (description)
+
+#### [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
+
+Add a doctor command for full garbage collection of LFS: `forgejo doctor --run gc-lfs`.
+
+#### Additions to the API
+
+* [Management for issue/pull and comment attachments](https://codeberg.org/forgejo/forgejo/commit/3c59d31bc)
+* [Get latest release](https://codeberg.org/forgejo/forgejo/commit/4d072a4c4)
+* [System hook](https://codeberg.org/forgejo/forgejo/commit/c0015979a)
+
+#### [Support disabling database auto migration](https://codeberg.org/forgejo/forgejo/commit/0a85537c7)
+
+* (description)
+
+#### [Repository setting to enable/disable releases unit](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
+
+* (description)
+
+### [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
+
+It appears for the first time in this Forgejo release but is not yet fit for production. It is not fully implemented and may be insecure. However, as long as it is not enabled, it presents no risk to existing Forgejo instances.
+
+* [User secrets](https://codeberg.org/forgejo/forgejo/commit/5882e179a)
+* [Secrets storage](https://codeberg.org/forgejo/forgejo/commit/659055138)
+
+If a repository has a file such as `.forgejo/workflows/test.yml`, it will be interpreted, for instance to run tests and verify the code in the repository works as expected (Continuous Integration). It can also be used to create HTML pages for a website and publish them (Continous Deployment). The syntax is similar to GitHub Actions and the jobs can be controled from the Forgejo web interface. [Read more...](https://forgejo.codeberg.page/2023-02-27-forgejo-actions/)
+
+<img src="./releases/images/forgejo-v1.19.0-0-rc0.png" alt="Actions" width="600" />
+
+### User Interface improvements
+
+#### [Add "Copy link" button for new uploads](https://codeberg.org/forgejo/forgejo/commit/9f919cf08)
+
+* (description)
+
+#### [PR Review Box UI](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
+
+* (description)
+
+#### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
+
+* (description)
+
+#### [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
+
+* (description)
+
+#### [Attention blocks within quote blocks for Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
+
+* (description)
+
+#### [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
+
+* (description)
+
+#### [Enable @<user>- completion popup on the release description textarea](https://codeberg.org/forgejo/forgejo/commit/b6b8feb3d)
+
+* (description)
+
+#### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
+
+* (description)
+
+#### [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
+
+* (description)
+
+#### [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
+
+* (description)
+
+### Container images upgraded to Alpine 3.17
+
+The Forgejo container images are now based on [Alpine 3.17](https://alpinelinux.org/posts/Alpine-3.17.0-released.html) instead of Alpine 3.16. It includes an upgrade from git 2.36.5 to git 2.38.4 and from openssh 9.0p1 to openssh 9.1p1.
 
 ## 1.18.5-0
 
