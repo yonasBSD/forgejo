@@ -68,6 +68,7 @@ When Forgejo is released, artefacts (packages, binaries, etc.) are first publish
 
 * Restart the last CI build at https://codeberg.org/forgejo/website/src/branch/main/
 * Verify https://forgejo.org/download/ points to the expected release
+* Update the [documentation link to the latest version](https://codeberg.org/forgejo/website/src/commit/e63c6f8ab64876b10b86de1d18162b6ccb87bd99/.woodpecker.yml#L35)
 * Manually try the instructions to work
 
 ### DNS update
