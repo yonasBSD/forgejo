@@ -17,6 +17,59 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
 ### Breaking changes
 
+#### [Support scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/de484e86bc)
+
+Forgejo access token, used with the
+[API](https://forgejo.org/docs/admin/api-usage/) can now have a
+"scope" that limits what it can access. Existing tokens stored in
+the database and created before Forgejo v1.19 had unlimited access.
+For backward compatibility, their access will remain the same and they
+will continue to work as before.
+
+However, **newly created token that do not specify a scope will now only
+have read-only access to public user profile and public repositories**.
+
+For instance, the `/users/{username}/tokens` API endpoint will require
+the `scopes: ['all', 'sudo']` parameter and the `forgejo admin user
+generate-access-token` will require the `--scopes all,sudo` argument
+obtain tokens with ulimited access as before for admin users.
+
+The the following scopes are supported:
+
+| Name | Description |
+| ---- | ----------- |
+| **(no scope)** | Grants read-only access to public user profile and public repositories. |
+| **repo** | Full control over all repositories. |
+| &nbsp;&nbsp;&nbsp; **repo:status** | Grants read/write access to commit status in all repositories. |
+| &nbsp;&nbsp;&nbsp; **public_repo** | Grants read/write access to public repositories only. |
+| **admin:repo_hook** | Grants access to repository hooks of all repositories. This is included in the `repo` scope. |
+| &nbsp;&nbsp;&nbsp; **write:repo_hook** | Grants read/write access to repository hooks |
+| &nbsp;&nbsp;&nbsp; **read:repo_hook** | Grants read-only access to repository hooks |
+| **admin:org** | Grants full access to organization settings |
+| &nbsp;&nbsp;&nbsp; **write:org** | Grants read/write access to organization settings |
+| &nbsp;&nbsp;&nbsp; **read:org** | Grants read-only access to organization settings |
+| **admin:public_key** | Grants full access for managing public keys |
+| &nbsp;&nbsp;&nbsp; **write:public_key** | Grant read/write access to public keys |
+| &nbsp;&nbsp;&nbsp; **read:public_key** | Grant read-only access to public keys |
+| **admin:org_hook** | Grants full access to organizational-level hooks |
+| **notification** | Grants full access to notifications |
+| **user** | Grants full access to user profile info |
+| &nbsp;&nbsp;&nbsp; **read:user** | Grants read access to user's profile |
+| &nbsp;&nbsp;&nbsp; **user:email** | Grants read access to user's email addresses |
+| &nbsp;&nbsp;&nbsp; **user:follow** | Grants access to follow/un-follow a user |
+| **delete_repo** | Grants access to delete repositories as an admin |
+| **package** | Grants full access to hosted packages |
+| &nbsp;&nbsp;&nbsp; **write:package** | Grants read/write access to packages |
+| &nbsp;&nbsp;&nbsp; **read:package** | Grants read access to packages |
+| &nbsp;&nbsp;&nbsp; **delete:package** | Grants delete access to packages |
+| **admin:gpg_key** | Grants full access for managing GPG keys |
+| &nbsp;&nbsp;&nbsp; **write:gpg_key** | Grants read/write access to GPG keys |
+| &nbsp;&nbsp;&nbsp; **read:gpg_key** | Grants read-only access to GPG keys |
+| **admin:application** | Grants full access to manage applications |
+| &nbsp;&nbsp;&nbsp; **write:application** | Grants read/write access for managing applications |
+| &nbsp;&nbsp;&nbsp; **read:application** | Grants read access for managing applications |
+| **sudo** | Allows to perform actions as the site admin. |
+
 #### [Repositories: by default disable all units except code and pulls on forks](https://codeberg.org/forgejo/forgejo/commit/2741546be)
 
 When forking a repository, the fork will now have issues, projects, releases, packages and wiki disabled. These can be enabled in the repository settings afterwards. To change back to the previous default behavior, configure `DEFAULT_FORK_REPO_UNITS` to be the same value as `DEFAULT_REPO_UNITS`.
@@ -67,7 +120,6 @@ Any webhook can now specify an `Authorization` header to be sent along every req
 #### [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
 
 * (description)
-* [Allow setting access token scope by CLI](https://codeberg.org/forgejo/forgejo/commit/3f2e72137)
 
 #### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
 
