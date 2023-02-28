@@ -119,7 +119,17 @@ Any webhook can now specify an `Authorization` header to be sent along every req
 
 #### [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
 
-* (description)
+Labels that contain a forward slash (**/**) separator are displayed with a slightly different color before and after the separator, as a visual aid. The first part of the label defines its "scope".
+
+<img src="./releases/images/forgejo-v1.19-label-list.png" alt="Label list" width="600" />
+
+When creating a label with a scope, it is possible to make it exclusive.
+
+<img src="./releases/images/forgejo-v1.19-label-new.png" alt="New label" width="600" />
+
+Such an exclusive label cannot be used at the same time as other labels in the same scope. In this example only one of the the exclusive labels `forgejo/ui` and `forgejo/i18n` can be selected and is shown with a leading dot. Multiple non exclusive labels can be selected and are shown with a leading checkmark.
+
+<img src="./releases/images/forgejo-v1.19-label-apply.png" alt="New label" width="400" />
 
 #### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
 
