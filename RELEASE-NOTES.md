@@ -168,10 +168,6 @@ If a repository has a file such as `.forgejo/workflows/test.yml`, it will be int
 
 ### User Interface improvements
 
-#### [Add "Copy link" button for new uploads](https://codeberg.org/forgejo/forgejo/commit/9f919cf08)
-
-* (description)
-
 #### [PR Review Box UI](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
 
 * (description)
