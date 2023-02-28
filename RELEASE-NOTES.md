@@ -178,7 +178,15 @@ If a repository has a file such as `.forgejo/workflows/test.yml`, it will be int
 
 #### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
 
-* (description)
+If a [BibTeX](https://fr.wikipedia.org/wiki/BibTeX) file named `CITATION.bib` is at the root of the repository, it can be conveniently copied and converted in APA by following the `Cite this repository` link.
+
+<img src="./releases/images/forgejo-v1.19-citation-link.png" alt="Citation link" width="500" />
+
+It will open a dialog box with the available formats and a preview of the content.
+
+<img src="./releases/images/forgejo-v1.19-citation-dialog.png" alt="Citation dialog" width="500" />
+
+The CFF format is also supported when a `CITATION.cff` file used instead.
 
 #### [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
 
