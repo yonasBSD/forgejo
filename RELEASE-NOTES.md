@@ -123,7 +123,7 @@ Any webhook can now specify an `Authorization` header to be sent along every req
 
 #### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
 
-* (description)
+It is now possible to create projects (kanban boards) for an organization or a user, in the same way it was possible for an individual repository.
 
 #### [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
 
