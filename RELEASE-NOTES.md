@@ -117,7 +117,9 @@ The first version of the [Forgejo documentation](https://forgejo.org/docs/latest
 
 #### [Option to prohibit fork if user reached maximum limit of repositories](https://codeberg.org/forgejo/forgejo/commit/7cc7db73b)
 
-* (description)
+It is possible for a user to create as many fork as they want, even when a quota on the number of repositories is imposed. The new `ALLOW_FORK_WITHOUT_MAXIMUM_LIMIT` setting can now be set to `false` so forks are prohibited if that means exceeding the quota.
+
+[Read more about repository configurations](https://forgejo.org/docs/admin/config-cheat-sheet/#repository-repository)
 
 #### [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
 
@@ -407,7 +409,7 @@ A new `forgejo` hook type is available and behaves exactly the same as the exist
 
 #### X-Forgejo headers
 
-Wherever a `X-Gitea` header is received or sent, an identical `X-Forgejo` is added. For instance when a notification mail is sent, the `X-Forgejo-Reason` header is set to explain why. Or when a webhook is sent, the `X-Forgejo-Event` header is set with `push`, `tag`, etc. for Woodpecker CI to decide on an action. 
+Wherever a `X-Gitea` header is received or sent, an identical `X-Forgejo` is added. For instance when a notification mail is sent, the `X-Forgejo-Reason` header is set to explain why. Or when a webhook is sent, the `X-Forgejo-Event` header is set with `push`, `tag`, etc. for Woodpecker CI to decide on an action.
 
 #### Look and feel fixes
 
