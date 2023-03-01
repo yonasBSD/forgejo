@@ -85,6 +85,8 @@ key algorithm, and recommend against its use. http://www.openssh.com/legacy.html
 
 #### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
 
+Any webhook can now specify an `Authorization` header to be sent along every request.
+
 * (why is it breaking?)
 
 #### Additional restrictions on valid user names
@@ -95,6 +97,10 @@ If a Forgejo instance has users or organizations named `forgejo-actions` and `gi
 
 ### Features
 
+### [Documentation](https://forgejo.org/docs/v1.19/)
+
+The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
+
 #### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
 
 * (description)
@@ -102,10 +108,6 @@ If a Forgejo instance has users or organizations named `forgejo-actions` and `gi
 #### [Secrets](https://codeberg.org/forgejo/forgejo/commit/659055138b6d32492b20c9f4d1d5a3cdaa47188d)
 
 * (description)
-
-#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313) 
-
-Any webhook can now specify an `Authorization` header to be sent along every request.
 
 #### Packages registries
 
