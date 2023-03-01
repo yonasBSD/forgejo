@@ -105,10 +105,6 @@ The first version of the [Forgejo documentation](https://forgejo.org/docs/latest
 
 * (description)
 
-#### [Secrets](https://codeberg.org/forgejo/forgejo/commit/659055138b6d32492b20c9f4d1d5a3cdaa47188d)
-
-* (description)
-
 #### Packages registries
 
 * Add support for [Cargo](https://codeberg.org/forgejo/forgejo/commit/df789d962), [Conda](https://codeberg.org/forgejo/forgejo/commit/6ba9ff7b4) and [Chef](https://codeberg.org/forgejo/forgejo/commit/d987ac6bf) package registries
