@@ -146,7 +146,23 @@ It is now possible to create projects (kanban boards) for an organization or a u
 
 #### [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
 
-* (description)
+When a user logs in Forgejo using an provider such as [Keycloak](https://www.keycloak.org/), they can now automatically be part of a Forgejo team, depending on the OIDC group they belong to. For instance:
+
+```json
+{"Developer": {"MyForgejoOrganization": ["MyForgejoTeam1", "MyForgejoTeam2"]}}
+```
+
+Means that the user who is in the OIDC group `Developer` will automatically be a member of the `MyForgejoTeam1` and `MyForgejoTeam2` teams in the `MyForgejoOrganization` organization.
+
+This mapping is set when adding a new `Authentication Source` in the `Site Administration` panel.
+
+<img src="./releases/images/forgejo-v1.19-oidc-part1.png" alt="OIDC Group mapping part1" width="500" />
+
+...
+
+<img src="./releases/images/forgejo-v1.19-oidc-part2.png" alt="OIDC Group mapping part2" width="500" />
+
+[Read more...](https://forgejo.org/docs/admin/oauth2-provider/#endpoints)
 
 #### [RSS Feed for Releases and Tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
 
