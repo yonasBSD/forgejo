@@ -110,10 +110,6 @@ You can now set up Forgejo to receive incoming email. When enabled, it is now po
 
 [Read more...](https://forgejo.org/docs/admin/incoming-email/)
 
-#### [Secrets](https://codeberg.org/forgejo/forgejo/commit/659055138b6d32492b20c9f4d1d5a3cdaa47188d)
-
-* (description)
-
 #### Packages registries
 
 * Add support for [Cargo](https://codeberg.org/forgejo/forgejo/commit/df789d962), [Conda](https://codeberg.org/forgejo/forgejo/commit/6ba9ff7b4) and [Chef](https://codeberg.org/forgejo/forgejo/commit/d987ac6bf) package registries
