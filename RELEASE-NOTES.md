@@ -142,7 +142,7 @@ Such an exclusive label cannot be used at the same time as other labels in the s
 
 #### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
 
-* (description)
+It is now possible to create projects (kanban boards) for an organization or a user, in the same way it was possible for an individual repository.
 
 #### [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
 
