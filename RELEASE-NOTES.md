@@ -97,13 +97,18 @@ If a Forgejo instance has users or organizations named `forgejo-actions` and `gi
 
 ### Features
 
-### [Documentation](https://forgejo.org/docs/v1.19/)
+### [Documentation](https://forgejo.org/docs/latest/)
 
 The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
 
 #### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
 
-* (description)
+You can now set up Forgejo to receive incoming email. When enabled, it is now possible to reply to an email notification from Forgejo and:
+
+* Add a comment to an issue or a pull request
+* Unsubscribe to the notifications
+
+[Read more...](https://forgejo.org/docs/admin/incoming-email/)
 
 #### [Secrets](https://codeberg.org/forgejo/forgejo/commit/659055138b6d32492b20c9f4d1d5a3cdaa47188d)
 
