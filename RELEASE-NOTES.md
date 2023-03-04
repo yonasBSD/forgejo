@@ -218,7 +218,7 @@ If a raw text file is displayed, a copy button of the text is enabled.
 
 #### [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
 
-* (description)
+Add setting to allow edits by maintainers by default, to avoid having to often ask contributors to enable this.
 
 ### Container images upgraded to Alpine 3.17
 
