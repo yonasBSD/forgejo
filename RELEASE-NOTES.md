@@ -167,9 +167,9 @@ If a repository has a file such as `.forgejo/workflows/test.yml`, it will be int
 
 ### User Interface improvements
 
-#### [PR Review Box UI](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
+#### [Review box on small screens](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
 
-* (description)
+The rendering of the review box is improved on small screens.
 
 #### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
 
