@@ -132,7 +132,9 @@ A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and t
 
 #### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
-* (description)
+Instead of selected a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+
+[Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
 
 #### [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
 
