@@ -187,9 +187,12 @@ The CFF format is also supported when a `CITATION.cff` file used instead.
 
 Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) files using [asciinema-player](https://github.com/asciinema/asciinema-player).
 
-#### [Attention blocks within quote blocks for Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
+#### [Attention blocks Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
 
-* (description)
+For each quote block, the first `**Note**` or `**Warning**` gets an icon
+prepended to it and its text is colored accordingly.
+
+<img src="./releases/images/forgejo-v1.19-note-warning.png" alt="Attention block" width="400" />
 
 #### [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
 
