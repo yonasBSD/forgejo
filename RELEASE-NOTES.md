@@ -132,7 +132,7 @@ A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and t
 
 #### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
-Instead of selected a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+Instead of selecting a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
 
 [Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
 
@@ -181,7 +181,7 @@ The CFF format is also supported when a `CITATION.cff` file used instead.
 
 #### [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
 
-Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) files using [asciinema-player](https://github.com/asciinema/asciinema-player).
+Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) using [asciinema-player](https://github.com/asciinema/asciinema-player).
 
 #### [Attention blocks Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
 
@@ -196,7 +196,7 @@ A commit hash can now be prefixed by the repository to be referenced from a comm
 
 #### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
 
-If the card preview in the project is set to **Images and Text**, the card preview displays images found in the corresponding issue. The most recent is displayed first, up to five images.
+If the card preview in the project is set to **Images and Text**, it displays images found in the corresponding issue. The most recent is displayed first, up to five images.
 
 [Read more about card preview images](https://forgejo.org/docs/v1.19/user/project/#card-previews-images).
 
