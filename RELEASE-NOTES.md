@@ -126,9 +126,9 @@ This mapping is set when adding a new `Authentication Source` in the `Site Admin
 
 [Read more...](https://forgejo.org/docs/admin/oauth2-provider/#endpoints)
 
-#### [RSS Feed for Releases and Tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
+#### [RSS feed for releases and tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
 
-* (description)
+A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and tags at `/{owner}/{repo}/tags.rss`.
 
 #### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
