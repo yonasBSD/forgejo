@@ -146,10 +146,6 @@ Add a doctor command for full garbage collection of LFS: `forgejo doctor --run g
 * [Get latest release](https://codeberg.org/forgejo/forgejo/commit/4d072a4c4)
 * [System hook](https://codeberg.org/forgejo/forgejo/commit/c0015979a)
 
-#### [Support disabling database auto migration](https://codeberg.org/forgejo/forgejo/commit/0a85537c7)
-
-* (description)
-
 #### [Option to disable releases on a repository](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
 
 It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
