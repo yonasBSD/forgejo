@@ -198,10 +198,6 @@ prepended to it and its text is colored accordingly.
 
 A commit hash can now be prefixed by the repository to be referenced from a comment in another repository: `owner/repo@commit`.
 
-#### [Enable @<user>- completion popup on the release description textarea](https://codeberg.org/forgejo/forgejo/commit/b6b8feb3d)
-
-* (description)
-
 #### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
 
 * (description)
