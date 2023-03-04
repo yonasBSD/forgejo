@@ -150,9 +150,9 @@ Add a doctor command for full garbage collection of LFS: `forgejo doctor --run g
 
 * (description)
 
-#### [Repository setting to enable/disable releases unit](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
+#### [Option to disable releases on a repository](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
 
-* (description)
+It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
 
 ### [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
 
