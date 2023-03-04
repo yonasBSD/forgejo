@@ -206,7 +206,15 @@ If the card preview in the project is set to **Images and Text**, the card previ
 
 #### [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
 
-* (description)
+If a raw text file is displayed, a copy button of the text is enabled.
+
+**Before**
+
+<img src="./releases/images/forgejo-v1.19-raw-copy-before.png" alt="Raw copy before" width="500" />
+
+**After**
+
+<img src="./releases/images/forgejo-v1.19-raw-copy-after.png" alt="Raw copy after" width="500" />
 
 #### [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
 
