@@ -196,7 +196,7 @@ prepended to it and its text is colored accordingly.
 
 #### [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
 
-* (description)
+A commit hash can now be prefixed by the repository to be referenced from a comment in another repository: `owner/repo@commit`.
 
 #### [Enable @<user>- completion popup on the release description textarea](https://codeberg.org/forgejo/forgejo/commit/b6b8feb3d)
 
