@@ -126,13 +126,15 @@ This mapping is set when adding a new `Authentication Source` in the `Site Admin
 
 [Read more...](https://forgejo.org/docs/admin/oauth2-provider/#endpoints)
 
-#### [RSS Feed for Releases and Tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
+#### [RSS feed for releases and tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
 
-* (description)
+A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and tags at `/{owner}/{repo}/tags.rss`.
 
 #### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
-* (description)
+Instead of selecting a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+
+[Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
 
 #### [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
 
@@ -144,13 +146,9 @@ Add a doctor command for full garbage collection of LFS: `forgejo doctor --run g
 * [Get latest release](https://codeberg.org/forgejo/forgejo/commit/4d072a4c4)
 * [System hook](https://codeberg.org/forgejo/forgejo/commit/c0015979a)
 
-#### [Support disabling database auto migration](https://codeberg.org/forgejo/forgejo/commit/0a85537c7)
+#### [Option to disable releases on a repository](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
 
-* (description)
-
-#### [Repository setting to enable/disable releases unit](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
-
-* (description)
+It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
 
 ### [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
 
@@ -165,9 +163,9 @@ If a repository has a file such as `.forgejo/workflows/test.yml`, it will be int
 
 ### User Interface improvements
 
-#### [PR Review Box UI](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
+#### [Review box on small screens](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
 
-* (description)
+The rendering of the review box is improved on small screens.
 
 #### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
 
@@ -183,31 +181,40 @@ The CFF format is also supported when a `CITATION.cff` file used instead.
 
 #### [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
 
-* (description)
+Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) using [asciinema-player](https://github.com/asciinema/asciinema-player).
 
-#### [Attention blocks within quote blocks for Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
+#### [Attention blocks Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
 
-* (description)
+For each quote block, the first `**Note**` or `**Warning**` gets an icon
+prepended to it and its text is colored accordingly.
+
+<img src="./releases/images/forgejo-v1.19-note-warning.png" alt="Attention block" width="400" />
 
 #### [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
 
-* (description)
-
-#### [Enable @<user>- completion popup on the release description textarea](https://codeberg.org/forgejo/forgejo/commit/b6b8feb3d)
-
-* (description)
+A commit hash can now be prefixed by the repository to be referenced from a comment in another repository: `owner/repo@commit`.
 
 #### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
 
-* (description)
+If the card preview in the project is set to **Images and Text**, it displays images found in the corresponding issue. The most recent is displayed first, up to five images.
+
+[Read more about card preview images](https://forgejo.org/docs/v1.19/user/project/#card-previews-images).
 
 #### [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
 
-* (description)
+If a raw text file is displayed, a copy button of the text is enabled.
+
+**Before**
+
+<img src="./releases/images/forgejo-v1.19-raw-copy-before.png" alt="Raw copy before" width="500" />
+
+**After**
+
+<img src="./releases/images/forgejo-v1.19-raw-copy-after.png" alt="Raw copy after" width="500" />
 
 #### [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
 
-* (description)
+Add setting to allow edits by maintainers by default, to avoid having to often ask contributors to enable this.
 
 ### Container images upgraded to Alpine 3.17
 
