@@ -200,7 +200,9 @@ A commit hash can now be prefixed by the repository to be referenced from a comm
 
 #### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
 
-* (description)
+If the card preview in the project is set to **Images and Text**, the card preview displays images found in the corresponding issue. The most recent is displayed first, up to five images.
+
+[Read more about card preview images](https://forgejo.org/docs/v1.19/user/project/#card-previews-images).
 
 #### [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
 
