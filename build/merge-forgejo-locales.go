@@ -56,6 +56,11 @@ func renameGiteaForgejo(filename string) []byte {
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		if strings.HasPrefix(line, "license_desc=") {
+			line = strings.Replace(line, "GitHub", "Forgejo", 1)
+		}
+
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			out = append(out, []byte("\n"+line+"\n")...)
 		} else if strings.HasPrefix(line, "settings.web_hook_name_gitea") {
