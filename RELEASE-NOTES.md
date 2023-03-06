@@ -167,6 +167,10 @@ If a repository has a file such as `.forgejo/workflows/test.yml`, it will be int
 
 The rendering of the review box is improved on small screens.
 
+#### [Video element enabled in markdown](https://codeberg.org/forgejo/forgejo/commit/f8a40dafb)
+
+The `<video>` HTML tag can now be used in MarkDown, with the `src`, `autoplay`, and `controls` attributes.
+
 #### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
 
 If a [BibTeX](https://fr.wikipedia.org/wiki/BibTeX) file named `CITATION.bib` is at the root of the repository, it can be conveniently copied and converted in APA by following the `Cite this repository` link.
