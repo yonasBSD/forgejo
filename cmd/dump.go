@@ -1,5 +1,6 @@
-// Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // Copyright 2016 The Gitea Authors. All rights reserved.
+// Copyright 2014 The Gogs Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package cmd
@@ -98,14 +99,14 @@ var outputTypeEnum = &outputType{
 // CmdDump represents the available dump sub-command.
 var CmdDump = cli.Command{
 	Name:  "dump",
-	Usage: "Dump Gitea files and database",
+	Usage: "Dump Forgejo files and database",
 	Description: `Dump compresses all related files and database into zip file.
-It can be used for backup and capture Gitea server image to send to maintainer`,
+It can be used for backup and capture Forgejo server image to send to maintainer`,
 	Action: runDump,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "file, f",
-			Value: fmt.Sprintf("gitea-dump-%d.zip", time.Now().Unix()),
+			Value: fmt.Sprintf("forgejo-dump-%d.zip", time.Now().Unix()),
 			Usage: "Name of the dump file which will be created. Supply '-' for stdout. See type for available types.",
 		},
 		cli.BoolFlag{
@@ -192,7 +193,7 @@ func runDump(ctx *cli.Context) error {
 	}
 	if !setting.InstallLock {
 		log.Error("Is '%s' really the right config path?\n", setting.CustomConf)
-		return fmt.Errorf("gitea is not initialized")
+		return fmt.Errorf("forgejo is not initialized")
 	}
 	setting.NewServices() // cannot access session settings otherwise
 
@@ -265,7 +266,7 @@ func runDump(ctx *cli.Context) error {
 		fatal("Path does not exist: %s", tmpDir)
 	}
 
-	dbDump, err := os.CreateTemp(tmpDir, "gitea-db.sql")
+	dbDump, err := os.CreateTemp(tmpDir, "forgejo-db.sql")
 	if err != nil {
 		fatal("Failed to create tmp file: %v", err)
 	}
@@ -286,8 +287,8 @@ func runDump(ctx *cli.Context) error {
 		fatal("Failed to dump database: %v", err)
 	}
 
-	if err := addFile(w, "gitea-db.sql", dbDump.Name(), verbose); err != nil {
-		fatal("Failed to include gitea-db.sql: %v", err)
+	if err := addFile(w, "forgejo-db.sql", dbDump.Name(), verbose); err != nil {
+		fatal("Failed to include forgejo-db.sql: %v", err)
 	}
 
 	if len(setting.CustomConf) > 0 {
