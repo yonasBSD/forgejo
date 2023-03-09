@@ -62,6 +62,6 @@ func runActionsRegistrationToken(stdCtx context.Context, ownerID, repoID int64) 
 	} else if err != nil {
 		log.Fatalf("GetUnactivatedRunnerToken %v", err)
 	}
-	fmt.Printf(token.Token)
+	fmt.Print(token.Token)
 	return nil
 }
