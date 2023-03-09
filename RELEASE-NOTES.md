@@ -49,12 +49,6 @@ When forking a repository, the fork will now have issues, projects, releases, pa
 Since OpenSSH 7.0 and greater similarly disable the ssh-dss (DSA) public
 key algorithm, and recommend against its use. http://www.openssh.com/legacy.html
 
-#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
-
-Any webhook can now specify an `Authorization` header to be sent along every request.
-
-* (why is it breaking?)
-
 #### Additional restrictions on valid user names
 
 The algorithm for validating user names was modified and some users may have invalid names. The command `forgejo doctor --run check-user-names` will list all of them so they can be renamed.
@@ -63,9 +57,15 @@ If a Forgejo instance has users or organizations named `forgejo-actions` and `gi
 
 ### Features
 
-### [Documentation](https://forgejo.org/docs/latest/)
+#### [Documentation](https://forgejo.org/docs/latest/)
 
 The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
+
+#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
+
+Forgejo webhooks can be configured to send an [authorization header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) to the target.
+
+[Read more about the webhook authorization header](https://forgejo.codeberg.page/docs/v1.19/user/webhooks/#authorization-header)
 
 #### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
 
