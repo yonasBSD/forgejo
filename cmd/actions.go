@@ -9,7 +9,6 @@ import (
 	"log"
 
 	actions_model "code.gitea.io/gitea/models/actions"
-	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 
@@ -30,18 +29,20 @@ var CmdActions = cli.Command{
 	},
 }
 
+func maybeInitDB(stdCtx context.Context) error {
+	if setting.Database.Type == "" {
+		if err := initDB(stdCtx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func runActions(ctx *cli.Context) error {
-	setting.InitProviderFromExistingFile()
-	setting.LoadCommonSettings()
-	setting.LoadDBSetting()
+	stdCtx := context.Background()
 
-	stdCtx, cancel := installSignals()
-	defer cancel()
-
-	if err := db.InitEngine(stdCtx); err != nil {
-		fmt.Println(err)
-		fmt.Println("Check if you are using the right config file. You can use a --config directive to specify one.")
-		return nil
+	if err := maybeInitDB(stdCtx); err != nil {
+		log.Fatalf("maybeInitDB %v", err)
 	}
 
 	if ctx.Bool("registration-token-admin") {
