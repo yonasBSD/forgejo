@@ -45,21 +45,22 @@ func runActions(ctx *cli.Context) error {
 	}
 
 	if ctx.Bool("registration-token-admin") {
-		return runActionsRegistrationToken(ctx, stdCtx, 0, 0)
+		// ownid=0,repo_id=0,means this token is used for global
+		return runActionsRegistrationToken(stdCtx, 0, 0)
 	}
 	return nil
 }
 
-func runActionsRegistrationToken(ctx *cli.Context, stdCtx context.Context, ownerID, repoID int64) error {
+func runActionsRegistrationToken(stdCtx context.Context, ownerID, repoID int64) error {
 	var token *actions_model.ActionRunnerToken
 	token, err := actions_model.GetUnactivatedRunnerToken(stdCtx, ownerID, repoID)
 	if errors.Is(err, util.ErrNotExist) {
 		token, err = actions_model.NewRunnerToken(stdCtx, ownerID, repoID)
 		if err != nil {
-			log.Fatalf("CreateRunnerToken", err)
+			log.Fatalf("CreateRunnerToken %v", err)
 		}
 	} else if err != nil {
-		log.Fatalf("GetUnactivatedRunnerToken", err)
+		log.Fatalf("GetUnactivatedRunnerToken %v", err)
 	}
 	fmt.Printf(token.Token)
 	return nil
