@@ -4,9 +4,7 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## DRAFT 1.19.0-0
-
-> **These are draft release notes for the upcoming `Forgejo v1.19.0-0` release. They are improved while release candidates are made available for testing in the https://codeberg.org/forgejo-experimental organization. Contributions are welcome!** [Read more...](https://forgejo.org/2023-02-27-release-v1/)
+## 1.19.0-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.0-0` release can be reviewed from the command line with:
 
@@ -15,206 +13,170 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/forgejo
 ```
 
-### Breaking changes
+* Breaking changes
+  * [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/de484e86bc)
 
-#### [Support scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/de484e86bc)
+    Forgejo access token, used with the [API](https://forgejo.org/docs/v1.19/admin/api-usage/) can now have a "scope" that limits what it can access. Existing tokens stored in the database and created before Forgejo v1.19 had unlimited access.  For backward compatibility, their access will remain the same and they will continue to work as before. However, **newly created token that do not specify a scope will now only have read-only access to public user profile and public repositories**.
 
-Forgejo access token, used with the
-[API](https://forgejo.org/docs/admin/api-usage/) can now have a
-"scope" that limits what it can access. Existing tokens stored in
-the database and created before Forgejo v1.19 had unlimited access.
-For backward compatibility, their access will remain the same and they
-will continue to work as before.
+    For instance, the `/users/{username}/tokens` API endpoint will require the `scopes: ['all', 'sudo']` parameter and the `forgejo admin user generate-access-token` will require the `--scopes all,sudo` argument obtain tokens with ulimited access as before for admin users.
 
-However, **newly created token that do not specify a scope will now only
-have read-only access to public user profile and public repositories**.
+    [Read more about the scoped tokens](https://forgejo.org/docs/v1.19/user/oauth2-provider/#scoped-tokens).
 
-For instance, the `/users/{username}/tokens` API endpoint will require
-the `scopes: ['all', 'sudo']` parameter and the `forgejo admin user
-generate-access-token` will require the `--scopes all,sudo` argument
-obtain tokens with ulimited access as before for admin users.
+  * [Disable all units except code and pulls on forks](https://codeberg.org/forgejo/forgejo/commit/2741546be) 
 
-[Read more about the scoped tokens](https://forgejo.org/docs/v1.19/user/oauth2-provider/#scoped-tokens).
+    When forking a repository, the fork will now have issues, projects, releases, packages and wiki disabled. These can be enabled in the repository settings afterwards. To change back to the previous default behavior, configure `DEFAULT_FORK_REPO_UNITS` to be the same value as `DEFAULT_REPO_UNITS`.
 
-#### [Repositories: by default disable all units except code and pulls on forks](https://codeberg.org/forgejo/forgejo/commit/2741546be)
+  * [Remove ONLY_SHOW_RELEVANT_REPOS setting](https://codeberg.org/forgejo/forgejo/commit/4d20a4a1b)
 
-When forking a repository, the fork will now have issues, projects, releases, packages and wiki disabled. These can be enabled in the repository settings afterwards. To change back to the previous default behavior, configure `DEFAULT_FORK_REPO_UNITS` to be the same value as `DEFAULT_REPO_UNITS`.
+    (description)
 
-#### [Remove ONLY_SHOW_RELEVANT_REPOS setting](https://codeberg.org/forgejo/forgejo/commit/4d20a4a1b)
+  * [Remove deprecated DSA host key from Docker Container](https://codeberg.org/forgejo/forgejo/commit/f17edfaf5a31ea3f4e9152424b75c2c4986acbe3)
+    Since OpenSSH 7.0 and greater similarly disable the ssh-dss (DSA) public key algorithm, and recommend against its use. http://www.openssh.com/legacy.html
 
-* (description)
+  * Additional restrictions on valid user names
 
-#### [Remove deprecated DSA host key from Docker Container](https://codeberg.org/forgejo/forgejo/commit/f17edfaf5a31ea3f4e9152424b75c2c4986acbe3)
+    The algorithm for validating user names was modified and some users may have invalid names. The command `forgejo doctor --run check-user-names` will list all of them so they can be renamed.
 
-Since OpenSSH 7.0 and greater similarly disable the ssh-dss (DSA) public
-key algorithm, and recommend against its use. http://www.openssh.com/legacy.html
+    If a Forgejo instance has users or organizations named `forgejo-actions` and `gitea-actions`, they will also need to be renamed before the upgrade. They are now reserved names for the experimental internal CI/CD named `Actions`.
+* Features
 
-#### Additional restrictions on valid user names
+   * [Documentation](https://forgejo.org/docs/latest/)
+     The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
 
-The algorithm for validating user names was modified and some users may have invalid names. The command `forgejo doctor --run check-user-names` will list all of them so they can be renamed.
+   * [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
+     Forgejo webhooks can be configured to send an [authorization header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) to the target.
+     [Read more about the webhook authorization header](https://forgejo.codeberg.page/docs/v1.19/user/webhooks/#authorization-header)
 
-If a Forgejo instance has users or organizations named `forgejo-actions` and `gitea-actions`, they will also need to be renamed before the upgrade. They are now reserved names for the experimental internal CI/CD named `Actions`.
+   * [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
+     You can now set up Forgejo to receive incoming email. When enabled, it is now possible to reply to an email notification from Forgejo and:
+     * Add a comment to an issue or a pull request
+     * Unsubscribe to the notifications
+     [Read more about incoming emails](https://forgejo.org/docs/v1.19/admin/incoming-email/)
 
-### Features
+   * Packages registries
+     * Support for [Cargo](https://forgejo.org/docs/v1.19/admin/packages/cargo/), [Conda](https://forgejo.org/docs/v1.19/admin/packages/conda/) and [Chef](https://forgejo.org/docs/v1.19/admin/packages/chef/)
+     * [Cleanup rules](https://codeberg.org/forgejo/forgejo/commit/32db62515)
+     * [Quota limits](https://codeberg.org/forgejo/forgejo/commit/20674dd05)
 
-#### [Documentation](https://forgejo.org/docs/latest/)
+   * [Option to prohibit fork if user reached maximum limit of repositories](https://codeberg.org/forgejo/forgejo/commit/7cc7db73b)
+     It is possible for a user to create as many fork as they want, even when a quota on the number of repositories is imposed. The new `ALLOW_FORK_WITHOUT_MAXIMUM_LIMIT` setting can now be set to `false` so forks are prohibited if that means exceeding the quota.
+     [Read more about repository configurations](https://forgejo.org/docs/v1.19/admin/config-cheat-sheet/#repository-repository)
 
-The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
+   * [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
+     Labels that contain a forward slash (**/**) separator are displayed with a slightly different color before and after the separator, as a visual aid. The first part of the label defines its "scope".
+     [Read more about scoped labels](https://forgejo.org/docs/v1.19/user/labels/).
 
-#### [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
+   * [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
+     It is now possible to create projects (kanban boards) for an organization or a user, in the same way it was possible for an individual repository.
 
-Forgejo webhooks can be configured to send an [authorization header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) to the target.
+   * [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
+     When a user logs in Forgejo using an provider such as [Keycloak](https://www.keycloak.org/), they can now automatically be part of a Forgejo team, depending on the OIDC group they belong to. For instance:
 
-[Read more about the webhook authorization header](https://forgejo.codeberg.page/docs/v1.19/user/webhooks/#authorization-header)
+     ```json
+     {"Developer": {"MyForgejoOrganization": ["MyForgejoTeam1", "MyForgejoTeam2"]}}
+     ```
 
-#### [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
+     Means that the user who is in the OIDC group `Developer` will automatically be a member of the `MyForgejoTeam1` and `MyForgejoTeam2` teams in the `MyForgejoOrganization` organization.
+     This mapping is set when adding a new `Authentication Source` in the `Site Administration` panel.
 
-You can now set up Forgejo to receive incoming email. When enabled, it is now possible to reply to an email notification from Forgejo and:
+     <img src="./releases/images/forgejo-v1.19-oidc-part1.png" alt="OIDC Group mapping part1" width="500" />
 
-* Add a comment to an issue or a pull request
-* Unsubscribe to the notifications
+     ...
 
-[Read more...](https://forgejo.org/docs/admin/incoming-email/)
+     <img src="./releases/images/forgejo-v1.19-oidc-part2.png" alt="OIDC Group mapping part2" width="500" />
 
-#### Packages registries
+     [Read more about OIDC groups mapping](https://forgejo.org/docs/v1.19/admin/oauth2-provider/#endpoints)
 
-* Add support for [Cargo](https://codeberg.org/forgejo/forgejo/commit/df789d962), [Conda](https://codeberg.org/forgejo/forgejo/commit/6ba9ff7b4) and [Chef](https://codeberg.org/forgejo/forgejo/commit/d987ac6bf) package registries
-* [Cleanup rules](https://codeberg.org/forgejo/forgejo/commit/32db62515)
-* [Quota limits](https://codeberg.org/forgejo/forgejo/commit/20674dd05)
+   * [RSS feed for releases and tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
 
-#### [Option to prohibit fork if user reached maximum limit of repositories](https://codeberg.org/forgejo/forgejo/commit/7cc7db73b)
+     A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and tags at `/{owner}/{repo}/tags.rss`.
 
-It is possible for a user to create as many fork as they want, even when a quota on the number of repositories is imposed. The new `ALLOW_FORK_WITHOUT_MAXIMUM_LIMIT` setting can now be set to `false` so forks are prohibited if that means exceeding the quota.
+   * [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
-[Read more about repository configurations](https://forgejo.org/docs/admin/config-cheat-sheet/#repository-repository)
+     Instead of selecting a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+     [Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
 
-#### [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
+   * [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
+     Add a doctor command for full garbage collection of LFS: `forgejo doctor --run gc-lfs`.
 
-Labels that contain a forward slash (**/**) separator are displayed with a slightly different color before and after the separator, as a visual aid. The first part of the label defines its "scope".
+   * Additions to the API
 
-[Read more about scoped labels](https://forgejo.org/docs/v1.19/user/labels/).
+     * [Management for issue/pull and comment attachments](https://codeberg.org/forgejo/forgejo/commit/3c59d31bc)
+     * [Get latest release](https://codeberg.org/forgejo/forgejo/commit/4d072a4c4)
+     * [System hook](https://codeberg.org/forgejo/forgejo/commit/c0015979a)
 
-#### [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
+   * [Option to disable releases on a repository](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
 
-It is now possible to create projects (kanban boards) for an organization or a user, in the same way it was possible for an individual repository.
+     It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
 
-#### [Map OIDC groups to Orgs/Teams](https://codeberg.org/forgejo/forgejo/commit/e8186f1c0)
+   * [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
 
-When a user logs in Forgejo using an provider such as [Keycloak](https://www.keycloak.org/), they can now automatically be part of a Forgejo team, depending on the OIDC group they belong to. For instance:
+     It appears for the first time in this Forgejo release but is not yet fit for production. It is not fully implemented and may be insecure. However, as long as it is not enabled, it presents no risk to existing Forgejo instances.
 
-```json
-{"Developer": {"MyForgejoOrganization": ["MyForgejoTeam1", "MyForgejoTeam2"]}}
-```
+     If a repository has a file such as `.forgejo/workflows/test.yml`, it will be interpreted, for instance to run tests and verify the code in the repository works as expected (Continuous Integration). It can also be used to create HTML pages for a website and publish them (Continous Deployment). The syntax is similar to GitHub Actions and the jobs can be controled from the Forgejo web interface.
 
-Means that the user who is in the OIDC group `Developer` will automatically be a member of the `MyForgejoTeam1` and `MyForgejoTeam2` teams in the `MyForgejoOrganization` organization.
+     [Read more about Forgejo Actions](https://forgejo.codeberg.page/2023-02-27-forgejo-actions/)
 
-This mapping is set when adding a new `Authentication Source` in the `Site Administration` panel.
+     <img src="./releases/images/forgejo-v1.19.0-0-rc0.png" alt="Actions" width="600" />
 
-<img src="./releases/images/forgejo-v1.19-oidc-part1.png" alt="OIDC Group mapping part1" width="500" />
+* User Interface improvements
 
-...
+   * [Review box on small screens](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
+     The rendering of the review box is improved on small screens.
 
-<img src="./releases/images/forgejo-v1.19-oidc-part2.png" alt="OIDC Group mapping part2" width="500" />
+   * [Video element enabled in markdown](https://codeberg.org/forgejo/forgejo/commit/f8a40dafb)
+     The `<video>` HTML tag can now be used in MarkDown, with the `src`, `autoplay`, and `controls` attributes.
 
-[Read more...](https://forgejo.org/docs/admin/oauth2-provider/#endpoints)
+   * [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
+     If a [BibTeX](https://fr.wikipedia.org/wiki/BibTeX) file named `CITATION.bib` is at the root of the repository, it can be conveniently copied and converted in APA by following the `Cite this repository` link.
 
-#### [RSS feed for releases and tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
+     <img src="./releases/images/forgejo-v1.19-citation-link.png" alt="Citation link" width="500" />
 
-A RSS feed is now available for releases at `/{owner}/{repo}/releases.rss` and tags at `/{owner}/{repo}/tags.rss`.
+     It will open a dialog box with the available formats and a preview of the content.
 
-#### [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
+     <img src="./releases/images/forgejo-v1.19-citation-dialog.png" alt="Citation dialog" width="500" />
 
-Instead of selecting a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+     The CFF format is also supported when a `CITATION.cff` file used instead.
 
-[Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
+   * [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
 
-#### [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
+     Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) using [asciinema-player](https://github.com/asciinema/asciinema-player).
 
-Add a doctor command for full garbage collection of LFS: `forgejo doctor --run gc-lfs`.
+   * [Attention blocks Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
 
-#### Additions to the API
+     For each quote block, the first `**Note**` or `**Warning**` gets an icon prepended to it and its text is colored accordingly.
 
-* [Management for issue/pull and comment attachments](https://codeberg.org/forgejo/forgejo/commit/3c59d31bc)
-* [Get latest release](https://codeberg.org/forgejo/forgejo/commit/4d072a4c4)
-* [System hook](https://codeberg.org/forgejo/forgejo/commit/c0015979a)
+     <img src="./releases/images/forgejo-v1.19-note-warning.png" alt="Attention block" width="400" />
 
-#### [Option to disable releases on a repository](https://codeberg.org/forgejo/forgejo/commit/faa96553d)
+   * [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
 
-It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
+     A commit hash can now be prefixed by the repository to be referenced from a comment in another repository: `owner/repo@commit`.
 
-### [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
+   * [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
 
-It appears for the first time in this Forgejo release but is not yet fit for production. It is not fully implemented and may be insecure. However, as long as it is not enabled, it presents no risk to existing Forgejo instances.
+     If the card preview in the project is set to **Images and Text**, it displays images found in the corresponding issue. The most recent is displayed first, up to five images.
 
-* [User secrets](https://codeberg.org/forgejo/forgejo/commit/5882e179a)
-* [Secrets storage](https://codeberg.org/forgejo/forgejo/commit/659055138)
+     [Read more about card preview images](https://forgejo.org/docs/v1.19/user/project/#card-previews-images).
 
-If a repository has a file such as `.forgejo/workflows/test.yml`, it will be interpreted, for instance to run tests and verify the code in the repository works as expected (Continuous Integration). It can also be used to create HTML pages for a website and publish them (Continous Deployment). The syntax is similar to GitHub Actions and the jobs can be controled from the Forgejo web interface. [Read more...](https://forgejo.codeberg.page/2023-02-27-forgejo-actions/)
+   * [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
 
-<img src="./releases/images/forgejo-v1.19.0-0-rc0.png" alt="Actions" width="600" />
+     If a raw text file is displayed, a copy button of the text is enabled.
 
-### User Interface improvements
+     **Before**
 
-#### [Review box on small screens](https://codeberg.org/forgejo/forgejo/commit/1fcf96ad0)
+     <img src="./releases/images/forgejo-v1.19-raw-copy-before.png" alt="Raw copy before" width="500" />
 
-The rendering of the review box is improved on small screens.
+     **After**
 
-#### [Video element enabled in markdown](https://codeberg.org/forgejo/forgejo/commit/f8a40dafb)
+     <img src="./releases/images/forgejo-v1.19-raw-copy-after.png" alt="Raw copy after" width="500" />
 
-The `<video>` HTML tag can now be used in MarkDown, with the `src`, `autoplay`, and `controls` attributes.
+   * [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
 
-#### [Copy citation file content in APA and BibTex format](https://codeberg.org/forgejo/forgejo/commit/9f8e77891)
+     Add setting to allow edits by maintainers by default, to avoid having to often ask contributors to enable this.
 
-If a [BibTeX](https://fr.wikipedia.org/wiki/BibTeX) file named `CITATION.bib` is at the root of the repository, it can be conveniently copied and converted in APA by following the `Cite this repository` link.
+* Container images upgraded to Alpine 3.17
 
-<img src="./releases/images/forgejo-v1.19-citation-link.png" alt="Citation link" width="500" />
-
-It will open a dialog box with the available formats and a preview of the content.
-
-<img src="./releases/images/forgejo-v1.19-citation-dialog.png" alt="Citation dialog" width="500" />
-
-The CFF format is also supported when a `CITATION.cff` file used instead.
-
-#### [Display asciicast](https://codeberg.org/forgejo/forgejo/commit/d9f748a70)
-
-Files with the `.cast` extension are displayed in the Forgejo web interface as [asciicast v2](https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md) using [asciinema-player](https://github.com/asciinema/asciinema-player).
-
-#### [Attention blocks Note and Warning](https://codeberg.org/forgejo/forgejo/commit/cb8328853)
-
-For each quote block, the first `**Note**` or `**Warning**` gets an icon
-prepended to it and its text is colored accordingly.
-
-<img src="./releases/images/forgejo-v1.19-note-warning.png" alt="Attention block" width="400" />
-
-#### [Support for commit cross references](https://codeberg.org/forgejo/forgejo/commit/d0d257b24)
-
-A commit hash can now be prefixed by the repository to be referenced from a comment in another repository: `owner/repo@commit`.
-
-#### [Preview images for Issue cards in Project Board view](https://codeberg.org/forgejo/forgejo/commit/fb1a2a13f)
-
-If the card preview in the project is set to **Images and Text**, it displays images found in the corresponding issue. The most recent is displayed first, up to five images.
-
-[Read more about card preview images](https://forgejo.org/docs/v1.19/user/project/#card-previews-images).
-
-#### [Add "Copy" button to file view of raw text](https://codeberg.org/forgejo/forgejo/commit/e3a7f1579)
-
-If a raw text file is displayed, a copy button of the text is enabled.
-
-**Before**
-
-<img src="./releases/images/forgejo-v1.19-raw-copy-before.png" alt="Raw copy before" width="500" />
-
-**After**
-
-<img src="./releases/images/forgejo-v1.19-raw-copy-after.png" alt="Raw copy after" width="500" />
-
-#### [Setting to allow edits on PRs by maintainers](https://codeberg.org/forgejo/forgejo/commit/49919c636)
-
-Add setting to allow edits by maintainers by default, to avoid having to often ask contributors to enable this.
-
-### Container images upgraded to Alpine 3.17
-
-The Forgejo container images are now based on [Alpine 3.17](https://alpinelinux.org/posts/Alpine-3.17.0-released.html) instead of Alpine 3.16. It includes an upgrade from git 2.36.5 to git 2.38.4 and from openssh 9.0p1 to openssh 9.1p1.
+  The Forgejo container images are now based on [Alpine 3.17](https://alpinelinux.org/posts/Alpine-3.17.0-released.html) instead of Alpine 3.16. It includes an upgrade from git 2.36.5 to git 2.38.4 and from openssh 9.0p1 to openssh 9.1p1.
 
 ## 1.18.5-0
 
