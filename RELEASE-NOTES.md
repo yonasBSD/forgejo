@@ -4,9 +4,9 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## 1.19.0-0
+## 1.19.0-2
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.0-0` release can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.0-2` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo/
@@ -45,12 +45,14 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
    * [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
      Forgejo webhooks can be configured to send an [authorization header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) to the target.
+
      [Read more about the webhook authorization header](https://forgejo.codeberg.page/docs/v1.19/user/webhooks/#authorization-header)
 
    * [Incoming emails](https://codeberg.org/forgejo/forgejo/commit/fc037b4b825f0501a1489e10d7c822435d825cb7)
      You can now set up Forgejo to receive incoming email. When enabled, it is now possible to reply to an email notification from Forgejo and:
      * Add a comment to an issue or a pull request
      * Unsubscribe to the notifications
+
      [Read more about incoming emails](https://forgejo.org/docs/v1.19/admin/incoming-email/)
 
    * Packages registries
@@ -60,10 +62,12 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
    * [Option to prohibit fork if user reached maximum limit of repositories](https://codeberg.org/forgejo/forgejo/commit/7cc7db73b)
      It is possible for a user to create as many fork as they want, even when a quota on the number of repositories is imposed. The new `ALLOW_FORK_WITHOUT_MAXIMUM_LIMIT` setting can now be set to `false` so forks are prohibited if that means exceeding the quota.
+
      [Read more about repository configurations](https://forgejo.org/docs/v1.19/admin/config-cheat-sheet/#repository-repository)
 
    * [Scoped labels](https://codeberg.org/forgejo/forgejo/commit/6221a6fd5)
      Labels that contain a forward slash (**/**) separator are displayed with a slightly different color before and after the separator, as a visual aid. The first part of the label defines its "scope".
+
      [Read more about scoped labels](https://forgejo.org/docs/v1.19/user/labels/).
 
    * [Support org/user level projects](https://codeberg.org/forgejo/forgejo/commit/6fe3c8b39)
@@ -94,6 +98,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
    * [Supports wildcard protected branch](https://codeberg.org/forgejo/forgejo/commit/2782c1439)
 
      Instead of selecting a branch to be protected, the name of the branch must be specified and can be a pattern such as `precious*`.
+
      [Read more about branch protection](https://forgejo.org/docs/v1.19/user/protection/#protected-branches).
 
    * [Garbage collect LFS](https://codeberg.org/forgejo/forgejo/commit/651fe4bb7)
