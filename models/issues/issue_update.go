@@ -608,9 +608,11 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 				teamusers := make([]*user_model.User, 0, 20)
 				if err := db.GetEngine(ctx).
 					Join("INNER", "team_user", "team_user.uid = `user`.id").
+					Join("LEFT", "blocked_user", "blocked_user.user_id = `user`.id").
 					In("`team_user`.team_id", checked).
 					And("`user`.is_active = ?", true).
 					And("`user`.prohibit_login = ?", false).
+					And("`blocked_user`.block_id IS NOT ?", doer.ID). // Use IS NOT to handle NULL values.
 					Find(&teamusers); err != nil {
 					return nil, fmt.Errorf("get teams users: %w", err)
 				}
@@ -644,8 +646,10 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 
 	unchecked := make([]*user_model.User, 0, len(mentionUsers))
 	if err := db.GetEngine(ctx).
+		Join("LEFT", "blocked_user", "blocked_user.user_id = `user`.id").
 		Where("`user`.is_active = ?", true).
 		And("`user`.prohibit_login = ?", false).
+		And("`blocked_user`.block_id IS NOT ?", doer.ID). // Use IS NOT to handle NULL values.
 		In("`user`.lower_name", mentionUsers).
 		Find(&unchecked); err != nil {
 		return nil, fmt.Errorf("find mentioned users: %w", err)

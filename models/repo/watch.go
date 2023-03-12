@@ -142,6 +142,21 @@ func GetWatchers(ctx context.Context, repoID int64) ([]*Watch, error) {
 		Find(&watches)
 }
 
+// GetWatchersExcludeBlocked returns all watchers of given repository, whereby
+// the doer isn't blocked by one of the watchers.
+func GetWatchersExcludeBlocked(ctx context.Context, repoID, doerID int64) ([]*Watch, error) {
+	watches := make([]*Watch, 0, 10)
+	return watches, db.GetEngine(ctx).
+		Join("INNER", "`user`", "`user`.id = `watch`.user_id").
+		Join("LEFT", "blocked_user", "blocked_user.block_id = `watch`.user_id").
+		Where("`watch`.repo_id=?", repoID).
+		And("`watch`.mode<>?", WatchModeDont).
+		And("`user`.is_active=?", true).
+		And("`user`.prohibit_login=?", false).
+		And("`blocked_user`.user_id IS NOT ?", doerID). // Use IS NOT to handle NULL values.
+		Find(&watches)
+}
+
 // GetRepoWatchersIDs returns IDs of watchers for a given repo ID
 // but avoids joining with `user` for performance reasons
 // User permissions must be verified elsewhere if required

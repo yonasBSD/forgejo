@@ -43,6 +43,32 @@ func TestGetWatchers(t *testing.T) {
 	assert.Len(t, watches, 0)
 }
 
+func TestGetWatchersExcludeBlocked(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	watches, err := repo_model.GetWatchersExcludeBlocked(db.DefaultContext, repo.ID, 1)
+	assert.NoError(t, err)
+
+	// One watchers are inactive, thus minus 1
+	assert.Len(t, watches, repo.NumWatches-1)
+	for _, watch := range watches {
+		assert.EqualValues(t, repo.ID, watch.RepoID)
+	}
+
+	watches, err = repo_model.GetWatchersExcludeBlocked(db.DefaultContext, unittest.NonexistentID, 1)
+	assert.NoError(t, err)
+	assert.Len(t, watches, 0)
+
+	watches, err = repo_model.GetWatchersExcludeBlocked(db.DefaultContext, repo.ID, 4)
+	assert.NoError(t, err)
+	// One watcher is inactive and one watcher blocked user 4.
+	assert.Len(t, watches, repo.NumWatches-2)
+	for _, watch := range watches {
+		assert.EqualValues(t, repo.ID, watch.RepoID)
+	}
+}
+
 func TestRepository_GetWatchers(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
