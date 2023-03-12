@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/routers/web/org"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
+	user_service "code.gitea.io/gitea/services/user"
 )
 
 // OwnerProfile render profile page for a user or a organization (aka, repo owner)
@@ -283,11 +284,17 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 // Action response for follow/unfollow user request
 func Action(ctx *context.Context) {
 	var err error
+	var redirectViaJSON bool
 	switch ctx.FormString("action") {
 	case "follow":
-		err = user_model.FollowUser(ctx.Doer.ID, ctx.ContextUser.ID)
+		err = user_model.FollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	case "unfollow":
-		err = user_model.UnfollowUser(ctx.Doer.ID, ctx.ContextUser.ID)
+		err = user_model.UnfollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+	case "block":
+		err = user_service.BlockUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+		redirectViaJSON = true
+	case "unblock":
+		err = user_model.UnblockUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	}
 
 	if err != nil {
@@ -295,5 +302,13 @@ func Action(ctx *context.Context) {
 		ctx.JSONError(fmt.Sprintf("Action %q failed", ctx.FormString("action")))
 		return
 	}
+
+	if redirectViaJSON {
+		ctx.JSON(http.StatusOK, map[string]interface{}{
+			"redirect": ctx.ContextUser.HomeLink(),
+		})
+		return
+	}
+
 	ctx.JSONOK()
 }

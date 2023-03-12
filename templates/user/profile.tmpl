@@ -41,4 +41,19 @@
 		</div>
 	</div>
 </div>
+<div class="ui small basic delete modal" id="block-user">
+	<div class="ui icon header">
+		{{svg "octicon-blocked" 16 "blocked inside"}}
+		{{$.locale.Tr "user.block_user"}}
+	</div>
+	<div class="content">
+		<p>{{$.locale.Tr "user.block_user.detail"}}</p>
+		<ul>
+				<li>{{$.locale.Tr "user.block_user.detail_1"}}</li>
+				<li>{{$.locale.Tr "user.block_user.detail_2"}}</li>
+		</ul>
+	</div>
+	{{template "base/modal_actions_confirm" .}}
+</div>
+
 {{template "base/footer" .}}
