@@ -5,11 +5,7 @@ package webhook
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"crypto/sha256"
 	"crypto/tls"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -50,113 +46,27 @@ func Deliver(ctx context.Context, t *webhook_model.HookTask) error {
 
 	t.IsDelivered = true
 
-	var req *http.Request
-
-	switch w.HTTPMethod {
-	case "":
-		log.Info("HTTP Method for webhook %s empty, setting to POST as default", w.URL)
-		fallthrough
-	case http.MethodPost:
-		switch w.ContentType {
-		case webhook_model.ContentTypeJSON:
-			req, err = http.NewRequest("POST", w.URL, strings.NewReader(t.PayloadContent))
-			if err != nil {
-				return err
-			}
-
-			req.Header.Set("Content-Type", "application/json")
-		case webhook_model.ContentTypeForm:
-			forms := url.Values{
-				"payload": []string{t.PayloadContent},
-			}
-
-			req, err = http.NewRequest("POST", w.URL, strings.NewReader(forms.Encode()))
-			if err != nil {
-				return err
-			}
-
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		}
-	case http.MethodGet:
-		u, err := url.Parse(w.URL)
-		if err != nil {
-			return fmt.Errorf("unable to deliver webhook task[%d] as cannot parse webhook url %s: %w", t.ID, w.URL, err)
-		}
-		vals := u.Query()
-		vals["payload"] = []string{t.PayloadContent}
-		u.RawQuery = vals.Encode()
-		req, err = http.NewRequest("GET", u.String(), nil)
-		if err != nil {
-			return fmt.Errorf("unable to deliver webhook task[%d] as unable to create HTTP request for webhook url %s: %w", t.ID, w.URL, err)
-		}
-	case http.MethodPut:
-		switch w.Type {
-		case webhook_module.MATRIX:
-			txnID, err := getMatrixTxnID([]byte(t.PayloadContent))
-			if err != nil {
-				return err
-			}
-			url := fmt.Sprintf("%s/%s", w.URL, url.PathEscape(txnID))
-			req, err = http.NewRequest("PUT", url, strings.NewReader(t.PayloadContent))
-			if err != nil {
-				return fmt.Errorf("unable to deliver webhook task[%d] as cannot create matrix request for webhook url %s: %w", t.ID, w.URL, err)
-			}
-		default:
-			return fmt.Errorf("invalid http method for webhook task[%d] in webhook %s: %v", t.ID, w.URL, w.HTTPMethod)
-		}
-	default:
-		return fmt.Errorf("invalid http method for webhook task[%d] in webhook %s: %v", t.ID, w.URL, w.HTTPMethod)
+	req, err := t.HTTPRequest(ctx)
+	if err != nil {
+		log.Error("NewRequest[%d]: %v", t.ID, err)
+		return fmt.Errorf("unable to create request for task[%d]: %w", t.ID, err)
 	}
 
-	var signatureSHA1 string
-	var signatureSHA256 string
-	if len(w.Secret) > 0 {
-		sig1 := hmac.New(sha1.New, []byte(w.Secret))
-		sig256 := hmac.New(sha256.New, []byte(w.Secret))
-		_, err = io.MultiWriter(sig1, sig256).Write([]byte(t.PayloadContent))
-		if err != nil {
-			log.Error("prepareWebhooks.sigWrite: %v", err)
-		}
-		signatureSHA1 = hex.EncodeToString(sig1.Sum(nil))
-		signatureSHA256 = hex.EncodeToString(sig256.Sum(nil))
+	if t.AddDefaultHeaders {
+		addDefaultHeaders(req, w, t)
 	}
 
-	event := t.EventType.Event()
-	eventType := string(t.EventType)
-	req.Header.Add("X-Gitea-Delivery", t.UUID)
-	req.Header.Add("X-Gitea-Event", event)
-	req.Header.Add("X-Gitea-Event-Type", eventType)
-	req.Header.Add("X-Gitea-Signature", signatureSHA256)
-	req.Header.Add("X-Gogs-Delivery", t.UUID)
-	req.Header.Add("X-Gogs-Event", event)
-	req.Header.Add("X-Gogs-Event-Type", eventType)
-	req.Header.Add("X-Gogs-Signature", signatureSHA256)
-	req.Header.Add("X-Hub-Signature", "sha1="+signatureSHA1)
-	req.Header.Add("X-Hub-Signature-256", "sha256="+signatureSHA256)
-	req.Header["X-GitHub-Delivery"] = []string{t.UUID}
-	req.Header["X-GitHub-Event"] = []string{event}
-	req.Header["X-GitHub-Event-Type"] = []string{eventType}
-
-	// Add Authorization Header
+	// Add Authorization Header, since it should not be saved in the hooktask model in cleartext for security reasons.
 	authorization, err := w.HeaderAuthorization()
 	if err != nil {
 		log.Error("Webhook could not get Authorization header [%d]: %v", w.ID, err)
 		return err
 	}
 	if authorization != "" {
-		req.Header["Authorization"] = []string{authorization}
+		req.Header.Set("Authorization", authorization)
 	}
 
 	// Record delivery information.
-	t.RequestInfo = &webhook_model.HookRequest{
-		URL:        req.URL.String(),
-		HTTPMethod: req.Method,
-		Headers:    map[string]string{},
-	}
-	for k, vals := range req.Header {
-		t.RequestInfo.Headers[k] = strings.Join(vals, ",")
-	}
-
 	t.ResponseInfo = &webhook_model.HookResponse{
 		Headers: map[string]string{},
 	}
@@ -210,7 +120,7 @@ func Deliver(ctx context.Context, t *webhook_model.HookTask) error {
 		return nil
 	}
 
-	resp, err := webhookHTTPClient.Do(req.WithContext(ctx))
+	resp, err := webhookHTTPClient.Do(req)
 	if err != nil {
 		t.ResponseInfo.Body = fmt.Sprintf("Delivery: %v", err)
 		return fmt.Errorf("unable to deliver webhook task[%d] in %s due to error in http client: %w", t.ID, w.URL, err)

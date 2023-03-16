@@ -78,6 +78,27 @@ func TestPrepareWebhooksBranchFilterNoMatch(t *testing.T) {
 	}
 }
 
-// TODO TestHookTask_deliver
+func TestPrepareWebhookViaRequest(t *testing.T) {
+	w := &webhook_model.Webhook{
+		ID:   42,
+		Type: webhook_module.MATRIX,
+		URL:  "https://matrix.example.com/_matrix/client/r0/rooms/ROOM_ID/send/m.room.message",
+		Meta: `{"message_type":0}`, // text
+		HookEvent: &webhook_module.HookEvent{
+			SendEverything: true,
+		},
+	}
+	p := createTestPayload()
+	err := PrepareWebhook(db.DefaultContext, w, webhook_module.HookEventCreate, p)
 
-// TODO TestDeliverHooks
+	assert.NoError(t, err)
+
+	task := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{HookID: 42})
+
+	assert.Equal(t, int64(42), task.HookID)
+	assert.Equal(t, webhook_module.HookEventCreate, task.EventType)
+	assert.Equal(t, "PUT", task.RequestMethod)
+	assert.Equal(t, "https://matrix.example.com/_matrix/client/r0/rooms/ROOM_ID/send/m.room.message/f8c147d78b4a12bbfad7d59d857495ca4950b7da", task.RequestURL)
+	assert.Equal(t, "Content-Type: application/json\r\n", task.RequestHeader)
+	assert.Equal(t, "{\n  \"body\": \"[[test/repo](http://localhost:3000/test/repo):[test](http://localhost:3000/test/repo/src/branch/test)] branch created by user1\",\n  \"msgtype\": \"\",\n  \"format\": \"org.matrix.custom.html\",\n  \"formatted_body\": \"[\\u003ca href=\\\"http://localhost:3000/test/repo\\\"\\u003etest/repo\\u003c/a\\u003e:\\u003ca href=\\\"http://localhost:3000/test/repo/src/branch/test\\\"\\u003etest\\u003c/a\\u003e] branch created by user1\"\n}", task.PayloadContent)
+}

@@ -5,6 +5,7 @@ package webhook
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,7 +18,6 @@ import (
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/hostmatcher"
 	"code.gitea.io/gitea/modules/setting"
-	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 
 	"github.com/stretchr/testify/assert"
@@ -114,7 +114,67 @@ func TestWebhookDeliverAuthorizationHeader(t *testing.T) {
 	assert.NoError(t, webhook_model.CreateWebhook(db.DefaultContext, hook))
 	db.GetEngine(db.DefaultContext).NoAutoTime().DB().Logger.ShowSQL(true)
 
-	hookTask := &webhook_model.HookTask{HookID: hook.ID, EventType: webhook_module.HookEventPush, Payloader: &api.PushPayload{}}
+	hookTask := &webhook_model.HookTask{
+		HookID:            hook.ID,
+		EventType:         webhook_module.HookEventPush,
+		RequestMethod:     "GET",
+		RequestURL:        s.URL + "/webhook",
+		AddDefaultHeaders: true,
+	}
+
+	hookTask, err = webhook_model.CreateHookTask(db.DefaultContext, hookTask)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, hookTask) {
+		return
+	}
+
+	assert.NoError(t, Deliver(context.Background(), hookTask))
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("waited to long for request to happen")
+	}
+
+	assert.True(t, hookTask.IsSucceed)
+}
+
+func TestWebhookDeliverHookTask(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	done := make(chan struct{}, 1)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "PUT", r.Method)
+		assert.Equal(t, "/webhook", r.URL.Path)
+		assert.Equal(t, "Bearer s3cr3t-t0ken", r.Header.Get("Authorization"))
+		assert.Equal(t, "push", r.Header.Get("X-GitHub-Event"))
+		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, `{"data": 42}`, string(body))
+		w.WriteHeader(200)
+		done <- struct{}{}
+	}))
+	t.Cleanup(s.Close)
+
+	hook := &webhook_model.Webhook{
+		RepoID:   3,
+		IsActive: true,
+		Type:     webhook_module.GITEA,
+	}
+	err := hook.SetHeaderAuthorization("Bearer s3cr3t-t0ken")
+	assert.NoError(t, err)
+	assert.NoError(t, webhook_model.CreateWebhook(db.DefaultContext, hook))
+	db.GetEngine(db.DefaultContext).NoAutoTime().DB().Logger.ShowSQL(true)
+
+	hookTask := &webhook_model.HookTask{
+		HookID:            hook.ID,
+		EventType:         webhook_module.HookEventPush,
+		RequestMethod:     "PUT",
+		RequestURL:        s.URL + "/webhook",
+		RequestHeader:     `Content-Type: application/json`,
+		PayloadContent:    `{"data": 42}`,
+		AddDefaultHeaders: true,
+	}
 
 	hookTask, err = webhook_model.CreateHookTask(db.DefaultContext, hookTask)
 	assert.NoError(t, err)

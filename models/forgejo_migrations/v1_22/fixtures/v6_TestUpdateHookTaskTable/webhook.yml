@@ -1,0 +1,39 @@
+- id: 1
+  repo_id: 1
+  http_method: "" #empty
+  url: example.org/webhook-1
+  content_type: 1 # json
+  type: gitea
+  secret: ""
+
+- id: 2
+  repo_id: 1
+  http_method: "POST"
+  url: example.org/webhook-2
+  content_type: 1 # json
+  type: gitea
+  secret: ""
+
+- id: 3
+  repo_id: 1
+  http_method: "POST"
+  url: example.org/webhook-3
+  content_type: 2 # form-urlencoded
+  type: gitea
+  secret: "secret"
+
+- id: 4
+  repo_id: 1
+  http_method: "GET"
+  url: example.org/webhook-4
+  content_type: 1 # json
+  type: gitea
+  secret: "s3cr3t"
+
+- id: 5
+  repo_id: 1
+  http_method: "PUT"
+  url: example.org/webhook-5
+  content_type: 1 # json
+  type: matrix
+  secret: ""

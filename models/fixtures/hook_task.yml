@@ -3,3 +3,18 @@
   hook_id: 1
   uuid: uuid1
   is_delivered: true
+  request_method: "PUT"
+  request_url: "/matrix-delivered"
+  request_header: "X-Head: 42"
+  payload_content: >
+    {"data":"payload"}
+
+-
+  id: 2
+  hook_id: 1
+  uuid: uuid2
+  is_delivered: false
+  request_method: "PUT"
+  request_url: "/matrix-undelivered"
+  request_header: "X-Head: 42"
+  payload_content: payload=%7B%22data%22%3A%22payload%22%7D%0A

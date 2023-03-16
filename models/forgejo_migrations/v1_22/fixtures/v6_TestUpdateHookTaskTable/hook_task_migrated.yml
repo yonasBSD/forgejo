@@ -1,0 +1,81 @@
+#########################################################
+#### legacy hook_task, created but not delivered yet ####
+#########################################################
+- id: 11
+  uuid: uuid11
+  hook_id: 1
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+  request_method: POST
+  request_url: example.org/webhook-1
+  request_header: |
+    Content-Type: application/json
+  add_default_headers: true
+
+- id: 21
+  uuid: uuid21
+  hook_id: 2
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+  request_method: POST
+  request_url: example.org/webhook-2
+  request_header: |
+    Content-Type: application/json
+  add_default_headers: true
+
+- id: 31
+  uuid: uuid31
+  hook_id: 3
+  payload_content: payload=%7B%22data%22%3A%22payload%22%7D%0A
+  event_type: create
+  delivered: 1706106005
+  request_method: POST
+  request_url: example.org/webhook-3
+  request_header: |
+    Content-Type: application/x-www-form-urlencoded
+  add_default_headers: true
+
+- id: 41
+  uuid: uuid41
+  hook_id: 4
+  payload_content:
+  event_type: create
+  delivered: 1706106005
+  request_method: GET
+  request_url: example.org/webhook-4?payload=%7B%22data%22%3A%22payload%22%7D%0A
+  request_header:
+  add_default_headers: true
+
+- id: 51
+  uuid: uuid51
+  hook_id: 5
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+  request_method: PUT
+  request_url: example.org/webhook-5/74e5250f00c41245c3116e808d63e1fdfd2f1b5f
+  request_header:
+  add_default_headers: true
+
+
+#####################################
+#### legacy hook_task, delivered ####
+#####################################
+- id: 101
+  uuid: uuid101
+  hook_id: 1
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106006
+  is_delivered: true
+  request_method: DELETE
+  request_url: example.org/delivered
+  request_header: |
+    X-Test: 42
+  add_default_headers: true

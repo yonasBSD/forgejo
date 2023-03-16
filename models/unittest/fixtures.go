@@ -144,3 +144,19 @@ func LoadFixtures(engine ...*xorm.Engine) error {
 
 	return err
 }
+
+func InitAndLoadFixtures(x *xorm.Engine, dir string) error {
+	old := fixturesLoader
+	defer func() {
+		fixturesLoader = old
+	}()
+
+	if err := InitFixtures(
+		FixturesOptions{
+			Dir: dir,
+		}, x); err != nil {
+		return err
+	}
+
+	return LoadFixtures(x)
+}

@@ -25,6 +25,12 @@ import (
 	"github.com/gobwas/glob"
 )
 
+var webhookConvertors = map[webhook_module.HookType]func(w *webhook_model.Webhook) (requestConvertor, error){
+	// TODO: complete
+	webhook_module.MATRIX: newMatrixConvertor,
+}
+
+// TODO: delete after conversion to webhookConvertors
 type webhook struct {
 	name           webhook_module.HookType
 	payloadCreator func(p api.Payloader, event webhook_module.HookEventType, meta string) (api.Payloader, error)
@@ -54,10 +60,6 @@ var webhooks = map[webhook_module.HookType]*webhook{
 	webhook_module.FEISHU: {
 		name:           webhook_module.FEISHU,
 		payloadCreator: GetFeishuPayload,
-	},
-	webhook_module.MATRIX: {
-		name:           webhook_module.MATRIX,
-		payloadCreator: GetMatrixPayload,
 	},
 	webhook_module.WECHATWORK: {
 		name:           webhook_module.WECHATWORK,
@@ -192,25 +194,23 @@ func PrepareWebhook(ctx context.Context, w *webhook_model.Webhook, event webhook
 		}
 	}
 
-	var payloader api.Payloader
-	var err error
-	webhook, ok := webhooks[w.Type]
-	if ok {
-		payloader, err = webhook.payloadCreator(p, event, w.Meta)
-		if err != nil {
-			return fmt.Errorf("create payload for %s[%s]: %w", w.Type, event, err)
-		}
-	} else {
-		payloader = p
+	webhookConvertor := webhookConvertors[w.Type]
+	if webhookConvertor == nil {
+		// use default convertor for unknown types
+		webhookConvertor = newDefaultConvertor
+	}
+	rc, err := webhookConvertor(w)
+	if err != nil {
+		return fmt.Errorf("webhookConvertor for %s[%s]: %w", w.Type, event, err)
+	}
+	req, err := convertRequest(rc, p, event)
+	if err != nil {
+		return fmt.Errorf("convertRequest for %s[%s]: %w", w.Type, event, err)
 	}
 
-	task, err := webhook_model.CreateHookTask(ctx, &webhook_model.HookTask{
-		HookID:    w.ID,
-		Payloader: payloader,
-		EventType: event,
-	})
+	task, err := req.createHookTask(ctx, w.ID, event)
 	if err != nil {
-		return fmt.Errorf("CreateHookTask: %w", err)
+		return fmt.Errorf("createHookTask for %s[%s]: %w", w.Type, event, err)
 	}
 
 	return enqueueHookTask(task.ID)

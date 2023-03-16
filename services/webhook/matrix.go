@@ -6,9 +6,8 @@ package webhook
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"html"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -46,29 +45,9 @@ func GetMatrixHook(w *webhook_model.Webhook) *MatrixMeta {
 	return s
 }
 
-var _ PayloadConvertor = &MatrixPayload{}
-
-// MatrixPayload contains payload for a Matrix room
-type MatrixPayload struct {
-	Body          string               `json:"body"`
-	MsgType       string               `json:"msgtype"`
-	Format        string               `json:"format"`
-	FormattedBody string               `json:"formatted_body"`
-	Commits       []*api.PayloadCommit `json:"io.gitea.commits,omitempty"`
-}
-
-// JSONPayload Marshals the MatrixPayload to json
-func (m *MatrixPayload) JSONPayload() ([]byte, error) {
-	data, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return []byte{}, err
-	}
-	return data, nil
-}
-
 // MatrixLinkFormatter creates a link compatible with Matrix
 func MatrixLinkFormatter(url, text string) string {
-	return fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(url), html.EscapeString(text))
+	return htmlLinkFormatter(url, text)
 }
 
 // MatrixLinkToRef Matrix-formatter link to a repo ref
@@ -84,63 +63,119 @@ func MatrixLinkToRef(repoURL, ref string) string {
 	}
 }
 
-// Create implements PayloadConvertor Create method
-func (m *MatrixPayload) Create(p *api.CreatePayload) (api.Payloader, error) {
+type matrixConvertor struct {
+	URL     string
+	MsgType string
+}
+
+var _ requestConvertor = matrixConvertor{}
+
+// newMatrixConvertor returns a new convertor for Matrix https://matrix.org/
+func newMatrixConvertor(w *webhook_model.Webhook) (requestConvertor, error) {
+	meta := &MatrixMeta{}
+	if err := json.Unmarshal([]byte(w.Meta), meta); err != nil {
+		return nil, fmt.Errorf("GetMatrixPayload meta json: %w", err)
+	}
+
+	return matrixConvertor{
+		URL:     w.URL,
+		MsgType: messageTypeText[meta.MessageType],
+	}, nil
+}
+
+func (m matrixConvertor) newRequest(text string, commits ...*api.PayloadCommit) (request, error) {
+	payload := struct {
+		Body          string               `json:"body"`
+		MsgType       string               `json:"msgtype"`
+		Format        string               `json:"format"`
+		FormattedBody string               `json:"formatted_body"`
+		Commits       []*api.PayloadCommit `json:"io.gitea.commits,omitempty"`
+	}{
+		Body:          getMessageBody(text),
+		MsgType:       m.MsgType,
+		Format:        "org.matrix.custom.html",
+		FormattedBody: text,
+		Commits:       commits,
+	}
+
+	body, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return request{}, err
+	}
+
+	txnID, err := getMatrixTxnID(body)
+	if err != nil {
+		return request{}, err
+	}
+
+	return request{
+		Method: http.MethodPut,
+		URL:    m.URL + "/" + txnID,
+		Body:   body,
+		Header: http.Header{
+			"Content-Type": {"application/json"},
+		},
+		AddDefaultHeaders: true,
+	}, nil
+}
+
+// Create implements requestConvertor Create method
+func (m matrixConvertor) Create(p *api.CreatePayload) (request, error) {
 	repoLink := MatrixLinkFormatter(p.Repo.HTMLURL, p.Repo.FullName)
 	refLink := MatrixLinkToRef(p.Repo.HTMLURL, p.Ref)
 	text := fmt.Sprintf("[%s:%s] %s created by %s", repoLink, refLink, p.RefType, p.Sender.UserName)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
 // Delete composes Matrix payload for delete a branch or tag.
-func (m *MatrixPayload) Delete(p *api.DeletePayload) (api.Payloader, error) {
+func (m matrixConvertor) Delete(p *api.DeletePayload) (request, error) {
 	refName := git.RefName(p.Ref).ShortName()
 	repoLink := MatrixLinkFormatter(p.Repo.HTMLURL, p.Repo.FullName)
 	text := fmt.Sprintf("[%s:%s] %s deleted by %s", repoLink, refName, p.RefType, p.Sender.UserName)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
 // Fork composes Matrix payload for forked by a repository.
-func (m *MatrixPayload) Fork(p *api.ForkPayload) (api.Payloader, error) {
+func (m matrixConvertor) Fork(p *api.ForkPayload) (request, error) {
 	baseLink := MatrixLinkFormatter(p.Forkee.HTMLURL, p.Forkee.FullName)
 	forkLink := MatrixLinkFormatter(p.Repo.HTMLURL, p.Repo.FullName)
 	text := fmt.Sprintf("%s is forked to %s", baseLink, forkLink)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Issue implements PayloadConvertor Issue method
-func (m *MatrixPayload) Issue(p *api.IssuePayload) (api.Payloader, error) {
+// Issue implements requestConvertor Issue method
+func (m matrixConvertor) Issue(p *api.IssuePayload) (request, error) {
 	text, _, _, _ := getIssuesPayloadInfo(p, MatrixLinkFormatter, true)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// IssueComment implements PayloadConvertor IssueComment method
-func (m *MatrixPayload) IssueComment(p *api.IssueCommentPayload) (api.Payloader, error) {
+// IssueComment implements requestConvertor IssueComment method
+func (m matrixConvertor) IssueComment(p *api.IssueCommentPayload) (request, error) {
 	text, _, _ := getIssueCommentPayloadInfo(p, MatrixLinkFormatter, true)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Wiki implements PayloadConvertor Wiki method
-func (m *MatrixPayload) Wiki(p *api.WikiPayload) (api.Payloader, error) {
+// Wiki implements requestConvertor Wiki method
+func (m matrixConvertor) Wiki(p *api.WikiPayload) (request, error) {
 	text, _, _ := getWikiPayloadInfo(p, MatrixLinkFormatter, true)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Release implements PayloadConvertor Release method
-func (m *MatrixPayload) Release(p *api.ReleasePayload) (api.Payloader, error) {
+// Release implements requestConvertor Release method
+func (m matrixConvertor) Release(p *api.ReleasePayload) (request, error) {
 	text, _ := getReleasePayloadInfo(p, MatrixLinkFormatter, true)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Push implements PayloadConvertor Push method
-func (m *MatrixPayload) Push(p *api.PushPayload) (api.Payloader, error) {
+// Push implements requestConvertor Push method
+func (m matrixConvertor) Push(p *api.PushPayload) (request, error) {
 	var commitDesc string
 
 	if p.TotalCommits == 1 {
@@ -163,18 +198,18 @@ func (m *MatrixPayload) Push(p *api.PushPayload) (api.Payloader, error) {
 
 	}
 
-	return getMatrixPayload(text, p.Commits, m.MsgType), nil
+	return m.newRequest(text, p.Commits...)
 }
 
-// PullRequest implements PayloadConvertor PullRequest method
-func (m *MatrixPayload) PullRequest(p *api.PullRequestPayload) (api.Payloader, error) {
+// PullRequest implements requestConvertor PullRequest method
+func (m matrixConvertor) PullRequest(p *api.PullRequestPayload) (request, error) {
 	text, _, _, _ := getPullRequestPayloadInfo(p, MatrixLinkFormatter, true)
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Review implements PayloadConvertor Review method
-func (m *MatrixPayload) Review(p *api.PullRequestPayload, event webhook_module.HookEventType) (api.Payloader, error) {
+// Review implements requestConvertor Review method
+func (m matrixConvertor) Review(p *api.PullRequestPayload, event webhook_module.HookEventType) (request, error) {
 	senderLink := MatrixLinkFormatter(setting.AppURL+url.PathEscape(p.Sender.UserName), p.Sender.UserName)
 	title := fmt.Sprintf("#%d %s", p.Index, p.PullRequest.Title)
 	titleLink := MatrixLinkFormatter(p.PullRequest.HTMLURL, title)
@@ -185,17 +220,17 @@ func (m *MatrixPayload) Review(p *api.PullRequestPayload, event webhook_module.H
 	case api.HookIssueReviewed:
 		action, err := parseHookPullRequestEventType(event)
 		if err != nil {
-			return nil, err
+			return request{}, err
 		}
 
 		text = fmt.Sprintf("[%s] Pull request review %s: %s by %s", repoLink, action, titleLink, senderLink)
 	}
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-// Repository implements PayloadConvertor Repository method
-func (m *MatrixPayload) Repository(p *api.RepositoryPayload) (api.Payloader, error) {
+// Repository implements requestConvertor Repository method
+func (m matrixConvertor) Repository(p *api.RepositoryPayload) (request, error) {
 	senderLink := MatrixLinkFormatter(setting.AppURL+p.Sender.UserName, p.Sender.UserName)
 	repoLink := MatrixLinkFormatter(p.Repository.HTMLURL, p.Repository.FullName)
 	var text string
@@ -206,11 +241,10 @@ func (m *MatrixPayload) Repository(p *api.RepositoryPayload) (api.Payloader, err
 	case api.HookRepoDeleted:
 		text = fmt.Sprintf("[%s] Repository deleted by %s", repoLink, senderLink)
 	}
-
-	return getMatrixPayload(text, nil, m.MsgType), nil
+	return m.newRequest(text)
 }
 
-func (m *MatrixPayload) Package(p *api.PackagePayload) (api.Payloader, error) {
+func (m matrixConvertor) Package(p *api.PackagePayload) (request, error) {
 	senderLink := MatrixLinkFormatter(setting.AppURL+p.Sender.UserName, p.Sender.UserName)
 	packageLink := MatrixLinkFormatter(p.Package.HTMLURL, p.Package.Name)
 	var text string
@@ -222,31 +256,7 @@ func (m *MatrixPayload) Package(p *api.PackagePayload) (api.Payloader, error) {
 		text = fmt.Sprintf("[%s] Package deleted by %s", packageLink, senderLink)
 	}
 
-	return getMatrixPayload(text, nil, m.MsgType), nil
-}
-
-// GetMatrixPayload converts a Matrix webhook into a MatrixPayload
-func GetMatrixPayload(p api.Payloader, event webhook_module.HookEventType, meta string) (api.Payloader, error) {
-	s := new(MatrixPayload)
-
-	matrix := &MatrixMeta{}
-	if err := json.Unmarshal([]byte(meta), &matrix); err != nil {
-		return s, errors.New("GetMatrixPayload meta json:" + err.Error())
-	}
-
-	s.MsgType = messageTypeText[matrix.MessageType]
-
-	return convertPayloader(s, p, event)
-}
-
-func getMatrixPayload(text string, commits []*api.PayloadCommit, msgType string) *MatrixPayload {
-	p := MatrixPayload{}
-	p.FormattedBody = text
-	p.Body = getMessageBody(text)
-	p.Format = "org.matrix.custom.html"
-	p.MsgType = msgType
-	p.Commits = commits
-	return &p
+	return m.newRequest(text)
 }
 
 var urlRegex = regexp.MustCompile(`<a [^>]*?href="([^">]*?)">(.*?)</a>`)

@@ -1,0 +1,62 @@
+#########################################################
+#### legacy hook_task, created but not delivered yet ####
+#########################################################
+- id: 11
+  uuid: uuid11
+  hook_id: 1
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+
+- id: 21
+  uuid: uuid21
+  hook_id: 2
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+
+- id: 31
+  uuid: uuid31
+  hook_id: 3
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+
+- id: 41
+  uuid: uuid41
+  hook_id: 4
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+
+- id: 51
+  uuid: uuid51
+  hook_id: 5
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106005
+
+#####################################
+#### legacy hook_task, delivered ####
+#####################################
+- id: 101
+  uuid: uuid101
+  hook_id: 1
+  payload_content: >
+    {"data":"payload"}
+  event_type: create
+  delivered: 1706106006
+  is_delivered: true
+  request_content: >
+    {
+      "url": "example.org/delivered",
+      "http_method": "DELETE",
+      "headers": {
+        "X-Test": "42"
+      }
+    }

@@ -4,14 +4,18 @@
 package webhook
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"net/http"
+	"net/textproto"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 
@@ -26,13 +30,6 @@ import (
 //  \___|_  / \____/ \____/|__|_ \ |____|  (____  /____  >__|_ \
 //        \/                    \/              \/     \/     \/
 
-// HookRequest represents hook task request information.
-type HookRequest struct {
-	URL        string            `json:"url"`
-	HTTPMethod string            `json:"http_method"`
-	Headers    map[string]string `json:"headers"`
-}
-
 // HookResponse represents hook task response information.
 type HookResponse struct {
 	Status  int               `json:"status"`
@@ -45,16 +42,24 @@ type HookTask struct {
 	ID             int64  `xorm:"pk autoincr"`
 	HookID         int64  `xorm:"index"`
 	UUID           string `xorm:"unique"`
-	api.Payloader  `xorm:"-"`
 	PayloadContent string `xorm:"LONGTEXT"`
 	EventType      webhook_module.HookEventType
 	IsDelivered    bool
 	Delivered      timeutil.TimeStampNano
 
+	// one of GET, PUT, POST, DELETE
+	// According to https://www.iana.org/assignments/http-methods/http-methods.xhtml, it
+	// should be 17 chars (for UPDATEREDIRECTREF), however the storage overhead is likely not
+	// worth the unlikely usage of such an http method.
+	RequestMethod string `xorm:"VARCHAR(6)"`
+	RequestURL    string `xorm:"request_url TEXT"`
+	RequestHeader string `xorm:"LONGTEXT"` // http.Header as text (HTTP wire format)
+	// AddDefaultHeaders will add the default X- headers to the request (event type, id, signature...)
+	// can't be stored in the RequestHeader, because they depend on the UUID of the task.
+	AddDefaultHeaders bool
+
 	// History info.
 	IsSucceed       bool
-	RequestContent  string        `xorm:"LONGTEXT"`
-	RequestInfo     *HookRequest  `xorm:"-"`
 	ResponseContent string        `xorm:"LONGTEXT"`
 	ResponseInfo    *HookResponse `xorm:"-"`
 }
@@ -66,9 +71,6 @@ func init() {
 // BeforeUpdate will be invoked by XORM before updating a record
 // representing this object
 func (t *HookTask) BeforeUpdate() {
-	if t.RequestInfo != nil {
-		t.RequestContent = t.simpleMarshalJSON(t.RequestInfo)
-	}
 	if t.ResponseInfo != nil {
 		t.ResponseContent = t.simpleMarshalJSON(t.ResponseInfo)
 	}
@@ -76,15 +78,6 @@ func (t *HookTask) BeforeUpdate() {
 
 // AfterLoad updates the webhook object upon setting a column
 func (t *HookTask) AfterLoad() {
-	if len(t.RequestContent) == 0 {
-		return
-	}
-
-	t.RequestInfo = &HookRequest{}
-	if err := json.Unmarshal([]byte(t.RequestContent), t.RequestInfo); err != nil {
-		log.Error("Unmarshal RequestContent[%d]: %v", t.ID, err)
-	}
-
 	if len(t.ResponseContent) > 0 {
 		t.ResponseInfo = &HookResponse{}
 		if err := json.Unmarshal([]byte(t.ResponseContent), t.ResponseInfo); err != nil {
@@ -101,6 +94,31 @@ func (t *HookTask) simpleMarshalJSON(v any) string {
 	return string(p)
 }
 
+// HTTPRequest creates an http.Request based on the data of the HookTask
+func (t *HookTask) HTTPRequest(ctx context.Context) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, t.RequestMethod, t.RequestURL, strings.NewReader(t.PayloadContent))
+	if err != nil {
+		return nil, err
+	}
+
+	if t.RequestHeader != "" {
+		tr := textproto.NewReader(bufio.NewReader(strings.NewReader(t.RequestHeader + "\n\n"))) // append newline to prevent EOF error
+		header, err := tr.ReadMIMEHeader()
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse request headers for task[%d]: %v", t.ID, err)
+		}
+		for name, values := range header {
+			// skip existing header values
+			if _, ok := req.Header[name]; ok {
+				continue
+			}
+			req.Header[name] = values
+		}
+	}
+
+	return req, nil
+}
+
 // HookTasks returns a list of hook tasks by given conditions.
 func HookTasks(ctx context.Context, hookID int64, page int) ([]*HookTask, error) {
 	tasks := make([]*HookTask, 0, setting.Webhook.PagingNum)
@@ -115,13 +133,6 @@ func HookTasks(ctx context.Context, hookID int64, page int) ([]*HookTask, error)
 // it handles conversion from Payload to PayloadContent.
 func CreateHookTask(ctx context.Context, t *HookTask) (*HookTask, error) {
 	t.UUID = gouuid.New().String()
-	if t.Payloader != nil {
-		data, err := t.Payloader.JSONPayload()
-		if err != nil {
-			return nil, err
-		}
-		t.PayloadContent = string(data)
-	}
 	if t.Delivered == 0 {
 		t.Delivered = timeutil.TimeStampNanoNow()
 	}
@@ -165,6 +176,11 @@ func ReplayHookTask(ctx context.Context, hookID int64, uuid string) (*HookTask, 
 		HookID:         task.HookID,
 		PayloadContent: task.PayloadContent,
 		EventType:      task.EventType,
+
+		RequestMethod:     task.RequestMethod,
+		RequestURL:        task.RequestURL,
+		RequestHeader:     task.RequestHeader,
+		AddDefaultHeaders: task.AddDefaultHeaders,
 	})
 }
 

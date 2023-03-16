@@ -8,6 +8,7 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+// TODO: replace usage of PayloadConvertor with requestConvertor
 // PayloadConvertor defines the interface to convert system webhook payload to external payload
 type PayloadConvertor interface {
 	api.Payloader
@@ -25,6 +26,7 @@ type PayloadConvertor interface {
 	Package(*api.PackagePayload) (api.Payloader, error)
 }
 
+// TODO: replace usage of convertPayloader with convertRequest
 func convertPayloader(s PayloadConvertor, p api.Payloader, event webhook_module.HookEventType) (api.Payloader, error) {
 	switch event {
 	case webhook_module.HookEventCreate:
