@@ -21,6 +21,10 @@ From a [Semantic Versioning](https://semver.org/) standpoint, all Forgejo releas
 
 When publishing the vX.Y.Z-N release, the following steps must be followed:
 
+### Semantic version
+
+* Update the FORGEJO_VERSION variable in the Makefile
+
 ### Create a milestone and a check list
 
 * Create a `Forgejo vX.X.Z-N` milestone set to the date of the release
