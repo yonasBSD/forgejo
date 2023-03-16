@@ -45,6 +45,12 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
    * [Documentation](https://forgejo.org/docs/latest/)
      The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
 
+   * [Semantic version](https://forgejo.org/docs/latest/user/semver)
+     In addition to the Forgejo release number, a [semantic version](https://semver.org/#semantic-versioning-200) number can be obtained from the
+     `/api/forgejo/v1/version` and now reflects the Gitea version that Forgejo depends on (e.g. `3.0.0+0-gitea-1.19.0`).
+
+     [Read more about semantic versions](https://forgejo.codeberg.page/docs/v1.19/user/semver)
+
    * [Webhook authorization header](https://codeberg.org/forgejo/forgejo/commit/b6e81357bd6fb80f8ba94c513f89a210beb05313)
      Forgejo webhooks can be configured to send an [authorization header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization) to the target.
 
