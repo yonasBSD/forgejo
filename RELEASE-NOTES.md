@@ -116,6 +116,13 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
      It is now possible to disable releases on a repository, in the same way it is possible to disable issues or packages.
 
+   * [Git reflog support](https://codeberg.org/forgejo/forgejo/commit/757b4c17e)
+     The [git reflog](https://git-scm.com/docs/git-reflog) are now active by default on all repositories and
+     kept around for 90 days. It allows the Forgejo admin to recover the previous tip of a branch after an
+     accidental force push.
+
+     [Read more about reflog](https://forgejo.org/docs/v1.19/admin/config-cheat-sheet/#git---reflog-settings-gitreflog)
+
    * [Actions](https://codeberg.org/forgejo/forgejo/commit/4011821c946e8db032be86266dd9364ccb204118): an experimental CI/CD
 
      It appears for the first time in this Forgejo release but is not yet fit for production. It is not fully implemented and may be insecure. However, as long as it is not enabled, it presents no risk to existing Forgejo instances.
