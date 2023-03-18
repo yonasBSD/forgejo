@@ -12,7 +12,7 @@ import (
 
 // Version defines model for Version.
 type Version struct {
-	Number *string `json:"number,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
