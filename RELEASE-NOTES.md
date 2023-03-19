@@ -64,7 +64,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
      [Read more about incoming emails](https://forgejo.org/docs/v1.19/admin/incoming-email/)
 
    * Packages registries
-     * Support for [Cargo](https://forgejo.org/docs/v1.19/admin/packages/cargo/), [Conda](https://forgejo.org/docs/v1.19/admin/packages/conda/) and [Chef](https://forgejo.org/docs/v1.19/admin/packages/chef/)
+     * Support for [Cargo](https://forgejo.org/docs/v1.19/user/packages/cargo/), [Conda](https://forgejo.org/docs/v1.19/user/packages/conda/) and [Chef](https://forgejo.org/docs/v1.19/user/packages/chef/)
      * [Cleanup rules](https://codeberg.org/forgejo/forgejo/commit/32db62515)
      * [Quota limits](https://codeberg.org/forgejo/forgejo/commit/20674dd05)
 
