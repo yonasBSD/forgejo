@@ -4,9 +4,9 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## 3.0.0+gitea-1.19.0
+## 1.19.0-2
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v3.0.0+gitea-1.19.0` release can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.0-2` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo/
@@ -46,8 +46,8 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
      The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
 
    * [Semantic version](https://forgejo.org/docs/latest/user/semver)
-     The Forgejo release number is now a [SemVer](https://semver.org/#semantic-versioning-200)-compliant one that can be obtained from the
-     `/api/forgejo/v1/version` and reflects the Gitea version that Forgejo depends on (e.g. `3.0.0+0-gitea-1.19.0`).
+     In addition to the Forgejo release number, a [semantic version](https://semver.org/#semantic-versioning-200) number can be obtained from the
+     `/api/forgejo/v1/version` and now reflects the Gitea version that Forgejo depends on (e.g. `3.0.0+0-gitea-1.19.0`).
 
      [Read more about semantic versions](https://forgejo.codeberg.page/docs/v1.19/user/semver)
 
