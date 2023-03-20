@@ -40,14 +40,16 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
     The algorithm for validating user names was modified and some users may have invalid names. The command `forgejo doctor --run check-user-names` will list all of them so they can be renamed.
 
     If a Forgejo instance has users or organizations named `forgejo-actions` and `gitea-actions`, they will also need to be renamed before the upgrade. They are now reserved names for the experimental internal CI/CD named `Actions`.
+
+  * [Semantic version](https://forgejo.org/docs/latest/user/semver)
+
+    Since v1.18.5, in addition to the Forgejo release number, a [semantic version](https://semver.org/#semantic-versioning-200) number (e.g. `v3.0.0`) can be obtained from the `number` key of a new `/api/forgejo/v1/version` endpoint.
+
+    Now, it reflects the Gitea version that Forgejo depends on, is no longer prefixed with `v` (e.g. `3.0.0+0-gitea-1.19.0`), and can be obtained from the `version` key of the same endpoint.
 * Features
 
   * [Documentation](https://forgejo.org/docs/latest/)
     The first version of the [Forgejo documentation](https://forgejo.org/docs/latest/) is available and covers the administration of Forgejo, from installation to troubleshooting.
-
-  * [Semantic version](https://forgejo.org/docs/latest/user/semver)
-    In addition to the Forgejo release number, a [semantic version](https://semver.org/#semantic-versioning-200) number can be obtained from the
-    `/api/forgejo/v1/version` and now reflects the Gitea version that Forgejo depends on (e.g. `3.0.0+0-gitea-1.19.0`).
 
     [Read more about semantic versions](https://forgejo.codeberg.page/docs/v1.19/user/semver)
 
