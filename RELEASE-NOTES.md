@@ -97,7 +97,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
      <img src="./releases/images/forgejo-v1.19-oidc-part2.png" alt="OIDC Group mapping part2" width="500" />
 
-     [Read more about OIDC groups mapping](https://forgejo.org/docs/v1.19/admin/oauth2-provider/#endpoints)
+     [Read more about OIDC groups mapping](https://forgejo.org/docs/v1.19/user/oauth2-provider/#endpoints)
 
    * [RSS feed for releases and tags](https://codeberg.org/forgejo/forgejo/commit/48d71b7d6)
 
