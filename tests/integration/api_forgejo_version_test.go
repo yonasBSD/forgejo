@@ -21,5 +21,5 @@ func TestAPIForgejoVersion(t *testing.T) {
 
 	var version v1.Version
 	DecodeJSON(t, resp, &version)
-	assert.Equal(t, "development", *version.Number)
+	assert.Equal(t, "development", *version.Version)
 }

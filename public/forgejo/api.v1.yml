@@ -35,6 +35,6 @@ components:
     Version:
       type: object
       properties:
-        number:
+        version:
           type: string
 
