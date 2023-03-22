@@ -23,6 +23,7 @@ NOTE: If your issue is a security concern, please email security@forgejo.org (GP
    directly to confirm the issue still persists without those services.
 -->
 
+- Can you reproduce the problem on [Forgejo Next](https://next.forgejo.org/)?
 - Forgejo version (or commit ref):
 - Git version:
 - Operating system:
@@ -40,6 +41,9 @@ If you are using a package or systemd tell us what distribution you are using.
 
 ## Description
 <!-- Please describe the issue you are having as clearly and succinctly as possible. -->
+
+## Reproducing
+<!-- Please explain how to cause the problem to occur on demand if possible. -->
 
 ## Logs
 <!--
