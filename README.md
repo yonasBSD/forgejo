@@ -35,12 +35,10 @@ If you like any of the following, Forgejo is literally meant for you:
 - Privacy: From update checker to default settings: Forgejo is built to be **privacy first** for you and your crew.
 - Federation: (WIP) We are actively working to connect software forges with each other through **ActivityPub**,
   and create a collaborative network of personal instances.
-  Interested? [Read more](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/WORKFLOW.md#federation-https-codeberg-org-forgejo-forgejo-issues-labels-79349)
 
 ## Learn more
 
-Subscribe to releases and blog post on [our website](https://forgejo.org), <a href="https://floss.social/@forgejo" rel="me">find us on the Fediverse</a> or hop into [our Matrix room](https://matrix.to/#/#forgejo-chat:matrix.org) if you have any questions or want to get involved.
-
+Dive into the [documentation](https://forgejo.org/docs/latest/), subscribe to releases and blog post on [our website](https://forgejo.org), <a href="https://floss.social/@forgejo" rel="me">find us on the Fediverse</a> or hop into [our Matrix room](https://matrix.to/#/#forgejo-chat:matrix.org) if you have any questions or want to get involved.
 
 ## Get involved
 

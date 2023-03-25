@@ -7,7 +7,7 @@ Dedicated repositories in the [Forgejo organization](https://codeberg.org/forgej
 - the [Code of Conduct](https://codeberg.org/forgejo/code-of-conduct)
 - the [sustainability and funding](https://codeberg.org/forgejo/sustainability).
 
-Other discussions regarding all **non technical aspects** of Forgejo, such as the governance, happen in the [meta issue tracker](https://codeberg.org/forgejo/meta/issues) and in the [matrix chatroom](https://matrix.to/#/#forgejo-chat:matrix.org).
+Other discussions regarding all **non technical aspects** of Forgejo, such as the governance, happen in a dedicated [issue tracker](https://codeberg.org/forgejo/discussions/issues) and in the [matrix chatroom](https://matrix.to/#/#forgejo-chat:matrix.org).
 
 # Security
 
