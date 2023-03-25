@@ -6,6 +6,7 @@ Sensitive security-related issues should be reported to [security@forgejo.org](m
 
 ## For everyone involved
 
+- [Documentation](https://forgejo.org/docs/latest/)
 - [Code of Conduct](CONTRIBUTING/COC.md)
 - [Bugs, features, security and others discussions](CONTRIBUTING/DISCUSSIONS.md)
 - [Governance](CONTRIBUTING/GOVERNANCE.md)
