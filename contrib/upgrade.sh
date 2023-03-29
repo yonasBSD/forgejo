@@ -66,12 +66,10 @@ fi
 
 require curl xz sha256sum "$sudocmd"
 
-lastrelease=$(curl --connect-timeout 10 -sL 'https://codeberg.org/api/v1/repos/forgejo/forgejo/releases?draft=false&pre-release=false&limit=1' -H 'accept: application/json')
-
 # select version to install
 if [[ -z "${forgejoversion:-}" ]]; then
   require jq
-  forgejoversion=$(echo "$lastrelease" | jq -r '.[0].tag_name | sub("v"; "")')
+  forgejoversion=$(curl --connect-timeout 10 -sL 'https://codeberg.org/api/v1/repos/forgejo/forgejo/releases?draft=false&pre-release=false&limit=1' -H 'accept: application/json' | jq -r '.[0].tag_name | sub("v"; "")')
   echo "Latest available version is $forgejoversion"
 fi
 
