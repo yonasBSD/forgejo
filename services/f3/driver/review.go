@@ -110,7 +110,8 @@ func (o *Review) FromFormat(review *format.Review) {
 	}
 	*o = Review{
 		Review: issues_model.Review{
-			ID: review.GetID(),
+			ID:         review.GetID(),
+			ReviewerID: review.ReviewerID.GetID(),
 			Reviewer: &user_model.User{
 				ID: review.ReviewerID.GetID(),
 			},
@@ -191,12 +192,6 @@ func (o *ReviewProvider) Put(ctx context.Context, user *User, project *Project, 
 		comment.ID = 0
 	}
 	r.IssueID = pullRequest.IssueID
-	// this is a workaround because the id remapping logic is missing, wait until it is implemented and remove it
-	u, err := user_model.GetUserByName(ctx, r.Reviewer.Name)
-	if err != nil {
-		panic(err)
-	}
-	r.ReviewerID = u.ID
 	if err := issues_model.InsertReviews([]*issues_model.Review{r}); err != nil {
 		panic(err)
 	}

@@ -61,7 +61,7 @@ func TestF3(t *testing.T) {
 		fixture.NewAsset()
 		fixture.NewIssueComment(nil)
 		fixture.NewPullRequestComment()
-		//		fixture.NewReview()
+		fixture.NewReview()
 		fixture.NewIssueReaction()
 		fixture.NewCommentReaction()
 
@@ -109,7 +109,7 @@ func TestF3(t *testing.T) {
 		assert.Contains(t, files, "/release/")
 		assert.Contains(t, files, "/asset/")
 		assert.Contains(t, files, "/comment/")
-		//		assert.Contains(t, files, "/review/")
+		assert.Contains(t, files, "/review/")
 		assert.Contains(t, files, "/reaction/")
 		//		f3_util.Command(context.Background(), "cp", "-a", f3.GetDirectory(), "abc")
 	})
