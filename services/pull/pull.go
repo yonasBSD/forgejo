@@ -257,7 +257,7 @@ func AddTestPullRequestTask(doer *user_model.User, repoID int64, branch string, 
 		// If you don't let it run all the way then you will lose data
 		// TODO: graceful: AddTestPullRequestTask needs to become a queue!
 
-		prs, err := issues_model.GetUnmergedPullRequestsByHeadInfo(repoID, branch, true)
+		prs, err := issues_model.GetUnmergedPullRequestsByHeadInfo(repoID, branch, false)
 		if err != nil {
 			log.Error("Find pull requests [head_repo_id: %d, head_branch: %s]: %v", repoID, branch, err)
 			return
