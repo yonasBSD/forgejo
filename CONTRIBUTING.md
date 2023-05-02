@@ -6,19 +6,18 @@ Sensitive security-related issues should be reported to [security@forgejo.org](m
 
 ## For everyone involved
 
-- [Documentation](https://forgejo.org/docs/latest/)
-- [Code of Conduct](CONTRIBUTING/COC.md)
-- [Bugs, features, security and others discussions](CONTRIBUTING/DISCUSSIONS.md)
-- [Governance](CONTRIBUTING/GOVERNANCE.md)
+- [Documentation](https://forgejo.org/docs/next/)
+- [Code of Conduct](https://forgejo.org/docs/next/developer/COC/)
+- [Bugs, features, security and others discussions](https://forgejo.org/docs/next/developer/DISCUSSIONS/)
+- [Governance](https://forgejo.org/docs/next/developer/GOVERNANCE/)
 - [Sustainability and funding](https://codeberg.org/forgejo/sustainability/src/branch/master/README.md)
 
 ## For contributors
 
-- [Developer Certificate of Origin (DCO)](CONTRIBUTING/DCO.md)
-- [Development workflow](CONTRIBUTING/WORKFLOW.md)
+- [Developer Certificate of Origin (DCO)](https://forgejo.org/docs/next/developer/DCO/)
+- [Development workflow](https://forgejo.org/docs/next/developer/WORKFLOW/)
 
 ## For maintainers
 
-- [Release management](CONTRIBUTING/RELEASE.md)
-- [Secrets](CONTRIBUTING/SECRETS.md)
-
+- [Release management](https://forgejo.org/docs/next/developer/RELEASE/)
+- [Secrets](https://forgejo.org/docs/next/developer/SECRETS/)
