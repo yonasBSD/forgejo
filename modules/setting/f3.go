@@ -11,7 +11,7 @@ var (
 	F3 = struct {
 		Enabled bool
 	}{
-		Enabled: true,
+		Enabled: false,
 	}
 )
 

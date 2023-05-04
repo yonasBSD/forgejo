@@ -24,6 +24,7 @@ import (
 func Test_CmdF3(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
+		setting.F3.Enabled = true
 		setting.Migrations.AllowLocalNetworks = true
 		// without migrations.Init() AllowLocalNetworks = true is not effective and
 		// a http call fails with "...migration can only call allowed HTTP servers..."
