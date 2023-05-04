@@ -25,6 +25,7 @@ import (
 func TestF3(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
+		setting.F3.Enabled = true
 		setting.Migrations.AllowLocalNetworks = true
 		AppVer := setting.AppVer
 		// Gitea SDK (go-sdk) need to parse the AppVer from server response, so we must set it to a valid version string.
