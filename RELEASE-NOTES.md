@@ -31,7 +31,7 @@ This stable release contains security fixes.
 
   The most prominent one is described here, others can be found in the list of commits included in the release as described above.
 
-  * [Allow user that are not signed in to browse the tag list](https://codeberg.org/forgejo/forgejo/commit/e76b3f72b23bf778a562682d829744451b27d615). Requiring users to be signed in to view the tag list was a regression introduced in Forgejo v1.19.2-0.
+  * [Allow users that are not signed in to browse the tag list](https://codeberg.org/forgejo/forgejo/commit/e76b3f72b23bf778a562682d829744451b27d615). Requiring users to be signed in to view the tag list was a regression introduced in Forgejo v1.19.2-0.
 
 ## 1.19.2-0
 
