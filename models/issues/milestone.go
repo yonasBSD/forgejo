@@ -190,8 +190,12 @@ func updateMilestone(ctx context.Context, m *Milestone) error {
 
 // UpdateMilestoneCounters calculates NumIssues, NumClosesIssues and Completeness
 func UpdateMilestoneCounters(ctx context.Context, id int64) error {
+	return UpdateMilestoneCountersWithDate(ctx, id, false, 0)
+}
+
+func UpdateMilestoneCountersWithDate(ctx context.Context, id int64, noAutoTime bool, updatedUnix timeutil.TimeStamp) error {
 	e := db.GetEngine(ctx)
-	_, err := e.ID(id).
+	sess := e.ID(id).
 		SetExpr("num_issues", builder.Select("count(*)").From("issue").Where(
 			builder.Eq{"milestone_id": id},
 		)).
@@ -200,11 +204,15 @@ func UpdateMilestoneCounters(ctx context.Context, id int64) error {
 				"milestone_id": id,
 				"is_closed":    true,
 			},
-		)).
-		Update(&Milestone{})
+		))
+	if noAutoTime {
+		sess.SetExpr("updated_unix", updatedUnix).NoAutoTime()
+	}
+	_, err := sess.Update(&Milestone{})
 	if err != nil {
 		return err
 	}
+
 	_, err = e.Exec("UPDATE `milestone` SET completeness=100*num_closed_issues/(CASE WHEN num_issues > 0 THEN num_issues ELSE 1 END) WHERE id=?",
 		id,
 	)

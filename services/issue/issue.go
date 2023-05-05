@@ -27,7 +27,7 @@ func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_mo
 	}
 
 	for _, assigneeID := range assigneeIDs {
-		if err := AddAssigneeIfNotAssigned(ctx, issue, issue.Poster, assigneeID); err != nil {
+		if err := AddAssigneeIfNotAssigned(ctx, issue, issue.Poster, assigneeID, false); err != nil {
 			return err
 		}
 	}
@@ -63,11 +63,11 @@ func ChangeTitle(ctx context.Context, issue *issues_model.Issue, doer *user_mode
 }
 
 // ChangeIssueRef changes the branch of this issue, as the given user.
-func ChangeIssueRef(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, ref string) error {
+func ChangeIssueRef(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, ref string, noAutoTime bool) error {
 	oldRef := issue.Ref
 	issue.Ref = ref
 
-	if err := issues_model.ChangeIssueRef(issue, doer, oldRef); err != nil {
+	if err := issues_model.ChangeIssueRef(issue, doer, oldRef, noAutoTime); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func ChangeIssueRef(ctx context.Context, issue *issues_model.Issue, doer *user_m
 // "assignees" (array): Logins for Users to assign to this issue.
 // Pass one or more user logins to replace the set of assignees on this Issue.
 // Send an empty array ([]) to clear all assignees from the Issue.
-func UpdateAssignees(ctx context.Context, issue *issues_model.Issue, oneAssignee string, multipleAssignees []string, doer *user_model.User) (err error) {
+func UpdateAssignees(ctx context.Context, issue *issues_model.Issue, oneAssignee string, multipleAssignees []string, doer *user_model.User, noAutoTime bool) (err error) {
 	var allNewAssignees []*user_model.User
 
 	// Keep the old assignee thingy for compatibility reasons
@@ -112,7 +112,7 @@ func UpdateAssignees(ctx context.Context, issue *issues_model.Issue, oneAssignee
 	}
 
 	// Delete all old assignees not passed
-	if err = DeleteNotPassedAssignee(ctx, issue, doer, allNewAssignees); err != nil {
+	if err = DeleteNotPassedAssignee(ctx, issue, doer, allNewAssignees, noAutoTime); err != nil {
 		return err
 	}
 
@@ -122,7 +122,7 @@ func UpdateAssignees(ctx context.Context, issue *issues_model.Issue, oneAssignee
 	// has access to the repo.
 	for _, assignee := range allNewAssignees {
 		// Extra method to prevent double adding (which would result in removing)
-		err = AddAssigneeIfNotAssigned(ctx, issue, doer, assignee.ID)
+		err = AddAssigneeIfNotAssigned(ctx, issue, doer, assignee.ID, noAutoTime)
 		if err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func DeleteIssue(ctx context.Context, doer *user_model.User, gitRepo *git.Reposi
 
 // AddAssigneeIfNotAssigned adds an assignee only if he isn't already assigned to the issue.
 // Also checks for access of assigned user
-func AddAssigneeIfNotAssigned(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assigneeID int64) (err error) {
+func AddAssigneeIfNotAssigned(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assigneeID int64, noAutoTime bool) (err error) {
 	assignee, err := user_model.GetUserByID(ctx, assigneeID)
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func AddAssigneeIfNotAssigned(ctx context.Context, issue *issues_model.Issue, do
 		return repo_model.ErrUserDoesNotHaveAccessToRepo{UserID: assigneeID, RepoName: issue.Repo.Name}
 	}
 
-	_, _, err = ToggleAssignee(ctx, issue, doer, assigneeID)
+	_, _, err = ToggleAssignee(ctx, issue, doer, assigneeID, noAutoTime)
 	if err != nil {
 		return err
 	}

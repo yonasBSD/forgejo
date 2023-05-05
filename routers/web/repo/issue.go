@@ -2057,7 +2057,7 @@ func UpdateIssueRef(ctx *context.Context) {
 
 	ref := ctx.FormTrim("ref")
 
-	if err := issue_service.ChangeIssueRef(ctx, issue, ctx.Doer, ref); err != nil {
+	if err := issue_service.ChangeIssueRef(ctx, issue, ctx.Doer, ref, false); err != nil {
 		ctx.ServerError("ChangeRef", err)
 		return
 	}
@@ -2135,7 +2135,7 @@ func UpdateIssueDeadline(ctx *context.Context) {
 		deadlineUnix = timeutil.TimeStamp(deadline.Unix())
 	}
 
-	if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer); err != nil {
+	if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer, false); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateIssueDeadline", err.Error())
 		return
 	}
@@ -2157,7 +2157,7 @@ func UpdateIssueMilestone(ctx *context.Context) {
 			continue
 		}
 		issue.MilestoneID = milestoneID
-		if err := issue_service.ChangeMilestoneAssign(issue, ctx.Doer, oldMilestoneID); err != nil {
+		if err := issue_service.ChangeMilestoneAssign(issue, ctx.Doer, oldMilestoneID, false); err != nil {
 			ctx.ServerError("ChangeMilestoneAssign", err)
 			return
 		}
@@ -2181,7 +2181,7 @@ func UpdateIssueAssignee(ctx *context.Context) {
 	for _, issue := range issues {
 		switch action {
 		case "clear":
-			if err := issue_service.DeleteNotPassedAssignee(ctx, issue, ctx.Doer, []*user_model.User{}); err != nil {
+			if err := issue_service.DeleteNotPassedAssignee(ctx, issue, ctx.Doer, []*user_model.User{}, false); err != nil {
 				ctx.ServerError("ClearAssignees", err)
 				return
 			}
@@ -2202,7 +2202,7 @@ func UpdateIssueAssignee(ctx *context.Context) {
 				return
 			}
 
-			_, _, err = issue_service.ToggleAssignee(ctx, issue, ctx.Doer, assigneeID)
+			_, _, err = issue_service.ToggleAssignee(ctx, issue, ctx.Doer, assigneeID, false)
 			if err != nil {
 				ctx.ServerError("ToggleAssignee", err)
 				return

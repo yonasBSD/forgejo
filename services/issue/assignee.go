@@ -17,7 +17,7 @@ import (
 )
 
 // DeleteNotPassedAssignee deletes all assignees who aren't passed via the "assignees" array
-func DeleteNotPassedAssignee(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assignees []*user_model.User) (err error) {
+func DeleteNotPassedAssignee(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assignees []*user_model.User, noAutoTime bool) (err error) {
 	var found bool
 	oriAssignes := make([]*user_model.User, len(issue.Assignees))
 	_ = copy(oriAssignes, issue.Assignees)
@@ -33,7 +33,7 @@ func DeleteNotPassedAssignee(ctx context.Context, issue *issues_model.Issue, doe
 
 		if !found {
 			// This function also does comments and hooks, which is why we call it separately instead of directly removing the assignees here
-			if _, _, err := ToggleAssignee(ctx, issue, doer, assignee.ID); err != nil {
+			if _, _, err := ToggleAssignee(ctx, issue, doer, assignee.ID, noAutoTime); err != nil {
 				return err
 			}
 		}
@@ -43,8 +43,8 @@ func DeleteNotPassedAssignee(ctx context.Context, issue *issues_model.Issue, doe
 }
 
 // ToggleAssignee changes a user between assigned and not assigned for this issue, and make issue comment for it.
-func ToggleAssignee(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assigneeID int64) (removed bool, comment *issues_model.Comment, err error) {
-	removed, comment, err = issues_model.ToggleIssueAssignee(ctx, issue, doer, assigneeID)
+func ToggleAssignee(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, assigneeID int64, noAutoTime bool) (removed bool, comment *issues_model.Comment, err error) {
+	removed, comment, err = issues_model.ToggleIssueAssignee(ctx, issue, doer, assigneeID, noAutoTime)
 	if err != nil {
 		return
 	}

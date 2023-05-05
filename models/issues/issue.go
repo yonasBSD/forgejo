@@ -638,9 +638,15 @@ func ReplaceIssueLabels(issue *Issue, labels []*Label, doer *user_model.User) (e
 }
 
 // UpdateIssueCols updates cols of issue
-func UpdateIssueCols(ctx context.Context, issue *Issue, cols ...string) error {
-	if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(cols...).Update(issue); err != nil {
-		return err
+func UpdateIssueCols(ctx context.Context, issue *Issue, noAutoTime bool, cols ...string) error {
+	if noAutoTime {
+		if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(cols...).NoAutoTime().Update(issue); err != nil {
+			return err
+		}
+	} else {
+		if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(cols...).Update(issue); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -665,10 +671,10 @@ func changeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User,
 	}
 
 	issue.IsClosed = isClosed
-	return doChangeIssueStatus(ctx, issue, doer, isMergePull)
+	return doChangeIssueStatus(ctx, issue, doer, isMergePull, false)
 }
 
-func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User, isMergePull bool) (*Comment, error) {
+func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User, isMergePull bool, noAutoTime bool) (*Comment, error) {
 	// Check for open dependencies
 	if issue.IsClosed && issue.Repo.IsDependenciesEnabled(ctx) {
 		// only check if dependencies are enabled and we're about to close an issue, otherwise reopening an issue would fail when there are unsatisfied dependencies
@@ -683,12 +689,16 @@ func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.Use
 	}
 
 	if issue.IsClosed {
-		issue.ClosedUnix = timeutil.TimeStampNow()
+		if noAutoTime {
+			issue.ClosedUnix = issue.UpdatedUnix
+		} else {
+			issue.ClosedUnix = timeutil.TimeStampNow()
+		}
 	} else {
 		issue.ClosedUnix = 0
 	}
 
-	if err := UpdateIssueCols(ctx, issue, "is_closed", "closed_unix"); err != nil {
+	if err := UpdateIssueCols(ctx, issue, noAutoTime, "is_closed", "closed_unix"); err != nil {
 		return nil, err
 	}
 
@@ -704,7 +714,7 @@ func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.Use
 
 	// Update issue count of milestone
 	if issue.MilestoneID > 0 {
-		if err := UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
+		if err := UpdateMilestoneCountersWithDate(ctx, issue.MilestoneID, noAutoTime, issue.UpdatedUnix); err != nil {
 			return nil, err
 		}
 	}
@@ -723,10 +733,12 @@ func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.Use
 	}
 
 	return CreateComment(ctx, &CreateCommentOptions{
-		Type:  cmtType,
-		Doer:  doer,
-		Repo:  issue.Repo,
-		Issue: issue,
+		Type:        cmtType,
+		Doer:        doer,
+		Repo:        issue.Repo,
+		Issue:       issue,
+		CreatedUnix: issue.UpdatedUnix,
+		NoAutoTime:  noAutoTime,
 	})
 }
 
@@ -750,7 +762,7 @@ func ChangeIssueTitle(ctx context.Context, issue *Issue, doer *user_model.User, 
 	}
 	defer committer.Close()
 
-	if err = UpdateIssueCols(ctx, issue, "name"); err != nil {
+	if err = UpdateIssueCols(ctx, issue, false, "name"); err != nil {
 		return fmt.Errorf("updateIssueCols: %w", err)
 	}
 
@@ -769,7 +781,7 @@ func ChangeIssueTitle(ctx context.Context, issue *Issue, doer *user_model.User, 
 	if _, err = CreateComment(ctx, opts); err != nil {
 		return fmt.Errorf("createComment: %w", err)
 	}
-	if err = issue.AddCrossReferences(ctx, doer, true); err != nil {
+	if err = issue.AddCrossReferences(ctx, doer, true, false); err != nil {
 		return err
 	}
 
@@ -777,14 +789,14 @@ func ChangeIssueTitle(ctx context.Context, issue *Issue, doer *user_model.User, 
 }
 
 // ChangeIssueRef changes the branch of this issue, as the given user.
-func ChangeIssueRef(issue *Issue, doer *user_model.User, oldRef string) (err error) {
+func ChangeIssueRef(issue *Issue, doer *user_model.User, oldRef string, noAutoTime bool) (err error) {
 	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
 	defer committer.Close()
 
-	if err = UpdateIssueCols(ctx, issue, "ref"); err != nil {
+	if err = UpdateIssueCols(ctx, issue, noAutoTime, "ref"); err != nil {
 		return fmt.Errorf("updateIssueCols: %w", err)
 	}
 
@@ -795,12 +807,14 @@ func ChangeIssueRef(issue *Issue, doer *user_model.User, oldRef string) (err err
 	newRefFriendly := strings.TrimPrefix(issue.Ref, git.BranchPrefix)
 
 	opts := &CreateCommentOptions{
-		Type:   CommentTypeChangeIssueRef,
-		Doer:   doer,
-		Repo:   issue.Repo,
-		Issue:  issue,
-		OldRef: oldRefFriendly,
-		NewRef: newRefFriendly,
+		Type:        CommentTypeChangeIssueRef,
+		Doer:        doer,
+		Repo:        issue.Repo,
+		Issue:       issue,
+		OldRef:      oldRefFriendly,
+		NewRef:      newRefFriendly,
+		CreatedUnix: issue.UpdatedUnix,
+		NoAutoTime:  noAutoTime,
 	}
 	if _, err = CreateComment(ctx, opts); err != nil {
 		return fmt.Errorf("createComment: %w", err)
@@ -867,7 +881,7 @@ func ChangeIssueContent(issue *Issue, doer *user_model.User, content string) (er
 
 	issue.Content = content
 
-	if err = UpdateIssueCols(ctx, issue, "content"); err != nil {
+	if err = UpdateIssueCols(ctx, issue, false, "content"); err != nil {
 		return fmt.Errorf("UpdateIssueCols: %w", err)
 	}
 
@@ -876,7 +890,7 @@ func ChangeIssueContent(issue *Issue, doer *user_model.User, content string) (er
 		return fmt.Errorf("SaveIssueContentHistory: %w", err)
 	}
 
-	if err = issue.AddCrossReferences(ctx, doer, true); err != nil {
+	if err = issue.AddCrossReferences(ctx, doer, true, false); err != nil {
 		return fmt.Errorf("addCrossReferences: %w", err)
 	}
 
@@ -1043,7 +1057,7 @@ func NewIssueWithIndex(ctx context.Context, doer *user_model.User, opts NewIssue
 		return err
 	}
 
-	return opts.Issue.AddCrossReferences(ctx, doer, false)
+	return opts.Issue.AddCrossReferences(ctx, doer, false, false)
 }
 
 // NewIssue creates new issue with labels for repository.
@@ -2016,7 +2030,7 @@ func SearchIssueIDsByKeyword(ctx context.Context, kw string, repoIDs []int64, li
 // UpdateIssueByAPI updates all allowed fields of given issue.
 // If the issue status is changed a statusChangeComment is returned
 // similarly if the title is changed the titleChanged bool is set to true
-func UpdateIssueByAPI(issue *Issue, doer *user_model.User) (statusChangeComment *Comment, titleChanged bool, err error) {
+func UpdateIssueByAPI(issue *Issue, doer *user_model.User, noAutoTime bool) (statusChangeComment *Comment, titleChanged bool, err error) {
 	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return nil, false, err
@@ -2033,11 +2047,20 @@ func UpdateIssueByAPI(issue *Issue, doer *user_model.User) (statusChangeComment 
 		return nil, false, err
 	}
 
-	if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(
-		"name", "content", "milestone_id", "priority",
-		"deadline_unix", "updated_unix", "is_locked").
-		Update(issue); err != nil {
-		return nil, false, err
+	if noAutoTime {
+		if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(
+			"name", "content", "milestone_id", "priority",
+			"deadline_unix", "updated_unix", "is_locked").
+			NoAutoTime().Update(issue); err != nil {
+			return nil, false, err
+		}
+	} else {
+		if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(
+			"name", "content", "milestone_id", "priority",
+			"deadline_unix", "updated_unix", "is_locked").
+			Update(issue); err != nil {
+			return nil, false, err
+		}
 	}
 
 	titleChanged = currentIssue.Title != issue.Title
@@ -2049,6 +2072,8 @@ func UpdateIssueByAPI(issue *Issue, doer *user_model.User) (statusChangeComment 
 			Issue:    issue,
 			OldTitle: currentIssue.Title,
 			NewTitle: issue.Title,
+			CreatedUnix: issue.UpdatedUnix,
+			NoAutoTime:  noAutoTime,
 		}
 		_, err := CreateComment(ctx, opts)
 		if err != nil {
@@ -2057,20 +2082,20 @@ func UpdateIssueByAPI(issue *Issue, doer *user_model.User) (statusChangeComment 
 	}
 
 	if currentIssue.IsClosed != issue.IsClosed {
-		statusChangeComment, err = doChangeIssueStatus(ctx, issue, doer, false)
+		statusChangeComment, err = doChangeIssueStatus(ctx, issue, doer, false, noAutoTime)
 		if err != nil {
 			return nil, false, err
 		}
 	}
 
-	if err := issue.AddCrossReferences(ctx, doer, true); err != nil {
+	if err := issue.AddCrossReferences(ctx, doer, true, noAutoTime); err != nil {
 		return nil, false, err
 	}
 	return statusChangeComment, titleChanged, committer.Commit()
 }
 
 // UpdateIssueDeadline updates an issue deadline and adds comments. Setting a deadline to 0 means deleting it.
-func UpdateIssueDeadline(issue *Issue, deadlineUnix timeutil.TimeStamp, doer *user_model.User) (err error) {
+func UpdateIssueDeadline(issue *Issue, deadlineUnix timeutil.TimeStamp, doer *user_model.User, noAutoTime bool) (err error) {
 	// if the deadline hasn't changed do nothing
 	if issue.DeadlineUnix == deadlineUnix {
 		return nil
@@ -2082,12 +2107,12 @@ func UpdateIssueDeadline(issue *Issue, deadlineUnix timeutil.TimeStamp, doer *us
 	defer committer.Close()
 
 	// Update the deadline
-	if err = UpdateIssueCols(ctx, &Issue{ID: issue.ID, DeadlineUnix: deadlineUnix}, "deadline_unix"); err != nil {
+	if err = UpdateIssueCols(ctx, &Issue{ID: issue.ID, DeadlineUnix: deadlineUnix}, noAutoTime, "deadline_unix"); err != nil {
 		return err
 	}
 
 	// Make the comment
-	if _, err = createDeadlineComment(ctx, doer, issue, deadlineUnix); err != nil {
+	if _, err = createDeadlineComment(ctx, doer, issue, deadlineUnix, noAutoTime); err != nil {
 		return fmt.Errorf("createRemovedDueDateComment: %w", err)
 	}
 

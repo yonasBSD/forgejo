@@ -813,8 +813,16 @@ func CreateComment(ctx context.Context, opts *CreateCommentOptions) (_ *Comment,
 		IsForcePush:      opts.IsForcePush,
 		Invalidated:      opts.Invalidated,
 	}
-	if _, err = e.Insert(comment); err != nil {
-		return nil, err
+	if opts.NoAutoTime {
+		comment.CreatedUnix = opts.CreatedUnix
+		comment.UpdatedUnix = opts.CreatedUnix
+		if _, err = e.NoAutoTime().Insert(comment); err != nil {
+			return nil, err
+		}
+	} else {
+		if _, err = e.Insert(comment); err != nil {
+			return nil, err
+		}
 	}
 
 	if err = opts.Repo.LoadOwner(ctx); err != nil {
@@ -874,11 +882,17 @@ func updateCommentInfos(ctx context.Context, opts *CreateCommentOptions, comment
 			return err
 		}
 	}
-	// update the issue's updated_unix column
-	return UpdateIssueCols(ctx, opts.Issue, "updated_unix")
+	// update the issue's updated_unix column if no update date is provided
+	if !opts.NoAutoTime {
+		if err := UpdateIssueCols(ctx, opts.Issue, false, "updated_unix"); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func createDeadlineComment(ctx context.Context, doer *user_model.User, issue *Issue, newDeadlineUnix timeutil.TimeStamp) (*Comment, error) {
+func createDeadlineComment(ctx context.Context, doer *user_model.User, issue *Issue, newDeadlineUnix timeutil.TimeStamp, noAutoTime bool) (*Comment, error) {
 	var content string
 	var commentType CommentType
 
@@ -901,12 +915,15 @@ func createDeadlineComment(ctx context.Context, doer *user_model.User, issue *Is
 	}
 
 	opts := &CreateCommentOptions{
-		Type:    commentType,
-		Doer:    doer,
-		Repo:    issue.Repo,
-		Issue:   issue,
-		Content: content,
+		Type:        commentType,
+		Doer:        doer,
+		Repo:        issue.Repo,
+		Issue:       issue,
+		Content:     content,
+		CreatedUnix: issue.UpdatedUnix,
+		NoAutoTime:  noAutoTime,
 	}
+
 	comment, err := CreateComment(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -983,6 +1000,8 @@ type CreateCommentOptions struct {
 	RefIsPull        bool
 	IsForcePush      bool
 	Invalidated      bool
+	CreatedUnix      timeutil.TimeStamp
+	NoAutoTime       bool // Do not auto-update dates
 }
 
 // GetCommentByID returns the comment by given ID.

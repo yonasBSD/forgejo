@@ -13,7 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/notification"
 )
 
-func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, oldMilestoneID int64) error {
+func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, oldMilestoneID int64, noAutoTime bool) error {
 	// Only check if milestone exists if we don't remove it.
 	if issue.MilestoneID > 0 {
 		has, err := issues_model.HasMilestoneByRepoID(ctx, issue.RepoID, issue.MilestoneID)
@@ -25,18 +25,18 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 		}
 	}
 
-	if err := issues_model.UpdateIssueCols(ctx, issue, "milestone_id"); err != nil {
+	if err := issues_model.UpdateIssueCols(ctx, issue, noAutoTime, "milestone_id"); err != nil {
 		return err
 	}
 
 	if oldMilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, oldMilestoneID); err != nil {
+		if err := issues_model.UpdateMilestoneCountersWithDate(ctx, oldMilestoneID, noAutoTime, issue.UpdatedUnix); err != nil {
 			return err
 		}
 	}
 
 	if issue.MilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
+		if err := issues_model.UpdateMilestoneCountersWithDate(ctx, issue.MilestoneID, noAutoTime, issue.UpdatedUnix); err != nil {
 			return err
 		}
 	}
@@ -53,6 +53,8 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 			Issue:          issue,
 			OldMilestoneID: oldMilestoneID,
 			MilestoneID:    issue.MilestoneID,
+			CreatedUnix:    issue.UpdatedUnix,
+			NoAutoTime:     noAutoTime,
 		}
 		if _, err := issues_model.CreateComment(ctx, opts); err != nil {
 			return err
@@ -63,14 +65,14 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 }
 
 // ChangeMilestoneAssign changes assignment of milestone for issue.
-func ChangeMilestoneAssign(issue *issues_model.Issue, doer *user_model.User, oldMilestoneID int64) (err error) {
+func ChangeMilestoneAssign(issue *issues_model.Issue, doer *user_model.User, oldMilestoneID int64, noAutoTime bool) (err error) {
 	ctx, committer, err := db.TxContext(db.DefaultContext)
 	if err != nil {
 		return err
 	}
 	defer committer.Close()
 
-	if err = changeMilestoneAssign(ctx, doer, issue, oldMilestoneID); err != nil {
+	if err = changeMilestoneAssign(ctx, doer, issue, oldMilestoneID, noAutoTime); err != nil {
 		return err
 	}
 
