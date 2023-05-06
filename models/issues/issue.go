@@ -674,7 +674,7 @@ func changeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User,
 	return doChangeIssueStatus(ctx, issue, doer, isMergePull, false)
 }
 
-func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User, isMergePull bool, noAutoTime bool) (*Comment, error) {
+func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User, isMergePull, noAutoTime bool) (*Comment, error) {
 	// Check for open dependencies
 	if issue.IsClosed && issue.Repo.IsDependenciesEnabled(ctx) {
 		// only check if dependencies are enabled and we're about to close an issue, otherwise reopening an issue would fail when there are unsatisfied dependencies
@@ -2066,12 +2066,12 @@ func UpdateIssueByAPI(issue *Issue, doer *user_model.User, noAutoTime bool) (sta
 	titleChanged = currentIssue.Title != issue.Title
 	if titleChanged {
 		opts := &CreateCommentOptions{
-			Type:     CommentTypeChangeTitle,
-			Doer:     doer,
-			Repo:     issue.Repo,
-			Issue:    issue,
-			OldTitle: currentIssue.Title,
-			NewTitle: issue.Title,
+			Type:        CommentTypeChangeTitle,
+			Doer:        doer,
+			Repo:        issue.Repo,
+			Issue:       issue,
+			OldTitle:    currentIssue.Title,
+			NewTitle:    issue.Title,
 			CreatedUnix: issue.UpdatedUnix,
 			NoAutoTime:  noAutoTime,
 		}

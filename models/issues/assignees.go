@@ -82,7 +82,7 @@ func ToggleIssueAssignee(ctx context.Context, issue *Issue, doer *user_model.Use
 	return removed, comment, nil
 }
 
-func toggleIssueAssignee(ctx context.Context, issue *Issue, doer *user_model.User, assigneeID int64, isCreate bool, noAutoTime bool) (removed bool, comment *Comment, err error) {
+func toggleIssueAssignee(ctx context.Context, issue *Issue, doer *user_model.User, assigneeID int64, isCreate, noAutoTime bool) (removed bool, comment *Comment, err error) {
 	removed, err = toggleUserAssignee(ctx, issue, assigneeID)
 	if err != nil {
 		return false, nil, fmt.Errorf("UpdateIssueUserByAssignee: %w", err)

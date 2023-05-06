@@ -58,7 +58,7 @@ func neuterCrossReferencesIds(ctx context.Context, ids []int64) error {
 }
 
 // AddCrossReferences add cross repositories references.
-func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.User, removeOld bool, noAutoTime bool) error {
+func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.User, removeOld, noAutoTime bool) error {
 	var commentType CommentType
 	if issue.IsPull {
 		commentType = CommentTypePullRef
@@ -66,11 +66,11 @@ func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.
 		commentType = CommentTypeIssueRef
 	}
 	ctx := &crossReferencesContext{
-		Type:      commentType,
-		Doer:      doer,
-		OrigIssue: issue,
-		RemoveOld: removeOld,
-		NoAutoTime: noAutoTime,
+		Type:        commentType,
+		Doer:        doer,
+		OrigIssue:   issue,
+		RemoveOld:   removeOld,
+		NoAutoTime:  noAutoTime,
 		UpdatedUnix: issue.UpdatedUnix,
 	}
 	return issue.createCrossReferences(stdCtx, ctx, issue.Title, issue.Content)
