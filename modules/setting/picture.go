@@ -71,7 +71,7 @@ func loadPictureFrom(rootCfg ConfigProvider) {
 }
 
 func GetDefaultDisableGravatar() bool {
-	return OfflineMode
+	return true
 }
 
 func GetDefaultEnableFederatedAvatar(disableGravatar bool) bool {

@@ -25,7 +25,7 @@
   prohibit_login: false
   avatar: avatar1
   avatar_email: user1@example.com
-  use_custom_avatar: false
+  use_custom_avatar: true
   num_followers: 0
   num_following: 0
   num_stars: 0
