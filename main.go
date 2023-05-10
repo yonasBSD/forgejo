@@ -85,6 +85,7 @@ arguments - which can alternatively be run by running the subcommand web.`
 		cmd.CmdDumpRepository,
 		cmd.CmdRestoreRepository,
 		cmd.CmdActions,
+		cmd.CmdF3,
 	}
 	// Now adjust these commands to add our global configuration options
 
