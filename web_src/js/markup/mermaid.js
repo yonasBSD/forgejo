@@ -17,7 +17,7 @@ export async function renderMermaid() {
   mermaid.initialize({
     startOnLoad: false,
     theme: isDarkTheme() ? 'dark' : 'neutral',
-    securityLevel: 'strict',
+    securityLevel: 'antiscript',
   });
 
   for (const el of els) {
