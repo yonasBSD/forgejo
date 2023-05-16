@@ -8,6 +8,7 @@ import (
 )
 
 func TestMinioStorageIterator(t *testing.T) {
+	t.Skip("minio not found in Forgejo test yet")
 	testStorageIterator(t, string(MinioStorageType), MinioStorageConfig{
 		Endpoint:        "127.0.0.1:9000",
 		AccessKeyID:     "123456",
