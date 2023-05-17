@@ -747,14 +747,28 @@ func EditIssue(ctx *context.APIContext) {
 	// In order to be set a specific update time, the DB will be updated
 	// with NoAutoTime. The 'noAutoTime' bool will be propagated down to the
 	// DB update calls to apply autoupdate or not.
-	noAutoTime := false
+	issue.NoAutoTime = false
 	if form.Updated != nil {
-		updatedUnix := timeutil.TimeStamp(form.Updated.Unix())
-		// A simple guard against potential malicious calls
-		if updatedUnix >= issue.CreatedUnix && updatedUnix < timeutil.TimeStampNow() {
-			issue.UpdatedUnix = updatedUnix
-			noAutoTime = true
+		// Check if the poster is allowed to set an update date
+		perm, err := access_model.GetUserRepoPermission(ctx, issue.Repo, ctx.Doer)
+		if err != nil {
+			ctx.Status(http.StatusForbidden)
+			return
 		}
+		if !perm.IsAdmin() && !perm.IsOwner() {
+			ctx.Error(http.StatusUnauthorized, "EditIssue", "user needs to have admin or owner right")
+			return
+		}
+
+		// A simple guard against potential malicious calls
+		updatedUnix := timeutil.TimeStamp(form.Updated.Unix())
+		if updatedUnix < issue.CreatedUnix || updatedUnix > timeutil.TimeStampNow() {
+			ctx.Error(http.StatusForbidden, "EditIssue", "unallowed update date")
+			return
+		}
+
+		issue.UpdatedUnix = updatedUnix
+		issue.NoAutoTime = true
 	}
 
 	oldTitle := issue.Title
@@ -765,7 +779,7 @@ func EditIssue(ctx *context.APIContext) {
 		issue.Content = *form.Body
 	}
 	if form.Ref != nil {
-		err = issue_service.ChangeIssueRef(ctx, issue, ctx.Doer, *form.Ref, noAutoTime)
+		err = issue_service.ChangeIssueRef(ctx, issue, ctx.Doer, *form.Ref)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "UpdateRef", err)
 			return
@@ -782,7 +796,7 @@ func EditIssue(ctx *context.APIContext) {
 			deadlineUnix = timeutil.TimeStamp(deadline.Unix())
 		}
 
-		if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer, noAutoTime); err != nil {
+		if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer); err != nil {
 			ctx.Error(http.StatusInternalServerError, "UpdateIssueDeadline", err)
 			return
 		}
@@ -803,7 +817,7 @@ func EditIssue(ctx *context.APIContext) {
 			oneAssignee = *form.Assignee
 		}
 
-		err = issue_service.UpdateAssignees(ctx, issue, oneAssignee, form.Assignees, ctx.Doer, noAutoTime)
+		err = issue_service.UpdateAssignees(ctx, issue, oneAssignee, form.Assignees, ctx.Doer)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "UpdateAssignees", err)
 			return
@@ -814,7 +828,7 @@ func EditIssue(ctx *context.APIContext) {
 		issue.MilestoneID != *form.Milestone {
 		oldMilestoneID := issue.MilestoneID
 		issue.MilestoneID = *form.Milestone
-		if err = issue_service.ChangeMilestoneAssign(issue, ctx.Doer, oldMilestoneID, noAutoTime); err != nil {
+		if err = issue_service.ChangeMilestoneAssign(issue, ctx.Doer, oldMilestoneID); err != nil {
 			ctx.Error(http.StatusInternalServerError, "ChangeMilestoneAssign", err)
 			return
 		}
@@ -831,7 +845,7 @@ func EditIssue(ctx *context.APIContext) {
 		}
 		issue.IsClosed = api.StateClosed == api.StateType(*form.State)
 	}
-	statusChangeComment, titleChanged, err := issues_model.UpdateIssueByAPI(issue, ctx.Doer, noAutoTime)
+	statusChangeComment, titleChanged, err := issues_model.UpdateIssueByAPI(issue, ctx.Doer)
 	if err != nil {
 		if issues_model.IsErrDependenciesLeft(err) {
 			ctx.Error(http.StatusPreconditionFailed, "DependenciesLeft", "cannot close this issue because it still has open dependencies")
@@ -969,7 +983,7 @@ func UpdateIssueDeadline(ctx *context.APIContext) {
 		deadlineUnix = timeutil.TimeStamp(deadline.Unix())
 	}
 
-	if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer, false); err != nil {
+	if err := issues_model.UpdateIssueDeadline(issue, deadlineUnix, ctx.Doer); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateIssueDeadline", err)
 		return
 	}

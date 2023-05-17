@@ -45,7 +45,7 @@ func updateIssueLock(opts *IssueLockOptions, lock bool) error {
 	}
 	defer committer.Close()
 
-	if err := UpdateIssueCols(ctx, opts.Issue, false, "is_locked"); err != nil {
+	if err := UpdateIssueCols(ctx, opts.Issue, "is_locked"); err != nil {
 		return err
 	}
 

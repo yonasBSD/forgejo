@@ -189,11 +189,7 @@ func updateMilestone(ctx context.Context, m *Milestone) error {
 }
 
 // UpdateMilestoneCounters calculates NumIssues, NumClosesIssues and Completeness
-func UpdateMilestoneCounters(ctx context.Context, id int64) error {
-	return UpdateMilestoneCountersWithDate(ctx, id, false, 0)
-}
-
-func UpdateMilestoneCountersWithDate(ctx context.Context, id int64, noAutoTime bool, updatedUnix timeutil.TimeStamp) error {
+func updateMilestoneCounters(ctx context.Context, id int64, noAutoTime bool, updatedUnix timeutil.TimeStamp) error {
 	e := db.GetEngine(ctx)
 	sess := e.ID(id).
 		SetExpr("num_issues", builder.Select("count(*)").From("issue").Where(
@@ -217,6 +213,16 @@ func UpdateMilestoneCountersWithDate(ctx context.Context, id int64, noAutoTime b
 		id,
 	)
 	return err
+}
+
+// UpdateMilestoneCounters calculates NumIssues, NumClosesIssues and Completeness
+func UpdateMilestoneCounters(ctx context.Context, id int64) error {
+	return updateMilestoneCounters(ctx, id, false, 0)
+}
+
+// UpdateMilestoneCountersWithDate calculates NumIssues, NumClosesIssues and Completeness and set the UpdatedUnix date
+func UpdateMilestoneCountersWithDate(ctx context.Context, id int64, updatedUnix timeutil.TimeStamp) error {
+	return updateMilestoneCounters(ctx, id, true, updatedUnix)
 }
 
 // ChangeMilestoneStatusByRepoIDAndID changes a milestone open/closed status if the milestone ID is in the repo.

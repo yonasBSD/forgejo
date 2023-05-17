@@ -13,7 +13,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/references"
-	"code.gitea.io/gitea/modules/timeutil"
 )
 
 type crossReference struct {
@@ -28,8 +27,6 @@ type crossReferencesContext struct {
 	OrigIssue   *Issue
 	OrigComment *Comment
 	RemoveOld   bool
-	NoAutoTime  bool
-	UpdatedUnix timeutil.TimeStamp
 }
 
 func findOldCrossReferences(ctx context.Context, issueID, commentID int64) ([]*Comment, error) {
@@ -58,7 +55,7 @@ func neuterCrossReferencesIds(ctx context.Context, ids []int64) error {
 }
 
 // AddCrossReferences add cross repositories references.
-func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.User, removeOld, noAutoTime bool) error {
+func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.User, removeOld bool) error {
 	var commentType CommentType
 	if issue.IsPull {
 		commentType = CommentTypePullRef
@@ -66,12 +63,10 @@ func (issue *Issue) AddCrossReferences(stdCtx context.Context, doer *user_model.
 		commentType = CommentTypeIssueRef
 	}
 	ctx := &crossReferencesContext{
-		Type:        commentType,
-		Doer:        doer,
-		OrigIssue:   issue,
-		RemoveOld:   removeOld,
-		NoAutoTime:  noAutoTime,
-		UpdatedUnix: issue.UpdatedUnix,
+		Type:      commentType,
+		Doer:      doer,
+		OrigIssue: issue,
+		RemoveOld: removeOld,
 	}
 	return issue.createCrossReferences(stdCtx, ctx, issue.Title, issue.Content)
 }
@@ -115,6 +110,10 @@ func (issue *Issue) createCrossReferences(stdCtx context.Context, ctx *crossRefe
 		if ctx.OrigComment != nil {
 			refCommentID = ctx.OrigComment.ID
 		}
+		if ctx.OrigIssue.NoAutoTime {
+			xref.Issue.NoAutoTime = true
+			xref.Issue.UpdatedUnix = ctx.OrigIssue.UpdatedUnix
+		}
 		opts := &CreateCommentOptions{
 			Type:         ctx.Type,
 			Doer:         ctx.Doer,
@@ -125,8 +124,6 @@ func (issue *Issue) createCrossReferences(stdCtx context.Context, ctx *crossRefe
 			RefCommentID: refCommentID,
 			RefAction:    xref.Action,
 			RefIsPull:    ctx.OrigIssue.IsPull,
-			NoAutoTime:   ctx.NoAutoTime,
-			CreatedUnix:  ctx.UpdatedUnix,
 		}
 		_, err := CreateComment(stdCtx, opts)
 		if err != nil {

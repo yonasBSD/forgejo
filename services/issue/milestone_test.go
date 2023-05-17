@@ -22,7 +22,7 @@ func TestChangeMilestoneAssign(t *testing.T) {
 
 	oldMilestoneID := issue.MilestoneID
 	issue.MilestoneID = 2
-	assert.NoError(t, ChangeMilestoneAssign(issue, doer, oldMilestoneID, false))
+	assert.NoError(t, ChangeMilestoneAssign(issue, doer, oldMilestoneID))
 	unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{
 		IssueID:        issue.ID,
 		Type:           issues_model.CommentTypeMilestone,
