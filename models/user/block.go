@@ -31,7 +31,13 @@ func init() {
 
 // IsBlocked returns if userID has blocked blockID.
 func IsBlocked(ctx context.Context, userID, blockID int64) bool {
-	has, _ := db.GetEngine(ctx).Get(&BlockedUser{UserID: userID, BlockID: blockID})
+	has, _ := db.GetEngine(ctx).Exist(&BlockedUser{UserID: userID, BlockID: blockID})
+	return has
+}
+
+// IsBlockedMultiple returns if one of the userIDs has blocked blockID.
+func IsBlockedMultiple(ctx context.Context, userIDs []int64, blockID int64) bool {
+	has, _ := db.GetEngine(ctx).In("user_id", userIDs).Exist(&BlockedUser{BlockID: blockID})
 	return has
 }
 

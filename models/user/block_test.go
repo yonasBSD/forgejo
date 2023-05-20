@@ -21,6 +21,16 @@ func TestIsBlocked(t *testing.T) {
 	assert.False(t, user_model.IsBlocked(db.DefaultContext, 3, 2))
 }
 
+func TestIsBlockedMultiple(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	assert.True(t, user_model.IsBlockedMultiple(db.DefaultContext, []int64{4}, 1))
+	assert.True(t, user_model.IsBlockedMultiple(db.DefaultContext, []int64{4, 3, 4, 5}, 1))
+
+	// Simple test cases to ensure the function can also respond with false.
+	assert.False(t, user_model.IsBlockedMultiple(db.DefaultContext, []int64{1}, 1))
+	assert.False(t, user_model.IsBlockedMultiple(db.DefaultContext, []int64{3, 4, 1}, 2))
+}
+
 func TestUnblockUser(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	assert.True(t, user_model.IsBlocked(db.DefaultContext, 4, 1))

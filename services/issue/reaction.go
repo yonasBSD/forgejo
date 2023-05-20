@@ -11,8 +11,12 @@ import (
 
 // CreateIssueReaction creates a reaction on issue.
 func CreateIssueReaction(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, content string) (*issues_model.Reaction, error) {
-	// Check if the doer is blocked by the issue's poster.
-	if user_model.IsBlocked(ctx, issue.PosterID, doer.ID) {
+	if err := issue.LoadRepo(ctx); err != nil {
+		return nil, err
+	}
+
+	// Check if the doer is blocked by the issue's poster or repository owner.
+	if user_model.IsBlockedMultiple(ctx, []int64{issue.PosterID, issue.Repo.OwnerID}, doer.ID) {
 		return nil, user_model.ErrBlockedByUser
 	}
 
@@ -25,8 +29,12 @@ func CreateIssueReaction(ctx context.Context, doer *user_model.User, issue *issu
 
 // CreateCommentReaction creates a reaction on comment.
 func CreateCommentReaction(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, comment *issues_model.Comment, content string) (*issues_model.Reaction, error) {
-	// Check if the doer is blocked by the issue's poster or by the comment's poster.
-	if user_model.IsBlocked(ctx, comment.PosterID, doer.ID) || user_model.IsBlocked(ctx, issue.PosterID, doer.ID) {
+	if err := issue.LoadRepo(ctx); err != nil {
+		return nil, err
+	}
+
+	// Check if the doer is blocked by the issue's poster, the comment's poster or repository owner.
+	if user_model.IsBlockedMultiple(ctx, []int64{comment.PosterID, issue.PosterID, issue.Repo.OwnerID}, doer.ID) {
 		return nil, user_model.ErrBlockedByUser
 	}
 
