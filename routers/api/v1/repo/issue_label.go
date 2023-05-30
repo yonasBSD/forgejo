@@ -149,6 +149,10 @@ func DeleteIssueLabel(ctx *context.APIContext) {
 	//   type: integer
 	//   format: int64
 	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     "$ref": "#/definitions/DeleteLabelsOption"
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
@@ -156,6 +160,7 @@ func DeleteIssueLabel(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
+	form := web.GetForm(ctx).(*api.DeleteLabelsOption)
 
 	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
@@ -169,6 +174,11 @@ func DeleteIssueLabel(ctx *context.APIContext) {
 
 	if !ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
 		ctx.Status(http.StatusForbidden)
+		return
+	}
+
+	if err := issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer); err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
 		return
 	}
 
@@ -269,11 +279,16 @@ func ClearIssueLabels(ctx *context.APIContext) {
 	//   type: integer
 	//   format: int64
 	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     "$ref": "#/definitions/DeleteLabelsOption"
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
 	//   "403":
 	//     "$ref": "#/responses/forbidden"
+	form := web.GetForm(ctx).(*api.DeleteLabelsOption)
 
 	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
@@ -287,6 +302,11 @@ func ClearIssueLabels(ctx *context.APIContext) {
 
 	if !ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
 		ctx.Status(http.StatusForbidden)
+		return
+	}
+
+	if err := issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer); err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
 		return
 	}
 
@@ -318,6 +338,12 @@ func prepareForReplaceOrAdd(ctx *context.APIContext, form api.IssueLabelsOption)
 	if !ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
 		ctx.Status(http.StatusForbidden)
 		return nil, nil, nil
+	}
+
+	err = issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer)
+	if err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
+		return nil, nil, err
 	}
 
 	return issue, labels, err
