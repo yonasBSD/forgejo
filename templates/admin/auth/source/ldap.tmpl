@@ -102,11 +102,11 @@
 		</div>
 		<div class="field">
 			<label>{{.locale.Tr "admin.auths.verify_group_membership"}}</label>
-			<input name="group_filter" value="{{.group_filter}}" placeholder="e.g. (|(cn=gitea_users)(cn=admins))">
+			<input name="group_filter" value="{{.group_filter}}" placeholder="e.g. (|(cn=forgejo_users)(cn=admins))">
 		</div>
 		<div class="field">
 			<label>{{.locale.Tr "admin.auths.map_group_to_team"}}</label>
-			<input name="group_team_map" value="{{.group_team_map}}" placeholder='e.g. {"cn=my-group,cn=groups,dc=example,dc=org": {"MyGiteaOrganization": ["MyGiteaTeam1", "MyGiteaTeam2"]}}'>
+			<input name="group_team_map" value="{{.group_team_map}}" placeholder='e.g. {"cn=my-group,cn=groups,dc=example,dc=org": {"MyForgejoOrganization": ["MyForgejoTeam1", "MyForgejoTeam2"]}}'>
 		</div>
 		<div class="ui checkbox">
 			<label>{{.locale.Tr "admin.auths.map_group_to_team_removal"}}</label>
