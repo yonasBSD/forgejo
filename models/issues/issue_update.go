@@ -27,7 +27,12 @@ import (
 
 // UpdateIssueCols updates cols of issue
 func UpdateIssueCols(ctx context.Context, issue *Issue, cols ...string) error {
-	if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(cols...).Update(issue); err != nil {
+	sess := db.GetEngine(ctx).ID(issue.ID)
+	if issue.NoAutoTime {
+		cols = append(cols, []string{"updated_unix"}...)
+		sess.NoAutoTime()
+	}
+	if _, err := sess.Cols(cols...).Update(issue); err != nil {
 		return err
 	}
 	return nil
@@ -71,7 +76,11 @@ func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.Use
 	}
 
 	if issue.IsClosed {
-		issue.ClosedUnix = timeutil.TimeStampNow()
+		if issue.NoAutoTime {
+			issue.ClosedUnix = issue.UpdatedUnix
+		} else {
+			issue.ClosedUnix = timeutil.TimeStampNow()
+		}
 	} else {
 		issue.ClosedUnix = 0
 	}
@@ -92,8 +101,14 @@ func doChangeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.Use
 
 	// Update issue count of milestone
 	if issue.MilestoneID > 0 {
-		if err := UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
-			return nil, err
+		if issue.NoAutoTime {
+			if err := UpdateMilestoneCountersWithDate(ctx, issue.MilestoneID, issue.UpdatedUnix); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -449,10 +464,13 @@ func UpdateIssueByAPI(issue *Issue, doer *user_model.User) (statusChangeComment 
 		return nil, false, err
 	}
 
-	if _, err := db.GetEngine(ctx).ID(issue.ID).Cols(
-		"name", "content", "milestone_id", "priority",
-		"deadline_unix", "updated_unix", "is_locked").
-		Update(issue); err != nil {
+	sess := db.GetEngine(ctx).ID(issue.ID)
+	cols := []string{"name", "content", "milestone_id", "priority", "deadline_unix", "is_locked"}
+	if issue.NoAutoTime {
+		cols = append(cols, "updated_unix")
+		sess.NoAutoTime()
+	}
+	if _, err := sess.Cols(cols...).Update(issue); err != nil {
 		return nil, false, err
 	}
 
@@ -498,7 +516,7 @@ func UpdateIssueDeadline(issue *Issue, deadlineUnix timeutil.TimeStamp, doer *us
 	defer committer.Close()
 
 	// Update the deadline
-	if err = UpdateIssueCols(ctx, &Issue{ID: issue.ID, DeadlineUnix: deadlineUnix}, "deadline_unix"); err != nil {
+	if err = UpdateIssueCols(ctx, &Issue{ID: issue.ID, DeadlineUnix: deadlineUnix, NoAutoTime: issue.NoAutoTime, UpdatedUnix: issue.UpdatedUnix}, "deadline_unix"); err != nil {
 		return err
 	}
 

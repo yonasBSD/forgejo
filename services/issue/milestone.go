@@ -30,14 +30,26 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 	}
 
 	if oldMilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, oldMilestoneID); err != nil {
-			return err
+		if issue.NoAutoTime {
+			if err := issues_model.UpdateMilestoneCountersWithDate(ctx, oldMilestoneID, issue.UpdatedUnix); err != nil {
+				return err
+			}
+		} else {
+			if err := issues_model.UpdateMilestoneCounters(ctx, oldMilestoneID); err != nil {
+				return err
+			}
 		}
 	}
 
 	if issue.MilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
-			return err
+		if issue.NoAutoTime {
+			if err := issues_model.UpdateMilestoneCountersWithDate(ctx, issue.MilestoneID, issue.UpdatedUnix); err != nil {
+				return err
+			}
+		} else {
+			if err := issues_model.UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
+				return err
+			}
 		}
 	}
 

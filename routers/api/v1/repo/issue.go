@@ -774,6 +774,33 @@ func EditIssue(ctx *context.APIContext) {
 		return
 	}
 
+	// In order to be set a specific update time, the DB will be updated
+	// with NoAutoTime. The 'noAutoTime' bool will be propagated down to the
+	// DB update calls to apply autoupdate or not.
+	issue.NoAutoTime = false
+	if form.Updated != nil {
+		// Check if the poster is allowed to set an update date
+		perm, err := access_model.GetUserRepoPermission(ctx, issue.Repo, ctx.Doer)
+		if err != nil {
+			ctx.Status(http.StatusForbidden)
+			return
+		}
+		if !perm.IsAdmin() && !perm.IsOwner() {
+			ctx.Error(http.StatusUnauthorized, "EditIssue", "user needs to have admin or owner right")
+			return
+		}
+
+		// A simple guard against potential inconsistent calls
+		updatedUnix := timeutil.TimeStamp(form.Updated.Unix())
+		if updatedUnix < issue.CreatedUnix || updatedUnix > timeutil.TimeStampNow() {
+			ctx.Error(http.StatusForbidden, "EditIssue", "unallowed update date")
+			return
+		}
+
+		issue.UpdatedUnix = updatedUnix
+		issue.NoAutoTime = true
+	}
+
 	oldTitle := issue.Title
 	if len(form.Title) > 0 {
 		issue.Title = form.Title

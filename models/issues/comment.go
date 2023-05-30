@@ -823,6 +823,11 @@ func CreateComment(ctx context.Context, opts *CreateCommentOptions) (_ *Comment,
 		IsForcePush:      opts.IsForcePush,
 		Invalidated:      opts.Invalidated,
 	}
+	if opts.Issue.NoAutoTime {
+		comment.CreatedUnix = opts.Issue.UpdatedUnix
+		comment.UpdatedUnix = opts.Issue.UpdatedUnix
+		e.NoAutoTime()
+	}
 	if _, err = e.Insert(comment); err != nil {
 		return nil, err
 	}
