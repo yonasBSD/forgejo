@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"testing"
 
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,4 +55,33 @@ func TestBlockUser(t *testing.T) {
 	loc := resp.Header().Get("Location")
 	assert.EqualValues(t, "/"+blockedUser.Name, loc)
 	unittest.AssertNotExistsBean(t, &user_model.BlockedUser{BlockID: blockedUser.ID, UserID: doer.ID})
+}
+
+func TestBlockIssueCreation(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: doer.ID})
+	BlockUser(t, doer, blockedUser)
+
+	session := loginUser(t, blockedUser.Name)
+	req := NewRequest(t, "GET", "/"+repo.OwnerName+"/"+repo.Name+"/issues/new")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	link, exists := htmlDoc.doc.Find("form.ui.form").Attr("action")
+	assert.True(t, exists)
+	req = NewRequestWithValues(t, "POST", link, map[string]string{
+		"_csrf":   htmlDoc.GetCSRF(),
+		"title":   "Title",
+		"content": "Hello!",
+	})
+
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	assert.Contains(t,
+		htmlDoc.doc.Find(".ui.negative.message").Text(),
+		translation.NewLocale("en-US").Tr("repo.issues.blocked_by_user"),
+	)
 }
