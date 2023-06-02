@@ -4,9 +4,15 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+	"path"
+	"strconv"
 	"testing"
 
+	"code.gitea.io/gitea/models/db"
+	issue_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
@@ -85,4 +91,68 @@ func TestBlockIssueCreation(t *testing.T) {
 		htmlDoc.doc.Find(".ui.negative.message").Text(),
 		translation.NewLocale("en-US").Tr("repo.issues.blocked_by_user"),
 	)
+}
+
+func TestBlockIssueReaction(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+	issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, PosterID: doer.ID, RepoID: repo.ID})
+	issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
+
+	BlockUser(t, doer, blockedUser)
+
+	session := loginUser(t, blockedUser.Name)
+	req := NewRequest(t, "GET", issueURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/reactions/react"), map[string]string{
+		"_csrf":   htmlDoc.GetCSRF(),
+		"content": "eyes",
+	})
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	type reactionResponse struct {
+		Empty bool `json:"empty"`
+	}
+
+	var respBody reactionResponse
+	DecodeJSON(t, resp, &respBody)
+
+	assert.EqualValues(t, true, respBody.Empty)
+}
+
+func TestBlockCommentReaction(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 1, RepoID: repo.ID})
+	comment := unittest.AssertExistsAndLoadBean(t, &issue_model.Comment{ID: 3, PosterID: doer.ID, IssueID: issue.ID})
+	_ = comment.LoadIssue(db.DefaultContext)
+	issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
+
+	BlockUser(t, doer, blockedUser)
+
+	session := loginUser(t, blockedUser.Name)
+	req := NewRequest(t, "GET", issueURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	req = NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/comments/", strconv.FormatInt(comment.ID, 10), "/reactions/react"), map[string]string{
+		"_csrf":   htmlDoc.GetCSRF(),
+		"content": "eyes",
+	})
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	type reactionResponse struct {
+		Empty bool `json:"empty"`
+	}
+
+	var respBody reactionResponse
+	DecodeJSON(t, resp, &respBody)
+
+	assert.EqualValues(t, true, respBody.Empty)
 }
