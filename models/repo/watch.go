@@ -10,6 +10,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
+	"xorm.io/builder"
 )
 
 // WatchMode specifies what kind of watch the user has on a repository
@@ -148,12 +149,12 @@ func GetWatchersExcludeBlocked(ctx context.Context, repoID, doerID int64) ([]*Wa
 	watches := make([]*Watch, 0, 10)
 	return watches, db.GetEngine(ctx).
 		Join("INNER", "`user`", "`user`.id = `watch`.user_id").
-		Join("LEFT", "blocked_user", "blocked_user.block_id = `watch`.user_id").
+		Join("LEFT", "blocked_user", "blocked_user.user_id = `watch`.user_id").
 		Where("`watch`.repo_id=?", repoID).
 		And("`watch`.mode<>?", WatchModeDont).
 		And("`user`.is_active=?", true).
 		And("`user`.prohibit_login=?", false).
-		And("`blocked_user`.user_id IS NOT ?", doerID). // Use IS NOT to handle NULL values.
+		And(builder.Or(builder.IsNull{"`blocked_user`.block_id"}, builder.Neq{"`blocked_user`.block_id": doerID})).
 		Find(&watches)
 }
 

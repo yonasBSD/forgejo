@@ -612,7 +612,7 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 					In("`team_user`.team_id", checked).
 					And("`user`.is_active = ?", true).
 					And("`user`.prohibit_login = ?", false).
-					And("`blocked_user`.block_id IS NOT ?", doer.ID). // Use IS NOT to handle NULL values.
+					And(builder.Or(builder.IsNull{"`blocked_user`.block_id"}, builder.Neq{"`blocked_user`.block_id": doer.ID})).
 					Find(&teamusers); err != nil {
 					return nil, fmt.Errorf("get teams users: %w", err)
 				}
@@ -649,7 +649,7 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 		Join("LEFT", "blocked_user", "blocked_user.user_id = `user`.id").
 		Where("`user`.is_active = ?", true).
 		And("`user`.prohibit_login = ?", false).
-		And("`blocked_user`.block_id IS NOT ?", doer.ID). // Use IS NOT to handle NULL values.
+		And(builder.Or(builder.IsNull{"`blocked_user`.block_id"}, builder.Neq{"`blocked_user`.block_id": doer.ID})).
 		In("`user`.lower_name", mentionUsers).
 		Find(&unchecked); err != nil {
 		return nil, fmt.Errorf("find mentioned users: %w", err)
