@@ -25,6 +25,11 @@ type BlockedUser struct {
 	CreatedUnix timeutil.TimeStamp `xorm:"created"`
 }
 
+// TableName provides the real table name
+func (*BlockedUser) TableName() string {
+	return "forgejo_blocked_user"
+}
+
 func init() {
 	db.RegisterModel(new(BlockedUser))
 }
@@ -52,8 +57,8 @@ func ListBlockedUsers(ctx context.Context, userID int64) ([]*User, error) {
 	users := make([]*User, 0, 8)
 	err := db.GetEngine(ctx).
 		Select("`user`.*").
-		Join("INNER", "blocked_user", "`user`.id=`blocked_user`.block_id").
-		Where("`blocked_user`.user_id=?", userID).
+		Join("INNER", "forgejo_blocked_user", "`user`.id=`forgejo_blocked_user`.block_id").
+		Where("`forgejo_blocked_user`.user_id=?", userID).
 		Find(&users)
 
 	return users, err
@@ -65,8 +70,8 @@ func ListBlockedByUsersID(ctx context.Context, userID int64) ([]int64, error) {
 	err := db.GetEngine(ctx).
 		Table("user").
 		Select("`user`.id").
-		Join("INNER", "blocked_user", "`user`.id=`blocked_user`.user_id").
-		Where("`blocked_user`.block_id=?", userID).
+		Join("INNER", "forgejo_blocked_user", "`user`.id=`forgejo_blocked_user`.user_id").
+		Where("`forgejo_blocked_user`.block_id=?", userID).
 		Find(&users)
 
 	return users, err

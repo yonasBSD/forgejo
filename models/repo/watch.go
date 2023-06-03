@@ -150,12 +150,12 @@ func GetWatchersExcludeBlocked(ctx context.Context, repoID, doerID int64) ([]*Wa
 	watches := make([]*Watch, 0, 10)
 	return watches, db.GetEngine(ctx).
 		Join("INNER", "`user`", "`user`.id = `watch`.user_id").
-		Join("LEFT", "blocked_user", "blocked_user.user_id = `watch`.user_id").
+		Join("LEFT", "forgejo_blocked_user", "forgejo_blocked_user.user_id = `watch`.user_id").
 		Where("`watch`.repo_id=?", repoID).
 		And("`watch`.mode<>?", WatchModeDont).
 		And("`user`.is_active=?", true).
 		And("`user`.prohibit_login=?", false).
-		And(builder.Or(builder.IsNull{"`blocked_user`.block_id"}, builder.Neq{"`blocked_user`.block_id": doerID})).
+		And(builder.Or(builder.IsNull{"`forgejo_blocked_user`.block_id"}, builder.Neq{"`forgejo_blocked_user`.block_id": doerID})).
 		Find(&watches)
 }
 
