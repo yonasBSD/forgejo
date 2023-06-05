@@ -175,12 +175,12 @@ func GlobalInitInstalled(ctx context.Context) {
 }
 
 // NormalRoutes represents non install routes
-func NormalRoutes() *web.Route {
+func NormalRoutes(middlewares ...any) *web.Route {
 	_ = templates.HTMLRenderer()
 	r := web.NewRoute()
 	r.Use(common.ProtocolMiddlewares()...)
 
-	r.Mount("/", web_routers.Routes())
+	r.Mount("/", web_routers.Routes(middlewares...))
 	r.Mount("/api/v1", apiv1.Routes())
 	r.Mount("/api/forgejo/v1", forgejo.Routes())
 	r.Mount("/api/internal", private.Routes())
