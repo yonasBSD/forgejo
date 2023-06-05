@@ -274,8 +274,12 @@ func ChangeIssueContent(issue *Issue, doer *user_model.User, content string) (er
 		return fmt.Errorf("UpdateIssueCols: %w", err)
 	}
 
+	historyDate := timeutil.TimeStampNow()
+	if issue.NoAutoTime {
+		historyDate = issue.UpdatedUnix
+	}
 	if err = SaveIssueContentHistory(ctx, doer.ID, issue.ID, 0,
-		timeutil.TimeStampNow(), issue.Content, false); err != nil {
+		historyDate, issue.Content, false); err != nil {
 		return fmt.Errorf("SaveIssueContentHistory: %w", err)
 	}
 
