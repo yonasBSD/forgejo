@@ -7651,6 +7651,13 @@
             "name": "index",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DeleteLabelsOption"
+            }
           }
         ],
         "responses": {
@@ -7703,6 +7710,13 @@
             "name": "id",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DeleteLabelsOption"
+            }
           }
         ],
         "responses": {
@@ -17784,6 +17798,18 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "DeleteLabelsOption": {
+      "description": "DeleteLabelOption options for deleting a label",
+      "type": "object",
+      "properties": {
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "DeployKey": {
       "description": "DeployKey a deploy key",
       "type": "object",
@@ -19505,6 +19531,11 @@
             "format": "int64"
           },
           "x-go-name": "Labels"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
