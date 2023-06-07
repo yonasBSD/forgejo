@@ -841,7 +841,7 @@ generate-go: $(TAGS_PREREQ) merge-locales
 
 .PHONY: merge-locales
 merge-locales:
-	$(GO) run build/merge-forgejo-locales.go
+	@CC= GOOS= GOARCH= $(GO) run build/merge-forgejo-locales.go
 
 .PHONY: security-check
 security-check:
