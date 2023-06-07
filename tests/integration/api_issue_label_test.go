@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -109,6 +110,59 @@ func TestAPIAddIssueLabels(t *testing.T) {
 	assert.Len(t, apiLabels, unittest.GetCount(t, &issues_model.IssueLabel{IssueID: issue.ID}))
 
 	unittest.AssertExistsAndLoadBean(t, &issues_model.IssueLabel{IssueID: issue.ID, LabelID: 2})
+}
+
+func TestAPIAddIssueLabelsWithAutoDate(t *testing.T) {
+	assert.NoError(t, unittest.LoadFixtures())
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID})
+	_ = unittest.AssertExistsAndLoadBean(t, &issues_model.Label{RepoID: repo.ID, ID: 2})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels?token=%s",
+		repo.OwnerName, repo.Name, issue.Index, token)
+	req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
+		Labels: []int64{1, 2},
+	})
+	resp := MakeRequest(t, req, http.StatusOK)
+	var apiLabels []*api.Label
+	DecodeJSON(t, resp, &apiLabels)
+
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.Index})
+	// the execution of the API call supposedly lasted less than one minute
+	updatedSince := time.Since(issueAfter.UpdatedUnix.AsTime())
+	assert.LessOrEqual(t, updatedSince, time.Minute)
+}
+
+func TestAPIAddIssueLabelsWithNoAutoDate(t *testing.T) {
+	assert.NoError(t, unittest.LoadFixtures())
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID})
+	_ = unittest.AssertExistsAndLoadBean(t, &issues_model.Label{RepoID: repo.ID, ID: 2})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+	updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels?token=%s",
+		repo.OwnerName, repo.Name, issue.Index, token)
+	req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
+		Labels:  []int64{1, 2},
+		Updated: &updatedAt,
+	})
+	resp := MakeRequest(t, req, http.StatusOK)
+	var apiLabels []*api.Label
+	DecodeJSON(t, resp, &apiLabels)
+	// dates will be converted into the same tz, in order to compare them
+	utcTZ, _ := time.LoadLocation("UTC")
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.Index})
+	assert.Equal(t, updatedAt.In(utcTZ), issueAfter.UpdatedUnix.AsTime().In(utcTZ))
 }
 
 func TestAPIReplaceIssueLabels(t *testing.T) {

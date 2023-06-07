@@ -213,6 +213,63 @@ func TestAPIEditIssue(t *testing.T) {
 	assert.Equal(t, title, issueAfter.Title)
 }
 
+func TestAPIEditIssueWithAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
+	repoBefore := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repoBefore.OwnerID})
+	assert.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	body := "new content!"
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+	req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+		Body: &body,
+	})
+	resp := MakeRequest(t, req, http.StatusCreated)
+	var apiIssue api.Issue
+	DecodeJSON(t, resp, &apiIssue)
+
+	// the execution of the API call supposedly lasted less than one minute
+	updatedSince := time.Since(apiIssue.Updated)
+	assert.LessOrEqual(t, updatedSince, time.Minute)
+
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
+	updatedSince = time.Since(issueAfter.UpdatedUnix.AsTime())
+	assert.LessOrEqual(t, updatedSince, time.Minute)
+}
+
+func TestAPIEditIssueWithNoAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
+	repoBefore := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repoBefore.OwnerID})
+	assert.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	body := "new content, with updated time"
+	updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+	req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+		Body:    &body,
+		Updated: &updatedAt,
+	})
+	resp := MakeRequest(t, req, http.StatusCreated)
+	var apiIssue api.Issue
+	DecodeJSON(t, resp, &apiIssue)
+	// dates will be converted into the same tz, in order to compare them
+	utcTZ, _ := time.LoadLocation("UTC")
+	assert.Equal(t, updatedAt.In(utcTZ), apiIssue.Updated.In(utcTZ))
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
+	assert.Equal(t, updatedAt.In(utcTZ), issueAfter.UpdatedUnix.AsTime().In(utcTZ))
+}
+
 func TestAPISearchIssues(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

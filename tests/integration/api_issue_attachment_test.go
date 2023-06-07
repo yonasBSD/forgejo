@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"testing"
+	"time"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -98,6 +99,91 @@ func TestAPICreateIssueAttachment(t *testing.T) {
 	DecodeJSON(t, resp, &apiAttachment)
 
 	unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID, IssueID: issue.ID})
+}
+
+func TestAPICreateIssueAttachmentWithAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, repoOwner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	filename := "image.png"
+	buff := generateImg()
+	body := &bytes.Buffer{}
+
+	// Setup multi-part
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("attachment", filename)
+	assert.NoError(t, err)
+	_, err = io.Copy(part, &buff)
+	assert.NoError(t, err)
+	err = writer.Close()
+	assert.NoError(t, err)
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/assets?token=%s",
+		repoOwner.Name, repo.Name, issue.Index, token)
+
+	req := NewRequestWithBody(t, "POST", urlStr, body)
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+	resp := session.MakeRequest(t, req, http.StatusCreated)
+
+	apiAttachment := new(api.Attachment)
+	DecodeJSON(t, resp, &apiAttachment)
+
+	unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID, IssueID: issue.ID})
+	// the execution of the API call supposedly lasted less than one minute
+	updatedSince := time.Since(apiAttachment.Created)
+	assert.LessOrEqual(t, updatedSince, time.Minute)
+
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.Index})
+	updatedSince = time.Since(issueAfter.UpdatedUnix.AsTime())
+	assert.LessOrEqual(t, updatedSince, time.Minute)
+}
+
+func TestAPICreateIssueAttachmentWithNoAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, repoOwner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	filename := "image.png"
+	buff := generateImg()
+	body := &bytes.Buffer{}
+
+	// Setup multi-part
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("attachment", filename)
+	assert.NoError(t, err)
+	_, err = io.Copy(part, &buff)
+	assert.NoError(t, err)
+	err = writer.Close()
+	assert.NoError(t, err)
+
+	updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/assets?token=%s&updated_at=%s",
+		repoOwner.Name, repo.Name, issue.Index, token, updatedAt.UTC().Format(time.RFC3339))
+
+	req := NewRequestWithBody(t, "POST", urlStr, body)
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+	resp := session.MakeRequest(t, req, http.StatusCreated)
+
+	apiAttachment := new(api.Attachment)
+	DecodeJSON(t, resp, &apiAttachment)
+
+	// dates will be converted into the same tz, in order to compare them
+	utcTZ, _ := time.LoadLocation("UTC")
+	unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID, IssueID: issue.ID})
+	assert.Equal(t, updatedAt.In(utcTZ), apiAttachment.Created.In(utcTZ))
+	issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+	assert.Equal(t, updatedAt.In(utcTZ), issueAfter.UpdatedUnix.AsTime().In(utcTZ))
 }
 
 func TestAPIEditIssueAttachment(t *testing.T) {
