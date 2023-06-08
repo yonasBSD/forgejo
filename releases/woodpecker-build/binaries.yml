@@ -7,9 +7,9 @@ when:
 variables:
  - &node_image 'node:18'
  - &golang_image 'golang:1.20'
- - &alpine_image 'alpine:3.17'
+ - &alpine_image 'alpine:3.18'
  - &gpg_sign_image 'plugins/gpgsign:1'
- - &xgo_image 'techknowlogick/xgo:go-1.19.x'
+ - &xgo_image 'techknowlogick/xgo:go-1.20.x'
  - &gpg_sign_image 'plugins/gpgsign:1'
  - &goproxy_override ''
  - &goproxy_setup |-
