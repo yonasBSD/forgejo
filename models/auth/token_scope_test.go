@@ -41,7 +41,7 @@ func TestAccessTokenScope_Normalize(t *testing.T) {
 		{"admin:application,write:application,user", "user,admin:application", nil},
 		{"all", "all", nil},
 		{"repo,admin:org,admin:public_key,admin:repo_hook,admin:org_hook,admin:user_hook,notification,user,delete_repo,package,admin:gpg_key,admin:application", "all", nil},
-		{"repo,admin:org,admin:public_key,admin:repo_hook,admin:org_hook,admin:user_hook,notification,user,delete_repo,package,admin:gpg_key,admin:application,sudo", "all,sudo", nil},
+		{"repo,admin:org,admin:public_key,admin:repo_hook,admin:org_hook,admin:user_hook,notification,user,delete_repo,package,admin:gpg_key,admin:application,sudo", "all", nil},
 	}
 
 	for _, test := range tests {

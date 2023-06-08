@@ -192,7 +192,7 @@ func (s AccessTokenScope) Parse() (AccessTokenScopeBitmap, error) {
 			remainingScopes = remainingScopes[i+1:]
 		}
 		singleScope := AccessTokenScope(v)
-		if singleScope == "" {
+		if singleScope == "" || singleScope == "sudo" {
 			continue
 		}
 		if singleScope == AccessTokenScopeAll {
