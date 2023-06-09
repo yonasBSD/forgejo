@@ -5,6 +5,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -298,9 +299,17 @@ func Action(ctx *context.Context) {
 	}
 
 	if err != nil {
-		log.Error("Failed to apply action %q: %v", ctx.FormString("action"), err)
-		ctx.JSONError(fmt.Sprintf("Action %q failed", ctx.FormString("action")))
-		return
+		if !errors.Is(err, user_model.ErrBlockedByUser) {
+			log.Error("Failed to apply action %q: %v", ctx.FormString("action"), err)
+			ctx.JSONError(fmt.Sprintf("Action %q failed", ctx.FormString("action")))
+			return
+		}
+
+		if ctx.ContextUser.IsOrganization() {
+			ctx.Flash.Error(ctx.Tr("org.follow_blocked_user"))
+		} else {
+			ctx.Flash.Error(ctx.Tr("user.follow_blocked_user"))
+		}
 	}
 
 	if redirectViaJSON {
