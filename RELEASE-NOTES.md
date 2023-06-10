@@ -13,6 +13,8 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/forgejo
 ```
 
+- [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+  The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
 - [CI]
   - Workflows are now [available to run tests](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) on `Forgejo` itself. It is not enabled yet on Codeberg but will work if the repository is mirrored on an instance where [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) is enabled.
 - [MODERATION]
