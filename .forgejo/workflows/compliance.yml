@@ -9,7 +9,7 @@ on:
 
 jobs:
   lint-backend:
-    runs-on: ubuntu-latest
+    runs-on: docker
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
@@ -21,7 +21,7 @@ jobs:
         env:
           TAGS: bindata sqlite sqlite_unlock_notify
   checks-backend:
-    runs-on: ubuntu-latest
+    runs-on: docker
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
