@@ -9,7 +9,7 @@ on:
 
 jobs:
   test-pgsql:
-    runs-on: ubuntu-latest
+    runs-on: docker
     container:
       image: codeberg.org/forgejo/test_env:main
     services:
