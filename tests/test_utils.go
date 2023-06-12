@@ -15,6 +15,7 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	packages_model "code.gitea.io/gitea/models/packages"
+	system_model "code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
@@ -176,6 +177,13 @@ func InitTest(requireGitea bool) {
 	}
 
 	routers.GlobalInitInstalled(graceful.GetManager().HammerContext())
+
+	if err := system_model.SetSettingNoVersion(graceful.GetManager().HammerContext(), system_model.KeyPictureDisableGravatar, "false"); err != nil {
+		log.Fatal("system_model.SetSettingNoVersion: %v", err)
+	}
+	if err := system_model.Init(graceful.GetManager().HammerContext()); err != nil {
+		log.Fatal("system_model.Init: %v", err)
+	}
 }
 
 func PrepareTestEnv(t testing.TB, skip ...int) func() {
