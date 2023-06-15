@@ -362,6 +362,12 @@ func CreateIssueComment(ctx *context.APIContext) {
 		return
 	}
 
+	err = issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer)
+	if err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
+		return
+	}
+
 	comment, err := issue_service.CreateIssueComment(ctx, ctx.Doer, ctx.Repo.Repository, issue, form.Body, nil)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "CreateIssueComment", err)
