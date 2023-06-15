@@ -93,7 +93,7 @@ runs:
 
     - name: Login to the container registry
       run: |
-        BASE64_AUTH=`echo -n "${{ inputs.doer }}:${{ inputs.token }}" | base64`
+        BASE64_AUTH=`echo -n "${{ inputs.doer }}:${{ inputs.token }}" | base64 -w0`
         mkdir -p ~/.docker
         echo "{\"auths\": {\"$CI_REGISTRY\": {\"auth\": \"$BASE64_AUTH\"}}}" > ~/.docker/config.json
       env:
