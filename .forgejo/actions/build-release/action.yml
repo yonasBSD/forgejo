@@ -16,8 +16,8 @@ inputs:
   doer:
     description: 'Name of the user authoring the release'
     required: true
-  ref_name:
-    description: 'Git reference of the tag for which the release must be built'
+  tag-version:
+    description: 'Version of the release derived from the tag withint the leading v'
     required: true
   suffix:
     description: 'Suffix to add to the image tag'
@@ -30,6 +30,9 @@ inputs:
   platforms:
     description: 'Coma separated list of platforms'
     default: 'linux/amd64,linux/arm64'
+  release-notes:
+    description: 'Full text of the release notes'
+    default: 'Release notes placeholder'
   binary-name:
     description: 'Name of the binary'
   binary-path:
@@ -103,14 +106,6 @@ runs:
       env:
         CI_REGISTRY: "${{ steps.registry.outputs.host-port }}"
 
-    - name: Create the tag and image variable
-      id: build
-      run: |
-        ${{ steps.verbose.outputs.shell }}
-        tag="${{ inputs.ref_name }}"
-        tag=${tag##*v}
-        echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
     - name: Build the container image for each architecture
       uses: https://github.com/docker/build-push-action@v4
       # workaround until https://github.com/docker/build-push-action/commit/d8823bfaed2a82c6f5d4799a2f8e86173c461aba is in @v4 or @v5 is released
@@ -121,7 +116,7 @@ runs:
         push: true
         file: ${{ inputs.dockerfile }}
         platforms: ${{ inputs.platforms }}
-        tags: ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ steps.build.outputs.tag }}${{ inputs.suffix }}
+        tags: ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ inputs.tag-version }}${{ inputs.suffix }}
 
     - name: Extract the binary from the container images into the release directory
       if: inputs.binary-name != ''
@@ -131,8 +126,8 @@ runs:
         cd release
         for platform in $(echo ${{ inputs.platforms }} | tr ',' ' '); do
           arch=$(echo $platform | sed -e 's|linux/||g' -e 's|arm/v6|arm-6|g')
-          docker create --platform $platform --name forgejo-$arch ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ steps.build.outputs.tag }}${{ inputs.suffix }}
-          binary="${{ inputs.binary-name }}-${{ steps.build.outputs.tag }}-linux"
+          docker create --platform $platform --name forgejo-$arch ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ inputs.tag-version }}${{ inputs.suffix }}
+          binary="${{ inputs.binary-name }}-${{ inputs.tag-version }}-linux"
           docker cp forgejo-$arch:${{ inputs.binary-path }} $binary-$arch
           xz --keep -9 $binary-$arch
           shasum -a 256 $binary-$arch > $binary-$arch.sha256
@@ -146,6 +141,6 @@ runs:
       with:
         direction: upload
         release-dir: release
-        release-notes: "RELEASE-NOTES#${{ steps.build.outputs.tag }}"
+        release-notes: "${{ inputs.release-notes }}"
         token: ${{ inputs.token }}
         verbose: ${{ steps.verbose.outputs.value }}

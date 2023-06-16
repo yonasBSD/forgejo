@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - Makefile
+      - Dockerfile
+      - Dockerfile.rootless
       - docker/**
       - .forgejo/actions/build-release/action.yml
       - .forgejo/workflows/build-release.yml
