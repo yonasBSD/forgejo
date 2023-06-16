@@ -48,11 +48,26 @@ jobs:
           go-version: ">=1.20"
           check-latest: true
 
-      - name: build sources
+      - name: Create the version from ref_name
+        id: tag-version
+        run: |
+          version="${{ github.ref_name }}"
+          version=${version##*v}
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create the release notes
+        id: release-notes
+        run: |
+          cat >> "$GITHUB_OUTPUT" <<EOF
+          value<<ENDVAR
+          See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#${{ steps.tag-version.outputs.value }}
+          ENDVAR
+          EOF
+
+      - name: Build sources
         run: |
           apt-get -qq install -y make
-          tag="${{ github.ref_name }}"
-          make VERSION=${tag##*v} sources-tarbal
+          make VERSION=${{ steps.tag-version.outputs.value }} sources-tarbal
           mv dist/release release
           find release | grep tar.gz # sanity check to fail fast
 
@@ -64,9 +79,10 @@ jobs:
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: root
-          ref_name: "${{ github.ref_name }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
           token: ${{ steps.token.outputs.value }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6
+          release-notes: "${{ steps.release-notes.outputs.value }}"
           binary-name: forgejo
           binary-path: /app/gitea/gitea
           verbose: ${{ steps.verbose.outputs.value }}
@@ -79,7 +95,7 @@ jobs:
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: root
-          ref_name: "${{ github.ref_name }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
           token: ${{ steps.token.outputs.value }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           suffix: -rootless
@@ -94,9 +110,10 @@ jobs:
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: "${{ secrets.DOER }}"
-          ref_name: "${{ github.ref_name }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
           token: "${{ secrets.TOKEN }}"
           platforms: linux/amd64,linux/arm64,linux/arm/v6
+          release-notes: "${{ steps.release-notes.outputs.value }}"
           binary-name: forgejo
           binary-path: /app/gitea/gitea
           verbose: ${{ steps.verbose.outputs.value }}
@@ -109,7 +126,7 @@ jobs:
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: "${{ secrets.DOER }}"
-          ref_name: "${{ github.ref_name }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
           token: "${{ secrets.TOKEN }}"
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           suffix: -rootless
