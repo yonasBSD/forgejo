@@ -44,6 +44,10 @@ runs:
     - run: echo "${{ github.action_path }}" >> $GITHUB_PATH
       shell: bash
 
+    - name: Install dependencies
+      run: |
+        apt-get install -y -qq xz-utils
+
     - name: set -x if verbose is required
       id: verbose
       run: |
@@ -124,12 +128,15 @@ runs:
       run: |
         ${{ steps.verbose.outputs.shell }}
         mkdir -p release
+        cd release
         for platform in $(echo ${{ inputs.platforms }} | tr ',' ' '); do
           arch=$(echo $platform | sed -e 's|linux/||g' -e 's|arm/v6|arm-6|g')
           docker create --platform $platform --name forgejo-$arch ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ steps.build.outputs.tag }}${{ inputs.suffix }}
-          binary="${{ inputs.binary-name }}-${{ steps.build.outputs.tag }}"
-          docker cp forgejo-$arch:${{ inputs.binary-path }} release/$binary-$arch
-          shasum -a 256 < release/$binary-$arch | cut -f1 -d ' ' > release/$binary-$arch.sha256
+          binary="${{ inputs.binary-name }}-${{ steps.build.outputs.tag }}-linux"
+          docker cp forgejo-$arch:${{ inputs.binary-path }} $binary-$arch
+          xz --keep -9 $binary-$arch
+          shasum -a 256 $binary-$arch > $binary-$arch.sha256
+          shasum -a 256 $binary-$arch.xz > $binary-$arch.xz.sha256
           docker rm forgejo-$arch
         done
 

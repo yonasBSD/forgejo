@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - id: verbose
+      - name: Increase the verbosity when there are no secrets
+        id: verbose
         run: |
-          # if there are no secrets, be verbose
           if test -z "${{ secrets.TOKEN }}"; then
             value=true
           else
@@ -22,17 +22,17 @@ jobs:
           fi
           echo "value=$value" >> "$GITHUB_OUTPUT"
 
-      - id: repository
+      - name: Sanitize the name of the repository
+        id: repository
         run: |
           set -x # comment out
           repository="${{ github.repository }}"
           echo "value=${repository##*/}" >> "$GITHUB_OUTPUT"
 
-      - name: when in a test environment, create a token
+      - name: When in a test environment, create a token
         id: token
         if: ${{ secrets.TOKEN == '' }}
         run: |
-          set -x # comment out
           apt-get -qq install -y jq
           url="${{ env.GITHUB_SERVER_URL }}"
           hostport=${url##http*://}
@@ -42,6 +42,19 @@ jobs:
           curl -sS -X DELETE $api/release
           token=$(curl -sS -X POST -H 'Content-Type: application/json' --data-raw '{"name": "release", "scopes": ["all"]}' $api | jq --raw-output .sha1)
           echo "value=${token}" >> "$GITHUB_OUTPUT"
+
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.20"
+          check-latest: true
+
+      - name: build sources
+        run: |
+          apt-get -qq install -y make
+          tag="${{ github.ref_name }}"
+          make VERSION=${tag##*v} sources-tarbal
+          mv dist/release release
+          find release | grep tar.gz # sanity check to fail fast
 
       - name: build container & release (when TOKEN secret is not set)
         if: ${{ secrets.TOKEN == '' }}
