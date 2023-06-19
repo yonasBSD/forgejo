@@ -1,10 +1,10 @@
 {{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings blocked-users")}}
 <div class="org-setting-content">
 	<div class="ui attached segment">
-		<form class="ui form ignore-dirty" id="block-user-form" action="{{$.Link}}/block" method="post">
+		<form class="ui form ignore-dirty gt-df gt-fw gt-gap-3" action="{{$.Link}}/block" method="post">
 			{{.CsrfTokenHtml}}
 			<input type="hidden" name="uid" value="">
-			<div class="inline field ui left">
+			<div class="ui left">
 				<div id="search-user-box" class="ui search">
 					<div class="ui input">
 						<input class="prompt" name="uname" placeholder="{{.locale.Tr "repo.settings.search_user_placeholder"}}" autocomplete="off" required>
