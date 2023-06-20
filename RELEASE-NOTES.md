@@ -26,14 +26,10 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 - [TIME]
   The display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more.
 - [WIKI]
-  - [WIKI] commit c0246677a692de804ffe1bb5f7d630fb002dd128 Fix markup background, improve wiki rendering [23750](https://github.com/go-gitea/gitea/pull/23750)
-  - [WIKI] commit 2f468381205f5f7e279791aa71e5288710a6476c Re-add initial wiki page text when editing the page [23984](https://github.com/go-gitea/gitea/pull/23984)
-  - [WIKI] commit 1ab16e48cccc086e7f97fb3ae8a293fe47a3a452 Improve Wiki TOC [24137](https://github.com/go-gitea/gitea/pull/24137)
-  - [WIKI] commit 284b41f45244bbe46fc8feee15bbfdf66d150e79 Fix bug when deleting wiki with no code write permission [24274](https://github.com/go-gitea/gitea/pull/24274)
-  - [WIKI] commit d347208114966166ffa9655adc5b202676546c31 Improve External Wiki in Repo Header [24304](https://github.com/go-gitea/gitea/pull/24304)
-  - [WIKI] commit db582d97ef6cd7d9f73a63c99639f6d00f40dc5a Improve wiki user title test [24559](https://github.com/go-gitea/gitea/pull/24559)
-  - [WIKI] commit 60e7963141681895dcc81da944192c4292c6a20a Fix inconsistent wiki path converting. [24277](https://github.com/go-gitea/gitea/pull/24277)
-  - [WIKI] commit b39a5bbbd610ba30651218658caaec1c86d6bca1 Make wiki title supports dashes and improve wiki name related features [24143](https://github.com/go-gitea/gitea/pull/24143)
+  - Improve the [display of the table of content](https://codeberg.org/forgejo/forgejo/commit/1ab16e48cccc086e7f97fb3ae8a293fe47a3a452).
+  - Fixed a bug [preventing team users who have wiki write permission to delete a page](https://codeberg.org/forgejo/forgejo/commit/284b41f45244bbe46fc8feee15bbfdf66d150e79).
+  - [Shows the External Link icon and URL in the header](https://codeberg.org/forgejo/forgejo/commit/d347208114966166ffa9655adc5b202676546c31) to indicate that the User will be sent to a external side to helps preventing fishing.
+  - Allow dash support in [wiki titles](https://codeberg.org/forgejo/forgejo/commit/b39a5bbbd610ba30651218658caaec1c86d6bca1).
 - [UI / UX]
   - [BREAKING UX preview render] commit 84daddc2fa74393cdc13371b0cc44f0444cfdae0 Editor preview support for external renderers [23333](https://github.com/go-gitea/gitea/pull/23333)
   - [BREAKING branding] commit d44e1565dadd09b4cdbb924479bf6e59a4d3c403 Refactor `setting.Other` and remove unused `SHOW_FOOTER_BRANDING` (#24270)
