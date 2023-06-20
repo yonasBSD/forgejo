@@ -16,25 +16,13 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 - [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
   The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
 - [CI]
-  - Workflows are now [available to run tests](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) on `Forgejo` itself. It is not enabled yet on Codeberg but will work if the repository is mirrored on an instance where [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) is enabled.
+  Forgejo Actions workflows are [now used](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
 - [MODERATION]
-  - Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
+  Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
 - [PACKAGES]
-  - [PACKAGES SWIFT] commit c709fa17a77eae391cafbe72d6b2594f74d86a60 Add Swift package registry [22404](https://github.com/go-gitea/gitea/pull/22404)
-  - [PACKAGE debian] commit bf999e406994ab34420fb62e0de7948c8c2116c1 Add Debian package registry [24426](https://github.com/go-gitea/gitea/pull/24426)
-  - [PACKAGES RPM] commit 05209f0d1d4b996b8beb6633880b8fe12c15932b Add RPM registry [23380](https://github.com/go-gitea/gitea/pull/23380)
-  - [PACKAGE alpine] commit 9173e079ae9ddf18685216fd846ca1727297393c Add Alpine package registry [23714](https://github.com/go-gitea/gitea/pull/23714)
-  - [PACKAGE go] commit 5968c63a11c94b0fdde0485af194bebb2ea1b8e7 Add Go package registry [24687](https://github.com/go-gitea/gitea/pull/24687)
-  - [PACKAGES CRAN] commit cdb088cec288a20e14240f86a689dd14f4cd603b Add CRAN package registry [22331](https://github.com/go-gitea/gitea/pull/22331)
-  - [PACKAGES cargo]] commit 723598b803919bfc074fee05f830421a99881c3b Implement Cargo HTTP index [24452](https://github.com/go-gitea/gitea/pull/24452)
+  Package registries are available for [SWIFT](https://forgejo.org/docs/v1.20/user/packages/swift), [debian](https://forgejo.org/docs/v1.20/user/packages/debian), [RPM](https://forgejo.org/docs/v1.20/user/packages/rpm), [alpine](https://forgejo.org/docs/v1.20/user/packages/alpine), [Go](https://forgejo.org/docs/v1.20/user/packages/go) [CRAN](https://forgejo.org/docs/v1.20/user/packages/cran) and [Cargo](https://forgejo.org/docs/v1.20/user/packages/cargo).
 - [A11Y]
-  - [A11Y] commit 6c354546547cd3a9595a7db119a6480d9cd506a7 Improve accessibility for issue comments [22612](https://github.com/go-gitea/gitea/pull/22612)
-  - [A11Y] commit a78e0b7dade16bc6509b943fe86e74962f1b95b6 Add accessibility to the menu on the navbar [23059](https://github.com/go-gitea/gitea/pull/23059)
-  - [A11Y] commit e8935606f5f1fff3c59222ebca6d4615ab06fb0b Scoped labels: set aria-disabled on muted Exclusive option for a11y [23306](https://github.com/go-gitea/gitea/pull/23306)
-  - [A11Y] commit d4f35bd681af0632da988e15306f330e020422b2 Use a general approch to improve a11y for all checkboxes and dropdowns. [23542](https://github.com/go-gitea/gitea/pull/23542)
-  - [A11Y RTL] commit 32d9c47ec7706d8f06e09b42e09a28d7a0e3c526 Add RTL rendering support to Markdown [24816](https://github.com/go-gitea/gitea/pull/24816)
-  - [A11Y] commit e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc Improve accessibility when (re-)viewing files [24817](https://github.com/go-gitea/gitea/pull/24817)
-  - [A11Y] commit 87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec Add aria attributes to interactive time tooltips. [23661](https://github.com/go-gitea/gitea/pull/23661)
+  Accessibility was improved for [issue comments](https://codeberg.org/forgejo/forgejo/commit/6c354546547cd3a9595a7db119a6480d9cd506a7), [the menu on the navbar](https://codeberg.org/forgejo/forgejo/commit/a78e0b7dade16bc6509b943fe86e74962f1b95b6), [scoped labels](https://codeberg.org/forgejo/forgejo/commit/e8935606f5f1fff3c59222ebca6d4615ab06fb0b), [checkboxes and dropdowns](https://codeberg.org/forgejo/forgejo/commit/d4f35bd681af0632da988e15306f330e020422b2), [RTL rendering support to Markdown](https://codeberg.org/forgejo/forgejo/commit/32d9c47ec7706d8f06e09b42e09a28d7a0e3c526), [file (re-)views](https://codeberg.org/forgejo/forgejo/commit/e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc), [interactive tooltips](https://codeberg.org/forgejo/forgejo/commit/87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec) and more.
 - [TIME]
   - [TIME] commit b7b58348317cbe0145dc453d45c886b8e2764b4c Use auto-updating, natively hoverable, localized time elements [23988](https://github.com/go-gitea/gitea/pull/23988)
   - [TIME] commit 25faee3c5f5be23c99b3b7e50418fc0dbad7a41b Fix date  display bug [24047](https://github.com/go-gitea/gitea/pull/24047)
