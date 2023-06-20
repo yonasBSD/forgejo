@@ -132,10 +132,6 @@ func MainTest(m *testing.M, testOpts *TestOptions) {
 
 	setting.IncomingEmail.ReplyToAddress = "incoming+%{token}@localhost"
 
-	if err := system_model.SetSettingNoVersion(db.DefaultContext, system_model.KeyPictureDisableGravatar, "false"); err != nil {
-		fatalTestError("system_model.SetSettingNoVersion: %v\n", err)
-	}
-
 	if err = storage.Init(); err != nil {
 		fatalTestError("storage.Init: %v\n", err)
 	}
