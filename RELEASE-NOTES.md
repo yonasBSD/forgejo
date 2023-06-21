@@ -202,7 +202,7 @@ github.com/go-gitea/gitea/pull/24397)
   - [WEBP avatars] commit 65fe0fb22cfb264f0b756065d0c3ce7a17d7e55b Allow `webp` images as avatars [24248](https://github.com/go-gitea/gitea/pull/24248)
   - [MARKDOWN livemd] commit 58caf422e67c78f87327bc9b00f89083a2432940 Add .livemd as a markdown extension [22730](https://github.com/go-gitea/gitea/pull/22730)
   - [FOLLOW org] commit cc64a925602d54f3439dd19f16b5280bd0377a7a Add follow organization and fix the logic of following page [24345](https://github.com/go-gitea/gitea/pull/24345)
-  - [PROFILE README] commit c090f87a8db5b51e0aa9c7278b38ddc862c048ac Add Gitea Profile Readmes [23260](https://github.com/go-gitea/gitea/pull/23260)
+  - [BREAKING PROFILE README] commit c090f87a8db5b51e0aa9c7278b38ddc862c048ac Add Gitea Profile Readmes [23260](https://github.com/go-gitea/gitea/pull/23260) breaking because it will display the .profile/README.md of a pre-existing repository, private or not
   - [HTTP RANGE] commit 023a048f52b5bf8c4b715285245a129f04e05a8c Make repository response support HTTP range request [24592](https://github.com/go-gitea/gitea/pull/24592)
   - [status check pattern] commit e7c2231dee356df5cbe5a47c07e31e3a8d090a6f Support for status check pattern [24633](https://github.com/go-gitea/gitea/pull/24633)
   - [EMAIL allow/block] commit 2cb66fff60c95efbd58b797f1197f2421f4687ce Support wildcard in email domain allow/block list [24831](https://github.com/go-gitea/gitea/pull/24831)
