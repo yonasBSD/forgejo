@@ -79,28 +79,8 @@ endif
 STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
-ifneq ($(GITHUB_REF_TYPE),branch)
-	VERSION ?= $(subst v,,$(GITHUB_REF_NAME))
-	GITEA_VERSION ?= $(GITHUB_REF_NAME)
-else
-	ifneq ($(GITHUB_REF_NAME),)
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))
-	else
-		VERSION ?= main
-	endif
-
-	STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
-	ifneq ($(STORED_VERSION),)
-		GITEA_VERSION ?= $(STORED_VERSION)
-	else
-		GITEA_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
-	endif
-endif
-
-# if version = "main" then update version to "nightly"
-ifeq ($(VERSION),main)
-	VERSION := main-nightly
-endif
+GITEA_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+VERSION = ${GITEA_VERSION}
 
 # SemVer
 FORGEJO_VERSION := 5.0.0+0-gitea-1.20.0
