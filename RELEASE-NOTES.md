@@ -57,6 +57,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Make Issue/PR/projects more compact](https://codeberg.org/forgejo/forgejo/commit/4a722c9a45659e7732258397bbb3dd1039ea1952)
   - [Improve RSS user interface](https://codeberg.org/forgejo/forgejo/commit/59d060622d375c4123ea88e2fa6c4f34d4fea4d3)
   - [Add details summary for vertical menus in settings to allow toggling](https://codeberg.org/forgejo/forgejo/commit/58536093b3112841bc69edb542189893b57e7a47)
+  - [Show visibility status of email in own profile](https://codeberg.org/forgejo/forgejo/commit/5e1bd8af5f16f9db88cfeb5b80bdf731435cacfb)
   - [Improve the protected branch setting page](https://codeberg.org/forgejo/forgejo/commit/72e956b79a3b2e055bb5d4d5e20e88eaa2eeec96)
   - [Improve the display of the pull request branch delete button](https://codeberg.org/forgejo/forgejo/commit/774d1a0fbdadd1136b6af895f8d449b0c8db54cb)
   - [Fix the color for repository transfer related buttons when having no permission to act](https://codeberg.org/forgejo/forgejo/commit/7abe958f5b507efa676fb3b2e27d30517f6d1908)
@@ -80,6 +81,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Support no label/assignee filter and batch clearing labels/assignees](https://codeberg.org/forgejo/forgejo/commit/b807d2f6205bf1ba60d3a543e8e1a16f7be956df)
   - [Display when a repo was archived](https://codeberg.org/forgejo/forgejo/commit/c41bc4f1279c9e1e6e11d7b5fcfe7ef089fc7577)
   - [Improve squash merge commit author and co-author with private emails](https://codeberg.org/forgejo/forgejo/commit/d647e74502fdf734c89b3e6592a9ad88c3005971)
+  - [Allow adding new files to an empty repo](https://codeberg.org/forgejo/forgejo/commit/e422342eebc18034ef586ec58f1e2fff0340091d)
   - [Move `Rename branch` from repo settings page to the page of branches list](https://codeberg.org/forgejo/forgejo/commit/e8173c2c33f1dd5b0a2c044255434d414cab62d2)
   - [Add "Updated" column for admin repositories list](https://codeberg.org/forgejo/forgejo/commit/94d6b5b09d49b2622c2164a03cfae45dced96c74)
   - [Hide the merge box of a pull request if it is merged and the branch was deleted](https://codeberg.org/forgejo/forgejo/commit/e9b39250b285f1b9cbf9739f33c06fc57401f314)
@@ -127,37 +129,30 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Add API for Label templates](https://codeberg.org/forgejo/forgejo/commit/25dc1556cd70b567a4920beb002a0addfbfd6ef2)
   - [Add API for changing/creating/deleting multiple files](https://codeberg.org/forgejo/forgejo/commit/275d4b7e3f4595206e5c4b1657d4f6d6969d9ce2)
 - **Features**
-  - [BREAKING] (maybe) commit f5987c24e2b561952ebf9a2485b863325c16ee48 Make `gitea serv` respect git binary home [23138](https://github.com/go-gitea/gitea/pull/23138)
-  - [README] commit 52e24167e5ebe0297f7630e9daecd6ffc9570a99 Test renderReadmeFile [23185](https://github.com/go-gitea/gitea/pull/23185)
-  - [REFLOGS] commit 757b4c17e900f1d11a81bc9467d90e6c245ee8f2 Support reflogs [22451](https://github.com/go-gitea/gitea/pull/22451)
-  - [DOCTOR] commit df411819ebe4d3e6852997ce41fadf837d5d4ea0 Check LFS/Packages settings in dump and doctor command [23631](https://github.com/go-gitea/gitea/pull/23631)
-  - [MINIO] commit 0e7bec1849d2d7a87713abe494b4d3ef416180d4 Add InsecureSkipVerify to Minio Client for Storage [23166](https://github.com/go-gitea/gitea/pull/23166)
-  - [MINIO MD5 checksum] commit 5727056ea109eb04ee535b981349cdfb44df9fae Make minio package support legacy MD5 checksum [23768](https://github.com/go-gitea/gitea/pull/23768)
-  - [PRIVACY email display] commit 6706ac2a0f5f2fe4f8e2555be7e2a8b4d5946398 Fix profile page email display, respect settings [23747](https://github.com/go-gitea/gitea/pull/23747)
-  - [INDEX meilisearch] commit 92c160d8e716cb3d05215a97cf521e843596f562 Add meilisearch support [23136](https://github.com/go-gitea/gitea/pull/23136)
-  - [PRIVACY email] commit 5e1bd8af5f16f9db88cfeb5b80bdf731435cacfb Show visibility status of email in own profile [23900](https://github.com/go-gitea/gitea/pull/23900)
-  - [BREAKING SSH key parsing] commit 7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04 Prefer native parser for SSH public key parsing [23798](https://github.com/go-gitea/gitea/pull/23798)
-  - [REDIS] commit 985f76dc4b0692c4d6c6f37e82500ef859557c16 Update redis library to support redis v7 [24114](https://github.com/go-gitea/gitea/pull/24114)
-  - [RESERVED users] commit 1819c4b59b81ba4db2a38d3b3dc81f29102fde51 Add new user types `reserved`, `bot`, and `remote` [24026](https://github.com/go-gitea/gitea/pull/24026)
-  - [NEW files to empty repo] commit e422342eebc18034ef586ec58f1e2fff0340091d Allow adding new files to an empty repo [24164](https://github.com/go-gitea/gitea/pull/24164)
-  - [WEBP avatars] commit 65fe0fb22cfb264f0b756065d0c3ce7a17d7e55b Allow `webp` images as avatars [24248](https://github.com/go-gitea/gitea/pull/24248)
-  - [MARKDOWN livemd] commit 58caf422e67c78f87327bc9b00f89083a2432940 Add .livemd as a markdown extension [22730](https://github.com/go-gitea/gitea/pull/22730)
-  - [FOLLOW org] commit cc64a925602d54f3439dd19f16b5280bd0377a7a Add follow organization and fix the logic of following page [24345](https://github.com/go-gitea/gitea/pull/24345)
-  - [BREAKING PROFILE README] commit c090f87a8db5b51e0aa9c7278b38ddc862c048ac Add Gitea Profile Readmes [23260](https://github.com/go-gitea/gitea/pull/23260) breaking because it will display the .profile/README.md of a pre-existing repository, private or not
-  - [HTTP RANGE] commit 023a048f52b5bf8c4b715285245a129f04e05a8c Make repository response support HTTP range request [24592](https://github.com/go-gitea/gitea/pull/24592)
-  - [status check pattern] commit e7c2231dee356df5cbe5a47c07e31e3a8d090a6f Support for status check pattern [24633](https://github.com/go-gitea/gitea/pull/24633)
-  - [EMAIL allow/block] commit 2cb66fff60c95efbd58b797f1197f2421f4687ce Support wildcard in email domain allow/block list [24831](https://github.com/go-gitea/gitea/pull/24831)
-  - [INSTALL page] commit abcf5a7b5e2c3df951b8048317a99a89b040b489 Fix install page context, make the install page tests really test [24858](https://github.com/go-gitea/gitea/pull/24858)
-  - [environment-to-ini FILE] commit c21605951b581440bb08b65d5907b1cd4e0ab6c5 Make environment-to-ini  support loading key value from file [24832](https://github.com/go-gitea/gitea/pull/24832)
-  - [APP ini git config] commit 8080ace6fcf73a5fbe4a0dd71881228abd0c68b9 Support changing git config through `app.ini`, use `diff.algorithm=histogram` by default [24860](https://github.com/go-gitea/gitea/pull/24860)
-  - [PIN issues] commit aaa109466350c531b9238a61115b2877daca57d3 Add the ability to pin Issues [24406](https://github.com/go-gitea/gitea/pull/24406)
-  - [BREAKING reflog / config] commit 2f149c5c9db97f20fbbc65e32d1f3133048b11a2 Use `[git.config]` for reflog cleaning up [24958](https://github.com/go-gitea/gitea/pull/24958)
-  - [SEARCH skip forks mirrors] commit 033d92997fc16baee097d2b25f08e0984e628abd Allow skipping forks and mirrors from being indexed [23187](https://github.com/go-gitea/gitea/pull/23187)
-  - [Implement systemd-notify protocol](https://codeberg.org/forgejo/forgejo/commit/7565e5c3de051400a9e3703f707049cbb9054cf3)
-- [WEBHOOK]
-  - [WEBHOOKS] commit 2173f14708ff3b35d7821fc9b6dcb5fcd06b8494 Add user webhooks [21563](https://github.com/go-gitea/gitea/pull/21563)
-  - [WEBHOOK] commit 9e04627acaaa853e5269f98f53f2615077cfb028 Fix incorrect `HookEventType` of pull request review comments [23650](https://github.com/go-gitea/gitea/pull/23650)
-  - [WEBHOOK review request] commit 309354c70ee994a1e8f261d7bc24e7473e601d02 New webhook trigger for receiving Pull Request review requests [24481](https://github.com/go-gitea/gitea/pull/24481)
+  - **Breaking:** user profile customization with a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac)
+    The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
+    breaking change because it will display the .profile/README.md of a pre-existing repository, private or not.
+  - Add [meilisearch](https://www.meilisearch.com/) support to [index the content of repositories](https://codeberg.org/forgejo/forgejo/commit/92c160d8e716cb3d05215a97cf521e843596f562).
+  - [Add support](https://codeberg.org/forgejo/forgejo/commit/985f76dc4b0692c4d6c6f37e82500ef859557c16) for [redis v7](https://raw.githubusercontent.com/redis/redis/7.0/00-RELEASENOTES)
+  - Allow [webp](https://en.wikipedia.org/wiki/WebP) images [as avatars](https://codeberg.org/forgejo/forgejo/commit/65fe0fb22cfb264f0b756065d0c3ce7a17d7e55b)
+  - [Add support](https://codeberg.org/forgejo/forgejo/commit/58caf422e67c78f87327bc9b00f89083a2432940) for rendering [.livemd](https://livebook.dev/)
+  - [A user can follow an organization](https://codeberg.org/forgejo/forgejo/commit/cc64a925602d54f3439dd19f16b5280bd0377a7a)
+  - [When playing a video in the web UI, the player control can be dragged to play on the specified position](https://codeberg.org/forgejo/forgejo/commit/023a048f52b5bf8c4b715285245a129f04e05a8c)
+  - The commit status required for a pull request to be merged can now be [specified as patterns](https://codeberg.org/forgejo/forgejo/commit/e7c2231dee356df5cbe5a47c07e31e3a8d090a6f) instead of being a hard coded list
+  - [Support wildcard in email domain allow and block lists](https://codeberg.org/forgejo/forgejo/commit/2cb66fff60c95efbd58b797f1197f2421f4687ce). [Read more about EMAIL_DOMAIN_ALLOWLIST and EMAIL_DOMAIN_BLOCKLIST](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/).
+  - When [installing with docker](https://forgejo.org/docs/v1.20/admin/installation/#installation-with-docker) the value of a configuration variable can now be fetched from a file by [adding the `__FILE` suffix](https://codeberg.org/forgejo/forgejo/commit/c21605951b581440bb08b65d5907b1cd4e0ab6c5). For instance `FORGEJO__security__INTERNAL_TOKEN__FILE=/etc/forgejo/token` can be used instead of `FORGEJO__security__INTERNAL_TOKEN=tokenvalue`.
+  - The [new `[git.config]` section of `app.ini`](https://codeberg.org/forgejo/forgejo/commit/8080ace6fcf73a5fbe4a0dd71881228abd0c68b9) is used to `git set config`. [Read more about the defaults it contains](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#git---config-options-gitconfig).
+  - [Issues and pull requests can be pinned](https://codeberg.org/forgejo/forgejo/commit/aaa109466350c531b9238a61115b2877daca57d3) and will show on top of the list of issues (or pull requests) and can be re-arranged by dragging them.
+  - [Implement systemd-notify protocol](https://codeberg.org/forgejo/forgejo/commit/7565e5c3de051400a9e3703f707049cbb9054cf3) and allows for using `Type=notify` in service files.
+- **Miscellaneous**
+  - [Provide more control over the repositories that are indexed](https://codeberg.org/forgejo/forgejo/commit/033d92997fc16baee097d2b25f08e0984e628abd). [Read more about REPO_INDEXER_REPO_TYPES](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/)
+  - **Breaking:** the section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
+    * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
+    * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
+  - **Breaking:** [SSH_KEYGEN_PATH default to using the Go SSH key parsing (empty string) instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
+- **Webhook**
+  - Similar to organization wide webhooks, it is now possible to have user wide webhooks](https://codeberg.org/forgejo/forgejo/commit/2173f14708ff3b35d7821fc9b6dcb5fcd06b8494)
+  - [Add webhook trigger when a Pull Request review requests is created](https://codeberg.org/forgejo/forgejo/commit/309354c70ee994a1e8f261d7bc24e7473e601d02)
 
 * Container images upgraded to Alpine 3.18
 
