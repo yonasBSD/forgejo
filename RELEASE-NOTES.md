@@ -52,7 +52,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Allows "video" HTML tag to be used in MarkDown, with the src, autoplay, and controls attributes](https://codeberg.org/forgejo/forgejo/commit/de6c718b46ebd3b7f6362c766eed328044d95ec7)
   - [Add "Reviewed by you" filter for pull requests](https://codeberg.org/forgejo/forgejo/commit/10cdcb9ea8077098921d72720f9f36fcfd950452)
   - [Make Ctrl+Enter submit a pending comment (starting review) instead of submitting a single comment](https://codeberg.org/forgejo/forgejo/commit/188c8c12c290e131fb342e3203634828652b0af5)
-  - (n0toose) [UI] commit 35ce7ca25b5756441949312d79aa6382f98ce8d6 Hide 'Mirror Settings' when unneeded, improve hints [24433](https://github.com/go-gitea/gitea/pull/24433)
+  - If an instance chooses to disable new pull or push mirrors or mirrors entirely, an appropriate message will [now be shown to the user in the Repository Settings](https://codeberg.org/forgejo/forgejo/commit/35ce7ca25b5756441949312d79aa6382f98ce8d6)
   - [Change `Close` to either `Close issue` or `Close pull request`](https://codeberg.org/forgejo/forgejo/commit/39d3711f3036db42d7ddf73dbdb125be611bcbba)
   - [Make Issue/PR/projects more compact](https://codeberg.org/forgejo/forgejo/commit/4a722c9a45659e7732258397bbb3dd1039ea1952)
   - [Improve RSS user interface](https://codeberg.org/forgejo/forgejo/commit/59d060622d375c4123ea88e2fa6c4f34d4fea4d3)
