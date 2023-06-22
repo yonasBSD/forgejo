@@ -13,31 +13,33 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/forgejo
 ```
 
-- [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+- **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
   The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
-- [CI]
+- **Continuous Integration:**
   Forgejo Actions workflows are [now used](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
-- [MODERATION]
+- **Moderation:**
   Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
-- [PACKAGES]
-  Package registries are available for [SWIFT](https://forgejo.org/docs/v1.20/user/packages/swift), [debian](https://forgejo.org/docs/v1.20/user/packages/debian), [RPM](https://forgejo.org/docs/v1.20/user/packages/rpm), [alpine](https://forgejo.org/docs/v1.20/user/packages/alpine), [Go](https://forgejo.org/docs/v1.20/user/packages/go), [CRAN](https://forgejo.org/docs/v1.20/user/packages/cran) and [Cargo](https://forgejo.org/docs/v1.20/user/packages/cargo).
-- [A11Y]
-  Accessibility was improved for [issue comments](https://codeberg.org/forgejo/forgejo/commit/6c354546547cd3a9595a7db119a6480d9cd506a7), [the menu on the navbar](https://codeberg.org/forgejo/forgejo/commit/a78e0b7dade16bc6509b943fe86e74962f1b95b6), [scoped labels](https://codeberg.org/forgejo/forgejo/commit/e8935606f5f1fff3c59222ebca6d4615ab06fb0b), [checkboxes and dropdowns](https://codeberg.org/forgejo/forgejo/commit/d4f35bd681af0632da988e15306f330e020422b2), [RTL rendering support to Markdown](https://codeberg.org/forgejo/forgejo/commit/32d9c47ec7706d8f06e09b42e09a28d7a0e3c526), [file (re-)views](https://codeberg.org/forgejo/forgejo/commit/e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc), [interactive tooltips](https://codeberg.org/forgejo/forgejo/commit/87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec), [using a button element](https://codeberg.org/forgejo/forgejo/commit/81fe5d61851c0e586af7d32c29171ceff9a571bb), [repository list](https://codeberg.org/forgejo/forgejo/commit/e82f1b15c7120ad13fd3b67cf7e2c6cb9915c22d) and more.
-- [TIME]
-  The display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more.
-- [WIKI]
-  - Improve the [display of the table of content](https://codeberg.org/forgejo/forgejo/commit/1ab16e48cccc086e7f97fb3ae8a293fe47a3a452).
-  - Fixed a bug [preventing team users who have wiki write permission to delete a page](https://codeberg.org/forgejo/forgejo/commit/284b41f45244bbe46fc8feee15bbfdf66d150e79).
-  - [Shows the External Link icon and URL in the header](https://codeberg.org/forgejo/forgejo/commit/d347208114966166ffa9655adc5b202676546c31) to indicate that the User will be sent to a external side to helps preventing fishing.
-  - Allow dash support in [wiki titles](https://codeberg.org/forgejo/forgejo/commit/b39a5bbbd610ba30651218658caaec1c86d6bca1).
-- [ACTIONS]
+- **Package:**
+  New registries are available for [SWIFT](https://forgejo.org/docs/v1.20/user/packages/swift), [debian](https://forgejo.org/docs/v1.20/user/packages/debian), [RPM](https://forgejo.org/docs/v1.20/user/packages/rpm), [alpine](https://forgejo.org/docs/v1.20/user/packages/alpine), [Go](https://forgejo.org/docs/v1.20/user/packages/go), [CRAN](https://forgejo.org/docs/v1.20/user/packages/cran) and [Cargo](https://forgejo.org/docs/v1.20/user/packages/cargo).
+- **Accessibility:**
+  numerous improvements for [issue comments](https://codeberg.org/forgejo/forgejo/commit/6c354546547cd3a9595a7db119a6480d9cd506a7), [the menu on the navbar](https://codeberg.org/forgejo/forgejo/commit/a78e0b7dade16bc6509b943fe86e74962f1b95b6), [scoped labels](https://codeberg.org/forgejo/forgejo/commit/e8935606f5f1fff3c59222ebca6d4615ab06fb0b), [checkboxes and dropdowns](https://codeberg.org/forgejo/forgejo/commit/d4f35bd681af0632da988e15306f330e020422b2), [RTL rendering support to Markdown](https://codeberg.org/forgejo/forgejo/commit/32d9c47ec7706d8f06e09b42e09a28d7a0e3c526), [file (re-)views](https://codeberg.org/forgejo/forgejo/commit/e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc), [interactive tooltips](https://codeberg.org/forgejo/forgejo/commit/87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec), [using a button element](https://codeberg.org/forgejo/forgejo/commit/81fe5d61851c0e586af7d32c29171ceff9a571bb), [repository list](https://codeberg.org/forgejo/forgejo/commit/e82f1b15c7120ad13fd3b67cf7e2c6cb9915c22d) and more.
+- **Time:**
+  the display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more.
+- **[Wiki](https://forgejo.org/docs/v1.20/user/wiki/):**
+  - Improve the [display of the table of content](https://codeberg.org/forgejo/forgejo/commit/1ab16e48cccc086e7f97fb3ae8a293fe47a3a452)
+  - Fixed a bug [preventing team users who have wiki write permission to delete a page](https://codeberg.org/forgejo/forgejo/commit/284b41f45244bbe46fc8feee15bbfdf66d150e79)
+  - [Shows the External Link icon and URL in the header](https://codeberg.org/forgejo/forgejo/commit/d347208114966166ffa9655adc5b202676546c31) to indicate that the User will be sent to a external side to helps preventing fishing
+  - Allow dash support in [titles](https://codeberg.org/forgejo/forgejo/commit/b39a5bbbd610ba30651218658caaec1c86d6bca1)
+- **[Actions](https://forgejo.org/docs/v1.20/user/actions/)**
   - High level summary of actions related features & UI
   - commit aac07d010f261c00fb3bd9644c71dc108c668c11 Add workflow error notification in ui [23404](https://github.com/go-gitea/gitea/pull/23404)
-- [TEMPLATES]
-  - commit 5c0745c0349f0709d0fc36fd8a97dcab86bce28a Add validations.required check to dropdown field [24849](https://github.com/go-gitea/gitea/pull/24849)
+- **[Templates](https://forgejo.org/docs/v1.20/user/issue-pull-request-templates/)**
   - [Configuration for the issue templates](https://codeberg.org/forgejo/forgejo/commit/f384b13f1cd44be3a87df5553a0099390dacd010). [Read more about issue config](https://forgejo.org/docs/v1.20/user/issue-pull-request-templates/#syntax-for-issue-config)
+  - [Add validations.required check to the dropdown field](https://codeberg.org/forgejo/forgejo/commit/5c0745c0349f0709d0fc36fd8a97dcab86bce28a)
   - [Issue template support markdown edition](https://codeberg.org/forgejo/forgejo/commit/c4303efc23ea19f16ee826809f43888ee4583ebb)
-- [UI / UX]
+  - [Use a general Eval function for expressions in templates](https://codeberg.org/forgejo/forgejo/commit/5b89670a318e52e271f65d96bfe1116d85d20988)
+  - [reload-templates CLI](https://codeberg.org/forgejo/forgejo/commit/3588edbb08f93aaa56defa82dffdbb202cd9aa4a)
+- **User Interface and User eXperience**
   - **Breaking:** the default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
   - **Breaking:** remove [meta tags `theme-color` and `default-theme`](https://codeberg.org/forgejo/forgejo/commit/c7612d178c5b954d4846cd27a65a7fa15fd1ba65)
     The ui.THEME_COLOR_META_TAG setting has been removed. If you still need to set the theme-color meta tag, add it via $GITEA_CUSTOM/templates/custom/header.tmpl instead.
@@ -53,6 +55,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - (n0toose) [UI] commit 35ce7ca25b5756441949312d79aa6382f98ce8d6 Hide 'Mirror Settings' when unneeded, improve hints [24433](https://github.com/go-gitea/gitea/pull/24433)
   - [Change `Close` to either `Close issue` or `Close pull request`](https://codeberg.org/forgejo/forgejo/commit/39d3711f3036db42d7ddf73dbdb125be611bcbba)
   - [Make Issue/PR/projects more compact](https://codeberg.org/forgejo/forgejo/commit/4a722c9a45659e7732258397bbb3dd1039ea1952)
+  - [Improve RSS user interface](https://codeberg.org/forgejo/forgejo/commit/59d060622d375c4123ea88e2fa6c4f34d4fea4d3)
   - [Add details summary for vertical menus in settings to allow toggling](https://codeberg.org/forgejo/forgejo/commit/58536093b3112841bc69edb542189893b57e7a47)
   - [Improve the protected branch setting page](https://codeberg.org/forgejo/forgejo/commit/72e956b79a3b2e055bb5d4d5e20e88eaa2eeec96)
   - [Improve the display of the pull request branch delete button](https://codeberg.org/forgejo/forgejo/commit/774d1a0fbdadd1136b6af895f8d449b0c8db54cb)
@@ -68,7 +71,6 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Show all activities in the dashboard, not just the most recent ones](https://codeberg.org/forgejo/forgejo/commit/f4920c9c7f5947d3b6476610f39bc3492ab4ef3b)
   - [Do not display the stars in the repository list of the dashboard](https://codeberg.org/forgejo/forgejo/commit/06c067bb0f9eeb8873ddc298819b30fc5913943f)
   - [Improve the display of tags to include the tag message](https://codeberg.org/forgejo/forgejo/commit/b78c955958301dde72d8caf189531f6e53c496b4)
-  - [Support "." char as user name for User/Orgs in RSS/ATOM/GPG/KEYS](https://codeberg.org/forgejo/forgejo/commit/88033438aa8214569913899a17b19b57bd609d97)
   - [Hide the target selector if a tag exists when creating a new release](https://codeberg.org/forgejo/forgejo/commit/3de9e63fd04d61e08fcbdec035c9f138347d9f37)
   - [Show the calculated commit status state of the latest commit on the default branch for each repository in the dashboard repository list](https://codeberg.org/forgejo/forgejo/commit/4810fe55e3e73edb962052df46bef125eb1817b3)
   - [Sort users and orgs on the explore page by recency UX](https://codeberg.org/forgejo/forgejo/commit/4daf40505a5f89747982ddd2f1df2a4001720846)
@@ -91,61 +93,40 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Add a tooltip to `Publish Review` explaining why they are disabled](https://codeberg.org/forgejo/forgejo/commit/a8c30a45fa49a3a551b1dca882960008c254bb3d)
   - [Show the file tree view by default when browsing the changes in a pull request](https://codeberg.org/forgejo/forgejo/commit/72eedfb91584720da774909d3f078b7d515c9fdd)
   - [Allow both fullname search in the author dropdown search of the issue list when `DEFAULT_SHOW_FULL_NAME` is true](https://codeberg.org/forgejo/forgejo/commit/661e78bed5c0879c32c53eb60f3d6898b93e1f08)
-- [PERF]
+- **Performance** 
   - [Speedup loading the list of authors in the dropdown of the list of issues](https://codeberg.org/forgejo/forgejo/commit/6eb678374b583079a0a08b7ed0c9ca220c0c0434)
-
-  - [PERF] commit 1319ba6742a8562453646763adad22379674bab5 Use minio/sha256-simd for accelerated SHA256 [23052](https://github.com/go-gitea/gitea/pull/23052)
-  - [PERF] commit ef4fc302468cc8a9fd8f65c4ebdc6f55138450d1 Speed up HasUserStopwatch & GetActiveStopwatch [23051](https://github.com/go-gitea/gitea/pull/23051)
-  - [PERF] commit 0268ee5c37b8ad733678f02bc15ec8642da62c10 Do not create commit graph for temporary repos [23219](https://github.com/go-gitea/gitea/pull/23219)
-  - [PERF] commit 75ea0d5dba5dbf2f84cef2d12460fdd566d43e62 Faster git.GetDivergingCommits [24482](https://github.com/go-gitea/gitea/pull/24482)
-  - [PERF] commit df48af22296ccce8e9bd18e5d35c9a3cdf5acb0f Order pull request conflict checking by recently updated, for each push [23220](https://github.com/go-gitea/gitea/pull/23220)
-- [AUTH]
-  - [MAIL smtp auth] commit 8be6da3e2fd0b685aeb6b9e7fd9dee5a4571163a Add ntlm authentication support for mail [23811](https://github.com/go-gitea/gitea/pull/23811)
-  - [AUTH LDAP] commit b8c19e7a11525da4174b6f80f87ff3e844d03d8a Update LDAP filters to include both username and email address [24547](https://github.com/go-gitea/gitea/pull/24547)
-  - [AUTH PKCE] commit 7d855efb1fe6b97c5d87492f67ed6aefd31b2474 Allow for PKCE flow without client secret + add docs [25033](https://github.com/go-gitea/gitea/pull/25033)
-  - [AUTH OAuth redirect] commit ca35dec18b3d3d7dd5cde4c69a10ae830961faf7 Add ability to set multiple redirect URIs in OAuth application UI [25072](https://github.com/go-gitea/gitea/pull/25072)
-- [REFACTOR]
-  - [BREAKING REFACTOR logger] commit 4647660776436f0a83129b4ceb8426b1fb0599bb Rewrite logger system [24726](https://github.com/go-gitea/gitea/pull/24726)
-  - [BREAKING REFACTOR queue] commit 6f9c278559789066aa831c1df25b0d866103d02d Rewrite queue [24505](https://github.com/go-gitea/gitea/pull/24505)
-  - [REFACTOR pull mirror] commit 99283415bcbaa8acfe4d249ce3040de2f3a8b006 Refactor Pull Mirror and fix out-of-sync bugs [24732](https://github.com/go-gitea/gitea/pull/24732)
-  - [REFACTOR git] commit f4538791f5fc82b173608fcf9c30e36ec01dc9d3 Refactor internal API for git commands, use meaningful messages instead of "Internal Server Error" [23687](https://github.com/go-gitea/gitea/pull/23687)
-  - [REFACTOR route] commit 92fd3fc4fd369b6a8c0a022a32a80dec2340223a Refactor "route" related code, fix Safari cookie bug [24330](https://github.com/go-gitea/gitea/pull/24330)
-  - [REFACTOR] commit 8598356df1eb21b6e33ecb9f9268ba36c5488e7c Refactor and tidy-up the merge/update branch code [22568](https://github.com/go-gitea/gitea/pull/22568)
-  - [REFACTOR] commit 542cec98f8c07e0f046a35f1d516807416536e74 Refactor merge/update git command calls [23366](https://github.com/go-gitea/gitea/pull/23366)
-  - [REFACTOR] commit ec261b63e14f84da3e2d9a6e27c8b831a7750677 Refactor repo commit list [23690](https://github.com/go-gitea/gitea/pull/23690)
-  - [REFACTOR cookie] commit 5b9557aef59b190c55de9ea218bf51152bc04786 Refactor cookie [24107](https://github.com/go-gitea/gitea/pull/24107)
-  - [REFACTOR web route] commit b9a97ccd0ea1ee44db85b0fbb80b75255af7c742 Refactor web route [24080](https://github.com/go-gitea/gitea/pull/24080)
-  - [REFACTOR issue stats] commit 38cf43d0606c13c38f459659f38e26cf31dceccb Some refactors for issues stats [24793](https://github.com/go-gitea/gitea/pull/24793)
-  - [REFACTOR] commit c59a057297c782f44a81a3e630b5094a58099edb Refactor rename user and rename organization [24052](https://github.com/go-gitea/gitea/pull/24052)
-  - [REWORK logger] commit 0d54395fb544d52585046bf0424659cec0626e31 Improve logger Pause handling [24946](https://github.com/go-gitea/gitea/pull/24946)
-  - [REWORK queue / logger] commit 18f26cfbf7f9b36b838c0e8762bfba98c89b9797 Improve queue and logger context [24924](https://github.com/go-gitea/gitea/pull/24924)
-  - [REFACTOR scoped token] commit 18de83b2a3fc120922096b7348d6375094ae1532 Redesign Scoped Access Tokens [24767](https://github.com/go-gitea/gitea/pull/24767)
-  - [REFACTOR ini] commit de4a21fcb4476772c69c36d086549e89ed4dcf6c Refactor INI package (first step) [25024](https://github.com/go-gitea/gitea/pull/25024)
-  - [REFACTOR diffFileInfo] commit ee99cf6313ba565523b3c43f61ffda4b71e2c39b Refactor diffFileInfo / DiffTreeStore  [24998](https://github.com/go-gitea/gitea/pull/24998)
-- [TEMPLATES]
-  - [TEMPLATES expressions] commit 5b89670a318e52e271f65d96bfe1116d85d20988 Use a general Eval function for expressions in templates. [23927](https://github.com/go-gitea/gitea/pull/23927)
-  - [CMD reload templates] commit 3588edbb08f93aaa56defa82dffdbb202cd9aa4a Add gitea manager reload-templates command [24843](https://github.com/go-gitea/gitea/pull/24843)
-- [RSS]
-  - [RSS feed] commit 59d060622d375c4123ea88e2fa6c4f34d4fea4d3 Improve RSS [24335](https://github.com/go-gitea/gitea/pull/24335)
-  - [RSS feed] commit 56d4893b2a996da6388801c9c8ff16b9b588ad55 Add RSS Feeds for branches and files [22719](https://github.com/go-gitea/gitea/pull/22719)
-- [API]
-  - [API EMAIL] commit d56bb7420184c0c2f451f4bcaa96c9b3b00c393d add admin API email endpoints [22792](https://github.com/go-gitea/gitea/pull/22792)
-  - [API USER RENAME] commit 03591f0f95823a0b1dcca969d2a3ed505c7e6d73 add user rename endpoint to admin api [22789](https://github.com/go-gitea/gitea/pull/22789)
-  - [API admin search] commit 6f9cc617fcc42477dec5ccab83d06f0a96544403 Add login name and source id for admin user searching API [23376](https://github.com/go-gitea/gitea/pull/23376)
-  - [API] commit 574d8fe6d6675c8aa05e2b75fdbc01c009efd8be Add absent repounits to create/edit repo API [23500](https://github.com/go-gitea/gitea/pull/23500)
-  - [API issue dependencies] commit 3cab9c6b0c050bfcb9f2f067e7dc1b0242875254 Add API to manage issue dependencies [17935](https://github.com/go-gitea/gitea/pull/17935)
-  - [API activity feeds] commit 6b0df6d8da76d77a9b5c42dcfa78dbfe197fd56d Add activity feeds API [23494](https://github.com/go-gitea/gitea/pull/23494)
-  - [API license] commit fb37eefa282543fd8ce63c361cd4cf0dfac9943c Add API for License templates [23009](https://github.com/go-gitea/gitea/pull/23009)
-  - [API gitignore] commit 36a5d4c2f3b5670e5e921034cd5d25817534a6d4 Add API for gitignore templates [22783](https://github.com/go-gitea/gitea/pull/22783)
-  - [API upload empty repo] commit cf465b472166ccf6d3e001e3043e4bf43e16e6b3 Support uploading file to empty repo by API [24357](https://github.com/go-gitea/gitea/pull/24357)
-  - [API COMMIT --not] commit f766b002938b5c81e343c81fda3c0669fa09809f Add ability to specify '--not' from GetAllCommits [24409](https://github.com/go-gitea/gitea/pull/24409)
-  - [API GetAllCommits] commit 1dd83dbb917d55bd253001646d6743f247a4d98b Filters for GetAllCommits [24568](https://github.com/go-gitea/gitea/pull/24568)
-  - [API get single commit] commit 5930ab5fdf7a970fcca3cd50b44cf1cacb615a54 Filter get single commit [24613](https://github.com/go-gitea/gitea/pull/24613)
-  - [API create branch] commit cd9a13ebb47d32f46b38439a524e3b2e0c619490 Create a branch directly from commit on the create branch API [22956](https://github.com/go-gitea/gitea/pull/22956)
-  - [BREAKING API team] commit 0a3c4d4a595cc7e12462dde393ed64186260f26b Fix team members API endpoint pagination [24754](https://github.com/go-gitea/gitea/pull/24754)
-  - [API label templates] commit 25dc1556cd70b567a4920beb002a0addfbfd6ef2 Add API for Label templates [24602](https://github.com/go-gitea/gitea/pull/24602)
-  - [API changing/creating/deleting multiple files] commit 275d4b7e3f4595206e5c4b1657d4f6d6969d9ce2 API endpoint for changing/creating/deleting multiple files [24887](https://github.com/go-gitea/gitea/pull/24887)
-- [FEATURES]
+  - [Use minio/sha256-simd for accelerated SHA256](https://codeberg.org/forgejo/forgejo/commit/1319ba6742a8562453646763adad22379674bab5)
+  - [Speed up HasUserStopwatch & GetActiveStopwatch](https://codeberg.org/forgejo/forgejo/commit/ef4fc302468cc8a9fd8f65c4ebdc6f55138450d1)
+  - [Do not create commit graph for temporary repos](https://codeberg.org/forgejo/forgejo/commit/0268ee5c37b8ad733678f02bc15ec8642da62c10)
+  - [Faster git.GetDivergingCommits](https://codeberg.org/forgejo/forgejo/commit/75ea0d5dba5dbf2f84cef2d12460fdd566d43e62)
+  - [Order pull request conflict checking by recently updated, for each push](https://codeberg.org/forgejo/forgejo/commit/df48af22296ccce8e9bd18e5d35c9a3cdf5acb0f)
+- **Authentication:**
+  - [Add ntlm authentication support for mail](https://codeberg.org/forgejo/forgejo/commit/8be6da3e2fd0b685aeb6b9e7fd9dee5a4571163a)
+  - [LDAP filters include both username and email address](https://codeberg.org/forgejo/forgejo/commit/b8c19e7a11525da4174b6f80f87ff3e844d03d8a)
+  - [Allow for PKCE flow without client secret](https://codeberg.org/forgejo/forgejo/commit/7d855efb1fe6b97c5d87492f67ed6aefd31b2474)
+  - [Add the ability to set multiple redirect URIs in the OAuth application UI](https://codeberg.org/forgejo/forgejo/commit/ca35dec18b3d3d7dd5cde4c69a10ae830961faf7)
+- **Refactor:** Essential sub-systems were refactored (the [queue system](https://codeberg.org/forgejo/forgejo/commit/6f9c278559789066aa831c1df25b0d866103d02d) that handles background tasks such as checking pull requests, the [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's logs, [pull mirror](https://codeberg.org/forgejo/forgejo/commit/99283415bcbaa8acfe4d249ce3040de2f3a8b006), [git internal API](https://codeberg.org/forgejo/forgejo/commit/f4538791f5fc82b173608fcf9c30e36ec01dc9d3), [routes](https://codeberg.org/forgejo/forgejo/commit/92fd3fc4fd369b6a8c0a022a32a80dec2340223a) and [web routes](https://codeberg.org/forgejo/forgejo/commit/b9a97ccd0ea1ee44db85b0fbb80b75255af7c742), [merge & update logic](https://codeberg.org/forgejo/forgejo/commit/8598356df1eb21b6e33ecb9f9268ba36c5488e7c) and [git command calls](https://codeberg.org/forgejo/forgejo/commit/542cec98f8c07e0f046a35f1d516807416536e74), [listing commits](https://codeberg.org/forgejo/forgejo/commit/ec261b63e14f84da3e2d9a6e27c8b831a7750677), [cookie](https://codeberg.org/forgejo/forgejo/commit/5b9557aef59b190c55de9ea218bf51152bc04786), [issue stats](https://codeberg.org/forgejo/forgejo/commit/38cf43d0606c13c38f459659f38e26cf31dceccb), [renaming users and organizations](https://codeberg.org/forgejo/forgejo/commit/c59a057297c782f44a81a3e630b5094a58099edb), [scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532), [app.ini handling](https://codeberg.org/forgejo/forgejo/commit/de4a21fcb4476772c69c36d086549e89ed4dcf6c), [diffFileInfo / DiffTreeStore](https://codeberg.org/forgejo/forgejo/commit/ee99cf6313ba565523b3c43f61ffda4b71e2c39b)...). In theory these changes are transparent to the Forgejo user and admin but the risk of subtle regressions is real: do not hesitate to [reach out](https://codeberg.org/forgejo/forgejo/issues) if you suspect anything.
+- **RSS**
+  - [Support "." char as user name for User/Orgs in RSS/ATOM/GPG/KEYS](https://codeberg.org/forgejo/forgejo/commit/88033438aa8214569913899a17b19b57bd609d97)
+  - [Add RSS Feeds for branches and files](https://codeberg.org/forgejo/forgejo/commit/56d4893b2a996da6388801c9c8ff16b9b588ad55)
+- **API**
+  - **Breaking:** [fix team members API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b)
+  - [Add admin API for email](https://codeberg.org/forgejo/forgejo/commit/d56bb7420184c0c2f451f4bcaa96c9b3b00c393d)
+  - [Add admin API to rename a user](https://codeberg.org/forgejo/forgejo/commit/03591f0f95823a0b1dcca969d2a3ed505c7e6d73)
+  - [Add login name and source id to admin user searching API](https://codeberg.org/forgejo/forgejo/commit/6f9cc617fcc42477dec5ccab83d06f0a96544403)
+  - [Add missing units to create and edit repo API](https://codeberg.org/forgejo/forgejo/commit/574d8fe6d6675c8aa05e2b75fdbc01c009efd8be)
+  - [Add API to manage issue dependencies](https://codeberg.org/forgejo/forgejo/commit/3cab9c6b0c050bfcb9f2f067e7dc1b0242875254)
+  - [Add API for activity feeds](https://codeberg.org/forgejo/forgejo/commit/6b0df6d8da76d77a9b5c42dcfa78dbfe197fd56d)
+  - [Add API for license templates](https://codeberg.org/forgejo/forgejo/commit/fb37eefa282543fd8ce63c361cd4cf0dfac9943c)
+  - [Add API for gitignore templates](https://codeberg.org/forgejo/forgejo/commit/36a5d4c2f3b5670e5e921034cd5d25817534a6d4)
+  - [Add API to upuload a file to an empty repository](https://codeberg.org/forgejo/forgejo/commit/cf465b472166ccf6d3e001e3043e4bf43e16e6b3)
+  - [Allow for --not when listing the commits of a repo](https://codeberg.org/forgejo/forgejo/commit/f766b002938b5c81e343c81fda3c0669fa09809f)
+  - [Add `files` and `verification` parameters to improve performances when listing the commits of a a repo](https://codeberg.org/forgejo/forgejo/commit/1dd83dbb917d55bd253001646d6743f247a4d98b)
+  - [Allow for listing a single commit in a repository](https://codeberg.org/forgejo/forgejo/commit/5930ab5fdf7a970fcca3cd50b44cf1cacb615a54)
+  - [Create a branch directly from commit on the create branch API](https://codeberg.org/forgejo/forgejo/commit/cd9a13ebb47d32f46b38439a524e3b2e0c619490)
+  - [Add API for Label templates](https://codeberg.org/forgejo/forgejo/commit/25dc1556cd70b567a4920beb002a0addfbfd6ef2)
+  - [Add API for changing/creating/deleting multiple files](https://codeberg.org/forgejo/forgejo/commit/275d4b7e3f4595206e5c4b1657d4f6d6969d9ce2)
+- **Features**
   - [BREAKING] (maybe) commit f5987c24e2b561952ebf9a2485b863325c16ee48 Make `gitea serv` respect git binary home [23138](https://github.com/go-gitea/gitea/pull/23138)
   - [README] commit 52e24167e5ebe0297f7630e9daecd6ffc9570a99 Test renderReadmeFile [23185](https://github.com/go-gitea/gitea/pull/23185)
   - [REFLOGS] commit 757b4c17e900f1d11a81bc9467d90e6c245ee8f2 Support reflogs [22451](https://github.com/go-gitea/gitea/pull/22451)
@@ -180,7 +161,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 
 * Container images upgraded to Alpine 3.18
 
-  The Forgejo container images are now based on [Alpine 3.18](https://alpinelinux.org/posts/Alpine-3.18.0-released.html) instead of Alpine 3.1.17 It includes an upgrade from git ...
+  The Forgejo container images are now based on [Alpine 3.18](https://alpinelinux.org/posts/Alpine-3.18.0-released.html) instead of Alpine 3.1.17.
 
 ## 1.19.3-0
 
