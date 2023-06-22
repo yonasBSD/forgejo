@@ -129,6 +129,14 @@ runs:
           docker create --platform $platform --name forgejo-$arch ${{ steps.registry.outputs.host-port }}/${{ inputs.owner }}/${{ inputs.repository }}:${{ inputs.tag-version }}${{ inputs.suffix }}
           binary="${{ inputs.binary-name }}-${{ inputs.tag-version }}-linux"
           docker cp forgejo-$arch:${{ inputs.binary-path }} $binary-$arch
+          chmod +x $binary-$arch
+          # the displayed version is converted with - sometime changed into +, deal with it
+          pattern=$(echo "${{ inputs.tag-version }}" | tr - .)
+          if ! ./$binary-$arch --version | grep "$pattern" ; then
+            echo "ERROR: expected version pattern $pattern not found in the output of $binary-$arch --version"
+            ./$binary-$arch --version
+            exit 1
+          fi
           xz --keep -9 $binary-$arch
           shasum -a 256 $binary-$arch > $binary-$arch.sha256
           shasum -a 256 $binary-$arch.xz > $binary-$arch.xz.sha256
