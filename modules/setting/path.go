@@ -123,11 +123,27 @@ func InitWorkPathAndCommonConfig(getEnvFn func(name string) string, args ArgWork
 			}
 		}
 
+		envWorkPath = getEnvFn("FORGEJO_WORK_DIR")
+		if envWorkPath != "" {
+			tmpWorkPath.Set(envWorkPath)
+			if !filepath.IsAbs(tmpWorkPath.Value) {
+				log.Fatal("FORGEJO_WORK_DIR (work path) must be absolute path")
+			}
+		}
+
 		envCustomPath := getEnvFn("GITEA_CUSTOM")
 		if envCustomPath != "" {
 			tmpCustomPath.Set(envCustomPath)
 			if !filepath.IsAbs(tmpCustomPath.Value) {
 				log.Fatal("GITEA_CUSTOM (custom path) must be absolute path")
+			}
+		}
+
+		envCustomPath = getEnvFn("FORGEJO_CUSTOM")
+		if envCustomPath != "" {
+			tmpCustomPath.Set(envCustomPath)
+			if !filepath.IsAbs(tmpCustomPath.Value) {
+				log.Fatal("FORGEJO_CUSTOM (custom path) must be absolute path")
 			}
 		}
 	}
@@ -171,7 +187,7 @@ func InitWorkPathAndCommonConfig(getEnvFn func(name string) string, args ArgWork
 			log.Fatal("WORK_PATH in %q must be absolute path", configWorkPath)
 		}
 		configWorkPath = filepath.Clean(configWorkPath)
-		if tmpWorkPath.Value != "" && (getEnvFn("GITEA_WORK_DIR") != "" || args.WorkPath != "") {
+		if tmpWorkPath.Value != "" && (getEnvFn("GITEA_WORK_DIR") != "" || getEnvFn("FORGEJO_WORK_DIR") != "" || args.WorkPath != "") {
 			fi1, err1 := os.Stat(tmpWorkPath.Value)
 			fi2, err2 := os.Stat(configWorkPath)
 			if err1 != nil || err2 != nil || !os.SameFile(fi1, fi2) {
