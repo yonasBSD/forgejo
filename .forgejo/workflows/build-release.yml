@@ -66,10 +66,31 @@ jobs:
 
       - name: Build sources
         run: |
+          set -x
           apt-get -qq install -y make
-          make VERSION=${{ steps.tag-version.outputs.value }} sources-tarbal
+          version=${{ steps.tag-version.outputs.value }}
+          make VERSION=$version sources-tarbal
           mv dist/release release
-          find release | grep tar.gz # sanity check to fail fast
+
+          #
+          # Sanity check to verify that the source tarbal knows the
+          # version and is able to rebuild itself from it.
+          #
+          # When in sources the version is determined with git.
+          # When in the tarbal the version is determined from a VERSION file.
+          #
+          (
+            tmp=$(mktemp -d)
+            tar --directory $tmp -zxvf release/*$version*.tar.gz
+            cd $tmp/*
+            make sources-tarbal
+            tarbal=$(echo dist/release/*$version*.tar.gz)
+            if ! test -f $tarbal ; then
+              echo $tarbal does not exist
+              find dist release
+              exit 1
+            fi
+          )
 
       - name: build container & release (when TOKEN secret is not set)
         if: ${{ secrets.TOKEN == '' }}

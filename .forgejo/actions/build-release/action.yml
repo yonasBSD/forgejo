@@ -130,7 +130,7 @@ runs:
           binary="${{ inputs.binary-name }}-${{ inputs.tag-version }}-linux"
           docker cp forgejo-$arch:${{ inputs.binary-path }} $binary-$arch
           chmod +x $binary-$arch
-          # the displayed version is converted with - sometime changed into +, deal with it
+          # the displayed version has a + instead of the first -, deal with it
           pattern=$(echo "${{ inputs.tag-version }}" | tr - .)
           if ! ./$binary-$arch --version | grep "$pattern" ; then
             echo "ERROR: expected version pattern $pattern not found in the output of $binary-$arch --version"
