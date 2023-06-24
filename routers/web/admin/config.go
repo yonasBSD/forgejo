@@ -207,6 +207,16 @@ func ChangeConfig(ctx *context.Context) {
 		return
 	}
 
+	if post, ok := postChangeConfigChecks[key]; ok {
+		if err := post(ctx, value); err != nil {
+			log.Warn("couldn't post process new setting: %v", err)
+			ctx.JSON(http.StatusOK, map[string]string{
+				"err": ctx.Tr("admin.config.set_setting_failed", key),
+			})
+			return
+		}
+	}
+
 	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"version": version + 1,
 	})
@@ -222,6 +232,29 @@ var changeConfigChecks = map[string]func(ctx *context.Context, newValue string) 
 	system_model.KeyPictureEnableFederatedAvatar: func(_ *context.Context, newValue string) error {
 		if v, _ := strconv.ParseBool(newValue); setting.OfflineMode && v {
 			return fmt.Errorf("%q cannot be false when OFFLINE_MODE is true", system_model.KeyPictureEnableFederatedAvatar)
+		}
+		return nil
+	},
+}
+
+var postChangeConfigChecks = map[string]func(ctx *context.Context, newValue string) error{
+	system_model.KeyPictureDisableGravatar: func(_ *context.Context, newValue string) error {
+		if v, _ := strconv.ParseBool(newValue); !v && !setting.OfflineMode {
+			var err error
+			system_model.GravatarSourceURL, err = url.Parse(setting.GravatarSource)
+			if err != nil {
+				return fmt.Errorf("failed to parse Gravatar URL(%s): %w", setting.GravatarSource, err)
+			}
+		}
+		return nil
+	},
+	system_model.KeyPictureEnableFederatedAvatar: func(_ *context.Context, newValue string) error {
+		if v, _ := strconv.ParseBool(newValue); v && !setting.OfflineMode {
+			var err error
+			system_model.GravatarSourceURL, err = url.Parse(setting.GravatarSource)
+			if err != nil {
+				return fmt.Errorf("failed to parse Gravatar URL(%s): %w", setting.GravatarSource, err)
+			}
 		}
 		return nil
 	},
