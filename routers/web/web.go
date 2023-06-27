@@ -351,6 +351,7 @@ func registerRoutes(m *web.Route) {
 		m.Get("/change-password", func(ctx *context.Context) {
 			ctx.Redirect(setting.AppSubURL + "/user/settings/account")
 		})
+		m.Get("/security.txt", securityTxt)
 	})
 
 	m.Group("/explore", func() {
