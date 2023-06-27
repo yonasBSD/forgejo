@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	gitea_context "code.gitea.io/gitea/modules/context"
@@ -241,18 +242,19 @@ func getUserToken(t testing.TB, userName string, scope ...auth.AccessTokenScope)
 	return getTokenForLoggedInUser(t, loginUser(t, userName), scope...)
 }
 
-func createUser(t testing.TB, userName, email, password string) func() {
-	u := &user_model.User{
-		Name:               userName,
-		Email:              email,
-		Passwd:             password,
-		MustChangePassword: false,
-		LoginType:          auth.Plain,
+func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {
+	user.MustChangePassword = false
+	user.LowerName = strings.ToLower(user.Name)
+
+	assert.NoError(t, db.Insert(ctx, user))
+
+	if len(user.Email) > 0 {
+		changePrimaryEmail := true
+		assert.NoError(t, user_model.UpdateUser(ctx, user, changePrimaryEmail))
 	}
 
-	assert.NoError(t, user_model.CreateUser(u, &user_model.CreateUserOverwriteOptions{}))
 	return func() {
-		assert.NoError(t, user_service.DeleteUser(context.Background(), u, true))
+		assert.NoError(t, user_service.DeleteUser(ctx, user, true))
 	}
 }
 
