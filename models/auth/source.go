@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -32,6 +33,9 @@ const (
 	SSPI        // 7
 )
 
+// This should be in the above list of types but is separated to avoid conflicts with Gitea changes
+const F3 Type = 129
+
 // String returns the string name of the LoginType
 func (typ Type) String() string {
 	return Names[typ]
@@ -50,6 +54,7 @@ var Names = map[Type]string{
 	PAM:    "PAM",
 	OAuth2: "OAuth2",
 	SSPI:   "SPNEGO with SSPI",
+	F3:     "F3",
 }
 
 // Config represents login config as far as the db is concerned
@@ -178,6 +183,10 @@ func (source *Source) IsSSPI() bool {
 	return source.Type == SSPI
 }
 
+func (source *Source) IsF3() bool {
+	return source.Type == F3
+}
+
 // HasTLS returns true of this source supports TLS.
 func (source *Source) HasTLS() bool {
 	hasTLSer, ok := source.Cfg.(HasTLSer)
@@ -302,6 +311,17 @@ func GetSourceByID(id int64) (*Source, error) {
 		return nil, err
 	} else if !has {
 		return nil, ErrSourceNotExist{id}
+	}
+	return source, nil
+}
+
+func GetSourceByName(ctx context.Context, name string) (*Source, error) {
+	source := &Source{}
+	has, err := db.GetEngine(ctx).Where("name = ?", name).Get(source)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrSourceNotExist{}
 	}
 	return source, nil
 }
