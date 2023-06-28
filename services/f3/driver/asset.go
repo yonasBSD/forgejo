@@ -32,8 +32,16 @@ func (o Asset) GetID() int64 {
 	return o.ID
 }
 
+func (o Asset) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Asset) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Asset) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Asset) IsNil() bool {
@@ -42,6 +50,10 @@ func (o *Asset) IsNil() bool {
 
 func (o *Asset) Equals(other *Asset) bool {
 	return o.Name == other.Name
+}
+
+func (o *Asset) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Asset) ToFormat() *format.ReleaseAsset {

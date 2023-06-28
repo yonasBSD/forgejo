@@ -30,8 +30,16 @@ func (o Project) GetID() int64 {
 	return o.ID
 }
 
+func (o Project) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Project) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Project) SetIDString(id string) {
+	o.SetID(f3_util.ParseInt(id))
 }
 
 func (o *Project) IsNil() bool {
@@ -40,6 +48,10 @@ func (o *Project) IsNil() bool {
 
 func (o *Project) Equals(other *Project) bool {
 	return (o.Name == other.Name)
+}
+
+func (o *Project) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Project) ToFormat() *format.Project {

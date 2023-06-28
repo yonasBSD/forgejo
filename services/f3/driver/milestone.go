@@ -31,6 +31,10 @@ func (o Milestone) GetID() int64 {
 	return o.ID
 }
 
+func (o Milestone) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o Milestone) GetName() string {
 	return o.Name
 }
@@ -39,12 +43,20 @@ func (o *Milestone) SetID(id int64) {
 	o.ID = id
 }
 
+func (o *Milestone) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
+}
+
 func (o *Milestone) IsNil() bool {
 	return o.ID == 0
 }
 
 func (o *Milestone) Equals(other *Milestone) bool {
 	return o.Name == other.Name
+}
+
+func (o *Milestone) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Milestone) ToFormat() *format.Milestone {

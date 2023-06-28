@@ -35,8 +35,16 @@ func (o PullRequest) GetID() int64 {
 	return o.Index
 }
 
+func (o PullRequest) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *PullRequest) SetID(id int64) {
 	o.Index = id
+}
+
+func (o *PullRequest) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *PullRequest) IsNil() bool {
@@ -49,6 +57,10 @@ func (o *PullRequest) Equals(other *PullRequest) bool {
 
 func (o PullRequest) IsForkPullRequest() bool {
 	return o.HeadRepoID != o.BaseRepoID
+}
+
+func (o *PullRequest) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *PullRequest) ToFormat() *format.PullRequest {
