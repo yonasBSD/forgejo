@@ -33,8 +33,16 @@ func (o Release) GetID() int64 {
 	return o.ID
 }
 
+func (o Release) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Release) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Release) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Release) IsNil() bool {
@@ -43,6 +51,10 @@ func (o *Release) IsNil() bool {
 
 func (o *Release) Equals(other *Release) bool {
 	return o.ID == other.ID
+}
+
+func (o *Release) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Release) ToFormat() *format.Release {

@@ -30,8 +30,16 @@ func (o Reaction) GetID() int64 {
 	return o.ID
 }
 
+func (o Reaction) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Reaction) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Reaction) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Reaction) IsNil() bool {
@@ -40,6 +48,10 @@ func (o *Reaction) IsNil() bool {
 
 func (o *Reaction) Equals(other *Reaction) bool {
 	return o.UserID == other.UserID && o.Type == other.Type
+}
+
+func (o *Reaction) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Reaction) ToFormat() *format.Reaction {

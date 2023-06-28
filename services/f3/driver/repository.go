@@ -22,6 +22,10 @@ func (o *Repository) Equals(other *Repository) bool {
 	return false // it is costly to figure that out, mirroring is as fast
 }
 
+func (o *Repository) ToFormatInterface() format.Interface {
+	return o.ToFormat()
+}
+
 func (o *Repository) ToFormat() *format.Repository {
 	return &o.Repository
 }
