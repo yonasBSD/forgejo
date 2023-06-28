@@ -30,8 +30,16 @@ func (o Review) GetID() int64 {
 	return o.ID
 }
 
+func (o Review) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Review) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Review) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Review) IsNil() bool {
@@ -40,6 +48,10 @@ func (o *Review) IsNil() bool {
 
 func (o *Review) Equals(other *Review) bool {
 	return o.Content == other.Content
+}
+
+func (o *Review) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Review) ToFormat() *format.Review {

@@ -4,6 +4,7 @@ package driver
 
 import (
 	"context"
+	"fmt"
 
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -26,8 +27,16 @@ func (o Topic) GetID() int64 {
 	return o.ID
 }
 
+func (o Topic) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Topic) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *Topic) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Topic) IsNil() bool {
@@ -36,6 +45,10 @@ func (o *Topic) IsNil() bool {
 
 func (o *Topic) Equals(other *Topic) bool {
 	return o.Name == other.Name
+}
+
+func (o *Topic) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Topic) ToFormat() *format.Topic {

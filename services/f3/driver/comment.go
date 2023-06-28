@@ -31,8 +31,16 @@ func (o Comment) GetID() int64 {
 	return o.Comment.ID
 }
 
+func (o Comment) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Comment) SetID(id int64) {
 	o.Comment.ID = id
+}
+
+func (o *Comment) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Comment) IsNil() bool {
@@ -41,6 +49,10 @@ func (o *Comment) IsNil() bool {
 
 func (o *Comment) Equals(other *Comment) bool {
 	return o.Comment.ID == other.Comment.ID
+}
+
+func (o *Comment) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Comment) ToFormat() *format.Comment {

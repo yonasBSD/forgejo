@@ -27,6 +27,10 @@ func (o Label) GetID() int64 {
 	return o.ID
 }
 
+func (o Label) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o Label) GetName() string {
 	return o.Name
 }
@@ -35,12 +39,20 @@ func (o *Label) SetID(id int64) {
 	o.ID = id
 }
 
+func (o *Label) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
+}
+
 func (o *Label) IsNil() bool {
 	return o.ID == 0
 }
 
 func (o *Label) Equals(other *Label) bool {
 	return o.Name == other.Name
+}
+
+func (o *Label) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Label) ToFormat() *format.Label {

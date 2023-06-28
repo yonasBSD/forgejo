@@ -29,8 +29,16 @@ func (o User) GetID() int64 {
 	return o.ID
 }
 
+func (o User) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *User) SetID(id int64) {
 	o.ID = id
+}
+
+func (o *User) SetIDString(id string) {
+	o.SetID(f3_util.ParseInt(id))
 }
 
 func (o *User) IsNil() bool {
@@ -39,6 +47,10 @@ func (o *User) IsNil() bool {
 
 func (o *User) Equals(other *User) bool {
 	return (o.Name == other.Name)
+}
+
+func (o *User) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *User) ToFormat() *format.User {
