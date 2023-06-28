@@ -24,6 +24,7 @@ import (
 	f3_common "lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	f3_f3 "lab.forgefriends.org/friendlyforgeformat/gof3/forges/f3"
 	f3_forgejo "lab.forgefriends.org/friendlyforgeformat/gof3/forges/forgejo"
+	f3_tests "lab.forgefriends.org/friendlyforgeformat/gof3/forges/tests"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
@@ -44,7 +45,7 @@ func TestF3(t *testing.T) {
 		//
 		// Step 1: create a fixture
 		//
-		fixtureNewF3Forge := func(t *testing.T, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.Options{
 				Options: gof3.Options{
 					Configuration: gof3.Configuration{

@@ -32,8 +32,16 @@ func (o Issue) GetID() int64 {
 	return o.Index
 }
 
+func (o Issue) GetIDString() string {
+	return fmt.Sprintf("%d", o.GetID())
+}
+
 func (o *Issue) SetID(id int64) {
 	o.Index = id
+}
+
+func (o *Issue) SetIDString(id string) {
+	o.SetID(util.ParseInt(id))
 }
 
 func (o *Issue) IsNil() bool {
@@ -42,6 +50,10 @@ func (o *Issue) IsNil() bool {
 
 func (o *Issue) Equals(other *Issue) bool {
 	return o.Index == other.Index
+}
+
+func (o *Issue) ToFormatInterface() format.Interface {
+	return o.ToFormat()
 }
 
 func (o *Issue) ToFormat() *format.Issue {
