@@ -119,8 +119,7 @@ func (o *Milestone) FromFormat(milestone *format.Milestone) {
 }
 
 type MilestoneProvider struct {
-	g       *Forgejo
-	project *ProjectProvider
+	BaseProviderWithProjectProvider
 }
 
 func (o *MilestoneProvider) ToFormat(ctx context.Context, milestone *Milestone) *format.Milestone {

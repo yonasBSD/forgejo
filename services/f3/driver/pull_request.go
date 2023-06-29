@@ -210,8 +210,7 @@ func (o *PullRequest) FromFormat(pullRequest *format.PullRequest) {
 }
 
 type PullRequestProvider struct {
-	g           *Forgejo
-	project     *ProjectProvider
+	BaseProviderWithProjectProvider
 	prHeadCache f3_forgejo.PrHeadCache
 }
 

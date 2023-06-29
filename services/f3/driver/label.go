@@ -76,8 +76,7 @@ func (o *Label) FromFormat(label *format.Label) {
 }
 
 type LabelProvider struct {
-	g       *Forgejo
-	project *ProjectProvider
+	BaseProviderWithProjectProvider
 }
 
 func (o *LabelProvider) ToFormat(ctx context.Context, label *Label) *format.Label {

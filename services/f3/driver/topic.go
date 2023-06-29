@@ -68,7 +68,7 @@ func (o *Topic) FromFormat(topic *format.Topic) {
 }
 
 type TopicProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *TopicProvider) ToFormat(ctx context.Context, topic *Topic) *format.Topic {

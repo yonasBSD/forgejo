@@ -35,7 +35,7 @@ func (o *Repository) FromFormat(repository *format.Repository) {
 }
 
 type RepositoryProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *RepositoryProvider) ToFormat(ctx context.Context, repository *Repository) *format.Repository {
