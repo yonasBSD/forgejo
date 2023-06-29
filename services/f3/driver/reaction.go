@@ -76,7 +76,7 @@ func (o *Reaction) FromFormat(reaction *format.Reaction) {
 }
 
 type ReactionProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *ReactionProvider) ToFormat(ctx context.Context, reaction *Reaction) *format.Reaction {

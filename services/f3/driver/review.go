@@ -151,7 +151,7 @@ func (o *Review) FromFormat(review *format.Review) {
 }
 
 type ReviewProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *ReviewProvider) ToFormat(ctx context.Context, review *Review) *format.Review {

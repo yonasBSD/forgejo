@@ -82,7 +82,7 @@ func (o *Comment) FromFormat(comment *format.Comment) {
 }
 
 type CommentProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *CommentProvider) ToFormat(ctx context.Context, comment *Comment) *format.Comment {
