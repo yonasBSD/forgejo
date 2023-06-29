@@ -100,7 +100,7 @@ func (o *Release) FromFormat(release *format.Release) {
 }
 
 type ReleaseProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *ReleaseProvider) ToFormat(ctx context.Context, release *Release) *format.Release {

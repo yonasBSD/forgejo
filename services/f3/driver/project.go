@@ -84,7 +84,7 @@ func (o *Project) FromFormat(project *format.Project) {
 }
 
 type ProjectProvider struct {
-	g          *Forgejo
+	BaseProvider
 	milestones f3_util.NameIDMap
 	labels     f3_util.NameIDMap
 }

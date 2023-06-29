@@ -82,7 +82,7 @@ func (o *Asset) FromFormat(asset *format.ReleaseAsset) {
 }
 
 type AssetProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *AssetProvider) ToFormat(ctx context.Context, asset *Asset) *format.ReleaseAsset {
