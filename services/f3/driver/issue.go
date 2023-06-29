@@ -125,8 +125,7 @@ func (o *Issue) FromFormat(issue *format.Issue) {
 }
 
 type IssueProvider struct {
-	g       *Forgejo
-	project *ProjectProvider
+	BaseProviderWithProjectProvider
 }
 
 func (o *IssueProvider) ToFormat(ctx context.Context, issue *Issue) *format.Issue {

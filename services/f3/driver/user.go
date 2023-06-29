@@ -76,7 +76,7 @@ func (o *User) FromFormat(user *format.User) {
 }
 
 type UserProvider struct {
-	g *Forgejo
+	BaseProvider
 }
 
 func (o *UserProvider) ToFormat(ctx context.Context, user *User) *format.User {
