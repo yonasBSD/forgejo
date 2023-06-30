@@ -5,17 +5,95 @@ package integration
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"path"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers/web"
+	"code.gitea.io/gitea/routers/web/auth"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLinksThrottle(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	link := "/user/sign_up"
+
+	//
+	// SignUp is a mock that sleeps longer than the throttle timeout.
+	// This guarantees that all calls pending in the backlog will timeout.
+	//
+	opts := web.ThrottleOpts["SignUp"]
+	defer test.MockVariable(&auth.SignUpInner, func(ctx *gitea_context.Context) {
+		time.Sleep(opts.BacklogTimeout + 5*time.Second)
+	})()
+	//
+	// Create more (tooMany) requests than can be handled simultaneously
+	// (ThrottleSignup) or stored in the backlog
+	// (ThrottleSignupBacklog).
+	//
+	tooMany := 5
+	requestsCount := opts.Limit + opts.BacklogLimit + tooMany
+	responses := make(chan *httptest.ResponseRecorder, requestsCount)
+	var wg sync.WaitGroup
+	for i := 0; i < requestsCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			req := NewRequest(t, "GET", link)
+			resp := MakeRequest(t, req, NoExpectedStatus)
+			responses <- resp
+		}()
+	}
+	wg.Wait()
+
+	codes := make(map[int]int, 2)
+	errs := make(map[string]int, 2)
+	for len(responses) > 0 {
+		res := <-responses
+		codes[res.Code]++
+		if res.Code == http.StatusTooManyRequests {
+			buf, err := io.ReadAll(res.Body)
+			assert.NoError(t, err)
+			errs[string(buf)]++
+		}
+	}
+
+	//
+	// There opts.Limit responses are StatusOK, all others are
+	// StatusTooManyRequests
+	//
+	assert.Equal(t, 2, len(codes), codes)
+	assert.Equal(t, opts.Limit, codes[http.StatusOK])
+	assert.Equal(t, opts.BacklogLimit+tooMany, codes[http.StatusTooManyRequests])
+	assert.Equal(t, 2, len(errs), errs)
+	//
+	// To distinguish between StatusTooManyRequests responses, take a look
+	// at the error message.
+	//
+	// opts.BacklogLimit responses timed out
+	// tooMany responses failed immediately because there was no room in the backlog
+	//
+	for message, count := range errs {
+		if strings.Contains(message, "Timed out") {
+			assert.Equal(t, opts.BacklogLimit, count)
+		}
+		if strings.Contains(message, "Server capacity") {
+			assert.Equal(t, tooMany, count)
+		}
+	}
+}
 
 func TestLinksNoLogin(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()

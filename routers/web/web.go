@@ -6,6 +6,7 @@ package web
 import (
 	gocontext "context"
 	"net/http"
+	"time"
 
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/unit"
@@ -166,6 +167,14 @@ func Routes(middlewares ...any) *web.Route {
 	registerRoutes(others)
 	routes.Mount("", others)
 	return routes
+}
+
+var ThrottleOpts = map[string]middleware.ThrottleOpts{
+	"SignUp": {
+		Limit:          10,
+		BacklogLimit:   60,
+		BacklogTimeout: 30 * time.Second,
+	},
 }
 
 // registerRoutes register routes
@@ -394,7 +403,7 @@ func registerRoutes(m *web.Route) {
 					Post(web.Bind(forms.SignUpOpenIDForm{}), auth.RegisterOpenIDPost)
 			}, openIDSignUpEnabled)
 		}, openIDSignInEnabled)
-		m.Get("/sign_up", auth.SignUp)
+		m.Get("/sign_up", middleware.ThrottleWithOpts(ThrottleOpts["SignUp"]), auth.SignUp)
 		m.Post("/sign_up", web.Bind(forms.RegisterForm{}), auth.SignUpPost)
 		m.Get("/link_account", linkAccountEnabled, auth.LinkAccount)
 		m.Post("/link_account_signin", linkAccountEnabled, web.Bind(forms.SignInForm{}), auth.LinkAccountPostSignIn)

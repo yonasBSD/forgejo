@@ -388,6 +388,10 @@ func SignOut(ctx *context.Context) {
 
 // SignUp render the register page
 func SignUp(ctx *context.Context) {
+	SignUpInner(ctx)
+}
+
+var SignUpInner = func(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_up")
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
