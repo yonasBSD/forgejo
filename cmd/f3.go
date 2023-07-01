@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/services/f3/util"
@@ -37,6 +38,11 @@ var CmdF3 = cli.Command{
 			Value: "",
 			Usage: "The name of the repository",
 		},
+		cli.StringFlag{
+			Name:  "authentication-source",
+			Value: "",
+			Usage: "The name of the authentication source matching the forge of origin",
+		},
 		cli.BoolFlag{
 			Name:  "no-pull-request",
 			Usage: "Do not dump pull requests",
@@ -67,6 +73,17 @@ func runF3(ctx *cli.Context) error {
 	return RunF3(stdCtx, ctx)
 }
 
+func getAuthenticationSource(ctx context.Context, authenticationSource string) (*auth_model.Source, error) {
+	source, err := auth_model.GetSourceByName(ctx, authenticationSource)
+	if err != nil {
+		if auth_model.IsErrSourceNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return source, nil
+}
+
 func RunF3(stdCtx context.Context, ctx *cli.Context) error {
 	doer, err := user_model.GetAdminUser()
 	if err != nil {
@@ -78,7 +95,17 @@ func RunF3(stdCtx context.Context, ctx *cli.Context) error {
 		features.PullRequests = false
 	}
 
-	forgejo := util.ForgejoForgeRoot(features, doer)
+	var sourceID int64
+	sourceName := ctx.String("authentication-source")
+	source, err := getAuthenticationSource(stdCtx, sourceName)
+	if err != nil {
+		return fmt.Errorf("error retrieving the authentication-source %s %v", sourceName, err)
+	}
+	if source != nil {
+		sourceID = source.ID
+	}
+
+	forgejo := util.ForgejoForgeRoot(features, doer, sourceID)
 	f3 := util.F3ForgeRoot(features, ctx.String("directory"))
 
 	if ctx.Bool("export") {
