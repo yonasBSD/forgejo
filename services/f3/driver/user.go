@@ -6,11 +6,13 @@ import (
 	"context"
 	"fmt"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/util"
 	user_service "code.gitea.io/gitea/services/user"
 
+	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
@@ -46,7 +48,7 @@ func (o *User) IsNil() bool {
 }
 
 func (o *User) Equals(other *User) bool {
-	return (o.Name == other.Name)
+	return (o.ID == other.ID)
 }
 
 func (o *User) ToFormatInterface() format.Interface {
@@ -79,6 +81,36 @@ type UserProvider struct {
 	BaseProvider
 }
 
+func getLocalMatchingRemote(ctx context.Context, authenticationSource int64, id string) *user_model.User {
+	u := &user_model.User{
+		LoginName:   id,
+		LoginSource: authenticationSource,
+		LoginType:   auth_model.OAuth2,
+		Type:        user_model.UserTypeIndividual,
+	}
+	has, err := db.GetEngine(ctx).Get(u)
+	if err != nil {
+		panic(err)
+	} else if !has {
+		return nil
+	}
+	return u
+}
+
+func (o *UserProvider) GetLocalMatchingRemote(ctx context.Context, format format.Interface, parents ...common.ContainerObjectInterface) (string, bool) {
+	authenticationSource := o.g.GetAuthenticationSource()
+	if authenticationSource == 0 {
+		return "", false
+	}
+	user := getLocalMatchingRemote(ctx, authenticationSource, format.GetIDString())
+	if user != nil {
+		o.g.GetLogger().Debug("found existing user %d with a matching authentication source for %s", user.ID, format.GetIDString())
+		return fmt.Sprintf("%d", user.ID), true
+	}
+	o.g.GetLogger().Debug("no pre-existing local user for %s", format.GetIDString())
+	return "", false
+}
+
 func (o *UserProvider) ToFormat(ctx context.Context, user *User) *format.User {
 	return user.ToFormat()
 }
@@ -105,19 +137,21 @@ func (o *UserProvider) ProcessObject(ctx context.Context, user *User) {
 }
 
 func (o *UserProvider) Get(ctx context.Context, exemplar *User) *User {
+	o.g.GetLogger().Debug("%+v", exemplar)
 	var user *user_model.User
 	var err error
 	if exemplar.GetID() > 0 {
 		user, err = user_model.GetUserByID(ctx, exemplar.GetID())
+		o.g.GetLogger().Debug("GetUserByID: %+v %v", user, err)
 	} else if exemplar.Name != "" {
 		user, err = user_model.GetUserByName(ctx, exemplar.Name)
 	} else {
 		panic("GetID() == 0 and UserName == \"\"")
 	}
-	if user_model.IsErrUserNotExist(err) {
-		return &User{}
-	}
 	if err != nil {
+		if user_model.IsErrUserNotExist(err) {
+			return &User{}
+		}
 		panic(fmt.Errorf("user %v %w", exemplar, err))
 	}
 	return UserConverter(user)
@@ -127,7 +161,12 @@ func (o *UserProvider) Put(ctx context.Context, user *User) *User {
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{
 		IsActive: util.OptionalBoolTrue,
 	}
-	u := user.User
+	u := user_model.User{
+		Name:     user.Name,
+		FullName: user.FullName,
+		Email:    user.Email,
+		Passwd:   user.Passwd,
+	}
 	err := user_model.CreateUser(&u, overwriteDefault)
 	if err != nil {
 		panic(err)
