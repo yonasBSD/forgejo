@@ -18,7 +18,8 @@ import (
 type Options struct {
 	gof3.Options
 
-	Doer *user_model.User
+	AuthenticationSource int64
+	Doer                 *user_model.User
 }
 
 type Forgejo struct {
@@ -59,6 +60,10 @@ func (o *Forgejo) GetDoer() *user_model.User {
 	return o.options.Doer
 }
 
+func (o *Forgejo) GetAuthenticationSource() int64 {
+	return o.options.AuthenticationSource
+}
+
 func (o *Forgejo) GetNewMigrationHTTPClient() gof3.NewMigrationHTTPClientFun {
 	return migrations.NewMigrationHTTPClient
 }
@@ -74,31 +79,31 @@ func (o *Forgejo) GetProvider(name string, parent common.ProviderInterface) comm
 	}
 	switch name {
 	case driver.ProviderUser:
-		return driver.NewProvider[UserProvider, *UserProvider, User, *User, format.User, *format.User](driver.ProviderUser, &UserProvider{g: o})
+		return driver.NewProvider[UserProvider, *UserProvider, User, *User, format.User, *format.User](driver.ProviderUser, NewProvider[UserProvider](o))
 	case driver.ProviderProject:
-		return driver.NewProviderWithParentOne[ProjectProvider, *ProjectProvider, Project, *Project, format.Project, *format.Project, User, *User](driver.ProviderProject, &ProjectProvider{g: o})
+		return driver.NewProviderWithParentOne[ProjectProvider, *ProjectProvider, Project, *Project, format.Project, *format.Project, User, *User](driver.ProviderProject, NewProvider[ProjectProvider, *ProjectProvider](o))
 	case driver.ProviderMilestone:
-		return driver.NewProviderWithParentOneTwo[MilestoneProvider, *MilestoneProvider, Milestone, *Milestone, format.Milestone, *format.Milestone, User, *User, Project, *Project](driver.ProviderMilestone, &MilestoneProvider{g: o, project: parentImpl.(*ProjectProvider)})
+		return driver.NewProviderWithParentOneTwo[MilestoneProvider, *MilestoneProvider, Milestone, *Milestone, format.Milestone, *format.Milestone, User, *User, Project, *Project](driver.ProviderMilestone, NewProviderWithProjectProvider[MilestoneProvider](o, parentImpl.(*ProjectProvider)))
 	case driver.ProviderIssue:
-		return driver.NewProviderWithParentOneTwo[IssueProvider, *IssueProvider, Issue, *Issue, format.Issue, *format.Issue, User, *User, Project, *Project](driver.ProviderIssue, &IssueProvider{g: o, project: parentImpl.(*ProjectProvider)})
+		return driver.NewProviderWithParentOneTwo[IssueProvider, *IssueProvider, Issue, *Issue, format.Issue, *format.Issue, User, *User, Project, *Project](driver.ProviderIssue, NewProviderWithProjectProvider[IssueProvider](o, parentImpl.(*ProjectProvider)))
 	case driver.ProviderPullRequest:
-		return driver.NewProviderWithParentOneTwo[PullRequestProvider, *PullRequestProvider, PullRequest, *PullRequest, format.PullRequest, *format.PullRequest, User, *User, Project, *Project](driver.ProviderPullRequest, &PullRequestProvider{g: o, project: parentImpl.(*ProjectProvider)})
+		return driver.NewProviderWithParentOneTwo[PullRequestProvider, *PullRequestProvider, PullRequest, *PullRequest, format.PullRequest, *format.PullRequest, User, *User, Project, *Project](driver.ProviderPullRequest, NewProviderWithProjectProvider[PullRequestProvider](o, parentImpl.(*ProjectProvider)))
 	case driver.ProviderReview:
-		return driver.NewProviderWithParentOneTwoThree[ReviewProvider, *ReviewProvider, Review, *Review, format.Review, *format.Review, User, *User, Project, *Project, PullRequest, *PullRequest](driver.ProviderReview, &ReviewProvider{g: o})
+		return driver.NewProviderWithParentOneTwoThree[ReviewProvider, *ReviewProvider, Review, *Review, format.Review, *format.Review, User, *User, Project, *Project, PullRequest, *PullRequest](driver.ProviderReview, NewProvider[ReviewProvider](o))
 	case driver.ProviderRepository:
-		return driver.NewProviderWithParentOneTwo[RepositoryProvider, *RepositoryProvider, Repository, *Repository, format.Repository, *format.Repository, User, *User, Project, *Project](driver.ProviderRepository, &RepositoryProvider{g: o})
+		return driver.NewProviderWithParentOneTwo[RepositoryProvider, *RepositoryProvider, Repository, *Repository, format.Repository, *format.Repository, User, *User, Project, *Project](driver.ProviderRepository, NewProvider[RepositoryProvider](o))
 	case driver.ProviderTopic:
-		return driver.NewProviderWithParentOneTwo[TopicProvider, *TopicProvider, Topic, *Topic, format.Topic, *format.Topic, User, *User, Project, *Project](driver.ProviderTopic, &TopicProvider{g: o})
+		return driver.NewProviderWithParentOneTwo[TopicProvider, *TopicProvider, Topic, *Topic, format.Topic, *format.Topic, User, *User, Project, *Project](driver.ProviderTopic, NewProvider[TopicProvider](o))
 	case driver.ProviderLabel:
-		return driver.NewProviderWithParentOneTwo[LabelProvider, *LabelProvider, Label, *Label, format.Label, *format.Label, User, *User, Project, *Project](driver.ProviderLabel, &LabelProvider{g: o, project: parentImpl.(*ProjectProvider)})
+		return driver.NewProviderWithParentOneTwo[LabelProvider, *LabelProvider, Label, *Label, format.Label, *format.Label, User, *User, Project, *Project](driver.ProviderLabel, NewProviderWithProjectProvider[LabelProvider](o, parentImpl.(*ProjectProvider)))
 	case driver.ProviderRelease:
-		return driver.NewProviderWithParentOneTwo[ReleaseProvider, *ReleaseProvider, Release, *Release, format.Release, *format.Release, User, *User, Project, *Project](driver.ProviderRelease, &ReleaseProvider{g: o})
+		return driver.NewProviderWithParentOneTwo[ReleaseProvider, *ReleaseProvider, Release, *Release, format.Release, *format.Release, User, *User, Project, *Project](driver.ProviderRelease, NewProvider[ReleaseProvider](o))
 	case driver.ProviderAsset:
-		return driver.NewProviderWithParentOneTwoThree[AssetProvider, *AssetProvider, Asset, *Asset, format.ReleaseAsset, *format.ReleaseAsset, User, *User, Project, *Project, Release, *Release](driver.ProviderAsset, &AssetProvider{g: o})
+		return driver.NewProviderWithParentOneTwoThree[AssetProvider, *AssetProvider, Asset, *Asset, format.ReleaseAsset, *format.ReleaseAsset, User, *User, Project, *Project, Release, *Release](driver.ProviderAsset, NewProvider[AssetProvider](o))
 	case driver.ProviderComment:
-		return driver.NewProviderWithParentOneTwoThreeInterface[CommentProvider, *CommentProvider, Comment, *Comment, format.Comment, *format.Comment, User, *User, Project, *Project](driver.ProviderComment, &CommentProvider{g: o})
+		return driver.NewProviderWithParentOneTwoThreeInterface[CommentProvider, *CommentProvider, Comment, *Comment, format.Comment, *format.Comment, User, *User, Project, *Project](driver.ProviderComment, NewProvider[CommentProvider](o))
 	case driver.ProviderReaction:
-		return driver.NewProviderWithParentOneTwoRest[ReactionProvider, *ReactionProvider, Reaction, *Reaction, format.Reaction, *format.Reaction, User, *User, Project, *Project](driver.ProviderReaction, &ReactionProvider{g: o})
+		return driver.NewProviderWithParentOneTwoRest[ReactionProvider, *ReactionProvider, Reaction, *Reaction, format.Reaction, *format.Reaction, User, *User, Project, *Project](driver.ProviderReaction, NewProvider[ReactionProvider](o))
 	default:
 		panic(fmt.Sprintf("unknown provider name %s", name))
 	}

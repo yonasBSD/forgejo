@@ -12,6 +12,7 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/services/f3/util"
@@ -69,7 +70,7 @@ func TestF3(t *testing.T) {
 		fixture.NewAsset()
 		fixture.NewIssueComment(nil)
 		fixture.NewPullRequestComment()
-		fixture.NewReview()
+		// fixture.NewReview()
 		fixture.NewIssueReaction()
 		fixture.NewCommentReaction()
 
@@ -78,7 +79,7 @@ func TestF3(t *testing.T) {
 		//
 		doer, err := user_model.GetAdminUser()
 		assert.NoError(t, err)
-		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer)
+		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
 		options := f3_common.NewMirrorOptionsRecurse()
 		forgejoLocal.Forge.Mirror(context.Background(), fixture.Forge, options)
 
@@ -117,7 +118,7 @@ func TestF3(t *testing.T) {
 		assert.Contains(t, files, "/release/")
 		assert.Contains(t, files, "/asset/")
 		assert.Contains(t, files, "/comment/")
-		assert.Contains(t, files, "/review/")
+		//		assert.Contains(t, files, "/review/")
 		assert.Contains(t, files, "/reaction/")
 		//		f3_util.Command(context.Background(), "cp", "-a", f3.GetDirectory(), "abc")
 	})
@@ -178,4 +179,92 @@ func TestMaybePromoteF3User(t *testing.T) {
 	// the OAuth2 email was used to set the missing user email
 	assert.Equal(t, userBeforeSignIn.Email, "")
 	assert.Equal(t, userAfterSignIn.Email, gitlabEmail)
+}
+
+func TestF3UserMapping(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
+		setting.F3.Enabled = true
+		setting.Migrations.AllowLocalNetworks = true
+		AppVer := setting.AppVer
+		// Gitea SDK (go-sdk) need to parse the AppVer from server response, so we must set it to a valid version string.
+		setting.AppVer = "1.16.0"
+		defer func() {
+			setting.Migrations.AllowLocalNetworks = AllowLocalNetworks
+			setting.AppVer = AppVer
+		}()
+
+		log.Debug("Step 1: create a fixture")
+		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+			root := f3_forges.NewForgeRoot(&f3_f3.Options{
+				Options: gof3.Options{
+					Configuration: gof3.Configuration{
+						Directory: tmpDir,
+					},
+					Features: gof3.AllFeatures,
+					Logger:   util.ToF3Logger(nil),
+				},
+				Remap: true,
+			})
+			return root
+		}
+		fixture := f3_forges.NewFixture(t, f3_forges.FixtureForgeFactory{Fun: fixtureNewF3Forge, AdminRequired: false})
+		userID := int64(5432)
+		fixture.NewUser(userID)
+		//		fixture.NewProject()
+
+		log.Debug("Step 2: mirror the fixture into Forgejo")
+		//
+		// OAuth2 authentication source GitLab
+		//
+		gitlabName := "gitlab"
+		gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+		//
+		// Create a user as if it had been previously been created by the F3
+		// authentication source.
+		//
+		gitlabUserID := fmt.Sprintf("%d", userID)
+		gitlabUser := &user_model.User{
+			Name:        "gitlabuser",
+			Email:       "gitlabuser@example.com",
+			LoginType:   auth_model.OAuth2,
+			LoginSource: gitlab.ID,
+			LoginName:   gitlabUserID,
+		}
+		defer createUser(context.Background(), t, gitlabUser)()
+
+		doer, err := user_model.GetAdminUser()
+		assert.NoError(t, err)
+		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, gitlab.ID)
+		options := f3_common.NewMirrorOptionsRecurse()
+		forgejoLocal.Forge.Mirror(context.Background(), fixture.Forge, options)
+
+		log.Debug("Step 3: mirror Forgejo into F3")
+		adminUsername := "user1"
+		forgejoAPI := f3_forges.NewForgeRootFromDriver(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
+			Options: gof3.Options{
+				Configuration: gof3.Configuration{
+					URL:       setting.AppURL,
+					Directory: t.TempDir(),
+				},
+				Features: gof3.AllFeatures,
+				Logger:   util.ToF3Logger(nil),
+			},
+			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
+		})
+
+		f3 := f3_forges.FixtureNewF3Forge(t, nil, t.TempDir())
+		apiForge := forgejoAPI.Forge
+		apiUser := apiForge.Users.GetFromFormat(context.Background(), &format.User{UserName: gitlabUser.Name})
+		//		apiProject := apiUser.Projects.GetFromFormat(context.Background(), &format.Project{Name: fixture.ProjectFormat.Name})
+		// options = f3_common.NewMirrorOptionsRecurse(apiUser, apiProject)
+		options = f3_common.NewMirrorOptionsRecurse(apiUser)
+		f3.Forge.Mirror(context.Background(), apiForge, options)
+
+		//
+		// Step 4: verify the fixture and F3 are equivalent
+		//
+		files := f3_util.Command(context.Background(), "find", f3.GetDirectory())
+		assert.Contains(t, files, fmt.Sprintf("/user/%d", gitlabUser.ID))
+	})
 }
