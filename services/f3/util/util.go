@@ -15,7 +15,9 @@ import (
 
 func ToF3Logger(messenger base.Messenger) gof3.Logger {
 	if messenger == nil {
-		messenger = func(string, ...interface{}) {}
+		messenger = func(message string, args ...interface{}) {
+			log.Info("Message: "+message, args...)
+		}
 	}
 	return gof3.Logger{
 		Message:  messenger,
@@ -29,13 +31,14 @@ func ToF3Logger(messenger base.Messenger) gof3.Logger {
 	}
 }
 
-func ForgejoForgeRoot(features gof3.Features, doer *user_model.User) *f3_forges.ForgeRoot {
+func ForgejoForgeRoot(features gof3.Features, doer *user_model.User, authenticationSource int64) *f3_forges.ForgeRoot {
 	forgeRoot := f3_forges.NewForgeRootFromDriver(&driver.Forgejo{}, &driver.Options{
 		Options: gof3.Options{
 			Features: features,
 			Logger:   ToF3Logger(nil),
 		},
-		Doer: doer,
+		Doer:                 doer,
+		AuthenticationSource: authenticationSource,
 	})
 	return forgeRoot
 }

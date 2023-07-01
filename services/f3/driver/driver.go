@@ -18,7 +18,8 @@ import (
 type Options struct {
 	gof3.Options
 
-	Doer *user_model.User
+	AuthenticationSource int64
+	Doer                 *user_model.User
 }
 
 type Forgejo struct {
@@ -57,6 +58,10 @@ func (o *Forgejo) GetDirectory() string {
 
 func (o *Forgejo) GetDoer() *user_model.User {
 	return o.options.Doer
+}
+
+func (o *Forgejo) GetAuthenticationSource() int64 {
+	return o.options.AuthenticationSource
 }
 
 func (o *Forgejo) GetNewMigrationHTTPClient() gof3.NewMigrationHTTPClientFun {
