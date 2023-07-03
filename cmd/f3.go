@@ -85,7 +85,7 @@ func getAuthenticationSource(ctx context.Context, authenticationSource string) (
 }
 
 func RunF3(stdCtx context.Context, ctx *cli.Context) error {
-	doer, err := user_model.GetAdminUser()
+	doer, err := user_model.GetAdminUser(stdCtx)
 	if err != nil {
 		return err
 	}
