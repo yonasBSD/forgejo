@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	gitea_context "code.gitea.io/gitea/modules/context"
@@ -34,10 +35,15 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/services/auth/source/f3"
+	"code.gitea.io/gitea/services/auth/source/oauth2"
 	user_service "code.gitea.io/gitea/services/user"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	goth_gitlab "github.com/markbates/goth/providers/gitlab"
 	"github.com/stretchr/testify/assert"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -241,18 +247,82 @@ func getUserToken(t testing.TB, userName string, scope ...auth.AccessTokenScope)
 	return getTokenForLoggedInUser(t, loginUser(t, userName), scope...)
 }
 
-func createUser(t testing.TB, userName, email, password string) func() {
-	u := &user_model.User{
-		Name:               userName,
-		Email:              email,
-		Passwd:             password,
-		MustChangePassword: false,
-		LoginType:          auth.Plain,
+func mockCompleteUserAuth(mock func(res http.ResponseWriter, req *http.Request) (goth.User, error)) func() {
+	old := gothic.CompleteUserAuth
+	gothic.CompleteUserAuth = mock
+	return func() {
+		gothic.CompleteUserAuth = old
+	}
+}
+
+func addAuthSource(t *testing.T, payload map[string]string) *auth.Source {
+	session := loginUser(t, "user1")
+	payload["_csrf"] = GetCSRF(t, session, "/admin/auths/new")
+	req := NewRequestWithValues(t, "POST", "/admin/auths/new", payload)
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	source, err := auth.GetSourceByName(context.Background(), payload["name"])
+	assert.NoError(t, err)
+	return source
+}
+
+func authSourcePayloadOAuth2(name string) map[string]string {
+	return map[string]string{
+		"type":      fmt.Sprintf("%d", auth.OAuth2),
+		"name":      name,
+		"is_active": "on",
+	}
+}
+
+func authSourcePayloadGitLab(name string) map[string]string {
+	payload := authSourcePayloadOAuth2(name)
+	payload["oauth2_provider"] = "gitlab"
+	return payload
+}
+
+func authSourcePayloadGitLabCustom(name string) map[string]string {
+	payload := authSourcePayloadGitLab(name)
+	payload["oauth2_use_custom_url"] = "on"
+	payload["oauth2_auth_url"] = goth_gitlab.AuthURL
+	payload["oauth2_token_url"] = goth_gitlab.TokenURL
+	payload["oauth2_profile_url"] = goth_gitlab.ProfileURL
+	return payload
+}
+
+func authSourcePayloadOIDC(name string) map[string]string {
+	payload := authSourcePayloadOAuth2(name)
+	payload["oauth2_provider"] = (&oauth2.OpenIDProvider{}).Name()
+	payload["open_id_connect_auto_discovery_url"] = codebergURL + "/.well-known/openid-configuration"
+	return payload
+}
+
+func createF3AuthSource(t *testing.T, name, url, matchingSource string) *auth.Source {
+	assert.NoError(t, auth.CreateSource(&auth.Source{
+		Type:     auth.F3,
+		Name:     name,
+		IsActive: true,
+		Cfg: &f3.Source{
+			URL:            url,
+			MatchingSource: matchingSource,
+		},
+	}))
+	source, err := auth.GetSourceByName(context.Background(), name)
+	assert.NoError(t, err)
+	return source
+}
+
+func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {
+	user.MustChangePassword = false
+	user.LowerName = strings.ToLower(user.Name)
+
+	assert.NoError(t, db.Insert(ctx, user))
+
+	if len(user.Email) > 0 {
+		changePrimaryEmail := true
+		assert.NoError(t, user_model.UpdateUser(ctx, user, changePrimaryEmail))
 	}
 
-	assert.NoError(t, user_model.CreateUser(u, &user_model.CreateUserOverwriteOptions{}))
 	return func() {
-		assert.NoError(t, user_service.DeleteUser(context.Background(), u, true))
+		assert.NoError(t, user_service.DeleteUser(ctx, user, true))
 	}
 }
 
