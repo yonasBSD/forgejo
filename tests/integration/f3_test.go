@@ -77,7 +77,7 @@ func TestF3(t *testing.T) {
 		//
 		// Step 2: mirror the fixture into Forgejo
 		//
-		doer, err := user_model.GetAdminUser()
+		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
 		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
 		options := f3_common.NewMirrorOptionsRecurse()
@@ -233,7 +233,7 @@ func TestF3UserMapping(t *testing.T) {
 		}
 		defer createUser(context.Background(), t, gitlabUser)()
 
-		doer, err := user_model.GetAdminUser()
+		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
 		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, gitlab.ID)
 		options := f3_common.NewMirrorOptionsRecurse()
