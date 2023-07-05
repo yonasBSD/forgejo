@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/models/system"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/updatechecker"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -209,6 +210,7 @@ func registerGCLFS() {
 			AutoFix:                 true,
 			OlderThan:               time.Now().Add(-gcLFSConfig.OlderThan),
 			UpdatedLessRecentlyThan: time.Now().Add(-gcLFSConfig.LastUpdatedMoreThanAgo),
+			Logger:                  log.GetLogger(log.DEFAULT),
 		})
 	})
 }
