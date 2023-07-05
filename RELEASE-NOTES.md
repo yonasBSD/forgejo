@@ -16,7 +16,8 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 - **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
   The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
 - **Continuous Integration:**
-  Forgejo Actions workflows are [now available](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
+  - [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) workflows are [now available](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
+  - The Woodpecker CI configuration for PR verification and building releases is no longer maintained as part of Forgejo itself and was moved to its [own repository](https://codeberg.org/forgejo-contrib/forgejo-ci-woodpecker).
 - **Moderation:**
   Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
 - **Package:**
@@ -157,6 +158,49 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 * Container images upgraded to Alpine 3.18
 
   The Forgejo container images are now based on [Alpine 3.18](https://alpinelinux.org/posts/Alpine-3.18.0-released.html) instead of Alpine 3.1.17.
+
+## 1.19.4-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.19/forgejo) included in the `Forgejo v1.19.4-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.19.3-0..v1.19.4-0
+```
+
+This stable release contains security fixes.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are upgraded to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.19/user/semver/)
+
+  The semantic version was updated from `4.2.1+0-gitea-1.19.3` to `4.2.2+0-gitea-1.19.4`.
+
+* Security fixes
+
+  * [An additional verification](https://codeberg.org/forgejo/forgejo/commit/a259a928a) was implemented to prevent [open redirects](https://en.wikipedia.org/wiki/Open_redirect). 
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix an edge case](https://codeberg.org/forgejo/forgejo/commit/27796464c) where a user changing their `username` in their profile page could fail
+  * The secrets are only meaningful in the context of `Frogejo Actions`, do not display them unless if `Forgejo Actions` is disabled ([patch 1](https://codeberg.org/forgejo/forgejo/commit/5883db45c), [patch 2](https://codeberg.org/forgejo/forgejo/commit/5fdac0d46))
+  * Actions can now be triggered on mirrored repositories ([patch 1](https://codeberg.org/forgejo/forgejo/commit/58bdcae61), [patch 2](https://codeberg.org/forgejo/forgejo/commit/8d4d6f9b2))
+  * [Return `404` in the API if the requested webhooks were not found](https://codeberg.org/forgejo/forgejo/commit/16bcceeff) instead of `500`
+  * Ensure topics deleted via the API are [also deleted in the repository](https://codeberg.org/forgejo/forgejo/commit/5dc29fdeb)
+  * [Tentative fix](https://codeberg.org/forgejo/forgejo/commit/9bc4887cb) to suppress the JavaScript error **TypeError: undefined is not an object (evaluating '_i18n.textEdited')** on safari. It is unclear if that fix is effective because it could not be reproduced, please report if it still happens for you.
+  * [Respect original content when creating secrets](https://codeberg.org/forgejo/forgejo/commit/f6919e3e5)
+  * If a mirror failed and left the database in an inconsistent state, make it so the repository page [does not fail with an error `500`](https://codeberg.org/forgejo/forgejo/commit/f37fba567)
+  * If a user that triggered `Actions` is deleted, [allow for the page listing the tasks it launched to show](https://codeberg.org/forgejo/forgejo/commit/f9bf040a5) instead of failing with an error `500`
+  * [Allow the selection of milestones](https://codeberg.org/forgejo/forgejo/commit/55d062003) when acting on multiple issues in the issue list page
+  * [Fix the API error message when trying to create a fork that already exists](https://codeberg.org/forgejo/forgejo/commit/4dccac3db)
+  * [Don't display a `create page` button in a mirror wiki repository](https://codeberg.org/forgejo/forgejo/commit/7a74957c1). A mirrored repository will also mirror a wiki and changes will be overridden.
+  * [Do not allow for a repository to enable actions if it is not enabled in the configuration](https://codeberg.org/forgejo/forgejo/commit/257287954)
+  * Allow for closed PRs to be re-opened and [synchronize with the latest content of the head branch](https://codeberg.org/forgejo/forgejo/commit/306b7b5d1)
+  * [Fix the `close` button of projects within an organization](https://codeberg.org/forgejo/forgejo/commit/306b7b5d1). It was a noop and now effectively closes the project
 
 ## 1.19.3-0
 
