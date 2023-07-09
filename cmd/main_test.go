@@ -23,10 +23,6 @@ func TestMain(m *testing.M) {
 	})
 }
 
-func makePathOutput(workPath, customPath, customConf string) string {
-	return fmt.Sprintf("WorkPath=%s\nCustomPath=%s\nCustomConf=%s", workPath, customPath, customConf)
-}
-
 func newTestApp() *cli.App {
 	app := NewMainApp()
 	testCmd := &cli.Command{

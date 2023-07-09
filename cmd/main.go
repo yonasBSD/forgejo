@@ -86,6 +86,25 @@ func appGlobalFlags() []cli.Flag {
 	}
 }
 
+func makePathOutput(workPath, customPath, customConf string) string {
+	return fmt.Sprintf("WorkPath=%s\nCustomPath=%s\nCustomConf=%s", workPath, customPath, customConf)
+}
+
+func NewTestApp() *cli.App {
+	app := NewMainApp()
+	testCmd := &cli.Command{
+		Name: "test-cmd",
+		Action: func(ctx *cli.Context) error {
+			_, _ = fmt.Fprint(app.Writer, makePathOutput(setting.AppWorkPath, setting.CustomPath, setting.CustomConf))
+			return nil
+		},
+	}
+	prepareSubcommandWithConfig(testCmd, appGlobalFlags())
+	app.Commands = append(app.Commands, testCmd)
+	app.DefaultCommand = testCmd.Name
+	return app
+}
+
 func prepareSubcommandWithConfig(command *cli.Command, globalFlags []cli.Flag) {
 	command.Flags = append(append([]cli.Flag{}, globalFlags...), command.Flags...)
 	command.Action = prepareWorkPathAndCustomConf(command.Action)
@@ -168,7 +187,9 @@ func NewMainApp() *cli.App {
 	// that is NOT compatible with Gitea.
 	//
 	if executable == "forgejo-cli" {
-		subCmds = []*cli.Command{}
+		subCmds = []*cli.Command{
+			forgejo.CmdActions(context.Background()),
+		}
 	} else {
 		//
 		// Otherwise provide a Gitea compatible CLI which includes Forgejo
