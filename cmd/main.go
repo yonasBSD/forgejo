@@ -4,11 +4,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
+	"code.gitea.io/gitea/cmd/forgejo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
@@ -58,7 +61,8 @@ func appGlobalFlags() []cli.Flag {
 	return []cli.Flag{
 		// make the builtin flags at the top
 		helpFlag,
-		cli.VersionFlag,
+		// Forgejo: commented out because it would conflict at runtime with the --version
+		// cli.VersionFlag,
 
 		// shared configuration flags, they are for global and for each sub-command at the same time
 		// eg: such command is valid: "./gitea --config /tmp/app.ini web --config /tmp/app.ini", while it's discouraged indeed
@@ -151,6 +155,37 @@ func checkCommandFlags(c any) bool {
 }
 
 func NewMainApp() *cli.App {
+	path, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	executable := filepath.Base(path)
+
+	var subCmds []*cli.Command
+
+	//
+	// If the executable is forgejo-cli, provide a Forgejo specific CLI
+	// that is NOT compatible with Gitea.
+	//
+	if executable == "forgejo-cli" {
+		subCmds = []*cli.Command{}
+	} else {
+		//
+		// Otherwise provide a Gitea compatible CLI which includes Forgejo
+		// specific additions under the forgejo-cli subcommand. It allows
+		// admins to migration from Gitea to Forgejo by replacing the gitea
+		// binary and rename it to forgejo if they want.
+		//
+		subCmds = []*cli.Command{
+			forgejo.CmdForgejo(context.Background()),
+			CmdActions,
+		}
+	}
+
+	return newMainApp(subCmds...)
+}
+
+func newMainApp(subCmds ...*cli.Command) *cli.App {
 	app := cli.NewApp()
 	app.EnableBashCompletion = true
 
@@ -169,13 +204,13 @@ func NewMainApp() *cli.App {
 		CmdMigrateStorage,
 		CmdDumpRepository,
 		CmdRestoreRepository,
-		CmdActions,
 		cmdHelp(), // the "help" sub-command was used to show the more information for "work path" and "custom config"
 	}
 
 	cmdConvert := util.ToPointer(*cmdDoctorConvert)
 	cmdConvert.Hidden = true // still support the legacy "./gitea doctor" by the hidden sub-command, remove it in next release
 	subCmdWithConfig = append(subCmdWithConfig, cmdConvert)
+	subCmdWithConfig = append(subCmdWithConfig, subCmds...)
 
 	// these sub-commands do not need the config file, and they do not depend on any path or environment variable.
 	subCmdStandalone := []*cli.Command{
