@@ -61,8 +61,7 @@ func appGlobalFlags() []cli.Flag {
 	return []cli.Flag{
 		// make the builtin flags at the top
 		helpFlag,
-		// Forgejo: commented out because it would conflict at runtime with the --version
-		// cli.VersionFlag,
+		cli.VersionFlag,
 
 		// shared configuration flags, they are for global and for each sub-command at the same time
 		// eg: such command is valid: "./gitea --config /tmp/app.ini web --config /tmp/app.ini", while it's discouraged indeed
@@ -168,7 +167,9 @@ func NewMainApp() *cli.App {
 	// that is NOT compatible with Gitea.
 	//
 	if executable == "forgejo-cli" {
-		subCmds = []*cli.Command{}
+		subCmds = []*cli.Command{
+			forgejo.CmdActions(context.Background()),
+		}
 	} else {
 		//
 		// Otherwise provide a Gitea compatible CLI which includes Forgejo
@@ -210,7 +211,6 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 	cmdConvert := util.ToPointer(*cmdDoctorConvert)
 	cmdConvert.Hidden = true // still support the legacy "./gitea doctor" by the hidden sub-command, remove it in next release
 	subCmdWithConfig = append(subCmdWithConfig, cmdConvert)
-	subCmdWithConfig = append(subCmdWithConfig, subCmds...)
 
 	// these sub-commands do not need the config file, and they do not depend on any path or environment variable.
 	subCmdStandalone := []*cli.Command{
@@ -230,6 +230,7 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 	}
 	app.Commands = append(app.Commands, subCmdWithConfig...)
 	app.Commands = append(app.Commands, subCmdStandalone...)
+	app.Commands = append(app.Commands, subCmds...)
 
 	if !checkCommandFlags(app) {
 		panic("some flags are incorrect") // this is a runtime check to help developers
