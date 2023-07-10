@@ -279,3 +279,7 @@ i.grey.icon.icon.icon.icon {
 .ui.tertiary.button:hover {
   color: #ccc;
 }
+::selection {
+  background: var(--steel-100) !important;
+  color: #000 !important;
+}
