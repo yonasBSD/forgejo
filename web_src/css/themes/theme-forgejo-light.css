@@ -249,3 +249,7 @@
   color: var(--color-warning-text) !important;
   border-color: #eab308 !important;
 }
+::selection {
+  background: var(--steel-450) !important;
+  color: #fff !important;
+}
