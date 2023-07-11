@@ -274,21 +274,21 @@ func To40ByteSHA(sha, out []byte) []byte {
 // It is recommended therefore to pass in an fnameBuf large enough to avoid almost all allocations
 //
 // Each line is composed of:
-// <mode-in-ascii-dropping-initial-zeros> SP <fname> NUL <20-byte SHA>
+// <mode-in-ascii-dropping-initial-zeros> SP <fname> NUL <hash>
 //
-// We don't attempt to convert the 20-byte SHA to 40-byte SHA to save a lot of time
-func ParseTreeLine(rd *bufio.Reader, modeBuf, fnameBuf, shaBuf []byte) (mode, fname, sha []byte, n int, err error) {
+// It does not convert the hash to the longer version to increase performance.
+func ParseTreeLine(rd *bufio.Reader, hashLen int, modeBuf, fnameBuf, hashBuf []byte) (mode, fname, hash []byte, n int, err error) {
 	var readBytes []byte
 
 	// Read the Mode & fname
 	readBytes, err = rd.ReadSlice('\x00')
 	if err != nil {
-		return mode, fname, sha, n, err
+		return mode, fname, hash, n, err
 	}
 	idx := bytes.IndexByte(readBytes, ' ')
 	if idx < 0 {
 		log.Debug("missing space in readBytes ParseTreeLine: %s", readBytes)
-		return mode, fname, sha, n, &ErrNotExist{}
+		return mode, fname, hash, n, &ErrNotExist{}
 	}
 
 	n += idx + 1
@@ -315,24 +315,24 @@ func ParseTreeLine(rd *bufio.Reader, modeBuf, fnameBuf, shaBuf []byte) (mode, fn
 	}
 	n += len(fnameBuf)
 	if err != nil {
-		return mode, fname, sha, n, err
+		return mode, fname, hash, n, err
 	}
 	fnameBuf = fnameBuf[:len(fnameBuf)-1]
 	fname = fnameBuf
 
-	// Deal with the 20-byte SHA
+	// Deal with the hash.
 	idx = 0
-	for idx < 20 {
+	for idx < hashLen {
 		var read int
-		read, err = rd.Read(shaBuf[idx:20])
+		read, err = rd.Read(hashBuf[idx:hashLen])
 		n += read
 		if err != nil {
-			return mode, fname, sha, n, err
+			return mode, fname, hash, n, err
 		}
 		idx += read
 	}
-	sha = shaBuf
-	return mode, fname, sha, n, err
+	hash = hashBuf
+	return mode, fname, hash, n, err
 }
 
 var callerPrefix string

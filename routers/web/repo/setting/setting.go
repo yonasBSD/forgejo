@@ -87,6 +87,12 @@ func SettingsCtxData(ctx *context.Context) {
 		return
 	}
 	ctx.Data["PushMirrors"] = pushMirrors
+
+	ctx.Data["ObjectFormat"], err = ctx.Repo.GitRepo.GetObjectFormat()
+	if err != nil {
+		ctx.ServerError("GetObjectFormat", err)
+		return
+	}
 }
 
 // Settings show a repository's settings page

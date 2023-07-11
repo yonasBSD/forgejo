@@ -31,8 +31,9 @@ type Repository struct {
 	checkReader *bufio.Reader
 	checkWriter WriteCloserError
 
-	Ctx             context.Context
-	LastCommitCache *LastCommitCache
+	Ctx               context.Context
+	LastCommitCache   *LastCommitCache
+	objectFormatCache ObjectFormatType
 }
 
 // openRepositoryWithDefaultContext opens the repository at the given path with DefaultContext.

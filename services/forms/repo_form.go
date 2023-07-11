@@ -50,6 +50,7 @@ type CreateRepoForm struct {
 	Avatar       bool
 	Labels       bool
 	TrustModel   string
+	ObjectFormat string `binding:"in(,sha1,sha256)"`
 }
 
 // Validate validates the fields

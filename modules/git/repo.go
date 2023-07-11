@@ -62,18 +62,30 @@ func IsRepoURLAccessible(ctx context.Context, url string) bool {
 	return err == nil
 }
 
+// InitRepositoryOptions
+type InitRepositoryOptions struct {
+	RepoPath     string
+	Bare         bool
+	ObjectFormat string
+}
+
 // InitRepository initializes a new Git repository.
-func InitRepository(ctx context.Context, repoPath string, bare bool) error {
-	err := os.MkdirAll(repoPath, os.ModePerm)
+func InitRepository(ctx context.Context, opts *InitRepositoryOptions) error {
+	err := os.MkdirAll(opts.RepoPath, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	cmd := NewCommand(ctx, "init")
-	if bare {
+	if opts.Bare {
 		cmd.AddArguments("--bare")
 	}
-	_, _, err = cmd.RunStdString(&RunOpts{Dir: repoPath})
+
+	if SupportObjectFormat && opts.ObjectFormat != "" {
+		cmd.AddArguments("--object-format").AddDynamicArguments(opts.ObjectFormat)
+	}
+
+	_, _, err = cmd.RunStdString(&RunOpts{Dir: opts.RepoPath})
 	return err
 }
 
@@ -93,6 +105,40 @@ func (repo *Repository) IsEmpty() (bool, error) {
 	}
 
 	return strings.TrimSpace(output.String()) == "", nil
+}
+
+// GetObjectFormat returns the storage object format of the repository.
+func (repo *Repository) GetObjectFormat() (ObjectFormatType, error) {
+	if repo.objectFormatCache != invalidObjectFormat {
+		return repo.objectFormatCache, nil
+	}
+
+	// Ensures the command is not run on versions of Git that didn't support
+	// showing what object format the repository was.
+	if !SupportObjectFormat {
+		return SHA1ObjectFormat, nil
+	}
+
+	var errbuf, output strings.Builder
+	if err := NewCommand(repo.Ctx, "rev-parse", "--show-object-format=storage").
+		Run(&RunOpts{
+			Dir:    repo.Path,
+			Stdout: &output,
+			Stderr: &errbuf,
+		}); err != nil {
+		if err.Error() == "exit status 1" && errbuf.String() == "" {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("show object format: %w - %s", err, errbuf.String())
+	}
+
+	var err error
+	repo.objectFormatCache, err = ToObjectFormat(strings.TrimSpace(output.String()))
+	if err != nil {
+		return 0, err
+	}
+
+	return repo.objectFormatCache, nil
 }
 
 // CloneRepoOptions options when clone a repository

@@ -30,8 +30,9 @@ type Repository struct {
 	gogitStorage *filesystem.Storage
 	gpgSettings  *GPGSettings
 
-	Ctx             context.Context
-	LastCommitCache *LastCommitCache
+	Ctx               context.Context
+	LastCommitCache   *LastCommitCache
+	objectFormatCache ObjectFormatType
 }
 
 // openRepositoryWithDefaultContext opens the repository at the given path with DefaultContext.

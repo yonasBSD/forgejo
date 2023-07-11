@@ -173,6 +173,7 @@ type CreateRepoOptions struct {
 	Status         repo_model.RepositoryStatus
 	TrustModel     repo_model.TrustModelType
 	MirrorInterval string
+	ObjectFormat   string
 }
 
 // CreateRepository creates a repository for the user/organization.

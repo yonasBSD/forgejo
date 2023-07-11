@@ -17,6 +17,10 @@
 					<span {{if not (eq .Repository.Size 0)}} data-tooltip-content="{{.Repository.SizeDetailsString}}"{{end}}>{{FileSize .Repository.Size}}</span>
 				</div>
 				<div class="inline field">
+					<label>{{.locale.Tr "repo.repo_object_format"}}</label>
+					<span>{{.ObjectFormat}}</span>
+				</div>
+				<div class="inline field">
 					<label>{{.locale.Tr "repo.template"}}</label>
 					<div class="ui checkbox">
 						<input name="template" type="checkbox" {{if .Repository.IsTemplate}}checked{{end}}>

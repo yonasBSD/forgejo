@@ -92,15 +92,15 @@ func parseTreeEntries(data []byte, ptree *Tree) ([]*TreeEntry, error) {
 	return entries, nil
 }
 
-func catBatchParseTreeEntries(ptree *Tree, rd *bufio.Reader, sz int64) ([]*TreeEntry, error) {
+func catBatchParseTreeEntries(ptree *Tree, rd *bufio.Reader, sz int64, hashLen int) ([]*TreeEntry, error) {
 	fnameBuf := make([]byte, 4096)
 	modeBuf := make([]byte, 40)
-	shaBuf := make([]byte, 40)
+	hashBuf := make([]byte, 40)
 	entries := make([]*TreeEntry, 0, 10)
 
 loop:
 	for sz > 0 {
-		mode, fname, sha, count, err := ParseTreeLine(rd, modeBuf, fnameBuf, shaBuf)
+		mode, fname, hash, count, err := ParseTreeLine(rd, hashLen, modeBuf, fnameBuf, hashBuf)
 		if err != nil {
 			if err == io.EOF {
 				break loop
@@ -127,7 +127,7 @@ loop:
 			return nil, fmt.Errorf("unknown mode: %v", string(mode))
 		}
 
-		entry.ID = MustID(sha)
+		entry.ID = MustID(hash)
 		entry.name = string(fname)
 		entries = append(entries, entry)
 	}

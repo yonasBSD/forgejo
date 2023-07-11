@@ -277,7 +277,7 @@ func initRepoCommit(ctx context.Context, tmpPath string, repo *repo_model.Reposi
 	return nil
 }
 
-func checkInitRepository(ctx context.Context, owner, name string) (err error) {
+func checkInitRepository(ctx context.Context, owner, name, objectFormat string) (err error) {
 	// Somehow the directory could exist.
 	repoPath := repo_model.RepoPath(owner, name)
 	isExist, err := util.IsExist(repoPath)
@@ -293,7 +293,7 @@ func checkInitRepository(ctx context.Context, owner, name string) (err error) {
 	}
 
 	// Init git bare new repository.
-	if err = git.InitRepository(ctx, repoPath, true); err != nil {
+	if err = git.InitRepository(ctx, &git.InitRepositoryOptions{RepoPath: repoPath, Bare: true, ObjectFormat: objectFormat}); err != nil {
 		return fmt.Errorf("git.InitRepository: %w", err)
 	} else if err = createDelegateHooks(repoPath); err != nil {
 		return fmt.Errorf("createDelegateHooks: %w", err)
@@ -303,7 +303,7 @@ func checkInitRepository(ctx context.Context, owner, name string) (err error) {
 
 // InitRepository initializes README and .gitignore if needed.
 func initRepository(ctx context.Context, repoPath string, u *user_model.User, repo *repo_model.Repository, opts CreateRepoOptions) (err error) {
-	if err = checkInitRepository(ctx, repo.OwnerName, repo.Name); err != nil {
+	if err = checkInitRepository(ctx, repo.OwnerName, repo.Name, opts.ObjectFormat); err != nil {
 		return err
 	}
 

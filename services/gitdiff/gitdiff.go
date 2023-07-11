@@ -1102,7 +1102,7 @@ func GetDiff(gitRepo *git.Repository, opts *DiffOptions, files ...string) (*Diff
 	if (len(opts.BeforeCommitID) == 0 || opts.BeforeCommitID == git.EmptySHA) && commit.ParentCount() == 0 {
 		cmdDiff.AddArguments("diff", "--src-prefix=\\a/", "--dst-prefix=\\b/", "-M").
 			AddArguments(opts.WhitespaceBehavior...).
-			AddArguments("4b825dc642cb6eb9a060e54bf8d69288fbee4904"). // append empty tree ref
+			AddArguments(git.EmptyTreeSHA). // append empty tree ref
 			AddDynamicArguments(opts.AfterCommitID)
 	} else {
 		actualBeforeCommitID := opts.BeforeCommitID

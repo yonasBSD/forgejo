@@ -36,6 +36,11 @@ var (
 	// SupportProcReceive version >= 2.29.0
 	SupportProcReceive bool
 
+	// SupportObjectFormat version >= 2.29.0
+	// Objectformat has been supported in earlier versions of Git, but was behind
+	// a build flag.
+	SupportObjectFormat bool
+
 	gitVersion *version.Version
 )
 
@@ -188,7 +193,9 @@ func InitFull(ctx context.Context) (err error) {
 	if CheckGitVersionAtLeast("2.9") == nil {
 		globalCommandArgs = append(globalCommandArgs, "-c", "credential.helper=")
 	}
+
 	SupportProcReceive = CheckGitVersionAtLeast("2.29") == nil
+	SupportObjectFormat = CheckGitVersionAtLeast("2.29") == nil
 
 	if setting.LFS.StartServer {
 		if CheckGitVersionAtLeast("2.1.2") != nil {

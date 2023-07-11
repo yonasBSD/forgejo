@@ -51,10 +51,17 @@ func (repo *Repository) getTree(id SHA1) (*Tree, error) {
 	case "tree":
 		tree := NewTree(repo, id)
 		tree.ResolvedID = id
-		tree.entries, err = catBatchParseTreeEntries(tree, rd, size)
+
+		objectFormat, err := repo.GetObjectFormat()
 		if err != nil {
 			return nil, err
 		}
+
+		tree.entries, err = catBatchParseTreeEntries(tree, rd, size, objectFormat.HashLen())
+		if err != nil {
+			return nil, err
+		}
+
 		tree.entriesParsed = true
 		return tree, nil
 	default:

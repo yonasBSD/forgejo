@@ -175,6 +175,7 @@ func Create(ctx *context.Context) {
 		}
 	}
 
+	ctx.Data["SupportsObjectFormat"] = git.SupportObjectFormat
 	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
 	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
 
@@ -286,6 +287,7 @@ func CreatePost(ctx *context.Context) {
 			AutoInit:      form.AutoInit,
 			IsTemplate:    form.Template,
 			TrustModel:    repo_model.ToTrustModel(form.TrustModel),
+			ObjectFormat:  form.ObjectFormat,
 		})
 		if err == nil {
 			log.Trace("Repository created [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)

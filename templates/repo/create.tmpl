@@ -201,6 +201,27 @@
 								</ul>
 							</div>
 						</div>
+                        {{if .SupportsObjectFormat}}
+						<div class="inline field">
+							<label>{{.locale.Tr "repo.settings.object_format"}}</label>
+                            <div class="ui selection dropdown">
+								<input type="hidden" id="object_format" name="object_format" value="sha1" required>
+								<div class="default text">sha1</div>
+								{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+								<div class="menu">
+									<div class="item" data-value="sha1">SHA1</div>
+									<div class="item" data-value="sha256">SHA256</div>
+								</div>
+                            </div>
+                            <div class="help">
+								{{.locale.Tr "repo.settings.object_format.helper"}}
+								<ul>
+									<li>{{.locale.Tr "repo.settings.object_format.helper_sha1"}}</li>
+									<li>{{.locale.Tr "repo.settings.object_format.helper_sha256"}}</li>
+								</ul>
+							</div>
+						</div>
+                        {{end}}
 						<div class="inline field">
 							<label>{{.locale.Tr "repo.template"}}</label>
 							<div class="ui checkbox">

@@ -28,12 +28,17 @@ func (repo *Repository) GetTagCommitID(name string) (string, error) {
 
 // GetCommit returns commit object of by ID string.
 func (repo *Repository) GetCommit(commitID string) (*Commit, error) {
-	id, err := repo.ConvertToSHA1(commitID)
+	objectFormat, err := repo.GetObjectFormat()
 	if err != nil {
 		return nil, err
 	}
 
-	return repo.getCommit(id)
+	objectHash, err := objectFormat.NewObjectHashFromString(commitID)
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.getCommit(objectHash)
 }
 
 // GetBranchCommit returns the last commit of given branch.
@@ -171,7 +176,7 @@ func (repo *Repository) searchCommits(id SHA1, opts SearchCommitsOptions) ([]*Co
 	if len(opts.Keywords) > 0 {
 		for _, v := range opts.Keywords {
 			// ignore anything not matching a valid sha pattern
-			if IsValidSHAPattern(v) {
+			if IsValidSHA1Pattern(v) {
 				// create new git log command with 1 commit limit
 				hashCmd := NewCommand(repo.Ctx, "log", "-1", prettyLogFormat)
 				// add previous arguments except for --grep and --all

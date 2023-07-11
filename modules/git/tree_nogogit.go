@@ -13,8 +13,8 @@ import (
 
 // Tree represents a flat directory listing.
 type Tree struct {
-	ID         SHA1
-	ResolvedID SHA1
+	ID         ObjectHash
+	ResolvedID ObjectHash
 	repo       *Repository
 
 	// parent tree
@@ -54,7 +54,12 @@ func (t *Tree) ListEntries() (Entries, error) {
 			}
 		}
 		if typ == "tree" {
-			t.entries, err = catBatchParseTreeEntries(t, rd, sz)
+			objectFormat, err := t.repo.GetObjectFormat()
+			if err != nil {
+				return nil, err
+			}
+
+			t.entries, err = catBatchParseTreeEntries(t, rd, sz, objectFormat.HashLen())
 			if err != nil {
 				return nil, err
 			}

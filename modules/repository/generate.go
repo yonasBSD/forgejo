@@ -223,7 +223,7 @@ func generateRepoCommit(ctx context.Context, repo, templateRepo, generateRepo *r
 		}
 	}
 
-	if err := git.InitRepository(ctx, tmpDir, false); err != nil {
+	if err := git.InitRepository(ctx, &git.InitRepositoryOptions{RepoPath: tmpDir}); err != nil {
 		return err
 	}
 
@@ -354,7 +354,8 @@ func GenerateRepository(ctx context.Context, doer, owner *user_model.User, templ
 		}
 	}
 
-	if err = checkInitRepository(ctx, owner.Name, generateRepo.Name); err != nil {
+	// TODO: Get object format of template repository.
+	if err = checkInitRepository(ctx, owner.Name, generateRepo.Name, "sha1"); err != nil {
 		return generateRepo, err
 	}
 
