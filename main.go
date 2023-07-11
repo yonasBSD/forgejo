@@ -145,6 +145,7 @@ argument - which can alternatively be run by running the subcommand web.`
 		cmd.CmdKeys,
 		cmd.CmdConvert,
 		cmd.CmdDoctor,
+		cmd.CmdF3,
 		cmd.CmdManager,
 		cmd.CmdEmbedded,
 		cmd.CmdMigrateStorage,
