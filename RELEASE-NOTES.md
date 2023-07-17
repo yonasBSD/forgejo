@@ -15,6 +15,35 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 
 - **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
   The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
+- **Breaking:**
+  - [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing token are still valid, they may have different scope than before. To ensure that no token have a larger scope than before they must be removed and recreated.
+  - The `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
+  - The ".png" suffix for [user and organizations is now reserved](https://codeberg.org/forgejo/forgejo/commit/2b91841cd3e1213ff3e4ed4209d6a4be89c2fa79)
+  - The section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
+    * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
+    * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
+  - [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's logs has settings different from the previous `log.<mode>.<logger>` in `app.ini`. Check the [documentation](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#log-log) and `app.example.ini` for more information. The SMTP logger was removed.
+  - Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (e.g. work path must be absolute). 
+  - User profile customization with a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac)
+    The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
+    breaking change because it will display the .profile/README.md of a pre-existing repository, private or not.
+  - [Fix team members API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b)
+  - [SSH_KEYGEN_PATH default to using the Go SSH key parsing (empty string) instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
+  - [Rework storage settings](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20)
+    All storage settings should be stored in one section, and one section only.
+    You cannot use multiple sections anymore to override settings.
+    The storage settings priority is now
+    1. `[attachment]`
+    2. `[storage.attachments]` | `[storage.<another>]`
+    3. `[storage]`
+    4. `default`
+    For extra override configuration items, currently only are `SERVE_DIRECT`, `MINIO_BASE_PATH`, `MINIO_BUCKET`, which could be configured in another section.
+    The priority of the override configuration is `[attachment]` > `[storage.attachments]` > `default`.
+  - [The [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
+  - The default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
+  - Remove [meta tags `theme-color` and `default-theme`](https://codeberg.org/forgejo/forgejo/commit/c7612d178c5b954d4846cd27a65a7fa15fd1ba65)
+    The ui.THEME_COLOR_META_TAG setting has been removed. If you still need to set the theme-color meta tag, add it via $GITEA_CUSTOM/templates/custom/header.tmpl instead.
+    The non-standard default-theme meta-tag has been removed. Third party code that needs to obtain the currently loaded theme should use the theme-<name> class on the <html> node instead, which holds the currently active theme.
 - **Continuous Integration:**
   - [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) workflows are [now available](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
   - The Woodpecker CI configuration for PR verification and building releases is no longer maintained as part of Forgejo itself and was moved to its [own repository](https://codeberg.org/forgejo-contrib/forgejo-ci-woodpecker).
@@ -39,11 +68,6 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Use a general Eval function for expressions in templates](https://codeberg.org/forgejo/forgejo/commit/5b89670a318e52e271f65d96bfe1116d85d20988)
   - [reload-templates CLI](https://codeberg.org/forgejo/forgejo/commit/3588edbb08f93aaa56defa82dffdbb202cd9aa4a)
 - **User Interface and User eXperience**
-  - **Breaking:** the default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
-  - **Breaking:** remove [meta tags `theme-color` and `default-theme`](https://codeberg.org/forgejo/forgejo/commit/c7612d178c5b954d4846cd27a65a7fa15fd1ba65)
-    The ui.THEME_COLOR_META_TAG setting has been removed. If you still need to set the theme-color meta tag, add it via $GITEA_CUSTOM/templates/custom/header.tmpl instead.
-    The non-standard default-theme meta-tag has been removed. Third party code that needs to obtain the currently loaded theme should use the theme-<name> class on the <html> node instead, which holds the currently active theme.
-  - **Breaking:** [the [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
   - The web editor used when creating issues, adding comments, etc. [changed](https://codeberg.org/forgejo/forgejo/commit/5cc0801de90d16b4d528e62de11c9b525be5d122) from [EasyMDE](https://github.com/Ionaru/easy-markdown-editor) which was no longer actively maintained to [GitHub markdown](https://github.com/github/markdown-toolbar-element). To help with the transition it is still possible to switch back to using EasyMDE using the double arrow button in the menubar.
   - [Improve wiki sidebar and TOC](https://codeberg.org/forgejo/forgejo/commit/51789ba12)
   - [Show outdated comments in the files changed tab of a pull request review](https://codeberg.org/forgejo/forgejo/commit/30a783879)
@@ -112,25 +136,11 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Allow for PKCE flow without client secret](https://codeberg.org/forgejo/forgejo/commit/7d855efb1fe6b97c5d87492f67ed6aefd31b2474)
   - [Add the ability to set multiple redirect URIs in the OAuth application UI](https://codeberg.org/forgejo/forgejo/commit/ca35dec18b3d3d7dd5cde4c69a10ae830961faf7)
 - **Refactor:**
-  - **Breaking:** [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing token are still valid, they may have different scope than before. To ensure that no token have a larger scope than before they must be removed and recreated.
-  - **Breaking:** [Rework storage settings](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20)
-    All storage settings should be stored in one section, and one section only.
-    You cannot use multiple sections anymore to override settings.
-    The storage settings priority is now
-    1. `[attachment]`
-    2. `[storage.attachments]` | `[storage.<another>]`
-    3. `[storage]`
-    4. `default`
-    For extra override configuration items, currently only are `SERVE_DIRECT`, `MINIO_BASE_PATH`, `MINIO_BUCKET`, which could be configured in another section.
-    The priority of the override configuration is `[attachment]` > `[storage.attachments]` > `default`.
-  - **Breaking:** the [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's logs has settings different from the previous `log.<mode>.<logger>` in `app.ini`. Check the [documentation](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#log-log) and `app.example.ini` for more information. The SMTP logger was removed.
-  - **Breaking:** Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (eg: work path must be absolute). 
   - Other essential sub-systems were refactored (the [queue system](https://codeberg.org/forgejo/forgejo/commit/6f9c278559789066aa831c1df25b0d866103d02d) that handles background tasks such as checking pull requests, [pull mirror](https://codeberg.org/forgejo/forgejo/commit/99283415bcbaa8acfe4d249ce3040de2f3a8b006), [git internal API](https://codeberg.org/forgejo/forgejo/commit/f4538791f5fc82b173608fcf9c30e36ec01dc9d3), [routes](https://codeberg.org/forgejo/forgejo/commit/92fd3fc4fd369b6a8c0a022a32a80dec2340223a) and [web routes](https://codeberg.org/forgejo/forgejo/commit/b9a97ccd0ea1ee44db85b0fbb80b75255af7c742), [merge & update logic](https://codeberg.org/forgejo/forgejo/commit/8598356df1eb21b6e33ecb9f9268ba36c5488e7c) and [git command calls](https://codeberg.org/forgejo/forgejo/commit/542cec98f8c07e0f046a35f1d516807416536e74), [listing commits](https://codeberg.org/forgejo/forgejo/commit/ec261b63e14f84da3e2d9a6e27c8b831a7750677), [cookie](https://codeberg.org/forgejo/forgejo/commit/5b9557aef59b190c55de9ea218bf51152bc04786), [issue stats](https://codeberg.org/forgejo/forgejo/commit/38cf43d0606c13c38f459659f38e26cf31dceccb), [renaming users and organizations](https://codeberg.org/forgejo/forgejo/commit/c59a057297c782f44a81a3e630b5094a58099edb), [app.ini handling](https://codeberg.org/forgejo/forgejo/commit/de4a21fcb4476772c69c36d086549e89ed4dcf6c), [diffFileInfo / DiffTreeStore](https://codeberg.org/forgejo/forgejo/commit/ee99cf6313ba565523b3c43f61ffda4b71e2c39b)...). In theory these changes are transparent to the Forgejo user and admin but the risk of subtle regressions is real: do not hesitate to [reach out](https://codeberg.org/forgejo/forgejo/issues) if you suspect anything.
 - **RSS**
   - [Support "." char as user name for User/Orgs in RSS/ATOM/GPG/KEYS](https://codeberg.org/forgejo/forgejo/commit/88033438aa8214569913899a17b19b57bd609d97)
   - [Add RSS Feeds for branches and files](https://codeberg.org/forgejo/forgejo/commit/56d4893b2a996da6388801c9c8ff16b9b588ad55)
 - **API**
-  - **Breaking:** [fix team members API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b)
   - [Add admin API for email](https://codeberg.org/forgejo/forgejo/commit/d56bb7420184c0c2f451f4bcaa96c9b3b00c393d)
   - [Add admin API to rename a user](https://codeberg.org/forgejo/forgejo/commit/03591f0f95823a0b1dcca969d2a3ed505c7e6d73)
   - [Add login name and source id to admin user searching API](https://codeberg.org/forgejo/forgejo/commit/6f9cc617fcc42477dec5ccab83d06f0a96544403)
@@ -147,9 +157,6 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Add API for Label templates](https://codeberg.org/forgejo/forgejo/commit/25dc1556cd70b567a4920beb002a0addfbfd6ef2)
   - [Add API for changing/creating/deleting multiple files](https://codeberg.org/forgejo/forgejo/commit/275d4b7e3f4595206e5c4b1657d4f6d6969d9ce2)
 - **Features**
-  - **Breaking:** user profile customization with a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac)
-    The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
-    breaking change because it will display the .profile/README.md of a pre-existing repository, private or not.
   - [Any URL scheme may be used for links](https://codeberg.org/forgejo/forgejo/commit/f5ce2ed292a90041abd749a8db26671645648a43). Previously, non-standard URLs (like matrix:) were not rendered unless explicitly listed in `markdown.CUSTOM_URL_SCHEMES`. Now the default if markdown.CUSTOM_URL_SCHEMES is not set is to allow all schemes and render markdown links ([label](URL)) as links.
   - [Always use "utf8mb4" for MySQL](https://codeberg.org/forgejo/forgejo/commit/cb3173a1e)
   - [Add Adopt repository event and handler](https://codeberg.org/forgejo/forgejo/commit/9d69a4758)
@@ -166,13 +173,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Issues and pull requests can be pinned](https://codeberg.org/forgejo/forgejo/commit/aaa109466350c531b9238a61115b2877daca57d3) and will show on top of the list of issues (or pull requests) and can be re-arranged by dragging them.
   - [Implement systemd-notify protocol](https://codeberg.org/forgejo/forgejo/commit/7565e5c3de051400a9e3703f707049cbb9054cf3) and allows for using `Type=notify` in service files.
 - **Miscellaneous**
-  - **Breaking:** the `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
-  - **Breaking:** the ".png" suffix for [user and organizations is now reserved](https://codeberg.org/forgejo/forgejo/commit/2b91841cd3e1213ff3e4ed4209d6a4be89c2fa79)
   - [Provide more control over the repositories that are indexed](https://codeberg.org/forgejo/forgejo/commit/033d92997fc16baee097d2b25f08e0984e628abd). [Read more about REPO_INDEXER_REPO_TYPES](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/)
-  - **Breaking:** the section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
-    * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
-    * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
-  - **Breaking:** [SSH_KEYGEN_PATH default to using the Go SSH key parsing (empty string) instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
 - **Webhook**
   - Similar to organization wide webhooks, it is now possible to have user wide webhooks](https://codeberg.org/forgejo/forgejo/commit/2173f14708ff3b35d7821fc9b6dcb5fcd06b8494)
   - [Add webhook trigger when a Pull Request review requests is created](https://codeberg.org/forgejo/forgejo/commit/309354c70ee994a1e8f261d7bc24e7473e601d02)
