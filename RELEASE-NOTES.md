@@ -4,9 +4,9 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## DRAFT 1.20.0-0
+## 1.20.0-5
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.0-?` release can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.0-5` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo/
@@ -15,9 +15,31 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 
 - **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
   The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
-- **Continuous Integration:**
-  - [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) workflows are [now available](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
-  - The Woodpecker CI configuration for PR verification and building releases is no longer maintained as part of Forgejo itself and was moved to its [own repository](https://codeberg.org/forgejo-contrib/forgejo-ci-woodpecker).
+- **Breaking:**
+  - [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing tokens are still valid, they may have a different scope than before. To ensure that no tokens have a larger scope than expected they must be removed and recreated.
+  - The `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
+  - The ".png" suffix for [user and organizations is now reserved](https://codeberg.org/forgejo/forgejo/commit/2b91841cd3e1213ff3e4ed4209d6a4be89c2fa79)
+  - The section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
+    * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
+    * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
+  - The [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's was refactored and has new settings, different from the previous one found at `log.<mode>.<logger>` in `app.ini`. Check the [documentation](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#log-log) and `app.example.ini` for more information. The SMTP logger was removed.
+  - Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (e.g. work path must be absolute). 
+  - The user profile can be customized with [a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac).
+    The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
+    breaking change because **it will display the .profile/README.md of a pre-existing repository, private or not**.
+  - The [API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b) for team members was fixed: it now starts at 1 instead of 0, just like all other paginated API endpoints.
+  - The `SSH_KEYGEN_PATH` variable in `app.ini` now defaults to using the [Go SSH key parsing instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
+  - The [storage settings](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20) were refactored.
+    They are now stored in one section. It is no longer possible to use multiple sections to override settings.
+    The storage settings priority is:
+    1. `[attachment]`
+    2. `[storage.attachments]` | `[storage.<another>]`
+    3. `[storage]`
+    4. `default`
+    For extra override configuration items, currently only are `SERVE_DIRECT`, `MINIO_BASE_PATH`, `MINIO_BUCKET`, which could be configured in another section.
+    The priority of the override configuration is `[attachment]` > `[storage.attachments]` > `default`.
+  - [The [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
+  - The default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
 - **Moderation:**
   Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
 - **Package:**
@@ -25,15 +47,16 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 - **Accessibility:**
   numerous improvements for [issue comments](https://codeberg.org/forgejo/forgejo/commit/6c354546547cd3a9595a7db119a6480d9cd506a7), [the menu on the navbar](https://codeberg.org/forgejo/forgejo/commit/a78e0b7dade16bc6509b943fe86e74962f1b95b6), [scoped labels](https://codeberg.org/forgejo/forgejo/commit/e8935606f5f1fff3c59222ebca6d4615ab06fb0b), [checkboxes and dropdowns](https://codeberg.org/forgejo/forgejo/commit/d4f35bd681af0632da988e15306f330e020422b2), [RTL rendering support to Markdown](https://codeberg.org/forgejo/forgejo/commit/32d9c47ec7706d8f06e09b42e09a28d7a0e3c526), [file (re-)views](https://codeberg.org/forgejo/forgejo/commit/e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc), [interactive tooltips](https://codeberg.org/forgejo/forgejo/commit/87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec), [using a button element](https://codeberg.org/forgejo/forgejo/commit/81fe5d61851c0e586af7d32c29171ceff9a571bb), [repository list](https://codeberg.org/forgejo/forgejo/commit/e82f1b15c7120ad13fd3b67cf7e2c6cb9915c22d) and more.
 - **Time:**
-  the display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more.
+  The display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more. Previously each rendered timestamp would be static, now the real time since an event happend is show. If a comment was added 2 minutes before the page rendered it would show as "2 minutes ago" on the initial render and if another 8 minutes have passed, without a page refresh you'd see "10 minutes ago".
 - **[Wiki](https://forgejo.org/docs/v1.20/user/wiki/)**
   - Improve the [display of the table of content](https://codeberg.org/forgejo/forgejo/commit/1ab16e48cccc086e7f97fb3ae8a293fe47a3a452)
   - Fixed a bug [preventing team users who have wiki write permission from deleting a page](https://codeberg.org/forgejo/forgejo/commit/284b41f45244bbe46fc8feee15bbfdf66d150e79)
   - [Shows the External Link icon and URL in the header](https://codeberg.org/forgejo/forgejo/commit/d347208114966166ffa9655adc5b202676546c31) to indicate that the user will be sent to an external side to help prevent fishing
-  - Allow dash support in [titles](https://codeberg.org/forgejo/forgejo/commit/b39a5bbbd610ba30651218658caaec1c86d6bca1)
+  - Allow dash in [titles](https://codeberg.org/forgejo/forgejo/commit/b39a5bbbd610ba30651218658caaec1c86d6bca1)
 - **[Actions](https://forgejo.org/docs/v1.20/user/actions/)**
-  - **TODO** High level summary of actions related features & UI
-  - **TODO** commit aac07d010f261c00fb3bd9644c71dc108c668c11 Add workflow error notification in ui [23404](https://github.com/go-gitea/gitea/pull/23404)
+  - The internal CI graduated from **experimental** to **[alpha](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It now has with a [user](https://forgejo.org/docs/v1.20/user/actions) documentation that includes examples and an extensive [administrator](https://forgejo.org/docs/v1.20/admin/actions) guide to set it up.
+  - [Forgejo Actions](https://forgejo.org/docs/v1.20/user/actions/) workflows are [now available](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/workflows) to run tests and publish releases for `Forgejo` itself.
+  - The Woodpecker CI configuration for PR verification and building releases for Forgejo v1.18 and v1.19 is no longer maintained as part of Forgejo itself and was moved to its [own repository](https://codeberg.org/forgejo-contrib/forgejo-ci-woodpecker).
 - **[Templates](https://forgejo.org/docs/v1.20/user/issue-pull-request-templates/)**
   - [Configuration for the issue templates](https://codeberg.org/forgejo/forgejo/commit/f384b13f1cd44be3a87df5553a0099390dacd010). [Read more about issue config](https://forgejo.org/docs/v1.20/user/issue-pull-request-templates/#syntax-for-issue-config) in the documentation.
   - [Add validations.required check to the dropdown field](https://codeberg.org/forgejo/forgejo/commit/5c0745c0349f0709d0fc36fd8a97dcab86bce28a)
@@ -41,11 +64,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Use a general Eval function for expressions in templates](https://codeberg.org/forgejo/forgejo/commit/5b89670a318e52e271f65d96bfe1116d85d20988)
   - [reload-templates CLI](https://codeberg.org/forgejo/forgejo/commit/3588edbb08f93aaa56defa82dffdbb202cd9aa4a)
 - **User Interface and User eXperience**
-  - **Breaking:** the default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
-  - **Breaking:** remove [meta tags `theme-color` and `default-theme`](https://codeberg.org/forgejo/forgejo/commit/c7612d178c5b954d4846cd27a65a7fa15fd1ba65)
-    The ui.THEME_COLOR_META_TAG setting has been removed. If you still need to set the theme-color meta tag, add it via $GITEA_CUSTOM/templates/custom/header.tmpl instead.
-    The non-standard default-theme meta-tag has been removed. Third party code that needs to obtain the currently loaded theme should use the theme-<name> class on the <html> node instead, which holds the currently active theme.
-  - **Breaking:** [the [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
+  - The web editor used when creating issues, adding comments, etc. [changed](https://codeberg.org/forgejo/forgejo/commit/5cc0801de90d16b4d528e62de11c9b525be5d122) from [EasyMDE](https://github.com/Ionaru/easy-markdown-editor) which was no longer actively maintained to [GitHub markdown](https://github.com/github/markdown-toolbar-element). To help with the transition it is still possible to switch back to using EasyMDE using the double arrow button in the menubar.
   - [Improve wiki sidebar and TOC](https://codeberg.org/forgejo/forgejo/commit/51789ba12)
   - [Show outdated comments in the files changed tab of a pull request review](https://codeberg.org/forgejo/forgejo/commit/30a783879)
   - [Redirect to package after version deletion](https://codeberg.org/forgejo/forgejo/commit/c27a3af72)
@@ -65,20 +84,20 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Improve the protected branch setting page](https://codeberg.org/forgejo/forgejo/commit/72e956b79a3b2e055bb5d4d5e20e88eaa2eeec96)
   - [Improve the display of the pull request branch delete button](https://codeberg.org/forgejo/forgejo/commit/774d1a0fbdadd1136b6af895f8d449b0c8db54cb)
   - [Fix the color for repository transfer related buttons when having no permission to act](https://codeberg.org/forgejo/forgejo/commit/7abe958f5b507efa676fb3b2e27d30517f6d1908)
-  - [Add Progressbar to Milestone Page](https://codeberg.org/forgejo/forgejo/commit/7d192cb674bc475b123c84b205aca821247c5dd1)
+  - [Add a progressbar to Milestone Page](https://codeberg.org/forgejo/forgejo/commit/7d192cb674bc475b123c84b205aca821247c5dd1)
   - [Nicer display when the list of notifications is empty](https://codeberg.org/forgejo/forgejo/commit/8251b317f7b7a2b5f626a02fa3bb540a1495e81d)
   - [Rename board to column in projects](https://codeberg.org/forgejo/forgejo/commit/843f81113ebe71fd725210c5a382268333865cc7)
   - [Improve header bar on issue, pull requests and milestone](https://codeberg.org/forgejo/forgejo/commit/8f4dafcd4e6b0b5d307c3e060ffe908c2a96f047)
   - [Add organization visibility label when displayed on the dashboard](https://codeberg.org/forgejo/forgejo/commit/97b70a0cd40e8f73cdf6ba4397087b45061de3d8)
   - [Unification of registration fields order](https://codeberg.org/forgejo/forgejo/commit/b9fad73e9fcf40e81cde3304198105af6c668421)
   - [Append `(comment)` when a link points at a comment rather than the whole issue](https://codeberg.org/forgejo/forgejo/commit/ca905b82df7f1d2a823d8df4448d485e5902876d)
-  - [Add visibility (private, limited) in thedashboard navbar](https://codeberg.org/forgejo/forgejo/commit/d949d8e074407a96dbcfa98a71ccd80527b5ad78)
+  - [Add visibility (private, limited) in the dashboard navbar](https://codeberg.org/forgejo/forgejo/commit/d949d8e074407a96dbcfa98a71ccd80527b5ad78)
   - [Show all activities in the dashboard, not just the most recent ones](https://codeberg.org/forgejo/forgejo/commit/f4920c9c7f5947d3b6476610f39bc3492ab4ef3b)
   - [Do not display the stars in the repository list of the dashboard](https://codeberg.org/forgejo/forgejo/commit/06c067bb0f9eeb8873ddc298819b30fc5913943f)
   - [Improve the display of tags to include the tag message](https://codeberg.org/forgejo/forgejo/commit/b78c955958301dde72d8caf189531f6e53c496b4)
   - [Hide the target selector if a tag exists when creating a new release](https://codeberg.org/forgejo/forgejo/commit/3de9e63fd04d61e08fcbdec035c9f138347d9f37)
   - [Show the calculated commit status state of the latest commit on the default branch for each repository in the dashboard repository list](https://codeberg.org/forgejo/forgejo/commit/4810fe55e3e73edb962052df46bef125eb1817b3)
-  - [Sort users and orgs on the explore page by recency UX](https://codeberg.org/forgejo/forgejo/commit/4daf40505a5f89747982ddd2f1df2a4001720846)
+  - [Sort users and orgs on the explore page by recency](https://codeberg.org/forgejo/forgejo/commit/4daf40505a5f89747982ddd2f1df2a4001720846)
   - [Show the number of repositories in the user or organization profile](https://codeberg.org/forgejo/forgejo/commit/52b17bfa07fea29441cd961da4edaf1ea97fe348)
   - [Review management (requesting again and discard) now happens at the top of the pull request](https://codeberg.org/forgejo/forgejo/commit/a70d853d064a97f0be1d3702a9c3912494b546ec)
   - [Add markdown preview when submitting a review](https://codeberg.org/forgejo/forgejo/commit/b5c26fa825e08122843ad6d27191d399a9af1c37)
@@ -113,13 +132,11 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Allow for PKCE flow without client secret](https://codeberg.org/forgejo/forgejo/commit/7d855efb1fe6b97c5d87492f67ed6aefd31b2474)
   - [Add the ability to set multiple redirect URIs in the OAuth application UI](https://codeberg.org/forgejo/forgejo/commit/ca35dec18b3d3d7dd5cde4c69a10ae830961faf7)
 - **Refactor:**
-  - **Breaking:** Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (eg: work path must be absolute). 
-  - Other essential sub-systems were refactored (the [queue system](https://codeberg.org/forgejo/forgejo/commit/6f9c278559789066aa831c1df25b0d866103d02d) that handles background tasks such as checking pull requests, the [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's logs, [pull mirror](https://codeberg.org/forgejo/forgejo/commit/99283415bcbaa8acfe4d249ce3040de2f3a8b006), [git internal API](https://codeberg.org/forgejo/forgejo/commit/f4538791f5fc82b173608fcf9c30e36ec01dc9d3), [routes](https://codeberg.org/forgejo/forgejo/commit/92fd3fc4fd369b6a8c0a022a32a80dec2340223a) and [web routes](https://codeberg.org/forgejo/forgejo/commit/b9a97ccd0ea1ee44db85b0fbb80b75255af7c742), [merge & update logic](https://codeberg.org/forgejo/forgejo/commit/8598356df1eb21b6e33ecb9f9268ba36c5488e7c) and [git command calls](https://codeberg.org/forgejo/forgejo/commit/542cec98f8c07e0f046a35f1d516807416536e74), [listing commits](https://codeberg.org/forgejo/forgejo/commit/ec261b63e14f84da3e2d9a6e27c8b831a7750677), [cookie](https://codeberg.org/forgejo/forgejo/commit/5b9557aef59b190c55de9ea218bf51152bc04786), [issue stats](https://codeberg.org/forgejo/forgejo/commit/38cf43d0606c13c38f459659f38e26cf31dceccb), [renaming users and organizations](https://codeberg.org/forgejo/forgejo/commit/c59a057297c782f44a81a3e630b5094a58099edb), [scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532), [app.ini handling](https://codeberg.org/forgejo/forgejo/commit/de4a21fcb4476772c69c36d086549e89ed4dcf6c), [diffFileInfo / DiffTreeStore](https://codeberg.org/forgejo/forgejo/commit/ee99cf6313ba565523b3c43f61ffda4b71e2c39b)...). In theory these changes are transparent to the Forgejo user and admin but the risk of subtle regressions is real: do not hesitate to [reach out](https://codeberg.org/forgejo/forgejo/issues) if you suspect anything.
+  Many essential sub-systems were refactored: the [queue system](https://codeberg.org/forgejo/forgejo/commit/6f9c278559789066aa831c1df25b0d866103d02d) that handles background tasks such as checking pull requests, [pull mirror](https://codeberg.org/forgejo/forgejo/commit/99283415bcbaa8acfe4d249ce3040de2f3a8b006), [git internal API](https://codeberg.org/forgejo/forgejo/commit/f4538791f5fc82b173608fcf9c30e36ec01dc9d3), [routes](https://codeberg.org/forgejo/forgejo/commit/92fd3fc4fd369b6a8c0a022a32a80dec2340223a) and [web routes](https://codeberg.org/forgejo/forgejo/commit/b9a97ccd0ea1ee44db85b0fbb80b75255af7c742), [merge & update logic](https://codeberg.org/forgejo/forgejo/commit/8598356df1eb21b6e33ecb9f9268ba36c5488e7c) and [git command calls](https://codeberg.org/forgejo/forgejo/commit/542cec98f8c07e0f046a35f1d516807416536e74), [listing commits](https://codeberg.org/forgejo/forgejo/commit/ec261b63e14f84da3e2d9a6e27c8b831a7750677), [cookie](https://codeberg.org/forgejo/forgejo/commit/5b9557aef59b190c55de9ea218bf51152bc04786), [issue stats](https://codeberg.org/forgejo/forgejo/commit/38cf43d0606c13c38f459659f38e26cf31dceccb), [renaming users and organizations](https://codeberg.org/forgejo/forgejo/commit/c59a057297c782f44a81a3e630b5094a58099edb), [app.ini handling](https://codeberg.org/forgejo/forgejo/commit/de4a21fcb4476772c69c36d086549e89ed4dcf6c), [diffFileInfo / DiffTreeStore](https://codeberg.org/forgejo/forgejo/commit/ee99cf6313ba565523b3c43f61ffda4b71e2c39b).... In theory these changes are transparent to the Forgejo user and admin but the risk of subtle regressions is real: do not hesitate to [reach out](https://codeberg.org/forgejo/forgejo/issues) if you suspect anything.
 - **RSS**
   - [Support "." char as user name for User/Orgs in RSS/ATOM/GPG/KEYS](https://codeberg.org/forgejo/forgejo/commit/88033438aa8214569913899a17b19b57bd609d97)
   - [Add RSS Feeds for branches and files](https://codeberg.org/forgejo/forgejo/commit/56d4893b2a996da6388801c9c8ff16b9b588ad55)
 - **API**
-  - **Breaking:** [fix team members API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b)
   - [Add admin API for email](https://codeberg.org/forgejo/forgejo/commit/d56bb7420184c0c2f451f4bcaa96c9b3b00c393d)
   - [Add admin API to rename a user](https://codeberg.org/forgejo/forgejo/commit/03591f0f95823a0b1dcca969d2a3ed505c7e6d73)
   - [Add login name and source id to admin user searching API](https://codeberg.org/forgejo/forgejo/commit/6f9cc617fcc42477dec5ccab83d06f0a96544403)
@@ -135,10 +152,8 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Create a branch directly from commit on the create branch API](https://codeberg.org/forgejo/forgejo/commit/cd9a13ebb47d32f46b38439a524e3b2e0c619490)
   - [Add API for Label templates](https://codeberg.org/forgejo/forgejo/commit/25dc1556cd70b567a4920beb002a0addfbfd6ef2)
   - [Add API for changing/creating/deleting multiple files](https://codeberg.org/forgejo/forgejo/commit/275d4b7e3f4595206e5c4b1657d4f6d6969d9ce2)
-- **Features**
-  - **Breaking:** user profile customization with a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac)
-    The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
-    breaking change because it will display the .profile/README.md of a pre-existing repository, private or not.
+- **Miscellaneous Features**
+  - [Any URL scheme may be used for links](https://codeberg.org/forgejo/forgejo/commit/f5ce2ed292a90041abd749a8db26671645648a43). Previously, non-standard URLs (like matrix:) were not rendered unless explicitly listed in `markdown.CUSTOM_URL_SCHEMES`. Now the default if `markdown.CUSTOM_URL_SCHEMES` is not set, all schemes are allowed and markdown links ([label](URL)) render as links.
   - [Always use "utf8mb4" for MySQL](https://codeberg.org/forgejo/forgejo/commit/cb3173a1e)
   - [Add Adopt repository event and handler](https://codeberg.org/forgejo/forgejo/commit/9d69a4758)
   - Add [meilisearch](https://www.meilisearch.com/) support to [index the content of repositories](https://codeberg.org/forgejo/forgejo/commit/92c160d8e716cb3d05215a97cf521e843596f562).
@@ -151,16 +166,11 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Support wildcard in email domain allow and block lists](https://codeberg.org/forgejo/forgejo/commit/2cb66fff60c95efbd58b797f1197f2421f4687ce). [Read more about EMAIL_DOMAIN_ALLOWLIST and EMAIL_DOMAIN_BLOCKLIST](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/).
   - When [installing with docker](https://forgejo.org/docs/v1.20/admin/installation/#installation-with-docker) the value of a configuration variable can now be fetched from a file by [adding the `__FILE` suffix](https://codeberg.org/forgejo/forgejo/commit/c21605951b581440bb08b65d5907b1cd4e0ab6c5). For instance `FORGEJO__security__INTERNAL_TOKEN__FILE=/etc/forgejo/token` can be used instead of `FORGEJO__security__INTERNAL_TOKEN=tokenvalue`.
   - The [new `[git.config]` section of `app.ini`](https://codeberg.org/forgejo/forgejo/commit/8080ace6fcf73a5fbe4a0dd71881228abd0c68b9) is used to `git set config`. [Read more about the defaults it contains](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#git---config-options-gitconfig).
-  - [Issues and pull requests can be pinned](https://codeberg.org/forgejo/forgejo/commit/aaa109466350c531b9238a61115b2877daca57d3) and will show on top of the list of issues (or pull requests) and can be re-arranged by dragging them.
+  - [Issues and pull requests can be pinned](https://codeberg.org/forgejo/forgejo/commit/aaa109466350c531b9238a61115b2877daca57d3). They will show on top of the list of issues (or pull requests) and can be re-arranged by dragging them.
   - [Implement systemd-notify protocol](https://codeberg.org/forgejo/forgejo/commit/7565e5c3de051400a9e3703f707049cbb9054cf3) and allows for using `Type=notify` in service files.
-- **Miscellaneous**
-  - [Provide more control over the repositories that are indexed](https://codeberg.org/forgejo/forgejo/commit/033d92997fc16baee097d2b25f08e0984e628abd). [Read more about REPO_INDEXER_REPO_TYPES](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/)
-  - **Breaking:** the section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
-    * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
-    * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
-  - **Breaking:** [SSH_KEYGEN_PATH default to using the Go SSH key parsing (empty string) instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
+  - [Provide more control over the repositories that are indexed](https://codeberg.org/forgejo/forgejo/commit/033d92997fc16baee097d2b25f08e0984e628abd). [Read more about REPO_INDEXER_REPO_TYPES](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/).
 - **Webhook**
-  - Similar to organization wide webhooks, it is now possible to have user wide webhooks](https://codeberg.org/forgejo/forgejo/commit/2173f14708ff3b35d7821fc9b6dcb5fcd06b8494)
+  - Similar to organization wide webhooks, it is now possible to have [user wide webhooks](https://codeberg.org/forgejo/forgejo/commit/2173f14708ff3b35d7821fc9b6dcb5fcd06b8494)
   - [Add webhook trigger when a Pull Request review requests is created](https://codeberg.org/forgejo/forgejo/commit/309354c70ee994a1e8f261d7bc24e7473e601d02)
 
 * Container images upgraded to Alpine 3.18
