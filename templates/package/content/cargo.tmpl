@@ -5,9 +5,9 @@
 			<div class="field">
 				<label>{{svg "octicon-code"}} {{.locale.Tr "packages.cargo.registry" | Safe}}</label>
 				<div class="markup"><pre class="code-block"><code>[registry]
-default = "gitea"
+default = "forgejo"
 
-[registries.gitea]
+[registries.forgejo]
 index = "<gitea-origin-url data-url="{{AppSubUrl}}/{{.PackageDescriptor.Owner.Name}}/_cargo-index.git"></gitea-origin-url>"
 
 [net]
@@ -18,7 +18,7 @@ git-fetch-with-cli = true</code></pre></div>
 				<div class="markup"><pre class="code-block"><code>cargo add {{.PackageDescriptor.Package.Name}}@{{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{.locale.Tr "packages.registry.documentation" "Cargo" "https://docs.gitea.com/usage/packages/cargo/" | Safe}}</label>
+				<label>{{.locale.Tr "packages.registry.documentation" "Cargo" "https://forgejo.org/docs/latest/user/packages/cargo/" | Safe}}</label>
 			</div>
 		</div>
 	</div>
