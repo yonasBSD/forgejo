@@ -24,7 +24,7 @@
 	<div class="extra content gt-word-break">
 		<ul>
 			{{if .ContextUser.Location}}
-				<li>{{svg "octicon-location"}} {{.ContextUser.Location}}</li>
+				<li>{{svg "octicon-location"}} <a href="https://www.openstreetmap.org/search?query={{.ContextUser.Location}}" rel="nofollow noreferrer">{{.ContextUser.Location}}</a></li>
 			{{end}}
 			{{if (eq .SignedUserID .ContextUser.ID)}}
 				<li>
