@@ -16,6 +16,7 @@ Sensitive security-related issues should be reported to [security@forgejo.org](m
 
 - [Developer Certificate of Origin (DCO)](https://forgejo.org/docs/next/developer/DCO/)
 - [Development workflow](https://forgejo.org/docs/next/developer/WORKFLOW/)
+- [Compiling from source](https://forgejo.org/docs/next/developer/from-source/)
 
 ## For maintainers
 
