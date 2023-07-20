@@ -16,6 +16,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	forgejo_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 
@@ -209,4 +210,48 @@ func TestBlockUserFromOrganization(t *testing.T) {
 	})
 	session.MakeRequest(t, req, http.StatusSeeOther)
 	unittest.AssertNotExistsBean(t, &user_model.BlockedUser{BlockID: blockedUser.ID, UserID: org.ID})
+}
+
+// TestBlockAddCollaborator ensures that the doer and blocked user cannot add each each other as collaborators.
+func TestBlockAddCollaborator(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+	BlockUser(t, user1, user2)
+
+	t.Run("BlockedUser Add Doer", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: user2.ID})
+
+		session := loginUser(t, user2.Name)
+		req := NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/settings/collaboration"), map[string]string{
+			"_csrf":        GetCSRF(t, session, path.Join(repo.Link(), "/settings/collaboration")),
+			"collaborator": user1.Name,
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthey%2Bhave%2Bblocked%2Bthe%2Brepository%2Bowner.", flashCookie.Value)
+	})
+
+	t.Run("Doer Add BlockedUser", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 7, OwnerID: user1.ID})
+
+		session := loginUser(t, user1.Name)
+		req := NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/settings/collaboration"), map[string]string{
+			"_csrf":        GetCSRF(t, session, path.Join(repo.Link(), "/settings/collaboration")),
+			"collaborator": user2.Name,
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthe%2Brepository%2Bowner%2Bhas%2Bblocked%2Bthem.", flashCookie.Value)
+	})
 }

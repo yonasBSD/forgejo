@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
@@ -97,5 +98,44 @@ func TestAPIOrgBlock(t *testing.T) {
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
+	})
+}
+
+// TestAPIBlock_AddCollaborator ensures that the doer and blocked user cannot
+// add each others as collaborators via the API.
+func TestAPIBlock_AddCollaborator(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user1 := "user10"
+	user2 := "user2"
+	perm := "write"
+	collabOption := &api.AddCollaboratorOption{Permission: &perm}
+
+	// User1 blocks User2.
+	session := loginUser(t, user1)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
+
+	req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s?token=%s", user2, token))
+	MakeRequest(t, req, http.StatusNoContent)
+	unittest.AssertExistsAndLoadBean(t, &user_model.BlockedUser{UserID: 10, BlockID: 2})
+
+	t.Run("BlockedUser Add Doer", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: 2})
+		session := loginUser(t, user2)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s?token=%s", user2, repo.Name, user1, token), collabOption)
+		session.MakeRequest(t, req, http.StatusForbidden)
+	})
+
+	t.Run("Doer Add BlockedUser", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 7, OwnerID: 10})
+		session := loginUser(t, user1)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s?token=%s", user1, repo.Name, user2, token), collabOption)
+		session.MakeRequest(t, req, http.StatusForbidden)
 	})
 }
