@@ -282,9 +282,9 @@ func TestGetOpenStreetMapLink(t *testing.T) {
 
 	testLocations := map[string]string{
 		"Αθήνα": "%ce%91%ce%b8%ce%ae%ce%bd%ce%b1",
-		// "  Αθήνα": "%20%20%ce%91%ce%b8%ce%ae%ce%bd%ce%b1",
+		"  Αθήνα": "%20%20%ce%91%ce%b8%ce%ae%ce%bd%ce%b1",
 		"Barbarossabrunnen, Düsseldorf": "Barbarossabrunnen%2c%20D%c3%bcsseldorf",
-		"39.91025,116.40753":            "39.91025%2C116.40753",
+		"39.91025,116.40753":            "39.91025%2c116.40753",
 		// "நியூ யோர்க்": "%e0%ae%a8%e0%ae%bf%e0%ae%af%e0%af%82%20%e0%ae%af%e0%af%8b%e0%ae%b0%e0%af%8d%e0%ae%95%e0%af%8d",
 	}
 
@@ -298,10 +298,10 @@ func TestGetOpenStreetMapLink(t *testing.T) {
 			"language": "en-US",
 			"location": location,
 		})
-		resp := session.MakeRequest(t, req, http.StatusSeeOther)
+		session.MakeRequest(t, req, http.StatusSeeOther)
 
 		req = NewRequest(t, "GET", "/user2/")
-		resp = session.MakeRequest(t, req, http.StatusOK)
+		resp := session.MakeRequest(t, req, http.StatusOK)
 		assert.Contains(t,
 			resp.Body.String(),
 			"<a href=\""+"https://www.openstreetmap.org/search?query="+encodedLocation+"\" rel=\"nofollow noreferrer\">",
