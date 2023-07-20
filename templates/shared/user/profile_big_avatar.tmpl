@@ -29,7 +29,7 @@
 					{{.ContextUser.Location}}
 					{{if .EnableOSMButton}}
 						<a href="https://www.openstreetmap.org/search?query={{.ContextUser.Location}}" rel="nofollow noreferrer">
-							<i class="ui right">
+							<i class="ui right" data-tooltip-content="{{.locale.Tr "user.redirect_to_osm"}}">
 								{{svg "octicon-link-external" 18 "gt-mr-2"}}
 							</i>
 						</a>
