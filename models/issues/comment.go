@@ -1106,9 +1106,12 @@ func UpdateComment(c *Comment, doer *user_model.User) error {
 		return err
 	}
 	defer committer.Close()
-	sess := db.GetEngine(ctx)
-
-	if _, err := sess.ID(c.ID).AllCols().Update(c); err != nil {
+	sess := db.GetEngine(ctx).ID(c.ID).AllCols()
+	if c.Issue.NoAutoTime {
+		c.UpdatedUnix = c.Issue.UpdatedUnix
+		sess = sess.NoAutoTime()
+	}
+	if _, err := sess.Update(c); err != nil {
 		return err
 	}
 	if err := c.LoadIssue(ctx); err != nil {

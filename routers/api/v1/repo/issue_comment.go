@@ -560,6 +560,17 @@ func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) 
 		return
 	}
 
+	err = comment.LoadIssue(ctx)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "LoadIssue", err)
+		return
+	}
+	err = issue_service.SetIssueUpdateDate(ctx, comment.Issue, form.Updated, ctx.Doer)
+	if err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
+		return
+	}
+
 	oldContent := comment.Content
 	comment.Content = form.Body
 	if err := issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
