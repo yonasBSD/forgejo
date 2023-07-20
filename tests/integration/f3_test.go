@@ -146,7 +146,7 @@ func TestMaybePromoteF3User(t *testing.T) {
 	gitlabEmail := "gitlabuser@example.com"
 	userBeforeSignIn := &user_model.User{
 		Name:        "gitlabuser",
-		Type:        user_model.UserTypeRemoteUser,
+		Type:        user_model.UserTypeF3,
 		LoginType:   auth_model.F3,
 		LoginSource: f3.ID,
 		LoginName:   gitlabUserID,
