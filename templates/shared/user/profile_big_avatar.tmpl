@@ -24,7 +24,15 @@
 	<div class="extra content gt-word-break">
 		<ul>
 			{{if .ContextUser.Location}}
-				<li>{{svg "octicon-location"}} <a href="https://www.openstreetmap.org/search?query={{.ContextUser.Location}}" rel="nofollow noreferrer">{{.ContextUser.Location}}</a></li>
+				<li>
+					{{svg "octicon-location"}}
+					{{.ContextUser.Location}}
+					<a href="https://www.openstreetmap.org/search?query={{.ContextUser.Location | Safe}}" rel="nofollow noreferrer">
+						<i class="ui right">
+							{{svg "octicon-link-external"}}
+						</i>
+					</a>
+				</li>
 			{{end}}
 			{{if (eq .SignedUserID .ContextUser.ID)}}
 				<li>
