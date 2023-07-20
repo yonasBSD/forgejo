@@ -15,7 +15,7 @@
 		{{if .ContextUser.FullName}}<span class="header text center">{{.ContextUser.FullName}}</span>{{end}}
 		<span class="username text center">{{.ContextUser.Name}}</span>
 		{{if .EnableFeed}}
-			<a href="{{.ContextUser.HomeLink}}.rss"><i class="ui text grey gt-ml-3" data-tooltip-content="{{.locale.Tr "rss_feed"}}">{{svg "octicon-rss" 18}}</i></a>
+			<a href="{{.ContextUser.HomeLink}}.rss"><i class="ui text grey gt-ml-3" data-tooltip-content="{{.locale.Tr "rss_feed"}}">{{svg "octicon-rss"}}</i></a>
 		{{end}}
 		<div class="gt-mt-3">
 			<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-person" 18 "gt-mr-2"}}{{.NumFollowers}} {{.locale.Tr "user.followers"}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{.NumFollowing}} {{.locale.Tr "user.following"}}</a>
@@ -77,7 +77,7 @@
 					</li>
 				{{end}}
 			{{end}}
-			<li>{{svg "octicon-clock"}} {{.locale.Tr "user.joined_on" (DateTime "short" .ContextUser.CreatedUnix) | Safe}}</li>
+			<li>{{svg "octicon-clock" 18 "gt-mr-2"}} {{.locale.Tr "user.joined_on" (DateTime "short" .ContextUser.CreatedUnix) | Safe}}</li>
 			{{if and .Orgs .HasOrgsVisible}}
 			<li>
 				<ul class="user-orgs">
