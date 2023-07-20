@@ -279,6 +279,7 @@ func TestListStopWatches(t *testing.T) {
 }
 
 func TestGetOpenStreetMapLink(t *testing.T) {
+	setting.Service.EnableOSMButton = true
 	defer tests.PrepareTestEnv(t)()
 
 	testLocations := map[string]string{
