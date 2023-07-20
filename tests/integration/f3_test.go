@@ -30,7 +30,7 @@ import (
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
 
-func TestF3(t *testing.T) {
+func TestF3Mirror(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -53,6 +53,7 @@ func TestF3(t *testing.T) {
 						Directory: tmpDir,
 					},
 					Features: gof3.AllFeatures,
+					Logger:   util.ToF3Logger(nil),
 				},
 				Remap: true,
 			})
@@ -75,7 +76,7 @@ func TestF3(t *testing.T) {
 		fixture.NewCommentReaction()
 
 		//
-		// Step 2: mirror the fixture into Forgejo
+		// Step 2: mirror F3 into Forgejo
 		//
 		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
@@ -181,7 +182,7 @@ func TestMaybePromoteF3User(t *testing.T) {
 	assert.Equal(t, userAfterSignIn.Email, gitlabEmail)
 }
 
-func TestF3UserMapping(t *testing.T) {
+func TestF3UserMappingExisting(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -194,7 +195,7 @@ func TestF3UserMapping(t *testing.T) {
 			setting.AppVer = AppVer
 		}()
 
-		log.Debug("Step 1: create a fixture")
+		log.Debug("Step 1: create a fixture in F3")
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.Options{
 				Options: gof3.Options{
@@ -213,7 +214,7 @@ func TestF3UserMapping(t *testing.T) {
 		fixture.NewUser(userID)
 		//		fixture.NewProject()
 
-		log.Debug("Step 2: mirror the fixture into Forgejo")
+		log.Debug("Step 2: mirror F3 into Forgejo")
 		//
 		// OAuth2 authentication source GitLab
 		//
@@ -266,5 +267,64 @@ func TestF3UserMapping(t *testing.T) {
 		//
 		files := f3_util.Command(context.Background(), "find", f3.GetDirectory())
 		assert.Contains(t, files, fmt.Sprintf("/user/%d", gitlabUser.ID))
+	})
+}
+
+func TestF3UserMappingNew(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
+		setting.F3.Enabled = true
+		setting.Migrations.AllowLocalNetworks = true
+		AppVer := setting.AppVer
+		// Gitea SDK (go-sdk) need to parse the AppVer from server response, so we must set it to a valid version string.
+		setting.AppVer = "1.16.0"
+		defer func() {
+			setting.Migrations.AllowLocalNetworks = AllowLocalNetworks
+			setting.AppVer = AppVer
+		}()
+
+		log.Debug("Step 1: create a fixture in F3")
+		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+			root := f3_forges.NewForgeRoot(&f3_f3.Options{
+				Options: gof3.Options{
+					Configuration: gof3.Configuration{
+						Directory: tmpDir,
+					},
+					Features: gof3.AllFeatures,
+					Logger:   util.ToF3Logger(nil),
+				},
+				Remap: true,
+			})
+			return root
+		}
+		fixture := f3_forges.NewFixture(t, f3_forges.FixtureForgeFactory{Fun: fixtureNewF3Forge, AdminRequired: false})
+		userID := int64(5432)
+		fixture.NewUser(userID)
+
+		log.Debug("Step 2: mirror F3 into Forgejo")
+		doer, err := user_model.GetAdminUser(context.Background())
+		assert.NoError(t, err)
+		forgejoLocalDestination := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
+		options := f3_common.NewMirrorOptionsRecurse()
+		forgejoLocalDestination.Forge.Mirror(context.Background(), fixture.Forge, options)
+
+		log.Debug("Step 3: change the Name of the user in F3 and mirror to Forgejo")
+		otherusername := "otheruser"
+		fixture.UserFormat.UserName = otherusername
+		fixture.Forge.Users.Upsert(context.Background(), fixture.UserFormat)
+		forgejoLocalDestination.Forge.Mirror(context.Background(), fixture.Forge, options)
+
+		log.Debug("Step 4: mirror Forgejo into F3 using the changed name")
+		f3 := util.F3ForgeRoot(gof3.AllFeatures, t.TempDir())
+		forgejoLocalOrigin := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
+		forgejoLocalOriginUser := forgejoLocalOrigin.Forge.Users.GetFromFormat(context.Background(), &format.User{UserName: otherusername})
+		options = f3_common.NewMirrorOptionsRecurse(forgejoLocalOriginUser)
+		f3.Forge.Mirror(context.Background(), forgejoLocalOrigin.Forge, options)
+
+		//
+		// verify the fixture and F3 are equivalent
+		//
+		files := f3_util.Command(context.Background(), "find", f3.GetDirectory())
+		assert.Contains(t, files, fmt.Sprintf("/user/%d", forgejoLocalOriginUser.GetID()))
 	})
 }
