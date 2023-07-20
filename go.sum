@@ -1774,8 +1774,8 @@ honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWh
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
 honnef.co/go/tools v0.0.1-2020.1.3/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
 honnef.co/go/tools v0.0.1-2020.1.4/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
-lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230701182935-ce3394d54c1e h1:dcD+UGLSrgeHYyEWZ+1mZvxQ2BXKyEhjhHcB7a6XgeA=
-lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230701182935-ce3394d54c1e/go.mod h1:yIlQydnn+pym6OH20iQ7fbe2TjLfnlOTtEOqvjFaC70=
+lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230716195945-2a5705c40928 h1:5aHRXtZIIjCzo4sJXpCAnQmJDC5Al8CkY/7aHlMP1J0=
+lab.forgefriends.org/friendlyforgeformat/gof3 v0.0.0-20230716195945-2a5705c40928/go.mod h1:yIlQydnn+pym6OH20iQ7fbe2TjLfnlOTtEOqvjFaC70=
 lukechampine.com/uint128 v1.1.1 h1:pnxCASz787iMf+02ssImqk6OLt+Z5QHMoZyUXR4z6JU=
 lukechampine.com/uint128 v1.1.1/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=
 modernc.org/cc/v3 v3.33.6/go.mod h1:iPJg1pkwXqAV16SNgFBVYmggfMg6xhs+2oiO0vclK3g=
