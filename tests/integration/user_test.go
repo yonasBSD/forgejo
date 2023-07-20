@@ -288,7 +288,12 @@ func TestGetOpenStreetMapLink(t *testing.T) {
 		"  Αθήνα":                       "%20%20%ce%91%ce%b8%ce%ae%ce%bd%ce%b1",
 		"Barbarossabrunnen, Düsseldorf": "Barbarossabrunnen%2c%20D%c3%bcsseldorf",
 		"39.91025,116.40753":            "39.91025%2c116.40753",
-		// "நியூ யோர்க்": "%e0%ae%a8%e0%ae%bf%e0%ae%af%e0%af%82%20%e0%ae%af%e0%af%8b%e0%ae%b0%e0%af%8d%e0%ae%95%e0%af%8d",
+		"པེ་ཅིང་གྲོང་ཁྱེར།": "%e0%bd%94%e0%bd%ba%e0%bc%8b%e0%bd%85%e0%bd%b2%e0%bd%84%e0%bc%8b%e0%bd%82%e0%be%b2%e0%bd%bc%e0%bd%84%e0%bc%8b%e0%bd%81%e0%be%b1%e0%bd%ba%e0%bd%a2%e0%bc%8d",
+		"Internet Archive":                         "Internet%20Archive",
+		"Schönhauser Allee 2, Berlin, Deutschland": "Sch%c3%b6nhauser%20Allee%202%2c%20Berlin%2c%20Deutschland",
+		"Miestna knižnica Podunajské Biskupice":    "Miestna%20kni%c5%benica%20Podunajsk%c3%a9%20Biskupice",
+		"東京タワー":                                    "%e6%9d%b1%e4%ba%ac%e3%82%bf%e3%83%af%e3%83%bc",
+		"Carnarvon Space & Technology Centre":      "Carnarvon%20Space%20%26%20Technology%20Centre",
 	}
 
 	session := loginUser(t, "user2")
