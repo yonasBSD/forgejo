@@ -18,7 +18,7 @@ func getUserByLoginName(ctx context.Context, name string) (*user_model.User, err
 	if len(name) == 0 {
 		return nil, user_model.ErrUserNotExist{Name: name}
 	}
-	u := &user_model.User{LoginName: name, LoginType: auth_model.F3, Type: user_model.UserTypeRemoteUser}
+	u := &user_model.User{LoginName: name, LoginType: auth_model.F3, Type: user_model.UserTypeF3}
 	has, err := db.GetEngine(ctx).Get(u)
 	if err != nil {
 		return nil, err
@@ -30,12 +30,12 @@ func getUserByLoginName(ctx context.Context, name string) (*user_model.User, err
 
 // The user created by F3 has:
 //
-//	Type        UserTypeRemoteUser
+//	Type        UserTypeF3
 //	LogingType  F3
 //	LoginName   set to the unique identifier of the originating forge
 //	LoginSource set to the F3 source that can be matched against a OAuth2 source
 //
-// If the source from which an authentification happens is OAuth2, a existing
+// If the source from which an authentification happens is OAuth2, an existing
 // F3 user will be promoted to an OAuth2 user provided:
 //
 //	user.LoginName is the same as goth.UserID (argument loginName)
@@ -80,6 +80,11 @@ func getF3UserToPromote(ctx context.Context, source *auth_model.Source, loginNam
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	if !u.IsF3() {
+		log.Debug("getF3UserToPromote: user %v is not a managed by F3", u)
+		return nil, nil
 	}
 
 	if u.Email != "" {
