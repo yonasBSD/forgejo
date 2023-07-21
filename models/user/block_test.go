@@ -49,6 +49,8 @@ func TestListBlockedUsers(t *testing.T) {
 	assert.NoError(t, err)
 	if assert.Len(t, blockedUsers, 1) {
 		assert.EqualValues(t, 1, blockedUsers[0].ID)
+		// The function returns the created Unix of the block, not that of the user.
+		assert.EqualValues(t, 1671607299, blockedUsers[0].CreatedUnix)
 	}
 }
 
