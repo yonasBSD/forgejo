@@ -608,6 +608,20 @@
   type: 1
   created_unix: 946684810
 
+# BEGIN Forgejo [GITEA] Fix generated source URL on rendered files
+-
+  id: 1091
+  repo_id: 49
+  type: 1
+  created_unix: 946684810
+
+-
+  id: 1092
+  repo_id: 49
+  type: 2
+  created_unix: 946684810
+# END Forgejo [GITEA] Fix generated source URL on rendered files
+
 -
   id: 91
   repo_id: 58
