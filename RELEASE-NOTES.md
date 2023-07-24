@@ -4,9 +4,9 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## 1.20.0-5
+## 1.20.1-0
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.0-5` release can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.1-0` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo/
@@ -14,7 +14,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 ```
 
 - **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
-  The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
+  The semantic version was updated to `5.0.0+0-gitea-1.20.1` because it contains breaking changes.
 - **Breaking:**
   - [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing tokens are still valid, they may have a different scope than before. To ensure that no tokens have a larger scope than expected they must be removed and recreated.
   - The `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
