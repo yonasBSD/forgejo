@@ -4,9 +4,9 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
 
-## 1.20.0-5
+## 1.20.1-0
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.0-5` release can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.1-0` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo/
@@ -14,7 +14,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 ```
 
 - **[Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/):**
-  The semantic version was updated to `5.0.0+0-gitea-1.20.0` because it contains breaking changes.
+  The semantic version was updated to `5.0.0+0-gitea-1.20.1` because it contains breaking changes.
 - **Breaking:**
   - [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing tokens are still valid, they may have a different scope than before. To ensure that no tokens have a larger scope than expected they must be removed and recreated.
   - The `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
@@ -126,6 +126,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Do not create commit graph for temporary repos](https://codeberg.org/forgejo/forgejo/commit/0268ee5c37b8ad733678f02bc15ec8642da62c10)
   - [Faster git.GetDivergingCommits](https://codeberg.org/forgejo/forgejo/commit/75ea0d5dba5dbf2f84cef2d12460fdd566d43e62)
   - [Order pull request conflict checking by recently updated, for each push](https://codeberg.org/forgejo/forgejo/commit/df48af22296ccce8e9bd18e5d35c9a3cdf5acb0f)
+  - [MySQL integration tests](https://codeberg.org/forgejo/forgejo/commit/49f68518c2a2bd36ca0106045bd84de01dec4b61) run twice faster low end machines and use an order of magnitude less disk I/O
 - **Authentication**
   - [Add ntlm authentication support for mail](https://codeberg.org/forgejo/forgejo/commit/8be6da3e2fd0b685aeb6b9e7fd9dee5a4571163a)
   - [LDAP filters include both username and email address](https://codeberg.org/forgejo/forgejo/commit/b8c19e7a11525da4174b6f80f87ff3e844d03d8a)
@@ -160,6 +161,9 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - [Add support](https://codeberg.org/forgejo/forgejo/commit/985f76dc4b0692c4d6c6f37e82500ef859557c16) for [redis v7](https://raw.githubusercontent.com/redis/redis/7.0/00-RELEASENOTES)
   - Allow [webp](https://en.wikipedia.org/wiki/WebP) images [as avatars](https://codeberg.org/forgejo/forgejo/commit/65fe0fb22cfb264f0b756065d0c3ce7a17d7e55b)
   - [Add support](https://codeberg.org/forgejo/forgejo/commit/58caf422e67c78f87327bc9b00f89083a2432940) for rendering [.livemd](https://livebook.dev/)
+  - The `forgejo forgejo-cli actions` [subcommand is added](https://codeberg.org/forgejo/forgejo/commit/d6efefbb63d59ba0251c10b6031f6b630b184eaf) to implement [offline registration with `actions register`](https://forgejo.org/docs/v1.20/admin/actions/#offline-registration) for the [Forgejo runner](https://code.forgejo.org/forgejo/runner).
+  - When [called as `forgejo-cli`](https://codeberg.org/forgejo/forgejo/commit/935fb85e8b2a5f6a9c9c6c0b78a234abc14df4fe) (with `ln -f forgejo forgejo-cli`), Forgejo provides a new CLI that is not backward compatible with Gitea. It contains Forgejo specific additions such as [offline registration](https://forgejo.org/docs/v1.20/admin/actions/#offline-registration)
+  - [Render list items](https://codeberg.org/forgejo/forgejo/commit/e1829f0728509c4c1b7810fe9f6df1aebb71b4c0) when an [org-mode](https://orgmode.org/) file is displayed
   - [A user can follow an organization](https://codeberg.org/forgejo/forgejo/commit/cc64a925602d54f3439dd19f16b5280bd0377a7a)
   - [When playing a video in the web UI, the player control can be dragged to play on the specified position](https://codeberg.org/forgejo/forgejo/commit/023a048f52b5bf8c4b715285245a129f04e05a8c)
   - The commit status required for a pull request to be merged can now be [specified as patterns](https://codeberg.org/forgejo/forgejo/commit/e7c2231dee356df5cbe5a47c07e31e3a8d090a6f) instead of being a hard coded list
