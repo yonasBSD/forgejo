@@ -17,6 +17,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   The semantic version was updated to `5.0.0+0-gitea-1.20.1` because it contains breaking changes.
 - **Breaking:**
   - [Scoped access tokens](https://codeberg.org/forgejo/forgejo/commit/18de83b2a3fc120922096b7348d6375094ae1532) or (Personal Access Tokens), were refactored and although existing tokens are still valid, they may have a different scope than before. To ensure that no tokens have a larger scope than expected they must be removed and recreated.
+  - If your `app.ini` has one of the the following `[indexer].ISSUE_INDEXER_QUEUE_TYPE`, `[indexer].ISSUE_INDEXER_QUEUE_BATCH_NUMBER`, `[indexer].`, `[indexer].ISSUE_INDEXER_QUEUE_DIR`, `[indexer].ISSUE_INDEXER_QUEUE_CONN_STR`, `[indexer].UPDATE_BUFFER_LEN`, `[mailer].SEND_BUFFER_LEN`, `[repository].PULL_REQUEST_QUEUE_LENGTH` or `[repository].MIRROR_QUEUE_LENGTH`, Forgejo will abort immediately. Unless you know exactly what you're doing, you must comment them out so the default values are used.
   - The `-p` option of `environment-to-ini` is [no longer supported](https://codeberg.org/forgejo/forgejo/commit/fa0b5b14c2faa6a5f76bb2e7bc9241a5e4354189)
   - The ".png" suffix for [user and organizations is now reserved](https://codeberg.org/forgejo/forgejo/commit/2b91841cd3e1213ff3e4ed4209d6a4be89c2fa79)
   - The section `[git.reflog]` is [now obsolete and its keys have been moved](https://codeberg.org/forgejo/forgejo/commit/2f149c5c9db97f20fbbc65e32d1f3133048b11a2) to the following replacements:
@@ -179,7 +180,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 
 * Container images upgraded to Alpine 3.18
 
-  The Forgejo container images are now based on [Alpine 3.18](https://alpinelinux.org/posts/Alpine-3.18.0-released.html) instead of Alpine 3.1.17.
+  The Forgejo container images are now based on [Alpine 3.18](https://alpinelinux.org/posts/Alpine-3.18.0-released.html) instead of Alpine 3.17.
 
 ## 1.19.4-0
 
