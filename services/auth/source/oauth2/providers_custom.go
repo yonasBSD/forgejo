@@ -6,6 +6,8 @@ package oauth2
 import (
 	"code.gitea.io/gitea/modules/setting"
 
+	"strings"
+
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/azureadv2"
 	"github.com/markbates/goth/providers/gitea"
@@ -76,6 +78,19 @@ func init() {
 		}, func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
 			scopes = append(scopes, "read_user")
 			provider := gitlab.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, scopes...)
+			provider.HTTPClient = HTTPClient
+			return provider, nil
+		}))
+
+	RegisterGothProvider(NewCustomProvider(
+		// TODO: remove strings workaround when goth adds forgejo support
+		"forgejo", "Forgejo", &CustomURLSettings{
+			TokenURL:   requiredAttribute(strings.Replace(gitea.TokenURL, "gitea.com", "codeberg.org", -1)),
+			AuthURL:    requiredAttribute(strings.Replace(gitea.AuthURL, "gitea.com", "codeberg.org", -1)),
+			ProfileURL: requiredAttribute(strings.Replace(gitea.ProfileURL, "gitea.com", "codeberg.org", -1)),
+		},
+		func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
+			provider := gitea.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, scopes...)
 			provider.HTTPClient = HTTPClient
 			return provider, nil
 		}))
