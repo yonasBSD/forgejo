@@ -106,7 +106,7 @@ jobs:
             #
             # Verify `make generate` files are available
             #
-            test -d modules/public/bindata.go
+            test -f modules/public/bindata.go
             #
             # Sanity check to verify that the source tarbal knows the
             # version and is able to rebuild itself from it.
