@@ -35,7 +35,7 @@ func SubcmdActionsGenerateRunnerToken(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:   "generate-runner-token",
 		Usage:  "Generate a new token for a runner to use to register with the server",
-		Action: func(cliCtx *cli.Context) error { return RunGenerateActionsRunnerToken(ctx, cliCtx) },
+		Action: prepareWorkPathAndCustomConf(ctx, func(cliCtx *cli.Context) error { return RunGenerateActionsRunnerToken(ctx, cliCtx) }),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "scope",
@@ -59,7 +59,7 @@ func SubcmdActionsRegister(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:   "register",
 		Usage:  "Idempotent registration of a runner using a shared secret",
-		Action: func(cliCtx *cli.Context) error { return RunRegister(ctx, cliCtx) },
+		Action: prepareWorkPathAndCustomConf(ctx, func(cliCtx *cli.Context) error { return RunRegister(ctx, cliCtx) }),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "secret",
@@ -189,8 +189,6 @@ func RunRegister(ctx context.Context, cliCtx *cli.Context) error {
 }
 
 func RunGenerateSecret(ctx context.Context, cliCtx *cli.Context) error {
-	setting.MustInstalled()
-
 	runner := actions_model.ActionRunner{}
 	if err := runner.GenerateToken(); err != nil {
 		return err
@@ -220,4 +218,26 @@ func RunGenerateActionsRunnerToken(ctx context.Context, cliCtx *cli.Context) err
 		panic(err)
 	}
 	return nil
+}
+
+func prepareWorkPathAndCustomConf(ctx context.Context, action cli.ActionFunc) func(cliCtx *cli.Context) error {
+	return func(cliCtx *cli.Context) error {
+		if !ContextGetNoInit(ctx) {
+			var args setting.ArgWorkPathAndCustomConf
+			// from children to parent, check the global flags
+			for _, curCtx := range cliCtx.Lineage() {
+				if curCtx.IsSet("work-path") && args.WorkPath == "" {
+					args.WorkPath = curCtx.String("work-path")
+				}
+				if curCtx.IsSet("custom-path") && args.CustomPath == "" {
+					args.CustomPath = curCtx.String("custom-path")
+				}
+				if curCtx.IsSet("config") && args.CustomConf == "" {
+					args.CustomConf = curCtx.String("config")
+				}
+			}
+			setting.InitWorkPathAndCommonConfig(os.Getenv, args)
+		}
+		return action(cliCtx)
+	}
 }
