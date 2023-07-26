@@ -35,6 +35,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/services/auth/source/f3"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
 	user_service "code.gitea.io/gitea/services/user"
 	"code.gitea.io/gitea/tests"
@@ -292,6 +293,21 @@ func authSourcePayloadOIDC(name string) map[string]string {
 	payload["oauth2_provider"] = (&oauth2.OpenIDProvider{}).Name()
 	payload["open_id_connect_auto_discovery_url"] = codebergURL + "/.well-known/openid-configuration"
 	return payload
+}
+
+func createF3AuthSource(t *testing.T, name, url, matchingSource string) *auth.Source {
+	assert.NoError(t, auth.CreateSource(&auth.Source{
+		Type:     auth.F3,
+		Name:     name,
+		IsActive: true,
+		Cfg: &f3.Source{
+			URL:            url,
+			MatchingSource: matchingSource,
+		},
+	}))
+	source, err := auth.GetSourceByName(context.Background(), name)
+	assert.NoError(t, err)
+	return source
 }
 
 func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {
