@@ -24,7 +24,13 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
     * `[git.reflog].ENABLED` → `[git.config].core.logAllRefUpdates`
     * `[git.reflog].EXPIRATION` → `[git.config].gc.reflogExpire`
   - The [logger](https://codeberg.org/forgejo/forgejo/commit/4647660776436f0a83129b4ceb8426b1fb0599bb) used to display Forgejo's was refactored and has new settings, different from the previous one found at `log.<mode>.<logger>` in `app.ini`. Check the [documentation](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#log-log) and `app.example.ini` for more information. The SMTP logger was removed.
-  - Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (e.g. work path must be absolute). 
+  - Forgejo will refuse to start if [the refactored path & config system](https://codeberg.org/forgejo/forgejo/commit/061b68e99) does not pass sanity checks (e.g. WORK_PATH must be absolute).
+  - Manually set [WORK_PATH](https://forgejo.org/docs/v1.20/admin/config-cheat-sheet/#overall-default) in `app.ini`.
+    If the `app.ini` file is writable by the user under which the Forgejo server runs and `WORK_PATH` is not set,
+    the server will add it. Otherwise it will log an error starting with `Unable to update WORK_PATH`.
+    One of the consequences of not setting `WORK_PATH` in `app.ini` is that pushing to a repository via ssh is
+    [likely to fail as explained in the corresponding bug report](https://codeberg.org/forgejo/forgejo/issues/1118).
+    Read the technical details in the [commit that implements the WORK_PATH change](https://codeberg.org/forgejo/forgejo/commit/061b68e99).
   - The user profile can be customized with [a Markdown file](https://codeberg.org/forgejo/forgejo/commit/c090f87a8db5b51e0aa9c7278b38ddc862c048ac).
     The profile page of a user is rendered using the `README.md` file of the `.profile` repository, if it exists. It is a
     breaking change because **it will display the .profile/README.md of a pre-existing repository, private or not**.
