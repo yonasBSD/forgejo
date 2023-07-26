@@ -164,7 +164,7 @@ func (o *IssueProvider) ProcessObject(ctx context.Context, user *User, project *
 
 func (o *IssueProvider) Get(ctx context.Context, user *User, project *Project, exemplar *Issue) *Issue {
 	id := exemplar.GetID()
-	issue, err := issues_model.GetIssueByIndex(project.GetID(), id)
+	issue, err := issues_model.GetIssueByIndex(ctx, project.GetID(), id)
 	if issues_model.IsErrIssueNotExist(err) {
 		return &Issue{}
 	}

@@ -11,47 +11,47 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/services/f3/util"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"lab.forgefriends.org/friendlyforgeformat/gof3"
 	f3_common "lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	f3_format "lab.forgefriends.org/friendlyforgeformat/gof3/format"
 )
 
-var CmdF3 = cli.Command{
+var CmdF3 = &cli.Command{
 	Name:        "f3",
 	Usage:       "Friendly Forge Format (F3) format export/import.",
 	Description: "Import or export a repository from or to the Friendly Forge Format (F3) format.",
 	Action:      runF3,
 	Flags: []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "directory",
 			Value: "./f3",
 			Usage: "Path of the directory where the F3 dump is stored",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "user",
 			Value: "",
 			Usage: "The name of the user who owns the repository",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "repository",
 			Value: "",
 			Usage: "The name of the repository",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "authentication-source",
 			Value: "",
 			Usage: "The name of the authentication source matching the forge of origin",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "no-pull-request",
 			Usage: "Do not dump pull requests",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "import",
 			Usage: "Import from the directory",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "export",
 			Usage: "Export to the directory",
 		},

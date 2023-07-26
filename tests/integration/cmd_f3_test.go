@@ -5,7 +5,6 @@ package integration
 import (
 	"bytes"
 	"context"
-	"flag"
 	"io"
 	"net/url"
 	"os"
@@ -16,7 +15,7 @@ import (
 	"code.gitea.io/gitea/services/migrations"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	f3_forges "lab.forgefriends.org/friendlyforgeformat/gof3/forges"
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
@@ -55,16 +54,18 @@ func Test_CmdF3(t *testing.T) {
 		//
 		// Step 2: import the fixture into Gitea
 		//
-		cmd.CmdF3.Action = func(ctx *cli.Context) { cmd.RunF3(context.Background(), ctx) }
+		cmd.CmdF3.Action = func(ctx *cli.Context) error { return cmd.RunF3(context.Background(), ctx) }
 		{
 			realStdout := os.Stdout // Backup Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			set := flag.NewFlagSet("f3", 0)
-			_ = set.Parse([]string{"f3", "--import", "--directory", fixture.ForgeRoot.GetDirectory()})
-			cliContext := cli.NewContext(&cli.App{Writer: os.Stdout}, set, nil)
-			assert.NoError(t, cmd.CmdF3.Run(cliContext))
+			app := cli.NewApp()
+			app.Writer = w
+			app.ErrWriter = w
+			app.Commands = []*cli.Command{cmd.CmdF3}
+			assert.NoError(t, app.Run([]string{"forgejo", "f3", "--import", "--directory", fixture.ForgeRoot.GetDirectory()}))
+
 			w.Close()
 			var buf bytes.Buffer
 			io.Copy(&buf, r)
@@ -82,10 +83,12 @@ func Test_CmdF3(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			set := flag.NewFlagSet("f3", 0)
-			_ = set.Parse([]string{"f3", "--export", "--no-pull-request", "--user", fixture.UserFormat.UserName, "--repository", fixture.ProjectFormat.Name, "--directory", directory})
-			cliContext := cli.NewContext(&cli.App{Writer: os.Stdout}, set, nil)
-			assert.NoError(t, cmd.CmdF3.Run(cliContext))
+			app := cli.NewApp()
+			app.Writer = w
+			app.ErrWriter = w
+			app.Commands = []*cli.Command{cmd.CmdF3}
+			assert.NoError(t, app.Run([]string{"forgejo", "f3", "--export", "--no-pull-request", "--user", fixture.UserFormat.UserName, "--repository", fixture.ProjectFormat.Name, "--directory", directory}))
+
 			w.Close()
 			var buf bytes.Buffer
 			io.Copy(&buf, r)
