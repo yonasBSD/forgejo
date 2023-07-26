@@ -22,6 +22,5 @@ func GenerateActionsRunnerToken(ctx context.Context, scope string) (string, Resp
 	})
 
 	resp, extra := requestJSONResp(req, &responseText{})
-	//	fmt.Printf("resp %v, extra %+v\n", resp, extra)
 	return resp.Text, extra
 }
