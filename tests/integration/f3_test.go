@@ -20,7 +20,7 @@ import (
 
 	"github.com/markbates/goth"
 	"github.com/stretchr/testify/assert"
-	"lab.forgefriends.org/friendlyforgeformat/gof3"
+	f3_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
 	f3_forges "lab.forgefriends.org/friendlyforgeformat/gof3/forges"
 	f3_common "lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	f3_f3 "lab.forgefriends.org/friendlyforgeformat/gof3/forges/f3"
@@ -48,11 +48,11 @@ func TestF3Mirror(t *testing.T) {
 		//
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.Options{
-				Options: gof3.Options{
-					Configuration: gof3.Configuration{
+				Options: f3_types.Options{
+					Configuration: f3_types.Configuration{
 						Directory: tmpDir,
 					},
-					Features: gof3.AllFeatures,
+					Features: f3_types.AllFeatures,
 					Logger:   util.ToF3Logger(nil),
 				},
 				Remap: true,
@@ -80,7 +80,7 @@ func TestF3Mirror(t *testing.T) {
 		//
 		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
-		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
+		forgejoLocal := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
 		options := f3_common.NewMirrorOptionsRecurse()
 		forgejoLocal.Forge.Mirror(context.Background(), fixture.Forge, options)
 
@@ -89,12 +89,12 @@ func TestF3Mirror(t *testing.T) {
 		//
 		adminUsername := "user1"
 		forgejoAPI := f3_forges.NewForgeRootFromDriver(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
-			Options: gof3.Options{
-				Configuration: gof3.Configuration{
+			Options: f3_types.Options{
+				Configuration: f3_types.Configuration{
 					URL:       setting.AppURL,
 					Directory: t.TempDir(),
 				},
-				Features: gof3.AllFeatures,
+				Features: f3_types.AllFeatures,
 			},
 			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
 		})
@@ -198,11 +198,11 @@ func TestF3UserMappingExisting(t *testing.T) {
 		log.Debug("Step 1: create a fixture in F3")
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.Options{
-				Options: gof3.Options{
-					Configuration: gof3.Configuration{
+				Options: f3_types.Options{
+					Configuration: f3_types.Configuration{
 						Directory: tmpDir,
 					},
-					Features: gof3.AllFeatures,
+					Features: f3_types.AllFeatures,
 					Logger:   util.ToF3Logger(nil),
 				},
 				Remap: true,
@@ -236,19 +236,19 @@ func TestF3UserMappingExisting(t *testing.T) {
 
 		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
-		forgejoLocal := util.ForgejoForgeRoot(gof3.AllFeatures, doer, gitlab.ID)
+		forgejoLocal := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, gitlab.ID)
 		options := f3_common.NewMirrorOptionsRecurse()
 		forgejoLocal.Forge.Mirror(context.Background(), fixture.Forge, options)
 
 		log.Debug("Step 3: mirror Forgejo into F3")
 		adminUsername := "user1"
 		forgejoAPI := f3_forges.NewForgeRootFromDriver(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
-			Options: gof3.Options{
-				Configuration: gof3.Configuration{
+			Options: f3_types.Options{
+				Configuration: f3_types.Configuration{
 					URL:       setting.AppURL,
 					Directory: t.TempDir(),
 				},
-				Features: gof3.AllFeatures,
+				Features: f3_types.AllFeatures,
 				Logger:   util.ToF3Logger(nil),
 			},
 			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
@@ -286,11 +286,11 @@ func TestF3UserMappingNew(t *testing.T) {
 		log.Debug("Step 1: create a fixture in F3")
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.Options{
-				Options: gof3.Options{
-					Configuration: gof3.Configuration{
+				Options: f3_types.Options{
+					Configuration: f3_types.Configuration{
 						Directory: tmpDir,
 					},
-					Features: gof3.AllFeatures,
+					Features: f3_types.AllFeatures,
 					Logger:   util.ToF3Logger(nil),
 				},
 				Remap: true,
@@ -304,7 +304,7 @@ func TestF3UserMappingNew(t *testing.T) {
 		log.Debug("Step 2: mirror F3 into Forgejo")
 		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
-		forgejoLocalDestination := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
+		forgejoLocalDestination := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
 		options := f3_common.NewMirrorOptionsRecurse()
 		forgejoLocalDestination.Forge.Mirror(context.Background(), fixture.Forge, options)
 
@@ -315,8 +315,8 @@ func TestF3UserMappingNew(t *testing.T) {
 		forgejoLocalDestination.Forge.Mirror(context.Background(), fixture.Forge, options)
 
 		log.Debug("Step 4: mirror Forgejo into F3 using the changed name")
-		f3 := util.F3ForgeRoot(gof3.AllFeatures, t.TempDir())
-		forgejoLocalOrigin := util.ForgejoForgeRoot(gof3.AllFeatures, doer, 0)
+		f3 := util.F3ForgeRoot(f3_types.AllFeatures, t.TempDir())
+		forgejoLocalOrigin := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
 		forgejoLocalOriginUser := forgejoLocalOrigin.Forge.Users.GetFromFormat(context.Background(), &format.User{UserName: otherusername})
 		options = f3_common.NewMirrorOptionsRecurse(forgejoLocalOriginUser)
 		f3.Forge.Mirror(context.Background(), forgejoLocalOrigin.Forge, options)
