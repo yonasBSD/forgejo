@@ -12,7 +12,7 @@ import (
 	"code.gitea.io/gitea/services/f3/util"
 
 	"github.com/urfave/cli/v2"
-	"lab.forgefriends.org/friendlyforgeformat/gof3"
+	f3_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
 	f3_common "lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	f3_format "lab.forgefriends.org/friendlyforgeformat/gof3/format"
 )
@@ -90,7 +90,7 @@ func RunF3(stdCtx context.Context, ctx *cli.Context) error {
 		return err
 	}
 
-	features := gof3.AllFeatures
+	features := f3_types.AllFeatures
 	if ctx.Bool("no-pull-request") {
 		features.PullRequests = false
 	}
