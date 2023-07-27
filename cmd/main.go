@@ -200,7 +200,6 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 		CmdMigrate,
 		CmdKeys,
 		CmdDoctor,
-		CmdF3,
 		CmdManager,
 		CmdEmbedded,
 		CmdMigrateStorage,
