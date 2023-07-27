@@ -8,19 +8,19 @@ import (
 	base "code.gitea.io/gitea/modules/migration"
 	"code.gitea.io/gitea/services/f3/driver"
 
-	"lab.forgefriends.org/friendlyforgeformat/gof3"
+	f3_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
 	f3_forges "lab.forgefriends.org/friendlyforgeformat/gof3/forges"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/f3"
 )
 
-func ToF3Logger(messenger base.Messenger) gof3.Logger {
+func ToF3Logger(messenger base.Messenger) f3_types.Logger {
 	if messenger == nil {
 		messenger = func(message string, args ...interface{}) {
 			log.Info("Message: "+message, args...)
 		}
 	}
-	return gof3.Logger{
-		Message:  messenger,
+	return f3_types.Logger{
+		Message:  f3_types.LoggerFun(messenger),
 		Trace:    log.Trace,
 		Debug:    log.Debug,
 		Info:     log.Info,
@@ -31,9 +31,9 @@ func ToF3Logger(messenger base.Messenger) gof3.Logger {
 	}
 }
 
-func ForgejoForgeRoot(features gof3.Features, doer *user_model.User, authenticationSource int64) *f3_forges.ForgeRoot {
+func ForgejoForgeRoot(features f3_types.Features, doer *user_model.User, authenticationSource int64) *f3_forges.ForgeRoot {
 	forgeRoot := f3_forges.NewForgeRootFromDriver(&driver.Forgejo{}, &driver.Options{
-		Options: gof3.Options{
+		Options: f3_types.Options{
 			Features: features,
 			Logger:   ToF3Logger(nil),
 		},
@@ -43,10 +43,10 @@ func ForgejoForgeRoot(features gof3.Features, doer *user_model.User, authenticat
 	return forgeRoot
 }
 
-func F3ForgeRoot(features gof3.Features, directory string) *f3_forges.ForgeRoot {
+func F3ForgeRoot(features f3_types.Features, directory string) *f3_forges.ForgeRoot {
 	forgeRoot := f3_forges.NewForgeRoot(&f3.Options{
-		Options: gof3.Options{
-			Configuration: gof3.Configuration{
+		Options: f3_types.Options{
+			Configuration: f3_types.Configuration{
 				Directory: directory,
 			},
 			Features: features,

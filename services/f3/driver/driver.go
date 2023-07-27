@@ -9,14 +9,14 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/migrations"
 
-	"lab.forgefriends.org/friendlyforgeformat/gof3"
+	f3_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/driver"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
 )
 
 type Options struct {
-	gof3.Options
+	f3_types.Options
 
 	AuthenticationSource int64
 	Doer                 *user_model.User
@@ -31,11 +31,11 @@ func (o *Forgejo) GetPerPage() int {
 	return o.perPage
 }
 
-func (o *Forgejo) GetOptions() gof3.OptionsInterface {
+func (o *Forgejo) GetOptions() f3_types.OptionsInterface {
 	return o.options
 }
 
-func (o *Forgejo) SetOptions(options gof3.OptionsInterface) {
+func (o *Forgejo) SetOptions(options f3_types.OptionsInterface) {
 	var ok bool
 	o.options, ok = options.(*Options)
 	if !ok {
@@ -43,11 +43,11 @@ func (o *Forgejo) SetOptions(options gof3.OptionsInterface) {
 	}
 }
 
-func (o *Forgejo) GetLogger() *gof3.Logger {
+func (o *Forgejo) GetLogger() *f3_types.Logger {
 	return o.GetOptions().GetLogger()
 }
 
-func (o *Forgejo) Init(options gof3.OptionsInterface) {
+func (o *Forgejo) Init(options f3_types.OptionsInterface) {
 	o.SetOptions(options)
 	o.perPage = setting.ItemsPerPage
 }
@@ -64,7 +64,7 @@ func (o *Forgejo) GetAuthenticationSource() int64 {
 	return o.options.AuthenticationSource
 }
 
-func (o *Forgejo) GetNewMigrationHTTPClient() gof3.NewMigrationHTTPClientFun {
+func (o *Forgejo) GetNewMigrationHTTPClient() f3_types.NewMigrationHTTPClientFun {
 	return migrations.NewMigrationHTTPClient
 }
 
