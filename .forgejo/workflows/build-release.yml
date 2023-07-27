@@ -100,9 +100,9 @@ jobs:
             #
             # Verify `make frontend` files are available
             #
-            test -d public/css
-            test -d public/fonts
-            test -d public/js
+            test -d public/assets/css
+            test -d public/assets/fonts
+            test -d public/assets/js
             #
             # Verify `make generate` files are available
             #
