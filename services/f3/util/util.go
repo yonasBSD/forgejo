@@ -13,13 +13,13 @@ import (
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/f3"
 )
 
-func ToF3Logger(messenger base.Messenger) f3_types.Logger {
+func ToF3Logger(messenger base.Messenger) *f3_types.Logger {
 	if messenger == nil {
 		messenger = func(message string, args ...interface{}) {
 			log.Info("Message: "+message, args...)
 		}
 	}
-	return f3_types.Logger{
+	return &f3_types.Logger{
 		Message:  f3_types.LoggerFun(messenger),
 		Trace:    log.Trace,
 		Debug:    log.Debug,
@@ -32,7 +32,7 @@ func ToF3Logger(messenger base.Messenger) f3_types.Logger {
 }
 
 func ForgejoForgeRoot(features f3_types.Features, doer *user_model.User, authenticationSource int64) *f3_forges.ForgeRoot {
-	forgeRoot := f3_forges.NewForgeRootFromDriver(&driver.Forgejo{}, &driver.Options{
+	forgeRoot := f3_forges.NewForgeRoot(&driver.Forgejo{}, &driver.Options{
 		Options: f3_types.Options{
 			Features: features,
 			Logger:   ToF3Logger(nil),
@@ -44,7 +44,7 @@ func ForgejoForgeRoot(features f3_types.Features, doer *user_model.User, authent
 }
 
 func F3ForgeRoot(features f3_types.Features, directory string) *f3_forges.ForgeRoot {
-	forgeRoot := f3_forges.NewForgeRoot(&f3.Options{
+	forgeRoot := f3_forges.NewForgeRoot(&f3.F3{}, &f3.Options{
 		Options: f3_types.Options{
 			Configuration: f3_types.Configuration{
 				Directory: directory,

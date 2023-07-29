@@ -30,7 +30,7 @@ import (
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
 
-func TestF3Mirror(t *testing.T) {
+func TestF3_Mirror(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -47,7 +47,7 @@ func TestF3Mirror(t *testing.T) {
 		// Step 1: create a fixture
 		//
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
-			root := f3_forges.NewForgeRoot(&f3_f3.Options{
+			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
 						Directory: tmpDir,
@@ -88,7 +88,7 @@ func TestF3Mirror(t *testing.T) {
 		// Step 3: mirror Forgejo into F3
 		//
 		adminUsername := "user1"
-		forgejoAPI := f3_forges.NewForgeRootFromDriver(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
+		forgejoAPI := f3_forges.NewForgeRoot(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
 			Options: f3_types.Options{
 				Configuration: f3_types.Configuration{
 					URL:       setting.AppURL,
@@ -125,7 +125,7 @@ func TestF3Mirror(t *testing.T) {
 	})
 }
 
-func TestMaybePromoteF3User(t *testing.T) {
+func TestF3_MaybePromoteUser(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	//
@@ -182,7 +182,7 @@ func TestMaybePromoteF3User(t *testing.T) {
 	assert.Equal(t, userAfterSignIn.Email, gitlabEmail)
 }
 
-func TestF3UserMappingExisting(t *testing.T) {
+func TestF3_UserMappingExisting(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -197,7 +197,7 @@ func TestF3UserMappingExisting(t *testing.T) {
 
 		log.Debug("Step 1: create a fixture in F3")
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
-			root := f3_forges.NewForgeRoot(&f3_f3.Options{
+			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
 						Directory: tmpDir,
@@ -242,7 +242,7 @@ func TestF3UserMappingExisting(t *testing.T) {
 
 		log.Debug("Step 3: mirror Forgejo into F3")
 		adminUsername := "user1"
-		forgejoAPI := f3_forges.NewForgeRootFromDriver(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
+		forgejoAPI := f3_forges.NewForgeRoot(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
 			Options: f3_types.Options{
 				Configuration: f3_types.Configuration{
 					URL:       setting.AppURL,
@@ -270,7 +270,7 @@ func TestF3UserMappingExisting(t *testing.T) {
 	})
 }
 
-func TestF3UserMappingNew(t *testing.T) {
+func TestF3_UserMappingNew(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -285,7 +285,7 @@ func TestF3UserMappingNew(t *testing.T) {
 
 		log.Debug("Step 1: create a fixture in F3")
 		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
-			root := f3_forges.NewForgeRoot(&f3_f3.Options{
+			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
 						Directory: tmpDir,

@@ -7,8 +7,10 @@ import (
 	"net/url"
 	"testing"
 
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/services/f3/driver"
 	"code.gitea.io/gitea/services/migrations"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +18,7 @@ import (
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
 
-func Test_CmdF3(t *testing.T) {
+func TestF3_CmdMirror_LocalForgejo(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		defer test.MockVariable(&setting.F3.Enabled, true)()
 		defer test.MockVariable(&setting.Migrations.AllowLocalNetworks, true)()
@@ -26,50 +28,45 @@ func Test_CmdF3(t *testing.T) {
 		// a http call fails with "...migration can only call allowed HTTP servers..."
 		migrations.Init()
 
+		ctx := context.Background()
+		var userID int64 = 700
 		//
-		// Step 1: create a fixture
+		// Step 1: create a fixture as an F3 archive
 		//
+		userID++
 		fixture := f3_forges.NewFixture(t, f3_forges.FixtureF3Factory)
-		fixture.NewUser(1234)
-		fixture.NewMilestone()
-		fixture.NewLabel()
+		fixture.NewUser(userID)
 		fixture.NewIssue()
-		fixture.NewTopic()
 		fixture.NewRepository()
-		fixture.NewRelease()
-		fixture.NewAsset()
-		fixture.NewIssueComment(nil)
-		fixture.NewIssueReaction()
 
 		//
-		// Step 2: import the fixture into Gitea
+		// Step 3: mirror the F3 archive to the forge
 		//
-		{
-			output, err := cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "f3", "--import", "--directory", fixture.ForgeRoot.GetDirectory()})
-			assert.NoError(t, err)
-			assert.EqualValues(t, "imported\n", output)
-		}
+		_, err := cmdForgejoCaptureOutput(t, []string{
+			"forgejo", "forgejo-cli", "f3", "mirror",
+			"--from-type=f3", "--from", fixture.ForgeRoot.GetDirectory(),
+			"--to-type", driver.Name,
+		})
+		assert.NoError(t, err)
+		user, err := user_model.GetUserByName(ctx, fixture.UserFormat.UserName)
+		assert.NoError(t, err)
+		//
+		// Step 4: mirror the forge to an F3 archive
+		//
+		dumpDir := t.TempDir()
+		_, err = cmdForgejoCaptureOutput(t, []string{
+			"forgejo", "forgejo-cli", "f3", "mirror",
+			"--user", user.Name, "--repository", fixture.ProjectFormat.Name,
+			"--from-type", driver.Name,
+			"--to-type=f3", "--to", dumpDir,
+		})
+		assert.NoError(t, err)
 
 		//
-		// Step 3: export Gitea into F3
+		// Step 5: verify the F3 archive content
 		//
-		directory := t.TempDir()
-		{
-			output, err := cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "f3", "--export", "--no-pull-request", "--user", fixture.UserFormat.UserName, "--repository", fixture.ProjectFormat.Name, "--directory", directory})
-			assert.NoError(t, err)
-			assert.EqualValues(t, "exported\n", output)
-		}
-
-		//
-		// Step 4: verify the export and import are equivalent
-		//
-		files := f3_util.Command(context.Background(), "find", directory)
-		assert.Contains(t, files, "/label/")
-		assert.Contains(t, files, "/issue/")
-		assert.Contains(t, files, "/milestone/")
-		assert.Contains(t, files, "/topic/")
-		assert.Contains(t, files, "/release/")
-		assert.Contains(t, files, "/asset/")
-		assert.Contains(t, files, "/reaction/")
+		files := f3_util.Command(context.Background(), "find", dumpDir)
+		assert.Contains(t, files, "/user/")
+		assert.Contains(t, files, "/project/")
 	})
 }

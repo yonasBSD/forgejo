@@ -3,17 +3,33 @@
 package driver
 
 import (
+	"context"
 	"fmt"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
+	base "code.gitea.io/gitea/modules/migration"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/migrations"
 
+	"github.com/urfave/cli/v2"
+	config_factory "lab.forgefriends.org/friendlyforgeformat/gof3/config/factory"
 	f3_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/common"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/driver"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
 )
+
+var Name = "InternalForgejo"
+
+func init() {
+	config_factory.RegisterFactory(Name, f3_types.OptionsFactory{
+		Name:  Name,
+		New:   func() f3_types.OptionsInterface { return &Options{} },
+		Flags: GetFlags,
+	}, func() common.DriverInterface { return &Forgejo{} })
+}
 
 type Options struct {
 	f3_types.Options
@@ -22,9 +38,77 @@ type Options struct {
 	Doer                 *user_model.User
 }
 
+func getAuthenticationSource(ctx context.Context, authenticationSource string) (*auth_model.Source, error) {
+	source, err := auth_model.GetSourceByName(ctx, authenticationSource)
+	if err != nil {
+		if auth_model.IsErrSourceNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return source, nil
+}
+
+func ToF3Logger(messenger base.Messenger) *f3_types.Logger {
+	if messenger == nil {
+		messenger = func(message string, args ...interface{}) {
+			log.Info("Message: "+message, args...)
+		}
+	}
+	return &f3_types.Logger{
+		Message:  f3_types.LoggerFun(messenger),
+		Trace:    log.Trace,
+		Debug:    log.Debug,
+		Info:     log.Info,
+		Warn:     log.Warn,
+		Error:    log.Error,
+		Critical: log.Critical,
+		Fatal:    log.Fatal,
+	}
+}
+
+func (o *Options) FromFlags(ctx context.Context, c *cli.Context, prefix string) f3_types.OptionsInterface {
+	o.Options.FromFlags(ctx, c, prefix)
+	o.Options.Logger = ToF3Logger(nil)
+	sourceName := c.String("authentication-source")
+	if sourceName != "" {
+		source, err := getAuthenticationSource(ctx, sourceName)
+		if err != nil {
+			panic(fmt.Errorf("error retrieving the authentication-source %s %v", sourceName, err))
+		}
+		if source != nil {
+			o.AuthenticationSource = source.ID
+		}
+	}
+
+	doer, err := user_model.GetAdminUser(ctx)
+	if err != nil {
+		panic(fmt.Errorf("GetAdminUser %v", err))
+	}
+	o.Doer = doer
+
+	return o
+}
+
+func GetFlags(prefix, category string) []cli.Flag {
+	flags := make([]cli.Flag, 0, 10)
+
+	flags = append(flags, &cli.StringFlag{
+		Name:  "authentication-source",
+		Value: "",
+		Usage: "The name of the authentication source matching the forge of origin",
+	})
+
+	return flags
+}
+
 type Forgejo struct {
 	perPage int
 	options *Options
+}
+
+func (o *Forgejo) GetName() string {
+	return Name
 }
 
 func (o *Forgejo) GetPerPage() int {
