@@ -22,20 +22,52 @@ func TestBlockUser(t *testing.T) {
 	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
 	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
-	// Follow each other.
-	assert.NoError(t, user_model.FollowUser(db.DefaultContext, doer.ID, blockedUser.ID))
-	assert.NoError(t, user_model.FollowUser(db.DefaultContext, blockedUser.ID, doer.ID))
+	t.Run("Follow", func(t *testing.T) {
+		defer user_model.UnblockUser(db.DefaultContext, doer.ID, blockedUser.ID)
 
-	// Blocked user watch repository of doer.
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: doer.ID})
-	assert.NoError(t, repo_model.WatchRepo(db.DefaultContext, blockedUser.ID, repo.ID, true))
+		// Follow each other.
+		assert.NoError(t, user_model.FollowUser(db.DefaultContext, doer.ID, blockedUser.ID))
+		assert.NoError(t, user_model.FollowUser(db.DefaultContext, blockedUser.ID, doer.ID))
 
-	assert.NoError(t, BlockUser(db.DefaultContext, doer.ID, blockedUser.ID))
+		assert.NoError(t, BlockUser(db.DefaultContext, doer.ID, blockedUser.ID))
 
-	// Ensure they aren't following each other anymore.
-	assert.False(t, user_model.IsFollowing(doer.ID, blockedUser.ID))
-	assert.False(t, user_model.IsFollowing(blockedUser.ID, doer.ID))
+		// Ensure they aren't following each other anymore.
+		assert.False(t, user_model.IsFollowing(doer.ID, blockedUser.ID))
+		assert.False(t, user_model.IsFollowing(blockedUser.ID, doer.ID))
+	})
 
-	// Ensure blocked user isn't following doer's repository.
-	assert.False(t, repo_model.IsWatching(blockedUser.ID, repo.ID))
+	t.Run("Watch", func(t *testing.T) {
+		defer user_model.UnblockUser(db.DefaultContext, doer.ID, blockedUser.ID)
+
+		// Blocked user watch repository of doer.
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: doer.ID})
+		assert.NoError(t, repo_model.WatchRepo(db.DefaultContext, blockedUser.ID, repo.ID, true))
+
+		assert.NoError(t, BlockUser(db.DefaultContext, doer.ID, blockedUser.ID))
+
+		// Ensure blocked user isn't following doer's repository.
+		assert.False(t, repo_model.IsWatching(blockedUser.ID, repo.ID))
+	})
+
+	t.Run("Collaboration", func(t *testing.T) {
+		doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 16})
+		blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 18})
+		repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 22, OwnerID: doer.ID})
+		repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 21, OwnerID: doer.ID})
+		defer user_model.UnblockUser(db.DefaultContext, doer.ID, blockedUser.ID)
+
+		isBlockedUserCollab := func(repo *repo_model.Repository) bool {
+			isCollaborator, err := repo_model.IsCollaborator(db.DefaultContext, repo.ID, blockedUser.ID)
+			assert.NoError(t, err)
+			return isCollaborator
+		}
+
+		assert.True(t, isBlockedUserCollab(repo1))
+		assert.True(t, isBlockedUserCollab(repo2))
+
+		assert.NoError(t, BlockUser(db.DefaultContext, doer.ID, blockedUser.ID))
+
+		assert.False(t, isBlockedUserCollab(repo1))
+		assert.False(t, isBlockedUserCollab(repo2))
+	})
 }

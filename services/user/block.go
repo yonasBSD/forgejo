@@ -54,5 +54,17 @@ func BlockUser(ctx context.Context, userID, blockID int64) error {
 		return err
 	}
 
+	// Remove blocked user as collaborator from repositories the user owns as an
+	// individual.
+	collabsID, err := repo_model.GetCollaboratorWithUser(ctx, userID, blockID)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.GetEngine(ctx).In("id", collabsID).Delete(&repo_model.Collaboration{})
+	if err != nil {
+		return err
+	}
+
 	return committer.Commit()
 }
