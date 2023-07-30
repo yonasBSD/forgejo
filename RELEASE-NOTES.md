@@ -1,8 +1,51 @@
 # Release Notes
 
-A Forgejo release is published shortly after a Gitea release is published and they have [matching release numbers](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/RELEASE.md#release-numbering). Additional Forgejo releases may be published to address urgent security issues or bug fixes. Forgejo release notes include all Gitea release notes.
+A Forgejo release is published shortly after a Gitea release is published and they have [matching release numbers](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/RELEASE.md#release-numbering). Additional Forgejo releases may be published to address urgent security issues or bug fixes.
 
-The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.19.1 or v1.19.2) does not require manual actions but others might (e.g. v1.18.0, v1.19.0).
+The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.20.1-0 or v1.20.2-0) does not require manual actions but others might (e.g. v1.19, v1.20).
+
+## 1.20.2-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.2-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.1-0..v1.20.2-0
+```
+
+This stable release includes bug fixes and displays [warnings in the administration panel](https://codeberg.org/forgejo/forgejo/commit/28f4029e40) when deprecated entries are found in `app.ini`.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are upgraded to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.1+0-gitea-1.20.2`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Add missing assets to the Forgejo sources tarbal](https://codeberg.org/forgejo/forgejo/commit/e14d239005)
+  * [Fix user type selection error when creating a user](https://codeberg.org/forgejo/forgejo/commit/268569b462) and selecting `public` or `private`.
+  * [Fix access check for org-level project](https://codeberg.org/forgejo/forgejo/commit/5afb0294f4)
+  * [Warn instead of reporting an error when a webhook cannot be found](https://codeberg.org/forgejo/forgejo/commit/4c3dcdf815)
+  * [Set MAX_WORKERS](https://codeberg.org/forgejo/forgejo/commit/5a4b19435d) to a value lower than 10 if the number of available CPUs is low to avoid overloading the host.
+  * [Fix bug when pushing to a pull request which enabled dismiss approval automatically](https://codeberg.org/forgejo/forgejo/commit/4640c53386)
+  * [Fix handling of plenty Nuget package versions](https://codeberg.org/forgejo/forgejo/commit/7bb8526736)
+  * [Update email-setup.en-us.md](https://codeberg.org/forgejo/forgejo/commit/31f2ce3998)
+  * [Fix bugs](https://codeberg.org/forgejo/forgejo/commit/9654d71bb2) in [LFS meta garbage collection](https://codeberg.org/forgejo/forgejo/issues/949)
+  * [Fix UI regression of asciinema player](https://codeberg.org/forgejo/forgejo/commit/f3c26de1f4)
+  * [Fix LFS object list style](https://codeberg.org/forgejo/forgejo/commit/f20cfc291c)
+  * [Fix CLI allowing creation of multiple user access tokens with the same name](https://codeberg.org/forgejo/forgejo/commit/b699e1d340)
+  * [Fix](https://codeberg.org/forgejo/forgejo/commit/f4a8f10f64) router logger [preventing separating the logs in different files](https://codeberg.org/forgejo/forgejo/issues/1123).
+  * [added ssh mirror workaround description](https://codeberg.org/forgejo/forgejo/commit/d9d38b6244)
+  * [Fix wrong workflow status when rerun a job in an already finished workflow](https://codeberg.org/forgejo/forgejo/commit/e2101ae572)
+  * [Fix escape problems in the branch selector](https://codeberg.org/forgejo/forgejo/commit/9fae415030)
+  * [Fix handling of Debian files with trailing slash](https://codeberg.org/forgejo/forgejo/commit/4be3270e87)
+  * [fix Missing 404 swagger response docs for /admin/users/{username}](https://codeberg.org/forgejo/forgejo/commit/1cd4d4b00e)
+  * [Use stderr as fallback if the log file can't be opened](https://codeberg.org/forgejo/forgejo/commit/942d02f8e9)
 
 ## 1.20.1-0
 
