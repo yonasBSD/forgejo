@@ -35,7 +35,7 @@ This stable release includes bug fixes and displays [warnings in the administrat
   * [Fix bug when pushing to a pull request which enabled dismiss approval automatically](https://codeberg.org/forgejo/forgejo/commit/4640c53386)
   * [Fix handling of plenty Nuget package versions](https://codeberg.org/forgejo/forgejo/commit/7bb8526736)
   * [Update email-setup.en-us.md](https://codeberg.org/forgejo/forgejo/commit/31f2ce3998)
-  * [Fix bugs](https://codeberg.org/forgejo/forgejo/commit/9654d71bb2) in [LFS meta garbage collection](https://codeberg.org/forgejo/forgejo/issues/949)
+  * [Fix bugs](https://codeberg.org/forgejo/forgejo/commit/9654d71bb2) in [LFS meta garbage collection](https://codeberg.org/forgejo/forgejo/issues/1113)
   * [Fix UI regression of asciinema player](https://codeberg.org/forgejo/forgejo/commit/f3c26de1f4)
   * [Fix LFS object list style](https://codeberg.org/forgejo/forgejo/commit/f20cfc291c)
   * [Fix CLI allowing creation of multiple user access tokens with the same name](https://codeberg.org/forgejo/forgejo/commit/b699e1d340)
