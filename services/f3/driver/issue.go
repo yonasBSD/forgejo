@@ -146,8 +146,8 @@ func (o *IssueProvider) FromFormat(ctx context.Context, i *format.Issue) *Issue 
 
 func (o *IssueProvider) GetObjects(ctx context.Context, user *User, project *Project, page int) []*Issue {
 	issues, err := issues_model.Issues(ctx, &issues_model.IssuesOptions{
-		ListOptions: db.ListOptions{Page: page, PageSize: o.g.perPage},
-		RepoIDs:     []int64{project.GetID()},
+		Paginator: &db.ListOptions{Page: page, PageSize: o.g.perPage},
+		RepoIDs:   []int64{project.GetID()},
 	})
 	if err != nil {
 		panic(fmt.Errorf("error while listing issues: %v", err))
