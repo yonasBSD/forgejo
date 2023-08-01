@@ -160,16 +160,15 @@ func NewMainApp() *cli.App {
 	}
 	executable := filepath.Base(path)
 
-	var subCmds []*cli.Command
+	var subCmdsStandalone []*cli.Command = make([]*cli.Command, 0, 10)
+	var subCmdWithConfig []*cli.Command = make([]*cli.Command, 0, 10)
 
 	//
 	// If the executable is forgejo-cli, provide a Forgejo specific CLI
 	// that is NOT compatible with Gitea.
 	//
 	if executable == "forgejo-cli" {
-		subCmds = []*cli.Command{
-			forgejo.CmdActions(context.Background()),
-		}
+		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdActions(context.Background()))
 	} else {
 		//
 		// Otherwise provide a Gitea compatible CLI which includes Forgejo
@@ -177,16 +176,14 @@ func NewMainApp() *cli.App {
 		// admins to migration from Gitea to Forgejo by replacing the gitea
 		// binary and rename it to forgejo if they want.
 		//
-		subCmds = []*cli.Command{
-			forgejo.CmdForgejo(context.Background()),
-			CmdActions,
-		}
+		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdForgejo(context.Background()))
+		subCmdWithConfig = append(subCmdWithConfig, CmdActions)
 	}
 
-	return newMainApp(subCmds...)
+	return newMainApp(subCmdsStandalone, subCmdWithConfig)
 }
 
-func newMainApp(subCmds ...*cli.Command) *cli.App {
+func newMainApp(subCmdsStandaloneArgs, subCmdWithConfigArgs []*cli.Command) *cli.App {
 	app := cli.NewApp()
 	app.EnableBashCompletion = true
 
@@ -211,6 +208,7 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 	cmdConvert := util.ToPointer(*cmdDoctorConvert)
 	cmdConvert.Hidden = true // still support the legacy "./gitea doctor" by the hidden sub-command, remove it in next release
 	subCmdWithConfig = append(subCmdWithConfig, cmdConvert)
+	subCmdWithConfig = append(subCmdWithConfig, subCmdWithConfigArgs...)
 
 	// these sub-commands do not need the config file, and they do not depend on any path or environment variable.
 	subCmdStandalone := []*cli.Command{
@@ -218,6 +216,7 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 		CmdGenerate,
 		CmdDocs,
 	}
+	subCmdStandalone = append(subCmdStandalone, subCmdsStandaloneArgs...)
 
 	app.DefaultCommand = CmdWeb.Name
 
@@ -230,7 +229,6 @@ func newMainApp(subCmds ...*cli.Command) *cli.App {
 	}
 	app.Commands = append(app.Commands, subCmdWithConfig...)
 	app.Commands = append(app.Commands, subCmdStandalone...)
-	app.Commands = append(app.Commands, subCmds...)
 
 	if !checkCommandFlags(app) {
 		panic("some flags are incorrect") // this is a runtime check to help developers
