@@ -900,6 +900,12 @@ func Routes() *web.Route {
 					Delete(user.DeleteHook)
 			}, reqWebhooksEnabled())
 
+			m.Group("", func() {
+				m.Get("/list_blocked", user.ListBlockedUsers)
+				m.Put("/block/{username}", user.BlockUser)
+				m.Put("/unblock/{username}", user.UnblockUser)
+			})
+
 			m.Group("/avatar", func() {
 				m.Post("", bind(api.UpdateUserAvatarOption{}), user.UpdateAvatar)
 				m.Delete("", user.DeleteAvatar)
@@ -1328,6 +1334,12 @@ func Routes() *web.Route {
 				m.Delete("", org.DeleteAvatar)
 			}, reqToken(), reqOrgOwnership())
 			m.Get("/activities/feeds", org.ListOrgActivityFeeds)
+
+			m.Group("", func() {
+				m.Get("/list_blocked", reqToken(), reqOrgOwnership(), org.ListBlockedUsers)
+				m.Put("/block/{username}", reqToken(), reqOrgOwnership(), org.BlockUser)
+				m.Put("/unblock/{username}", reqToken(), reqOrgOwnership(), org.UnblockUser)
+			}, reqToken(), reqOrgOwnership())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), orgAssignment(true))
 		m.Group("/teams/{teamid}", func() {
 			m.Combo("").Get(reqToken(), org.GetTeam).
