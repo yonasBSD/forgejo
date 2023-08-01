@@ -49,6 +49,17 @@ runs:
         version=${version##*v}
         echo "value=$version" >> "$GITHUB_OUTPUT"
 
+    - name: Create the release notes
+        id: release-notes
+        run: |
+          anchor=${{ steps.tag-version.outputs.value }}
+          anchor=${anchor//./-}
+          cat >> "$GITHUB_OUTPUT" <<EOF
+          value<<ENDVAR
+          See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#$anchor
+          ENDVAR
+          EOF
+
     - name: apt-get install docker.io
       run: |
         DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -qq -y docker.io
@@ -71,7 +82,7 @@ runs:
         repo: ${{ inputs.to-owner }}/${{ inputs.repo }}
         direction: upload
         release-dir: release
-        release-notes: "See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#${{ steps.tag-version.outputs.value }}"
+        release-notes: ${{ steps.release-notes.outputs.value }}
         token: ${{ inputs.token }}
         gpg-private-key: ${{ inputs.gpg-private-key }}
         gpg-passphrase: ${{ inputs.gpg-passphrase }}
