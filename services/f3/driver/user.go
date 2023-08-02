@@ -49,9 +49,6 @@ func (o *User) IsNil() bool {
 }
 
 func (o *User) Equals(other *User) bool {
-	if o.ID != other.ID {
-		return false
-	}
 	//
 	// Only compare user data if both are managed by F3 otherwise
 	// they are equal if they have the same ID. Here is an example:
@@ -67,7 +64,7 @@ func (o *User) Equals(other *User) bool {
 	//   no longer is managed by F3
 	//
 	if !o.IsF3() || !other.IsF3() {
-		return true
+		return o.ID == other.ID
 	}
 	return (o.Name == other.Name &&
 		o.FullName == other.FullName &&
