@@ -14,7 +14,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	user_service "code.gitea.io/gitea/services/user"
 
 	"github.com/stretchr/testify/assert"
 	config_types "lab.forgefriends.org/friendlyforgeformat/gof3/config/types"
@@ -24,6 +23,8 @@ import (
 
 type forgejoInstance struct {
 	g       *Forgejo
+	t       tests.TestingT
+	ctx     context.Context
 	creator *tests.Creator
 }
 
@@ -58,23 +59,37 @@ func newTestForgejo(t tests.TestingT) forgejoInstance {
 
 	return forgejoInstance{
 		g:       &g,
+		t:       t,
+		ctx:     ctx,
 		creator: tests.NewCreator(t),
 	}
 }
 
-func (o *forgejoInstance) createUser(ctx context.Context, t testing.TB) (*format.User, func()) {
+func (o *forgejoInstance) createUser() (*format.User, *User) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	fixtureUser := o.creator.CreateUser(int64(rand.Uint64()))
+	assert.NotNil(o.t, fixtureUser)
+
 	user := &User{}
 	user.FromFormat(fixtureUser)
 	user.User.MustChangePassword = false
 	user.User.LowerName = strings.ToLower(user.User.Name)
 
-	assert.NoError(t, db.Insert(ctx, user.User))
+	assert.NoError(o.t, db.Insert(o.ctx, user.User))
 
-	return fixtureUser, func() {
-		assert.NoError(t, user_service.DeleteUser(ctx, &user.User, true))
-	}
+	return fixtureUser, user
+}
+
+func (o *forgejoInstance) createProject(user *User) (*format.Project, *Project) {
+	fixtureProject := o.creator.CreateProject(user.ToFormat())
+	assert.NotNil(o.t, fixtureProject)
+
+	project := &Project{}
+	project.FromFormat(fixtureProject)
+
+	provider := &ProjectProvider{BaseProvider: BaseProvider{g: o.g}}
+
+	return fixtureProject, provider.Put(o.ctx, user, project)
 }
 
 type BeanConstraint[Bean any, BeanFormat any, BeanFormatPtr any] interface {

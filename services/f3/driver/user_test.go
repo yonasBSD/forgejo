@@ -3,28 +3,24 @@
 package driver
 
 import (
-	"context"
 	"testing"
 
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 
-	"github.com/stretchr/testify/assert"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/tests"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
+	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
 
 func TestF3Driver_Users(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	unittest.PrepareTestEnv(t)
 
-	ctx := context.Background()
 	tf := newTestForgejo(t)
 	provider := &UserProvider{BaseProvider: BaseProvider{g: tf.g}}
-	assert.NotNil(t, provider)
-	user, deleteUser := tf.createUser(ctx, t)
-	defer deleteUser()
+	fixtureUser := tf.creator.CreateUser(f3_util.RandInt64())
 
-	tests.ProviderMethods[User, format.User](tests.ProviderOptions{T: t, Retry: false}, provider, user, nil)
+	tests.ProviderMethods[User, format.User](tests.ProviderOptions{T: t}, provider, fixtureUser, nil)
 }
 
 func TestF3Driver_UserFormat(t *testing.T) {
