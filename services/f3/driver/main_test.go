@@ -89,7 +89,7 @@ func (o *forgejoInstance) createProject(user *User) (*format.Project, *Project) 
 
 	provider := &ProjectProvider{BaseProvider: BaseProvider{g: o.g}}
 
-	return fixtureProject, provider.Put(o.ctx, user, project)
+	return fixtureProject, provider.Put(o.ctx, user, project, nil)
 }
 
 type BeanConstraint[Bean any, BeanFormat any, BeanFormatPtr any] interface {

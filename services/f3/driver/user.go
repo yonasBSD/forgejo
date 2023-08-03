@@ -194,7 +194,7 @@ func (o *UserProvider) Get(ctx context.Context, exemplar *User) *User {
 	return UserConverter(user)
 }
 
-func (o *UserProvider) Put(ctx context.Context, user *User) *User {
+func (o *UserProvider) Put(ctx context.Context, user, existing *User) *User {
 	o.g.GetLogger().Trace("begin %+v", *user)
 	u := &user_model.User{
 		ID:   user.GetID(),

@@ -139,7 +139,7 @@ func (o *ReactionProvider) Get(ctx context.Context, user *User, project *Project
 	return reaction
 }
 
-func (o *ReactionProvider) Put(ctx context.Context, user *User, project *Project, parents []common.ContainerObjectInterface, reaction *Reaction) *Reaction {
+func (o *ReactionProvider) Put(ctx context.Context, user *User, project *Project, parents []common.ContainerObjectInterface, reaction, existing *Reaction) *Reaction {
 	r := &issues_model.Reaction{
 		Type:   reaction.Type,
 		UserID: o.g.GetDoer().ID,

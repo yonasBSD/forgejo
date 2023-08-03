@@ -289,7 +289,7 @@ func (o *PullRequestProvider) Get(ctx context.Context, user *User, project *Proj
 	return p
 }
 
-func (o *PullRequestProvider) Put(ctx context.Context, user *User, project *Project, pullRequest *PullRequest) *PullRequest {
+func (o *PullRequestProvider) Put(ctx context.Context, user *User, project *Project, pullRequest, existing *PullRequest) *PullRequest {
 	i := pullRequest.PullRequest.Issue
 	i.RepoID = project.GetID()
 	labels := make([]int64, 0, len(i.Labels))
