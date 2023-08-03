@@ -6,32 +6,12 @@ import (
 	"testing"
 
 	issue_model "code.gitea.io/gitea/models/issues"
-	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"lab.forgefriends.org/friendlyforgeformat/gof3/forges/tests"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
 )
-
-func TestF3Driver_Issues(t *testing.T) {
-	unittest.PrepareTestEnv(t)
-
-	tf := newTestForgejo(t)
-
-	userFixture, user := tf.createUser()
-	projectFixture, project := tf.createProject(user)
-
-	provider := &IssueProvider{
-		BaseProviderWithProjectProvider: BaseProviderWithProjectProvider{
-			BaseProvider: BaseProvider{g: tf.g},
-		},
-	}
-
-	fixtureIssue := tf.creator.CreateIssue(userFixture, projectFixture, []*format.Label{}, []*format.Milestone{})
-
-	tests.ProviderMethodsWithParentOneTwo[Issue, format.Issue, User, Project](tests.ProviderOptions{T: t}, provider, fixtureIssue, user, project, nil)
-}
 
 func TestF3Driver_IssueFormat(t *testing.T) {
 	now := timeutil.TimeStampNow()
@@ -66,5 +46,5 @@ func TestF3Driver_IssueFormat(t *testing.T) {
 			},
 		},
 	}
-	toFromFormat[Issue, format.Issue, *Issue, *format.Issue](t, &issue)
+	tests.ToFromFormat[Issue, format.Issue, *Issue, *format.Issue](t, &issue)
 }

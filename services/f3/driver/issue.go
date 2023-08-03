@@ -49,7 +49,8 @@ func (o *Issue) IsNil() bool {
 }
 
 func (o *Issue) Equals(other *Issue) bool {
-	return o.Index == other.Index
+	return (o.Index == other.Index &&
+		o.Title == other.Title)
 }
 
 func (o *Issue) ToFormatInterface() format.Interface {
@@ -184,10 +185,33 @@ func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, i
 		labels = append(labels, label.ID)
 	}
 
-	if err := issues_model.NewIssue(&project.Repository, &i, labels, []string{}); err != nil {
-		panic(err)
+	var result *Issue
+
+	if existing == nil || existing.IsNil() {
+		if err := issues_model.NewIssue(&project.Repository, &i, labels, []string{}); err != nil {
+			panic(err)
+		}
+		result = IssueConverter(&i)
+	} else {
+		e := existing.Issue
+		if issue.GetID() != existing.GetID() {
+			panic(fmt.Sprintf("issue.GetID() %d != existing.GetID() %d", issue.GetID(), existing.GetID()))
+		}
+		var u issues_model.Issue
+		u.Index = existing.GetID()
+		u.RepoID = project.GetID()
+		cols := make([]string, 0, 10)
+		if i.Title != e.Title {
+			u.Title = i.Title
+			cols = append(cols, "name")
+		}
+		if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+			panic(err)
+		}
+		result = existing
 	}
-	return o.Get(ctx, user, project, IssueConverter(&i))
+
+	return o.Get(ctx, user, project, result)
 }
 
 func (o *IssueProvider) Delete(ctx context.Context, user *User, project *Project, issue *Issue) *Issue {

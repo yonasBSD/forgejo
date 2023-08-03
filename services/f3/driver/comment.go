@@ -48,7 +48,7 @@ func (o *Comment) IsNil() bool {
 }
 
 func (o *Comment) Equals(other *Comment) bool {
-	return o.Comment.ID == other.Comment.ID
+	return o.Comment.Content == other.Comment.Content
 }
 
 func (o *Comment) ToFormatInterface() format.Interface {
@@ -57,8 +57,8 @@ func (o *Comment) ToFormatInterface() format.Interface {
 
 func (o *Comment) ToFormat() *format.Comment {
 	return &format.Comment{
-		IssueIndex: o.Comment.IssueID,
 		Common:     format.NewCommon(o.Comment.ID),
+		IssueIndex: o.Comment.IssueID,
 		PosterID:   format.NewUserReference(o.Comment.Poster.ID),
 		Content:    o.Comment.Content,
 		Created:    o.Comment.CreatedUnix.AsTime(),
@@ -69,7 +69,11 @@ func (o *Comment) ToFormat() *format.Comment {
 func (o *Comment) FromFormat(comment *format.Comment) {
 	*o = Comment{
 		Comment: issues_model.Comment{
-			ID:       comment.GetID(),
+			ID:      comment.GetID(),
+			IssueID: comment.IssueIndex,
+			Issue: &issues_model.Issue{
+				ID: comment.IssueIndex,
+			},
 			PosterID: comment.PosterID.GetID(),
 			Poster: &user_model.User{
 				ID: comment.PosterID.GetID(),
@@ -96,10 +100,19 @@ func (o *CommentProvider) FromFormat(ctx context.Context, f *format.Comment) *Co
 }
 
 func (o *CommentProvider) GetObjects(ctx context.Context, user *User, project *Project, commentable common.ContainerObjectInterface, page int) []*Comment {
+	var issue *issues_model.Issue
+	switch c := commentable.(type) {
+	case *PullRequest:
+		issue = c.PullRequest.Issue
+	case *Issue:
+		issue = &c.Issue
+	default:
+		panic(fmt.Errorf("unexpected type %T", commentable))
+	}
 	comments, err := issues_model.FindComments(ctx, &issues_model.FindCommentsOptions{
 		ListOptions: db.ListOptions{Page: page, PageSize: o.g.perPage},
 		RepoID:      project.GetID(),
-		IssueID:     commentable.GetID(),
+		IssueID:     issue.ID,
 		Type:        issues_model.CommentTypeComment,
 	})
 	if err != nil {

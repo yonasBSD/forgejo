@@ -10,6 +10,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -170,11 +171,14 @@ func (o *PullRequest) FromFormat(pullRequest *format.PullRequest) {
 	}
 
 	issue := issues_model.Issue{
-		RepoID:      base.ID,
-		Repo:        base,
-		Title:       pullRequest.Title,
-		Index:       pullRequest.GetID(),
-		PosterID:    pullRequest.PosterID.GetID(),
+		RepoID:   base.ID,
+		Repo:     base,
+		Title:    pullRequest.Title,
+		Index:    pullRequest.GetID(),
+		PosterID: pullRequest.PosterID.GetID(),
+		Poster: &user_model.User{
+			ID: pullRequest.PosterID.GetID(),
+		},
 		Content:     pullRequest.Content,
 		IsPull:      true,
 		IsClosed:    pullRequest.State == "closed",
@@ -186,8 +190,18 @@ func (o *PullRequest) FromFormat(pullRequest *format.PullRequest) {
 
 	pr := issues_model.PullRequest{
 		HeadRepoID: head.ID,
+		HeadRepo: &repo_model.Repository{
+			ID:        head.ID,
+			Name:      pullRequest.Head.RepoName,
+			OwnerName: pullRequest.Head.OwnerName,
+		},
 		HeadBranch: pullRequest.Head.Ref,
 		BaseRepoID: base.ID,
+		BaseRepo: &repo_model.Repository{
+			ID:        base.ID,
+			Name:      pullRequest.Base.RepoName,
+			OwnerName: pullRequest.Base.OwnerName,
+		},
 		BaseBranch: pullRequest.Base.Ref,
 		MergeBase:  pullRequest.Base.SHA,
 		Index:      pullRequest.GetID(),
@@ -253,6 +267,9 @@ func (o *PullRequestProvider) ProcessObject(ctx context.Context, user *User, pro
 		panic(err)
 	}
 	if err := pr.Issue.LoadRepo(ctx); err != nil {
+		panic(err)
+	}
+	if err := pr.Issue.LoadAttributes(ctx); err != nil {
 		panic(err)
 	}
 	if err := pr.LoadAttributes(ctx); err != nil {

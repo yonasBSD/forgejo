@@ -168,6 +168,7 @@ func (o *ReviewProvider) GetObjects(ctx context.Context, user *User, project *Pr
 	reviews, err := issues_model.FindReviews(ctx, issues_model.FindReviewOptions{
 		ListOptions: db.ListOptions{Page: page, PageSize: o.g.perPage},
 		IssueID:     pullRequest.IssueID,
+		Type:        issues_model.ReviewTypeUnknown,
 	})
 	if err != nil {
 		panic(fmt.Errorf("error while listing reviews: %v", err))

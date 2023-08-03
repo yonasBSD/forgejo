@@ -71,11 +71,12 @@ func (o *Asset) ToFormat() *format.ReleaseAsset {
 func (o *Asset) FromFormat(asset *format.ReleaseAsset) {
 	*o = Asset{
 		Attachment: repo_model.Attachment{
-			ID:            asset.GetID(),
-			Name:          asset.Name,
-			Size:          int64(asset.Size),
-			DownloadCount: int64(asset.DownloadCount),
-			CreatedUnix:   timeutil.TimeStamp(asset.Created.Unix()),
+			ID:                asset.GetID(),
+			Name:              asset.Name,
+			Size:              int64(asset.Size),
+			DownloadCount:     int64(asset.DownloadCount),
+			CustomDownloadURL: asset.DownloadURL,
+			CreatedUnix:       timeutil.TimeStamp(asset.Created.Unix()),
 		},
 		DownloadFunc: asset.DownloadFunc,
 	}

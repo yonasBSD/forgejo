@@ -50,7 +50,7 @@ func (o *Release) IsNil() bool {
 }
 
 func (o *Release) Equals(other *Release) bool {
-	return o.ID == other.ID
+	return o.TagName == other.TagName
 }
 
 func (o *Release) ToFormatInterface() format.Interface {
@@ -82,6 +82,7 @@ func (o *Release) FromFormat(release *format.Release) {
 
 	*o = Release{
 		repo_model.Release{
+			ID:          release.GetID(),
 			PublisherID: release.PublisherID.GetID(),
 			Publisher: &user_model.User{
 				ID: release.PublisherID.GetID(),
