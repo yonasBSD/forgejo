@@ -1106,23 +1106,18 @@ func UpdateComment(c *Comment, doer *user_model.User) error {
 		return err
 	}
 	defer committer.Close()
+
 	sess := db.GetEngine(ctx).ID(c.ID).AllCols()
+	if c.Issue.NoAutoTime {
+		// update the DataBase
+		sess = sess.NoAutoTime().SetExpr("updated_unix", c.Issue.UpdatedUnix)
+		// the UpdatedUnix value of the Comment also has to be set,
+		// to return the adequate valuè
+		// see https://codeberg.org/forgejo/forgejo/pulls/764#issuecomment-1023801
+		c.UpdatedUnix = c.Issue.UpdatedUnix
+	}
 	if _, err := sess.Update(c); err != nil {
 		return err
-	}
-	if c.Issue.NoAutoTime {
-		// AllCols().Update() does not change the "update_unix" field
-		// even if NoAutoTime is set.
-		// So, we need to commit the former pending Update() and
-		// then call an other Update() specifically to set "updated_unix".
-		if err := committer.Commit(); err != nil {
-			return fmt.Errorf("Commit: %w", err)
-		}
-		c.UpdatedUnix = c.Issue.UpdatedUnix
-		sess := db.GetEngine(ctx).ID(c.ID).Cols("updated_unix").NoAutoTime()
-		if _, err := sess.Update(c); err != nil {
-			return err
-		}
 	}
 	if err := c.LoadIssue(ctx); err != nil {
 		return err
