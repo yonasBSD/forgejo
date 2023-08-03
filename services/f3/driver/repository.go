@@ -78,7 +78,7 @@ func (o *RepositoryProvider) Get(ctx context.Context, user *User, project *Proje
 	}
 }
 
-func (o *RepositoryProvider) Put(ctx context.Context, user *User, project *Project, repository *Repository) *Repository {
+func (o *RepositoryProvider) Put(ctx context.Context, user *User, project *Project, repository, existing *Repository) *Repository {
 	if repository.FetchFunc != nil {
 		directory, delete := format.RepositoryDefaultDirectory()
 		defer delete()

@@ -117,7 +117,7 @@ func (o *LabelProvider) Get(ctx context.Context, user *User, project *Project, e
 	return LabelConverter(label)
 }
 
-func (o *LabelProvider) Put(ctx context.Context, user *User, project *Project, label *Label) *Label {
+func (o *LabelProvider) Put(ctx context.Context, user *User, project *Project, label, existing *Label) *Label {
 	l := label.Label
 	l.RepoID = project.GetID()
 	if err := issues_model.NewLabel(ctx, &l); err != nil {

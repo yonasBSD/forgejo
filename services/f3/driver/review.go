@@ -197,7 +197,7 @@ func (o *ReviewProvider) Get(ctx context.Context, user *User, project *Project, 
 	return ReviewConverter(review)
 }
 
-func (o *ReviewProvider) Put(ctx context.Context, user *User, project *Project, pullRequest *PullRequest, review *Review) *Review {
+func (o *ReviewProvider) Put(ctx context.Context, user *User, project *Project, pullRequest *PullRequest, review, existing *Review) *Review {
 	r := &review.Review
 	r.ID = 0
 	for _, comment := range r.Comments {

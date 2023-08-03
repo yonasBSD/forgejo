@@ -139,7 +139,7 @@ func (o *ProjectProvider) Get(ctx context.Context, user *User, exemplar *Project
 	return ProjectConverter(project)
 }
 
-func (o *ProjectProvider) Put(ctx context.Context, user *User, project *Project) *Project {
+func (o *ProjectProvider) Put(ctx context.Context, user *User, project, existing *Project) *Project {
 	repo, err := repo_module.CreateRepository(o.g.GetDoer(), &user.User, repo_module.CreateRepoOptions{
 		Name:        project.Name,
 		Description: project.Description,

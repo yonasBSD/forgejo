@@ -164,7 +164,7 @@ func (o *MilestoneProvider) Get(ctx context.Context, user *User, project *Projec
 	return MilestoneConverter(milestone)
 }
 
-func (o *MilestoneProvider) Put(ctx context.Context, user *User, project *Project, milestone *Milestone) *Milestone {
+func (o *MilestoneProvider) Put(ctx context.Context, user *User, project *Project, milestone, existing *Milestone) *Milestone {
 	m := milestone.Milestone
 	m.RepoID = project.GetID()
 	if err := issues_model.NewMilestone(&m); err != nil {

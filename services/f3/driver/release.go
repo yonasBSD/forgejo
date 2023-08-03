@@ -146,7 +146,7 @@ func (o *ReleaseProvider) Get(ctx context.Context, user *User, project *Project,
 	return r
 }
 
-func (o *ReleaseProvider) Put(ctx context.Context, user *User, project *Project, release *Release) *Release {
+func (o *ReleaseProvider) Put(ctx context.Context, user *User, project *Project, release, existing *Release) *Release {
 	r := release.Release
 	r.RepoID = project.GetID()
 

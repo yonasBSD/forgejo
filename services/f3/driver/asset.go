@@ -141,7 +141,7 @@ func (o *AssetProvider) Get(ctx context.Context, user *User, project *Project, r
 	return AssetConverter(asset)
 }
 
-func (o *AssetProvider) Put(ctx context.Context, user *User, project *Project, release *Release, asset *Asset) *Asset {
+func (o *AssetProvider) Put(ctx context.Context, user *User, project *Project, release *Release, asset, existing *Asset) *Asset {
 	asset.ID = 0
 	asset.UploaderID = user.GetID()
 	asset.RepoID = project.GetID()

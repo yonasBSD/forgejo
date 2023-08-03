@@ -133,7 +133,7 @@ func (o *CommentProvider) Get(ctx context.Context, user *User, project *Project,
 	return co
 }
 
-func (o *CommentProvider) Put(ctx context.Context, user *User, project *Project, commentable common.ContainerObjectInterface, comment *Comment) *Comment {
+func (o *CommentProvider) Put(ctx context.Context, user *User, project *Project, commentable common.ContainerObjectInterface, comment, existing *Comment) *Comment {
 	var issue *issues_model.Issue
 	switch c := commentable.(type) {
 	case *PullRequest:

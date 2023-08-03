@@ -108,7 +108,7 @@ func (o *TopicProvider) Get(ctx context.Context, user *User, project *Project, e
 	return TopicConverter(topic)
 }
 
-func (o *TopicProvider) Put(ctx context.Context, user *User, project *Project, topic *Topic) *Topic {
+func (o *TopicProvider) Put(ctx context.Context, user *User, project *Project, topic, existing *Topic) *Topic {
 	t, err := repo_model.AddTopic(project.GetID(), topic.Name)
 	if err != nil {
 		panic(err)

@@ -176,7 +176,7 @@ func (o *IssueProvider) Get(ctx context.Context, user *User, project *Project, e
 	return i
 }
 
-func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, issue *Issue) *Issue {
+func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, issue, existing *Issue) *Issue {
 	i := issue.Issue
 	i.RepoID = project.GetID()
 	labels := make([]int64, 0, len(i.Labels))
