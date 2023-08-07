@@ -5,6 +5,7 @@
 package org
 
 import (
+	"fmt"
 	"net/http"
 
 	activities_model "code.gitea.io/gitea/models/activities"
@@ -499,13 +500,15 @@ func BlockUser(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
 
-	user := user.GetUserByParams(ctx)
-	if ctx.Written() {
+	if ctx.ContextUser.IsOrganization() {
+		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("%s is an organization not a user", ctx.ContextUser.Name))
 		return
 	}
 
-	utils.BlockUser(ctx, ctx.Org.Organization.AsUser(), user)
+	utils.BlockUser(ctx, ctx.Org.Organization.AsUser(), ctx.ContextUser)
 }
 
 // UnblockUser unblocks a user from the organization.
@@ -531,11 +534,13 @@ func UnblockUser(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
 
-	user := user.GetUserByParams(ctx)
-	if ctx.Written() {
+	if ctx.ContextUser.IsOrganization() {
+		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("%s is an organization not a user", ctx.ContextUser.Name))
 		return
 	}
 
-	utils.UnblockUser(ctx, ctx.Org.Organization.AsUser(), user)
+	utils.UnblockUser(ctx, ctx.Org.Organization.AsUser(), ctx.ContextUser)
 }
