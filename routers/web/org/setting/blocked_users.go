@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -41,6 +42,11 @@ func BlockedUsersBlock(ctx *context.Context) {
 		return
 	}
 
+	if u.IsOrganization() {
+		ctx.ServerError("IsOrganization", fmt.Errorf("%s is an organization not a user", u.Name))
+		return
+	}
+
 	if err := user_service.BlockUser(ctx, ctx.Org.Organization.ID, u.ID); err != nil {
 		ctx.ServerError("BlockUser", err)
 		return
@@ -52,8 +58,19 @@ func BlockedUsersBlock(ctx *context.Context) {
 
 // BlockedUsersUnblock unblocks a particular user from the organization.
 func BlockedUsersUnblock(ctx *context.Context) {
-	if err := user_model.UnblockUser(ctx, ctx.Org.Organization.ID, ctx.FormInt64("user_id")); err != nil {
-		ctx.ServerError("BlockUser", err)
+	u, err := user_model.GetUserByID(ctx, ctx.FormInt64("user_id"))
+	if err != nil {
+		ctx.ServerError("GetUserByID", err)
+		return
+	}
+
+	if u.IsOrganization() {
+		ctx.ServerError("IsOrganization", fmt.Errorf("%s is an organization not a user", u.Name))
+		return
+	}
+
+	if err := user_model.UnblockUser(ctx, ctx.Org.Organization.ID, u.ID); err != nil {
+		ctx.ServerError("UnblockUser", err)
 		return
 	}
 

@@ -58,6 +58,26 @@ func TestAPIUserBlock(t *testing.T) {
 
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: 2})
 	})
+
+	t.Run("Organization as target", func(t *testing.T) {
+		org := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 26, Type: user_model.UserTypeOrganization})
+
+		t.Run("Block", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s?token=%s", org.Name, token))
+			MakeRequest(t, req, http.StatusUnprocessableEntity)
+
+			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: org.ID})
+		})
+
+		t.Run("Unblock", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/unblock/%s?token=%s", org.Name, token))
+			MakeRequest(t, req, http.StatusUnprocessableEntity)
+		})
+	})
 }
 
 func TestAPIOrgBlock(t *testing.T) {
@@ -98,6 +118,73 @@ func TestAPIOrgBlock(t *testing.T) {
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
+	})
+
+	t.Run("Organization as target", func(t *testing.T) {
+		targetOrg := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 26, Type: user_model.UserTypeOrganization})
+
+		t.Run("Block", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/%s?token=%s", org, targetOrg.Name, token))
+			MakeRequest(t, req, http.StatusUnprocessableEntity)
+
+			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: targetOrg.ID})
+		})
+
+		t.Run("Unblock", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/%s?token=%s", org, targetOrg.Name, token))
+			MakeRequest(t, req, http.StatusUnprocessableEntity)
+		})
+	})
+
+	t.Run("Read scope token", func(t *testing.T) {
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadOrganization)
+
+		t.Run("Write action", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2?token=%s", org, token))
+			MakeRequest(t, req, http.StatusForbidden)
+
+			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
+		})
+
+		t.Run("Read action", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked?token=%s", org, token))
+			MakeRequest(t, req, http.StatusOK)
+		})
+	})
+
+	t.Run("Not as owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		org := "user3"
+		user := "user4" // Part of org team with write perms.
+
+		session := loginUser(t, user)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
+
+		t.Run("Block user", func(t *testing.T) {
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2?token=%s", org, token))
+			MakeRequest(t, req, http.StatusForbidden)
+
+			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 3, BlockID: 2})
+		})
+
+		t.Run("Unblock user", func(t *testing.T) {
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/user2?token=%s", org, token))
+			MakeRequest(t, req, http.StatusForbidden)
+		})
+
+		t.Run("List blocked users", func(t *testing.T) {
+			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked?token=%s", org, token))
+			MakeRequest(t, req, http.StatusForbidden)
+		})
 	})
 }
 

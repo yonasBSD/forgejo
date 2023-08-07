@@ -287,7 +287,15 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 func Action(ctx *context.Context) {
 	var err error
 	var redirectViaJSON bool
-	switch ctx.FormString("action") {
+	action := ctx.FormString("action")
+
+	if ctx.ContextUser.IsOrganization() && (action == "block" || action == "unblock") {
+		log.Error("Cannot perform this action on an organization %q", ctx.FormString("action"))
+		ctx.JSONError(fmt.Sprintf("Action %q failed", ctx.FormString("action")))
+		return
+	}
+
+	switch action {
 	case "follow":
 		err = user_model.FollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	case "unfollow":
