@@ -4,6 +4,61 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.20.1-0 or v1.20.2-0) does not require manual actions but others might (e.g. v1.19, v1.20).
 
+## 1.20.3-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.3-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.2-0..v1.20.3-0
+```
+
+This stable release includes bug fixes and a safeguard against a
+regression that may lead to data loss. The `[storage*]` sections in the
+`app.ini` file may cause the files for some subsystems - Attachments,
+LFS, Avatars, Repository avatars, Repository archives, Packages - to
+be merged together or misplaced.  The safeguard detects this situation
+and Forgejo will not start to prevent data loss. If your instance is in
+this situation, [follow the instructions in the companion blog post](https://forgejo.org/2023-08-release-v1-20-3-0/).
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are upgraded to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.2+0-gitea-1.20.3`
+
+* Breaking changes
+
+  * [Fix some bugs in how the storage sections are interpreted](https://codeberg.org/forgejo/forgejo/commit/815682c88) in the `app.ini` file. Read more about this issue in the [v1.20.3-0 blog post](https://forgejo.org/2023-08-release-v1-20-3-0/)
+  * [Add sanity checks](https://codeberg.org/forgejo/forgejo/commit/ee0e4848e) to detect an `app.ini` configuration that [needs manual fixing to preserve storage](https://forgejo.org/2023-08-release-v1-20-3-0/)
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix links to pull request reviews sent via mail](https://codeberg.org/forgejo/forgejo/commit/88e179d5ef8ee41f71d068195685ff098b38ca31). The pull request link was correct but it did not go the the review and stayed at the beginning of the page
+  * [Recognize OGG as an audio format](https://codeberg.org/forgejo/forgejo/commit/622ec5c79f299c32ac2667a1aa7b4bf5d7c2d6cf)
+  * [Consistently show the last time a cron job was run in the admin panel](https://codeberg.org/forgejo/forgejo/commit/5f769ef20)
+  * [Fix NuGet registry v2 & v3 API search endpoints](https://codeberg.org/forgejo/forgejo/commit/471138829b0c24fe8c621dbb866ae8bb45ebc674)
+  * [Allow html <img /> code to be parsed in markdown files](https://codeberg.org/forgejo/forgejo/commit/e7d0475e1)
+  * [Fix incorrect color of the selected assignees when creating an issue](https://codeberg.org/forgejo/forgejo/commit/c7d7490b2)
+  * [Add missing MinIO region on client initialization](https://codeberg.org/forgejo/forgejo/commit/927cbe62b)
+  * [Add pull request review request webhook event](https://codeberg.org/forgejo/forgejo/commit/99c8dab9d)
+  * [Fix bad url in the wiki due to incorrect unescaping](https://codeberg.org/forgejo/forgejo/commit/e0f6956a4)
+  * [Fix the sort menu that was broken when displaying a custom profile from the `.profile`  repository](https://codeberg.org/forgejo/forgejo/commit/fa92a6a4c)
+  * [Workaround](https://codeberg.org/forgejo/forgejo/commit/3d211dea2) MariaDB [performance issue on large Forgejo instances](https://codeberg.org/forgejo/forgejo/issues/1161)
+  * [Display human-readable text](https://codeberg.org/forgejo/forgejo/commit/2729bb3c6) instead of [numerical file modes](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation)
+  * [The CLI exit code now is different from zero when an error occurs](https://codeberg.org/forgejo/forgejo/commit/089af9ab1)
+  * [Fix error when a Debian package has a double newline character at the end of the control block](https://codeberg.org/forgejo/forgejo/commit/dd7180846)
+  * [Fix a condition that would cause git related tasks to hang for longer than necessary in the queues and use too many resources as a result](https://codeberg.org/forgejo/forgejo/commit/36f8fbe1b)
+  * [Fix the topic validation rule and suport dots](https://codeberg.org/forgejo/forgejo/commit/a578b75d7)
+  * [Fix pull request check list when there are more than 30](https://codeberg.org/forgejo/forgejo/commit/e226b9646)
+  * [Fix attachment clipboard copy on insecure origin](https://codeberg.org/forgejo/forgejo/commit/12ac84c26)
+  * [Fix the profile README rendering](https://codeberg.org/forgejo/forgejo/commit/84c3b60a4) that [was inconsistent with other markdown files renderings](https://codeberg.org/forgejo/forgejo/issues/833)
+  * [Fix API leaking the user email when the caller is not authentified](https://codeberg.org/forgejo/forgejo/commit/d89003cc1)
+
 ## 1.20.2-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.2-0` release can be reviewed from the command line with:
@@ -79,15 +134,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
     breaking change because **it will display the .profile/README.md of a pre-existing repository, private or not**.
   - The [API endpoint pagination](https://codeberg.org/forgejo/forgejo/commit/0a3c4d4a595cc7e12462dde393ed64186260f26b) for team members was fixed: it now starts at 1 instead of 0, just like all other paginated API endpoints.
   - The `SSH_KEYGEN_PATH` variable in `app.ini` now defaults to using the [Go SSH key parsing instead of the `ssh-keygen` binary](https://codeberg.org/forgejo/forgejo/commit/7a8a4f54321f208ebbb0f708a5f0e49c4cd4cc04). When `START_SSH_SERVER` is true, the decision to use the Go SSH key parsing or an external binary will now depend on the value of `SSH_KEYGEN_PATH` instead of always using the Go SSH key parsing.
-  - The [storage settings](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20) were refactored.
-    They are now stored in one section. It is no longer possible to use multiple sections to override settings.
-    The storage settings priority is:
-    1. `[attachment]`
-    2. `[storage.attachments]` | `[storage.<another>]`
-    3. `[storage]`
-    4. `default`
-    For extra override configuration items, currently only are `SERVE_DIRECT`, `MINIO_BASE_PATH`, `MINIO_BUCKET`, which could be configured in another section.
-    The priority of the override configuration is `[attachment]` > `[storage.attachments]` > `default`.
+  - The storage settings were [refactored](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20). Read more about [storage settings](https://forgejo.org/docs/v1.20/admin/storage/).
   - [The [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
   - In addition to the already deprecated options inside [queue], many options have been dropped as well. Those are WRAP_IF_NECESSARY, MAX_ATTEMPTS, TIMEOUT, WORKERS, BLOCK_TIMEOUT, BOOST_TIMEOUT, BOOST_WORKERS. You can remove them from your app.ini now. Additionally, some default values have changed in this section.
   - The default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
