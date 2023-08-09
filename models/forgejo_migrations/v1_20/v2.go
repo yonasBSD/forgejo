@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package v1_20 //nolint
+package forgejo_v1_20 //nolint:revive
 
 import (
 	"xorm.io/xorm"
