@@ -7,18 +7,18 @@ Sensitive security-related issues should be reported to [security@forgejo.org](m
 ## For everyone involved
 
 - [Documentation](https://forgejo.org/docs/next/)
-- [Code of Conduct](https://forgejo.org/docs/next/developer/COC/)
-- [Bugs, features, security and others discussions](https://forgejo.org/docs/next/developer/DISCUSSIONS/)
-- [Governance](https://forgejo.org/docs/next/developer/GOVERNANCE/)
-- [Sustainability and funding](https://codeberg.org/forgejo/sustainability/src/branch/master/README.md)
+- [Code of Conduct](https://forgejo.org/docs/latest/developer/coc/)
+- [Bugs, features, security and others discussions](https://forgejo.org/docs/latest/developer/discussions/)
+- [Governance](https://forgejo.org/docs/latest/developer/governance/)
+- [Sustainability and funding](https://codeberg.org/forgejo/sustainability/src/branch/main/README.md)
 
 ## For contributors
 
-- [Developer Certificate of Origin (DCO)](https://forgejo.org/docs/next/developer/DCO/)
-- [Development workflow](https://forgejo.org/docs/next/developer/WORKFLOW/)
-- [Compiling from source](https://forgejo.org/docs/next/developer/from-source/)
+- [Developer Certificate of Origin (DCO)](https://forgejo.org/docs/latest/developer/dco/)
+- [Development workflow](https://forgejo.org/docs/latest/developer/workflow/)
+- [Compiling from source](https://forgejo.org/docs/latest/developer/from-source/)
 
 ## For maintainers
 
-- [Release management](https://forgejo.org/docs/next/developer/RELEASE/)
-- [Secrets](https://forgejo.org/docs/next/developer/SECRETS/)
+- [Release management](https://forgejo.org/docs/latest/developer/release/)
+- [Secrets](https://forgejo.org/docs/latest/developer/secrets/)
