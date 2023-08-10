@@ -902,8 +902,10 @@ func Routes() *web.Route {
 
 			m.Group("", func() {
 				m.Get("/list_blocked", user.ListBlockedUsers)
-				m.Put("/block/{username}", user.BlockUser)
-				m.Put("/unblock/{username}", user.UnblockUser)
+				m.Group("", func() {
+					m.Put("/block/{username}", user.BlockUser)
+					m.Put("/unblock/{username}", user.UnblockUser)
+				}, context_service.UserAssignmentAPI())
 			})
 
 			m.Group("/avatar", func() {
@@ -1336,9 +1338,11 @@ func Routes() *web.Route {
 			m.Get("/activities/feeds", org.ListOrgActivityFeeds)
 
 			m.Group("", func() {
-				m.Get("/list_blocked", reqToken(), reqOrgOwnership(), org.ListBlockedUsers)
-				m.Put("/block/{username}", reqToken(), reqOrgOwnership(), org.BlockUser)
-				m.Put("/unblock/{username}", reqToken(), reqOrgOwnership(), org.UnblockUser)
+				m.Get("/list_blocked", org.ListBlockedUsers)
+				m.Group("", func() {
+					m.Put("/block/{username}", org.BlockUser)
+					m.Put("/unblock/{username}", org.UnblockUser)
+				}, context_service.UserAssignmentAPI())
 			}, reqToken(), reqOrgOwnership())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), orgAssignment(true))
 		m.Group("/teams/{teamid}", func() {
