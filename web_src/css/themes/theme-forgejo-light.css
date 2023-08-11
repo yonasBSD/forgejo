@@ -198,7 +198,7 @@
   --color-reaction-bg: #0000000a;
   --color-reaction-active-bg: var(--color-primary-alpha-20);
   --color-nav-bg: var(--zinc-100);
-  --color-nav-hover-bg: var(--zinc-100);
+  --color-nav-hover-bg: var(--zinc-300);
   --color-label-active-bg: #4c525e;
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
