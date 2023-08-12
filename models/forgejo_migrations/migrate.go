@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 
+	"code.gitea.io/gitea/models/forgejo/semver"
+	forgejo_v1_20 "code.gitea.io/gitea/models/forgejo_migrations/v1_20"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -34,7 +36,10 @@ func NewMigration(desc string, fn func(*xorm.Engine) error) *Migration {
 
 // This is a sequence of additional Forgejo migrations.
 // Add new migrations to the bottom of the list.
-var migrations = []*Migration{}
+var migrations = []*Migration{
+	// v2 -> v3
+	NewMigration("create the forgejo_sem_ver table", forgejo_v1_20.CreateSemVerTable),
+}
 
 // GetCurrentDBVersion returns the current Forgejo database version.
 func GetCurrentDBVersion(x *xorm.Engine) (int64, error) {
@@ -135,5 +140,10 @@ func Migrate(x *xorm.Engine) error {
 			return err
 		}
 	}
-	return nil
+
+	if err := x.Sync(new(semver.ForgejoSemVer)); err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+
+	return semver.SetVersionStringWithEngine(x, setting.ForgejoVersion)
 }
