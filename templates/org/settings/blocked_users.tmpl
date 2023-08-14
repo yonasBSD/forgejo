@@ -17,7 +17,7 @@
 	<div class="ui bottom attached table segment blocked-users">
 		{{range .BlockedUsers}}
 			<div class="item gt-df gt-ac gt-fw">
-				{{avatar $.Context . 48 "gt-mr-3 gt-mb-0"}}
+				{{ctx.AvatarUtils.Avatar $.Context . 48 "gt-mr-3 gt-mb-0"}}
 					<div class="gt-df gt-fc">
 						<a href="{{.HomeLink}}">{{.Name}}</a>
 						<i class="gt-mt-2">{{$.locale.Tr "settings.blocked_since" (DateTime "short" .CreatedUnix) | Safe}}</i>
