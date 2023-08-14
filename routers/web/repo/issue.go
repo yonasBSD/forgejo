@@ -1200,7 +1200,10 @@ func NewIssuePost(ctx *context.Context) {
 	}
 
 	if err := issue_service.NewIssue(ctx, repo, issue, labelIDs, attachments, assigneeIDs); err != nil {
-		if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
+		if errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.RenderWithErr(ctx.Tr("repo.issues.blocked_by_user"), tplIssueNew, form)
+			return
+		} else if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
 			ctx.Error(http.StatusBadRequest, "UserDoesNotHaveAccessToRepo", err.Error())
 			return
 		}
@@ -3171,7 +3174,7 @@ func ChangeIssueReaction(ctx *context.Context) {
 
 	switch ctx.Params(":action") {
 	case "react":
-		reaction, err := issues_model.CreateIssueReaction(ctx.Doer.ID, issue.ID, form.Content)
+		reaction, err := issue_service.CreateIssueReaction(ctx, ctx.Doer, issue, form.Content)
 		if err != nil {
 			if issues_model.IsErrForbiddenIssueReaction(err) {
 				ctx.ServerError("ChangeIssueReaction", err)
@@ -3273,7 +3276,7 @@ func ChangeCommentReaction(ctx *context.Context) {
 
 	switch ctx.Params(":action") {
 	case "react":
-		reaction, err := issues_model.CreateCommentReaction(ctx.Doer.ID, comment.Issue.ID, comment.ID, form.Content)
+		reaction, err := issue_service.CreateCommentReaction(ctx, ctx.Doer, comment.Issue, comment, form.Content)
 		if err != nil {
 			if issues_model.IsErrForbiddenIssueReaction(err) {
 				ctx.ServerError("ChangeIssueReaction", err)
