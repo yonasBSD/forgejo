@@ -286,6 +286,7 @@ const (
 	OneDevService                          // 6 onedev service
 	GitBucketService                       // 7 gitbucket service
 	CodebaseService                        // 8 codebase service
+	ForgejoService                         // 9 forgejo service
 )
 
 // Name represents the service type's name
@@ -313,6 +314,8 @@ func (gt GitServiceType) Title() string {
 		return "Codebase"
 	case PlainGitService:
 		return "Git"
+	case ForgejoService:
+		return "Forgejo"
 	}
 	return ""
 }
@@ -352,7 +355,7 @@ type MigrateRepoOptions struct {
 // TokenAuth represents whether a service type supports token-based auth
 func (gt GitServiceType) TokenAuth() bool {
 	switch gt {
-	case GithubService, GiteaService, GitlabService:
+	case GithubService, GiteaService, GitlabService, ForgejoService:
 		return true
 	}
 	return false
@@ -368,6 +371,7 @@ var SupportedFullGitService = []GitServiceType{
 	OneDevService,
 	GitBucketService,
 	CodebaseService,
+	ForgejoService,
 }
 
 // RepoTransfer represents a pending repo transfer
