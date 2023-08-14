@@ -1655,6 +1655,45 @@
         }
       }
     },
+    "/orgs/{org}/block/{username}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "Blocks a user from the organization",
+        "operationId": "orgBlockUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the org",
+            "name": "org",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/orgs/{org}/hooks": {
       "get": {
         "produces": [
@@ -2015,6 +2054,44 @@
           },
           "422": {
             "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/orgs/{org}/list_blocked": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "List the organization's blocked users",
+        "operationId": "orgListBlockedUsers",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the org",
+            "name": "org",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/BlockedUserList"
           }
         }
       }
@@ -2479,6 +2556,45 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/orgs/{org}/unblock/{username}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "Unblock a user from the organization",
+        "operationId": "orgUnblockUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the org",
+            "name": "org",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
           }
         }
       }
@@ -3840,6 +3956,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
           },
           "422": {
             "$ref": "#/responses/validationError"
@@ -13962,6 +14081,38 @@
         }
       }
     },
+    "/user/block/{username}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Blocks a user from the doer.",
+        "operationId": "userBlockUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/user/emails": {
       "get": {
         "produces": [
@@ -14138,6 +14289,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
           }
         }
       },
@@ -14608,6 +14762,37 @@
         }
       }
     },
+    "/user/list_blocked": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "List the authenticated user's blocked users",
+        "operationId": "userListBlockedUsers",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "page number of results to return (1-based)",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "page size of results",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/BlockedUserList"
+          }
+        }
+      }
+    },
     "/user/orgs": {
       "get": {
         "produces": [
@@ -15005,6 +15190,38 @@
         "responses": {
           "200": {
             "$ref": "#/responses/TrackedTimeList"
+          }
+        }
+      }
+    },
+    "/user/unblock/{username}": {
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Unblocks a user from the doer.",
+        "operationId": "userUnblockUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
           }
         }
       }
@@ -15935,6 +16152,23 @@
         "uuid": {
           "type": "string",
           "x-go-name": "UUID"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "BlockedUser": {
+      "type": "object",
+      "title": "BlockedUser represents a blocked user.",
+      "properties": {
+        "block_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "BlockID"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Created"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -22166,6 +22400,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/Attachment"
+        }
+      }
+    },
+    "BlockedUserList": {
+      "description": "BlockedUserList",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BlockedUser"
         }
       }
     },
