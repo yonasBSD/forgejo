@@ -281,12 +281,12 @@ const (
 	PlainGitService                        // 1 plain git service
 	GithubService                          // 2 github.com
 	GiteaService                           // 3 gitea service
-	GitlabService                          // 4 gitlab service
-	GogsService                            // 5 gogs service
-	OneDevService                          // 6 onedev service
-	GitBucketService                       // 7 gitbucket service
-	CodebaseService                        // 8 codebase service
-	ForgejoService                         // 9 forgejo service
+	ForgejoService                         // 4 forgejo service
+	GitlabService                          // 5 gitlab service
+	GogsService                            // 6 gogs service
+	OneDevService                          // 7 onedev service
+	GitBucketService                       // 8 gitbucket service
+	CodebaseService                        // 9 codebase service
 )
 
 // Name represents the service type's name
@@ -302,6 +302,8 @@ func (gt GitServiceType) Title() string {
 		return "GitHub"
 	case GiteaService:
 		return "Gitea"
+	case ForgejoService:
+		return "Forgejo"
 	case GitlabService:
 		return "GitLab"
 	case GogsService:
@@ -314,8 +316,6 @@ func (gt GitServiceType) Title() string {
 		return "Codebase"
 	case PlainGitService:
 		return "Git"
-	case ForgejoService:
-		return "Forgejo"
 	}
 	return ""
 }
@@ -366,12 +366,12 @@ func (gt GitServiceType) TokenAuth() bool {
 var SupportedFullGitService = []GitServiceType{
 	GithubService,
 	GitlabService,
+	ForgejoService,
 	GiteaService,
 	GogsService,
 	OneDevService,
 	GitBucketService,
 	CodebaseService,
-	ForgejoService,
 }
 
 // RepoTransfer represents a pending repo transfer
