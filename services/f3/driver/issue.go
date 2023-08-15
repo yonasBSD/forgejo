@@ -49,8 +49,7 @@ func (o *Issue) IsNil() bool {
 }
 
 func (o *Issue) Equals(other *Issue) bool {
-	return (o.Index == other.Index &&
-		o.Title == other.Title)
+	return (o.Title == other.Title)
 }
 
 func (o *Issue) ToFormatInterface() format.Interface {
