@@ -46,7 +46,7 @@ func TestF3_Mirror(t *testing.T) {
 		//
 		// Step 1: create a fixture
 		//
-		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+		fixtureNewF3Forge := func(t f3_tests.TestingT, logger *f3_types.Logger, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
@@ -88,6 +88,7 @@ func TestF3_Mirror(t *testing.T) {
 		// Step 3: mirror Forgejo into F3
 		//
 		adminUsername := "user1"
+		logger := util.ToF3Logger(nil)
 		forgejoAPI := f3_forges.NewForgeRoot(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
 			Options: f3_types.Options{
 				Configuration: f3_types.Configuration{
@@ -95,11 +96,12 @@ func TestF3_Mirror(t *testing.T) {
 					Directory: t.TempDir(),
 				},
 				Features: f3_types.AllFeatures,
+				Logger:   logger,
 			},
 			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
 		})
 
-		f3 := f3_forges.FixtureNewF3Forge(t, nil, t.TempDir())
+		f3 := f3_forges.FixtureNewF3Forge(t, logger, nil, t.TempDir())
 		apiForge := forgejoAPI.Forge
 		apiUser := apiForge.Users.GetFromFormat(context.Background(), &format.User{UserName: fixture.UserFormat.UserName})
 		apiProject := apiUser.Projects.GetFromFormat(context.Background(), &format.Project{Name: fixture.ProjectFormat.Name})
@@ -196,7 +198,7 @@ func TestF3_UserMappingExisting(t *testing.T) {
 		}()
 
 		log.Debug("Step 1: create a fixture in F3")
-		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+		fixtureNewF3Forge := func(t f3_tests.TestingT, logger *f3_types.Logger, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
@@ -242,6 +244,7 @@ func TestF3_UserMappingExisting(t *testing.T) {
 
 		log.Debug("Step 3: mirror Forgejo into F3")
 		adminUsername := "user1"
+		logger := util.ToF3Logger(nil)
 		forgejoAPI := f3_forges.NewForgeRoot(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
 			Options: f3_types.Options{
 				Configuration: f3_types.Configuration{
@@ -249,12 +252,12 @@ func TestF3_UserMappingExisting(t *testing.T) {
 					Directory: t.TempDir(),
 				},
 				Features: f3_types.AllFeatures,
-				Logger:   util.ToF3Logger(nil),
+				Logger:   logger,
 			},
 			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
 		})
 
-		f3 := f3_forges.FixtureNewF3Forge(t, nil, t.TempDir())
+		f3 := f3_forges.FixtureNewF3Forge(t, logger, nil, t.TempDir())
 		apiForge := forgejoAPI.Forge
 		apiUser := apiForge.Users.GetFromFormat(context.Background(), &format.User{UserName: gitlabUser.Name})
 		//		apiProject := apiUser.Projects.GetFromFormat(context.Background(), &format.Project{Name: fixture.ProjectFormat.Name})
@@ -284,7 +287,7 @@ func TestF3_UserMappingNew(t *testing.T) {
 		}()
 
 		log.Debug("Step 1: create a fixture in F3")
-		fixtureNewF3Forge := func(t f3_tests.TestingT, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
+		fixtureNewF3Forge := func(t f3_tests.TestingT, logger *f3_types.Logger, user *format.User, tmpDir string) *f3_forges.ForgeRoot {
 			root := f3_forges.NewForgeRoot(&f3_f3.F3{}, &f3_f3.Options{
 				Options: f3_types.Options{
 					Configuration: f3_types.Configuration{
