@@ -281,12 +281,12 @@ const (
 	PlainGitService                        // 1 plain git service
 	GithubService                          // 2 github.com
 	GiteaService                           // 3 gitea service
-	ForgejoService                         // 4 forgejo service
-	GitlabService                          // 5 gitlab service
-	GogsService                            // 6 gogs service
-	OneDevService                          // 7 onedev service
-	GitBucketService                       // 8 gitbucket service
-	CodebaseService                        // 9 codebase service
+	GitlabService                          // 4 gitlab service
+	GogsService                            // 5 gogs service
+	OneDevService                          // 6 onedev service
+	GitBucketService                       // 7 gitbucket service
+	CodebaseService                        // 8 codebase service
+	ForgejoService                         // 9 forgejo service
 )
 
 // Name represents the service type's name
@@ -302,8 +302,6 @@ func (gt GitServiceType) Title() string {
 		return "GitHub"
 	case GiteaService:
 		return "Gitea"
-	case ForgejoService:
-		return "Forgejo"
 	case GitlabService:
 		return "GitLab"
 	case GogsService:
@@ -314,6 +312,8 @@ func (gt GitServiceType) Title() string {
 		return "GitBucket"
 	case CodebaseService:
 		return "Codebase"
+	case ForgejoService:
+		return "Forgejo"
 	case PlainGitService:
 		return "Git"
 	}
