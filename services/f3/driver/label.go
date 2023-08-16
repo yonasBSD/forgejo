@@ -120,10 +120,31 @@ func (o *LabelProvider) Get(ctx context.Context, user *User, project *Project, e
 func (o *LabelProvider) Put(ctx context.Context, user *User, project *Project, label, existing *Label) *Label {
 	l := label.Label
 	l.RepoID = project.GetID()
-	if err := issues_model.NewLabel(ctx, &l); err != nil {
-		panic(err)
+
+	var result *Label
+
+	if existing == nil || existing.IsNil() {
+		if err := issues_model.NewLabel(ctx, &l); err != nil {
+			panic(err)
+		}
+		result = LabelConverter(&l)
+	} else {
+		var u issues_model.Label
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if l.Name != existing.Name {
+			u.Name = l.Name
+			cols = append(cols, "name")
+		}
+
+		if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+			panic(err)
+		}
+		result = existing
 	}
-	return o.Get(ctx, user, project, LabelConverter(&l))
+
+	return o.Get(ctx, user, project, result)
 }
 
 func (o *LabelProvider) Delete(ctx context.Context, user *User, project *Project, label *Label) *Label {
