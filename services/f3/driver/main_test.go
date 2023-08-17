@@ -36,6 +36,9 @@ func TestForgeMethods(t *testing.T) {
 	testCommentProviderOptions := f3_tests.TestCommentProviderOptions
 	testCommentProviderOptions.ModifiedPut = true
 
+	testPullRequestsProviderOptions := f3_tests.TestPullRequestsProviderOptions
+	testPullRequestsProviderOptions.ModifiedPut = true
+
 	for _, testCase := range []struct {
 		name string
 		fun  func(f3_tests.ForgeTestInterface, f3_tests.ProviderOptions)
@@ -50,7 +53,7 @@ func TestForgeMethods(t *testing.T) {
 		{name: "project", fun: f3_tests.TestProject, opts: f3_tests.TestProjectProviderOptions},
 		{name: "user", fun: f3_tests.TestUsers, opts: testUsersProviderOptions},
 		{name: "topic", fun: f3_tests.TestTopic, opts: f3_tests.TestTopicProviderOptions},
-		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: f3_tests.TestPullRequestsProviderOptions},
+		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: testPullRequestsProviderOptions},
 		{name: "release", fun: f3_tests.TestReleases, opts: f3_tests.TestReleasesProviderOptions},
 		{name: "review", fun: f3_tests.TestReview, opts: f3_tests.TestReviewProviderOptions},
 	} {

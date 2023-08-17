@@ -314,9 +314,28 @@ func (o *PullRequestProvider) Put(ctx context.Context, user *User, project *Proj
 		labels = append(labels, label.ID)
 	}
 
-	if err := issues_model.NewPullRequest(ctx, &project.Repository, i, labels, []string{}, &pullRequest.PullRequest); err != nil {
-		panic(err)
+	if existing == nil || existing.IsNil() {
+		if err := issues_model.NewPullRequest(ctx, &project.Repository, i, labels, []string{}, &pullRequest.PullRequest); err != nil {
+			panic(err)
+		}
+	} else {
+		var u issues_model.Issue
+		u.Index = i.Index
+		u.RepoID = project.GetID()
+		cols := make([]string, 0, 10)
+
+		if i.Title != existing.Issue.Title {
+			u.Title = i.Title
+			cols = append(cols, "name")
+		}
+
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.Issue.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
 	}
+
 	return o.Get(ctx, user, project, pullRequest)
 }
 
