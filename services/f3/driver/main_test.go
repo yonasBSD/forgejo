@@ -45,6 +45,9 @@ func TestForgeMethods(t *testing.T) {
 	testProjectProviderOptions := f3_tests.TestProjectProviderOptions
 	testProjectProviderOptions.ModifiedPut = true
 
+	testReviewProviderOptions := f3_tests.TestReviewProviderOptions
+	testReviewProviderOptions.ModifiedPut = true
+
 	testPullRequestsProviderOptions := f3_tests.TestPullRequestsProviderOptions
 	testPullRequestsProviderOptions.ModifiedPut = true
 
@@ -64,7 +67,7 @@ func TestForgeMethods(t *testing.T) {
 		{name: "topic", fun: f3_tests.TestTopic, opts: f3_tests.TestTopicProviderOptions},
 		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: testPullRequestsProviderOptions},
 		{name: "release", fun: f3_tests.TestReleases, opts: testReleasesProviderOptions},
-		{name: "review", fun: f3_tests.TestReview, opts: f3_tests.TestReviewProviderOptions},
+		{name: "review", fun: f3_tests.TestReview, opts: testReviewProviderOptions},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCase.fun(NewTestForgejo(t), testCase.opts)
