@@ -42,6 +42,9 @@ func TestForgeMethods(t *testing.T) {
 	testCommentProviderOptions := f3_tests.TestCommentProviderOptions
 	testCommentProviderOptions.ModifiedPut = true
 
+	testProjectProviderOptions := f3_tests.TestProjectProviderOptions
+	testProjectProviderOptions.ModifiedPut = true
+
 	testPullRequestsProviderOptions := f3_tests.TestPullRequestsProviderOptions
 	testPullRequestsProviderOptions.ModifiedPut = true
 
@@ -56,7 +59,7 @@ func TestForgeMethods(t *testing.T) {
 		{name: "issue", fun: f3_tests.TestIssue, opts: testIssueProviderOptions},
 		{name: "label", fun: f3_tests.TestLabel, opts: testLabelProviderOptions},
 		{name: "milestone", fun: f3_tests.TestMilestones, opts: testMilestonesProviderOptions},
-		{name: "project", fun: f3_tests.TestProject, opts: f3_tests.TestProjectProviderOptions},
+		{name: "project", fun: f3_tests.TestProject, opts: testProjectProviderOptions},
 		{name: "user", fun: f3_tests.TestUsers, opts: testUsersProviderOptions},
 		{name: "topic", fun: f3_tests.TestTopic, opts: f3_tests.TestTopicProviderOptions},
 		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: testPullRequestsProviderOptions},

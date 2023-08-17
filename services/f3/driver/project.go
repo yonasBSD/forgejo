@@ -5,6 +5,7 @@ package driver
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -140,16 +141,38 @@ func (o *ProjectProvider) Get(ctx context.Context, user *User, exemplar *Project
 }
 
 func (o *ProjectProvider) Put(ctx context.Context, user *User, project, existing *Project) *Project {
-	repo, err := repo_module.CreateRepository(o.g.GetDoer(), &user.User, repo_module.CreateRepoOptions{
-		Name:        project.Name,
-		Description: project.Description,
-		OriginalURL: project.OriginalURL,
-		IsPrivate:   project.IsPrivate,
-	})
-	if err != nil {
-		panic(err)
+	var result *Project
+
+	if existing == nil || existing.IsNil() {
+		repo, err := repo_module.CreateRepository(o.g.GetDoer(), &user.User, repo_module.CreateRepoOptions{
+			Name:        project.Name,
+			Description: project.Description,
+			OriginalURL: project.OriginalURL,
+			IsPrivate:   project.IsPrivate,
+		})
+		if err != nil {
+			panic(err)
+		}
+		result = ProjectConverter(repo)
+	} else {
+		var u repo_model.Repository
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if project.Name != existing.Name {
+			u.Name = project.Name
+			u.LowerName = strings.ToLower(u.Name)
+			cols = append(cols, "name", "lower_name")
+		}
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+		result = existing
 	}
-	return o.Get(ctx, user, ProjectConverter(repo))
+
+	return o.Get(ctx, user, result)
 }
 
 func (o *ProjectProvider) Delete(ctx context.Context, user *User, project *Project) *Project {
