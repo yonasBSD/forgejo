@@ -199,16 +199,37 @@ func (o *ReviewProvider) Get(ctx context.Context, user *User, project *Project, 
 }
 
 func (o *ReviewProvider) Put(ctx context.Context, user *User, project *Project, pullRequest *PullRequest, review, existing *Review) *Review {
-	r := &review.Review
-	r.ID = 0
-	for _, comment := range r.Comments {
-		comment.ID = 0
+	var result *Review
+
+	if existing == nil || existing.IsNil() {
+		r := &review.Review
+		r.ID = 0
+		for _, comment := range r.Comments {
+			comment.ID = 0
+		}
+		r.IssueID = pullRequest.IssueID
+		if err := issues_model.InsertReviews([]*issues_model.Review{r}); err != nil {
+			panic(err)
+		}
+		result = ReviewConverter(r)
+	} else {
+		var u issues_model.Review
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if review.Content != existing.Content {
+			u.Content = review.Content
+			cols = append(cols, "content")
+		}
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+		result = existing
 	}
-	r.IssueID = pullRequest.IssueID
-	if err := issues_model.InsertReviews([]*issues_model.Review{r}); err != nil {
-		panic(err)
-	}
-	return o.Get(ctx, user, project, pullRequest, ReviewConverter(r))
+
+	return o.Get(ctx, user, project, pullRequest, result)
 }
 
 func (o *ReviewProvider) Delete(ctx context.Context, user *User, project *Project, pullRequest *PullRequest, review *Review) *Review {

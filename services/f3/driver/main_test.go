@@ -30,23 +30,44 @@ func TestForgeMethods(t *testing.T) {
 	testLabelProviderOptions := f3_tests.TestLabelProviderOptions
 	testLabelProviderOptions.ModifiedPut = true
 
+	testMilestonesProviderOptions := f3_tests.TestMilestonesProviderOptions
+	testMilestonesProviderOptions.ModifiedPut = true
+
+	testReleasesProviderOptions := f3_tests.TestReleasesProviderOptions
+	testReleasesProviderOptions.ModifiedPut = true
+
+	testAssetsProviderOptions := f3_tests.TestAssetsProviderOptions
+	testAssetsProviderOptions.ModifiedPut = true
+
+	testCommentProviderOptions := f3_tests.TestCommentProviderOptions
+	testCommentProviderOptions.ModifiedPut = true
+
+	testProjectProviderOptions := f3_tests.TestProjectProviderOptions
+	testProjectProviderOptions.ModifiedPut = true
+
+	testReviewProviderOptions := f3_tests.TestReviewProviderOptions
+	testReviewProviderOptions.ModifiedPut = true
+
+	testPullRequestsProviderOptions := f3_tests.TestPullRequestsProviderOptions
+	testPullRequestsProviderOptions.ModifiedPut = true
+
 	for _, testCase := range []struct {
 		name string
 		fun  func(f3_tests.ForgeTestInterface, f3_tests.ProviderOptions)
 		opts f3_tests.ProviderOptions
 	}{
-		{name: "asset", fun: f3_tests.TestAssets, opts: f3_tests.TestAssetsProviderOptions},
+		{name: "asset", fun: f3_tests.TestAssets, opts: testAssetsProviderOptions},
 		{name: "repository", fun: f3_tests.TestRepository, opts: f3_tests.TestRepositoryProviderOptions},
-		{name: "comment", fun: f3_tests.TestComment, opts: f3_tests.TestCommentProviderOptions},
+		{name: "comment", fun: f3_tests.TestComment, opts: testCommentProviderOptions},
 		{name: "issue", fun: f3_tests.TestIssue, opts: testIssueProviderOptions},
 		{name: "label", fun: f3_tests.TestLabel, opts: testLabelProviderOptions},
-		{name: "milestone", fun: f3_tests.TestMilestones, opts: f3_tests.TestMilestonesProviderOptions},
-		{name: "project", fun: f3_tests.TestProject, opts: f3_tests.TestProjectProviderOptions},
+		{name: "milestone", fun: f3_tests.TestMilestones, opts: testMilestonesProviderOptions},
+		{name: "project", fun: f3_tests.TestProject, opts: testProjectProviderOptions},
 		{name: "user", fun: f3_tests.TestUsers, opts: testUsersProviderOptions},
 		{name: "topic", fun: f3_tests.TestTopic, opts: f3_tests.TestTopicProviderOptions},
-		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: f3_tests.TestPullRequestsProviderOptions},
-		{name: "release", fun: f3_tests.TestReleases, opts: f3_tests.TestReleasesProviderOptions},
-		{name: "review", fun: f3_tests.TestReview, opts: f3_tests.TestReviewProviderOptions},
+		{name: "pull_request", fun: f3_tests.TestPullRequests, opts: testPullRequestsProviderOptions},
+		{name: "release", fun: f3_tests.TestReleases, opts: testReleasesProviderOptions},
+		{name: "review", fun: f3_tests.TestReview, opts: testReviewProviderOptions},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCase.fun(NewTestForgejo(t), testCase.opts)

@@ -167,10 +167,34 @@ func (o *MilestoneProvider) Get(ctx context.Context, user *User, project *Projec
 func (o *MilestoneProvider) Put(ctx context.Context, user *User, project *Project, milestone, existing *Milestone) *Milestone {
 	m := milestone.Milestone
 	m.RepoID = project.GetID()
-	if err := issues_model.NewMilestone(&m); err != nil {
-		panic(err)
+
+	var result *Milestone
+
+	if existing == nil || existing.IsNil() {
+		if err := issues_model.NewMilestone(&m); err != nil {
+			panic(err)
+		}
+		result = MilestoneConverter(&m)
+	} else {
+		var u issues_model.Milestone
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if m.Name != existing.Name {
+			u.Name = m.Name
+			cols = append(cols, "name")
+		}
+
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+
+		result = existing
 	}
-	return o.Get(ctx, user, project, MilestoneConverter(&m))
+
+	return o.Get(ctx, user, project, result)
 }
 
 func (o *MilestoneProvider) Delete(ctx context.Context, user *User, project *Project, milestone *Milestone) *Milestone {
