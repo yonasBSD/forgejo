@@ -30,6 +30,9 @@ func TestForgeMethods(t *testing.T) {
 	testLabelProviderOptions := f3_tests.TestLabelProviderOptions
 	testLabelProviderOptions.ModifiedPut = true
 
+	testCommentProviderOptions := f3_tests.TestCommentProviderOptions
+	testCommentProviderOptions.ModifiedPut = true
+
 	for _, testCase := range []struct {
 		name string
 		fun  func(f3_tests.ForgeTestInterface, f3_tests.ProviderOptions)
@@ -37,7 +40,7 @@ func TestForgeMethods(t *testing.T) {
 	}{
 		{name: "asset", fun: f3_tests.TestAssets, opts: f3_tests.TestAssetsProviderOptions},
 		{name: "repository", fun: f3_tests.TestRepository, opts: f3_tests.TestRepositoryProviderOptions},
-		{name: "comment", fun: f3_tests.TestComment, opts: f3_tests.TestCommentProviderOptions},
+		{name: "comment", fun: f3_tests.TestComment, opts: testCommentProviderOptions},
 		{name: "issue", fun: f3_tests.TestIssue, opts: testIssueProviderOptions},
 		{name: "label", fun: f3_tests.TestLabel, opts: testLabelProviderOptions},
 		{name: "milestone", fun: f3_tests.TestMilestones, opts: f3_tests.TestMilestonesProviderOptions},

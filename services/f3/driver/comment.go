@@ -156,11 +156,35 @@ func (o *CommentProvider) Put(ctx context.Context, user *User, project *Project,
 	default:
 		panic(fmt.Errorf("unexpected type %T", commentable))
 	}
-	c, err := issue_service.CreateIssueComment(ctx, o.g.GetDoer(), &project.Repository, issue, comment.Content, nil)
-	if err != nil {
-		panic(err)
+
+	var result *Comment
+
+	if existing == nil || existing.IsNil() {
+		c, err := issue_service.CreateIssueComment(ctx, o.g.GetDoer(), &project.Repository, issue, comment.Content, nil)
+		if err != nil {
+			panic(err)
+		}
+		result = CommentConverter(c)
+	} else {
+		var u issues_model.Comment
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if comment.Content != existing.Content {
+			u.Content = comment.Content
+			cols = append(cols, "content")
+		}
+
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+
+		result = existing
 	}
-	return o.Get(ctx, user, project, commentable, CommentConverter(c))
+
+	return o.Get(ctx, user, project, commentable, result)
 }
 
 func (o *CommentProvider) Delete(ctx context.Context, user *User, project *Project, commentable common.ContainerObjectInterface, comment *Comment) *Comment {
