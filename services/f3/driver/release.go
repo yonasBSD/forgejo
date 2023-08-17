@@ -50,7 +50,8 @@ func (o *Release) IsNil() bool {
 }
 
 func (o *Release) Equals(other *Release) bool {
-	return o.TagName == other.TagName
+	return (o.TagName == other.TagName &&
+		o.Title == other.Title)
 }
 
 func (o *Release) ToFormatInterface() format.Interface {
@@ -148,20 +149,40 @@ func (o *ReleaseProvider) Get(ctx context.Context, user *User, project *Project,
 }
 
 func (o *ReleaseProvider) Put(ctx context.Context, user *User, project *Project, release, existing *Release) *Release {
-	r := release.Release
-	r.RepoID = project.GetID()
+	var result *Release
 
-	repoPath := repo_model.RepoPath(user.Name, project.Name)
-	gitRepo, err := git.OpenRepository(ctx, repoPath)
-	if err != nil {
-		panic(err)
-	}
-	defer gitRepo.Close()
+	if existing == nil || existing.IsNil() {
+		r := release.Release
+		r.RepoID = project.GetID()
 
-	if err := release_service.CreateRelease(gitRepo, &r, nil, ""); err != nil {
-		panic(err)
+		repoPath := repo_model.RepoPath(user.Name, project.Name)
+		gitRepo, err := git.OpenRepository(ctx, repoPath)
+		if err != nil {
+			panic(err)
+		}
+		defer gitRepo.Close()
+
+		if err := release_service.CreateRelease(gitRepo, &r, nil, ""); err != nil {
+			panic(err)
+		}
+		result = ReleaseConverter(&r)
+	} else {
+		var u repo_model.Release
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if release.Title != existing.Title {
+			u.Title = release.Title
+			cols = append(cols, "title")
+		}
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+		result = existing
 	}
-	return o.Get(ctx, user, project, ReleaseConverter(&r))
+	return o.Get(ctx, user, project, result)
 }
 
 func (o *ReleaseProvider) Delete(ctx context.Context, user *User, project *Project, release *Release) *Release {
