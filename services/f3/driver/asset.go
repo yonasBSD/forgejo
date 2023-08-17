@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 
+	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/services/attachment"
@@ -143,19 +144,40 @@ func (o *AssetProvider) Get(ctx context.Context, user *User, project *Project, r
 }
 
 func (o *AssetProvider) Put(ctx context.Context, user *User, project *Project, release *Release, asset, existing *Asset) *Asset {
-	asset.ID = 0
-	asset.UploaderID = user.GetID()
-	asset.RepoID = project.GetID()
-	asset.ReleaseID = release.GetID()
-	asset.UUID = uuid.New().String()
+	var result *Asset
 
-	download := asset.DownloadFunc()
-	defer download.Close()
-	a, err := attachment.NewAttachment(&asset.Attachment, download, asset.Size)
-	if err != nil {
-		panic(err)
+	if existing == nil || existing.IsNil() {
+		a := asset.Attachment
+		a.UploaderID = user.GetID()
+		a.RepoID = project.GetID()
+		a.ReleaseID = release.GetID()
+		a.UUID = uuid.New().String()
+
+		download := asset.DownloadFunc()
+		defer download.Close()
+
+		insertedAttachment, err := attachment.NewAttachment(&a, download, asset.Size)
+		if err != nil {
+			panic(err)
+		}
+		result = AssetConverter(insertedAttachment)
+	} else {
+		var u repo_model.Attachment
+		u.ID = existing.GetID()
+		cols := make([]string, 0, 10)
+
+		if asset.Name != existing.Name {
+			u.Name = asset.Name
+			cols = append(cols, "name")
+		}
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
+		}
+		result = existing
 	}
-	return o.Get(ctx, user, project, release, AssetConverter(a))
+	return o.Get(ctx, user, project, release, result)
 }
 
 func (o *AssetProvider) Delete(ctx context.Context, user *User, project *Project, release *Release, asset *Asset) *Asset {

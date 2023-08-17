@@ -36,6 +36,9 @@ func TestForgeMethods(t *testing.T) {
 	testReleasesProviderOptions := f3_tests.TestReleasesProviderOptions
 	testReleasesProviderOptions.ModifiedPut = true
 
+	testAssetsProviderOptions := f3_tests.TestAssetsProviderOptions
+	testAssetsProviderOptions.ModifiedPut = true
+
 	testCommentProviderOptions := f3_tests.TestCommentProviderOptions
 	testCommentProviderOptions.ModifiedPut = true
 
@@ -47,7 +50,7 @@ func TestForgeMethods(t *testing.T) {
 		fun  func(f3_tests.ForgeTestInterface, f3_tests.ProviderOptions)
 		opts f3_tests.ProviderOptions
 	}{
-		{name: "asset", fun: f3_tests.TestAssets, opts: f3_tests.TestAssetsProviderOptions},
+		{name: "asset", fun: f3_tests.TestAssets, opts: testAssetsProviderOptions},
 		{name: "repository", fun: f3_tests.TestRepository, opts: f3_tests.TestRepositoryProviderOptions},
 		{name: "comment", fun: f3_tests.TestComment, opts: testCommentProviderOptions},
 		{name: "issue", fun: f3_tests.TestIssue, opts: testIssueProviderOptions},
