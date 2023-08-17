@@ -204,9 +204,13 @@ func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, i
 			u.Title = i.Title
 			cols = append(cols, "name")
 		}
-		if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
-			panic(err)
+
+		if len(cols) > 0 {
+			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+				panic(err)
+			}
 		}
+
 		result = existing
 	}
 
