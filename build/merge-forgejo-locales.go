@@ -49,6 +49,8 @@ func renameGiteaForgejo(filename string) []byte {
 		`<a href="https://github.com/go-gitea/gitea/issues" target="_blank">GitHub</a>`, `<a href="https://codeberg.org/forgejo/forgejo/issues" target="_blank">Codeberg</a>`,
 		"https://github.com/go-gitea/gitea", "https://codeberg.org/forgejo/forgejo",
 		"https://blog.gitea.io", "https://forgejo.org/news",
+		"https://docs.gitea.io/en-us/protected-tags/", "https://forgejo.org/docs/latest/user/protection/#protected-tags",
+		"https://docs.gitea.io/en-us/webhooks/", "https://forgejo.org/docs/latest/user/webhooks/",
 	)
 
 	out := make([]byte, 0, 1024)
