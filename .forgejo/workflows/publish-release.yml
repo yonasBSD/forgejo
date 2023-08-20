@@ -59,6 +59,13 @@ jobs:
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
           verbose: ${{ secrets.VERBOSE }}
 
+
+      - name: set up go for the DNS update below
+        uses: https://code.forgejo.org/actions/setup-go@v4
+        if: secrets.ROLE == 'forgejo-experimental'
+        with:
+          go-version: ">=1.21"
+          check-latest: true
       - name: update the _release.experimental DNS record
         if: secrets.ROLE == 'forgejo-experimental'
         uses: https://code.forgejo.org/actions/ovh-dns-update@v1
