@@ -1,6 +1,16 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 
+#
+# Debug loop from the source tree:
+#
+# ./.forgejo/upgrades/test-upgrade.sh dependencies
+# ./.forgejo/upgrades/test-upgrade.sh build_all
+# ./.forgejo/upgrades/test-upgrade.sh test_downgrade_1.20.2_fails
+#
+# Everything happens in /tmp/forgejo-upgrades
+#
+
 set -ex
 
 HOST_PORT=0.0.0.0:3000
@@ -156,7 +166,6 @@ function test_downgrade_1.20.2_fails() {
 
     echo "================ See also https://codeberg.org/forgejo/forgejo/pulls/1225"
 
-
     echo "================ downgrading from 1.20.3-0 to 1.20.2-0 fails"
     stop
     reset default
@@ -197,6 +206,88 @@ function test_bug_storage_merged() {
 	cat $work_path/log/forgejo.log
 	return 1
     fi
+}
+
+function test_bug_storage_relative_path() {
+    local work_path=$DIR/forgejo-work-path
+
+    echo "================ using < 1.20.3-0 legacy [server].XXXX and [picture].XXXX are relative to WORK_PATH"
+    for version in 1.18.5-0 1.19.4-0 1.20.2-0 ; do
+	stop
+	reset legagy-relative
+	start $version
+	test -d $work_path/relative-lfs
+	test -d $work_path/relative-avatars
+	test -d $work_path/relative-repo-avatars
+    done
+
+    echo "================ using >= 1.20.3-0 legacy [server].XXXX and [picture].XXXX are relative to APP_DATA_PATH"
+    for version in 1.20.3-0 1.21.0-0 ; do
+	stop
+	reset legagy-relative
+	start $version
+	test -d $work_path/data/relative-lfs
+	test -d $work_path/data/relative-avatars
+	test -d $work_path/data/relative-repo-avatars
+    done
+
+    echo "================ using >= 1.20.3-0 relative [storage.XXXX].PATHS are relative to APP_DATA_PATH"
+    for version in 1.20.3-0 1.21.0-0 ; do
+	stop
+	reset storage-relative
+	start $version
+	for path in ${STORAGE_PATHS} ; do
+	    test -d $work_path/data/relative-$path
+	done
+    done
+
+    echo "================ using 1.20.[12]-0 relative [storage.XXXX].PATHS are inconsistent"
+    for version in 1.20.2-0 ; do
+	stop
+	reset storage-relative
+	start $version
+	test -d $work_path/data/packages
+	test -d $work_path/relative-repo-archive
+	test -d $work_path/relative-attachments
+	test -d $work_path/relative-lfs
+	test -d $work_path/data/avatars
+	test -d $work_path/data/repo-avatars
+    done
+
+    echo "================ using < 1.20 relative [storage.XXXX].PATHS are inconsistent"
+    for version in 1.18.5-0 1.19.4-0 ; do
+	stop
+	reset storage-relative
+	start $version
+	test -d $work_path/relative-packages
+	test -d $work_path/relative-repo-archive
+	test -d $work_path/relative-attachments
+	test -d $work_path/data/lfs
+	test -d $work_path/data/avatars
+	test -d $work_path/data/repo-avatars
+    done
+
+    echo "================ using < 1.20.3-0 relative [XXXX].PATHS are relative to WORK_PATH"
+    for version in 1.18.5-0 1.19.4-0 1.20.2-0 ; do
+	stop
+	reset relative
+	start $version
+	for path in ${STORAGE_PATHS} ; do
+	    test -d $work_path/relative-$path
+	done
+    done
+
+    echo "================ using >= 1.20.3-0 relative [XXXX].PATHS are relative to APP_DATA_PATH"
+    for version in 1.20.3-0 1.21.0-0 ; do
+	stop
+	reset relative
+	start $version
+	for path in ${STORAGE_PATHS} ; do
+	    test -d $work_path/data/relative-$path
+	done
+    done
+
+    stop
 }
 
 function test_bug_storage_misplace() {
