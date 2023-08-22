@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	forgejo_context "code.gitea.io/gitea/modules/context"
+	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 
@@ -124,6 +125,62 @@ func TestBlockIssueCreation(t *testing.T) {
 		htmlDoc.doc.Find(".ui.negative.message").Text(),
 		translation.NewLocale("en-US").Tr("repo.issues.blocked_by_user"),
 	)
+}
+
+func TestBlockCommentCreation(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	expectedFlash := "error%3DYou%2Bcannot%2Bcreate%2Ba%2Bcomment%2Bon%2Bthis%2Bissue%2Bbecause%2Byou%2Bare%2Bblocked%2Bby%2Bthe%2Brepository%2Bowner%2Bor%2Bthe%2Bposter%2Bof%2Bthe%2Bissue."
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	BlockUser(t, doer, blockedUser)
+
+	t.Run("Blocked by repository owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: doer.ID})
+		issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, RepoID: repo.ID})
+		issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
+
+		session := loginUser(t, blockedUser.Name)
+		req := NewRequest(t, "GET", issueURL)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/comments"), map[string]string{
+			"_csrf":   htmlDoc.GetCSRF(),
+			"content": "Not a kind comment",
+		})
+		session.MakeRequest(t, req, http.StatusOK)
+
+		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, expectedFlash, flashCookie.Value)
+	})
+
+	t.Run("Blocked by issue poster", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 5})
+		issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 15, RepoID: repo.ID, PosterID: doer.ID})
+		issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
+
+		session := loginUser(t, blockedUser.Name)
+		req := NewRequest(t, "GET", issueURL)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/comments"), map[string]string{
+			"_csrf":   htmlDoc.GetCSRF(),
+			"content": "Not a kind comment",
+		})
+		session.MakeRequest(t, req, http.StatusOK)
+
+		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, expectedFlash, flashCookie.Value)
+	})
 }
 
 func TestBlockIssueReaction(t *testing.T) {
