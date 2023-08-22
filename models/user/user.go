@@ -55,6 +55,9 @@ const (
 	UserTypeRemoteUser
 )
 
+// It belongs above but is set explicitly here to avoid conflicts
+const UserTypeF3 UserType = 128
+
 const (
 	// EmailNotificationsEnabled indicates that the user would like to receive all email notifications except your own
 	EmailNotificationsEnabled = "enabled"
@@ -220,7 +223,7 @@ func (u *User) GetEmail() string {
 // GetAllUsers returns a slice of all individual users found in DB.
 func GetAllUsers() ([]*User, error) {
 	users := make([]*User, 0)
-	return users, db.GetEngine(db.DefaultContext).OrderBy("id").Where("type = ?", UserTypeIndividual).Find(&users)
+	return users, db.GetEngine(db.DefaultContext).OrderBy("id").In("type", UserTypeIndividual, UserTypeF3).Find(&users)
 }
 
 // IsLocal returns true if user login type is LoginPlain.
@@ -414,6 +417,10 @@ func (u *User) IsIndividual() bool {
 // IsBot returns whether or not the user is of type bot
 func (u *User) IsBot() bool {
 	return u.Type == UserTypeBot
+}
+
+func (u *User) IsF3() bool {
+	return u.Type == UserTypeF3
 }
 
 // DisplayName returns full name if it's not empty,
@@ -969,7 +976,8 @@ func GetUserByName(ctx context.Context, name string) (*User, error) {
 	if len(name) == 0 {
 		return nil, ErrUserNotExist{0, name, 0}
 	}
-	u := &User{LowerName: strings.ToLower(name), Type: UserTypeIndividual}
+	// adding Type: UserTypeIndividual is a noop because it is zero and discarded
+	u := &User{LowerName: strings.ToLower(name)}
 	has, err := db.GetEngine(ctx).Get(u)
 	if err != nil {
 		return nil, err
@@ -1005,7 +1013,7 @@ func GetMaileableUsersByIDs(ctx context.Context, ids []int64, isMention bool) ([
 	if isMention {
 		return ous, db.GetEngine(ctx).
 			In("id", ids).
-			Where("`type` = ?", UserTypeIndividual).
+			In("`type`", UserTypeIndividual, UserTypeF3).
 			And("`prohibit_login` = ?", false).
 			And("`is_active` = ?", true).
 			In("`email_notifications_preference`", EmailNotificationsEnabled, EmailNotificationsOnMention, EmailNotificationsAndYourOwn).
@@ -1014,7 +1022,7 @@ func GetMaileableUsersByIDs(ctx context.Context, ids []int64, isMention bool) ([
 
 	return ous, db.GetEngine(ctx).
 		In("id", ids).
-		Where("`type` = ?", UserTypeIndividual).
+		In("`type`", UserTypeIndividual, UserTypeF3).
 		And("`prohibit_login` = ?", false).
 		And("`is_active` = ?", true).
 		In("`email_notifications_preference`", EmailNotificationsEnabled, EmailNotificationsAndYourOwn).
