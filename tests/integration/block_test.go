@@ -17,7 +17,6 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	forgejo_context "code.gitea.io/gitea/modules/context"
-	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 
@@ -154,7 +153,7 @@ func TestBlockCommentCreation(t *testing.T) {
 		})
 		session.MakeRequest(t, req, http.StatusOK)
 
-		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
 		assert.NotNil(t, flashCookie)
 		assert.EqualValues(t, expectedFlash, flashCookie.Value)
 	})
@@ -177,7 +176,7 @@ func TestBlockCommentCreation(t *testing.T) {
 		})
 		session.MakeRequest(t, req, http.StatusOK)
 
-		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
 		assert.NotNil(t, flashCookie)
 		assert.EqualValues(t, expectedFlash, flashCookie.Value)
 	})
