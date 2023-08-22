@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"testing"
 
-	"code.gitea.io/gitea/models/db"
 	issue_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
@@ -45,6 +44,8 @@ func BlockUser(t *testing.T, doer, blockedUser *user_model.User) {
 	assert.True(t, unittest.BeanExists(t, &user_model.BlockedUser{BlockID: blockedUser.ID, UserID: doer.ID}))
 }
 
+// TestBlockUser ensures that users can execute blocking related actions can
+// happen under the correct conditions.
 func TestBlockUser(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -94,191 +95,6 @@ func TestBlockUser(t *testing.T) {
 
 			assert.Contains(t, resp.Body.String(), "Action \\\"unblock\\\" failed")
 		})
-	})
-}
-
-func TestBlockIssueCreation(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: doer.ID})
-	BlockUser(t, doer, blockedUser)
-
-	session := loginUser(t, blockedUser.Name)
-	req := NewRequest(t, "GET", "/"+repo.OwnerName+"/"+repo.Name+"/issues/new")
-	resp := session.MakeRequest(t, req, http.StatusOK)
-
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	link, exists := htmlDoc.doc.Find("form.ui.form").Attr("action")
-	assert.True(t, exists)
-	req = NewRequestWithValues(t, "POST", link, map[string]string{
-		"_csrf":   htmlDoc.GetCSRF(),
-		"title":   "Title",
-		"content": "Hello!",
-	})
-
-	resp = session.MakeRequest(t, req, http.StatusOK)
-	htmlDoc = NewHTMLParser(t, resp.Body)
-	assert.Contains(t,
-		htmlDoc.doc.Find(".ui.negative.message").Text(),
-		translation.NewLocale("en-US").Tr("repo.issues.blocked_by_user"),
-	)
-}
-
-func TestBlockCommentCreation(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	expectedFlash := "error%3DYou%2Bcannot%2Bcreate%2Ba%2Bcomment%2Bon%2Bthis%2Bissue%2Bbecause%2Byou%2Bare%2Bblocked%2Bby%2Bthe%2Brepository%2Bowner%2Bor%2Bthe%2Bposter%2Bof%2Bthe%2Bissue."
-	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-
-	BlockUser(t, doer, blockedUser)
-
-	t.Run("Blocked by repository owner", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: doer.ID})
-		issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, RepoID: repo.ID})
-		issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
-
-		session := loginUser(t, blockedUser.Name)
-		req := NewRequest(t, "GET", issueURL)
-		resp := session.MakeRequest(t, req, http.StatusOK)
-		htmlDoc := NewHTMLParser(t, resp.Body)
-
-		req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/comments"), map[string]string{
-			"_csrf":   htmlDoc.GetCSRF(),
-			"content": "Not a kind comment",
-		})
-		session.MakeRequest(t, req, http.StatusOK)
-
-		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
-		assert.NotNil(t, flashCookie)
-		assert.EqualValues(t, expectedFlash, flashCookie.Value)
-	})
-
-	t.Run("Blocked by issue poster", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 5})
-		issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 15, RepoID: repo.ID, PosterID: doer.ID})
-		issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
-
-		session := loginUser(t, blockedUser.Name)
-		req := NewRequest(t, "GET", issueURL)
-		resp := session.MakeRequest(t, req, http.StatusOK)
-		htmlDoc := NewHTMLParser(t, resp.Body)
-
-		req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/comments"), map[string]string{
-			"_csrf":   htmlDoc.GetCSRF(),
-			"content": "Not a kind comment",
-		})
-		session.MakeRequest(t, req, http.StatusOK)
-
-		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
-		assert.NotNil(t, flashCookie)
-		assert.EqualValues(t, expectedFlash, flashCookie.Value)
-	})
-}
-
-func TestBlockIssueReaction(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
-	issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, PosterID: doer.ID, RepoID: repo.ID})
-	issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
-
-	BlockUser(t, doer, blockedUser)
-
-	session := loginUser(t, blockedUser.Name)
-	req := NewRequest(t, "GET", issueURL)
-	resp := session.MakeRequest(t, req, http.StatusOK)
-	htmlDoc := NewHTMLParser(t, resp.Body)
-
-	req = NewRequestWithValues(t, "POST", path.Join(issueURL, "/reactions/react"), map[string]string{
-		"_csrf":   htmlDoc.GetCSRF(),
-		"content": "eyes",
-	})
-	resp = session.MakeRequest(t, req, http.StatusOK)
-	type reactionResponse struct {
-		Empty bool `json:"empty"`
-	}
-
-	var respBody reactionResponse
-	DecodeJSON(t, resp, &respBody)
-
-	assert.EqualValues(t, true, respBody.Empty)
-}
-
-func TestBlockCommentReaction(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
-	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
-	issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 1, RepoID: repo.ID})
-	comment := unittest.AssertExistsAndLoadBean(t, &issue_model.Comment{ID: 3, PosterID: doer.ID, IssueID: issue.ID})
-	_ = comment.LoadIssue(db.DefaultContext)
-	issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo.OwnerName), url.PathEscape(repo.Name), issue.Index)
-
-	BlockUser(t, doer, blockedUser)
-
-	session := loginUser(t, blockedUser.Name)
-	req := NewRequest(t, "GET", issueURL)
-	resp := session.MakeRequest(t, req, http.StatusOK)
-	htmlDoc := NewHTMLParser(t, resp.Body)
-
-	req = NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/comments/", strconv.FormatInt(comment.ID, 10), "/reactions/react"), map[string]string{
-		"_csrf":   htmlDoc.GetCSRF(),
-		"content": "eyes",
-	})
-	resp = session.MakeRequest(t, req, http.StatusOK)
-	type reactionResponse struct {
-		Empty bool `json:"empty"`
-	}
-
-	var respBody reactionResponse
-	DecodeJSON(t, resp, &respBody)
-
-	assert.EqualValues(t, true, respBody.Empty)
-}
-
-// TestBlockFollow ensures that the doer and blocked user cannot follow each other.
-func TestBlockFollow(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
-	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-
-	BlockUser(t, doer, blockedUser)
-
-	// Doer cannot follow blocked user.
-	t.Run("Doer follow blocked user", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		session := loginUser(t, doer.Name)
-
-		req := NewRequestWithValues(t, "POST", "/"+blockedUser.Name, map[string]string{
-			"_csrf":  GetCSRF(t, session, "/"+blockedUser.Name),
-			"action": "follow",
-		})
-		session.MakeRequest(t, req, http.StatusSeeOther)
-		unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: doer.ID, FollowID: blockedUser.ID})
-	})
-
-	// Blocked user cannot follow doer.
-	t.Run("Blocked user follow doer", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		session := loginUser(t, blockedUser.Name)
-
-		req := NewRequestWithValues(t, "POST", "/"+doer.Name, map[string]string{
-			"_csrf":  GetCSRF(t, session, "/"+doer.Name),
-			"action": "follow",
-		})
-		session.MakeRequest(t, req, http.StatusSeeOther)
-
-		unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: blockedUser.ID, FollowID: doer.ID})
 	})
 }
 
@@ -340,46 +156,208 @@ func TestBlockUserFromOrganization(t *testing.T) {
 	})
 }
 
-// TestBlockAddCollaborator ensures that the doer and blocked user cannot add each each other as collaborators.
-func TestBlockAddCollaborator(t *testing.T) {
+// TestBlockActions ensures that certain actions cannot be performed as a doer
+// and as a blocked user and are handled cleanly after the blocking has taken
+// place.
+func TestBlockActions(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
-	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: doer.ID})
+	issue4 := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, RepoID: repo2.ID})
+	issue4URL := fmt.Sprintf("/%s/issues/%d", repo2.FullName(), issue4.Index)
+	// NOTE: Sessions shouldn't be shared, because in some situations flash
+	// messages are persistent and that would interfere with accurate test
+	// results.
 
-	BlockUser(t, user1, user2)
+	BlockUser(t, doer, blockedUser)
 
-	t.Run("BlockedUser Add Doer", func(t *testing.T) {
+	// Ensures that issue creation on doer's ownen repositories are blocked.
+	t.Run("Issue creation", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: user2.ID})
+		session := loginUser(t, blockedUser.Name)
+		link := fmt.Sprintf("%s/issues/new", repo2.FullName())
 
-		session := loginUser(t, user2.Name)
-		req := NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/settings/collaboration"), map[string]string{
-			"_csrf":        GetCSRF(t, session, path.Join(repo.Link(), "/settings/collaboration")),
-			"collaborator": user1.Name,
+		req := NewRequestWithValues(t, "POST", link, map[string]string{
+			"_csrf":   GetCSRF(t, session, link),
+			"title":   "Title",
+			"content": "Hello!",
 		})
-		session.MakeRequest(t, req, http.StatusSeeOther)
+		resp := session.MakeRequest(t, req, http.StatusOK)
 
-		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
-		assert.NotNil(t, flashCookie)
-		assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthey%2Bhave%2Bblocked%2Bthe%2Brepository%2Bowner.", flashCookie.Value)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		assert.Contains(t,
+			htmlDoc.doc.Find(".ui.negative.message").Text(),
+			translation.NewLocale("en-US").Tr("repo.issues.blocked_by_user"),
+		)
 	})
 
-	t.Run("Doer Add BlockedUser", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
+	// Ensures that comment creation on doer's owned repositories and doer's
+	// posted issues are blocked.
+	t.Run("Comment creation", func(t *testing.T) {
+		expectedFlash := "error%3DYou%2Bcannot%2Bcreate%2Ba%2Bcomment%2Bon%2Bthis%2Bissue%2Bbecause%2Byou%2Bare%2Bblocked%2Bby%2Bthe%2Brepository%2Bowner%2Bor%2Bthe%2Bposter%2Bof%2Bthe%2Bissue."
 
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 7, OwnerID: user1.ID})
+		t.Run("Blocked by repository owner", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
 
-		session := loginUser(t, user1.Name)
-		req := NewRequestWithValues(t, "POST", path.Join(repo.Link(), "/settings/collaboration"), map[string]string{
-			"_csrf":        GetCSRF(t, session, path.Join(repo.Link(), "/settings/collaboration")),
-			"collaborator": user2.Name,
+			session := loginUser(t, blockedUser.Name)
+
+			req := NewRequestWithValues(t, "POST", path.Join(issue4URL, "/comments"), map[string]string{
+				"_csrf":   GetCSRF(t, session, issue4URL),
+				"content": "Not a kind comment",
+			})
+			session.MakeRequest(t, req, http.StatusOK)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, expectedFlash, flashCookie.Value)
 		})
-		session.MakeRequest(t, req, http.StatusSeeOther)
 
-		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
-		assert.NotNil(t, flashCookie)
-		assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthe%2Brepository%2Bowner%2Bhas%2Bblocked%2Bthem.", flashCookie.Value)
+		t.Run("Blocked by issue poster", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			repo5 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 5})
+			issue15 := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 15, RepoID: repo5.ID, PosterID: doer.ID})
+
+			session := loginUser(t, blockedUser.Name)
+			issueURL := fmt.Sprintf("/%s/%s/issues/%d", url.PathEscape(repo5.OwnerName), url.PathEscape(repo5.Name), issue15.Index)
+
+			req := NewRequestWithValues(t, "POST", path.Join(issueURL, "/comments"), map[string]string{
+				"_csrf":   GetCSRF(t, session, issueURL),
+				"content": "Not a kind comment",
+			})
+			session.MakeRequest(t, req, http.StatusOK)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, expectedFlash, flashCookie.Value)
+		})
+	})
+
+	// Ensures that reactions on doer's owned issues and doer's owned comments are
+	// blocked.
+	t.Run("Add a reaction", func(t *testing.T) {
+		type reactionResponse struct {
+			Empty bool `json:"empty"`
+		}
+
+		t.Run("On a issue", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, blockedUser.Name)
+
+			req := NewRequestWithValues(t, "POST", path.Join(issue4URL, "/reactions/react"), map[string]string{
+				"_csrf":   GetCSRF(t, session, issue4URL),
+				"content": "eyes",
+			})
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			var respBody reactionResponse
+			DecodeJSON(t, resp, &respBody)
+
+			assert.EqualValues(t, true, respBody.Empty)
+		})
+
+		t.Run("On a comment", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			comment := unittest.AssertExistsAndLoadBean(t, &issue_model.Comment{ID: 8, PosterID: doer.ID, IssueID: issue4.ID})
+
+			session := loginUser(t, blockedUser.Name)
+
+			req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/comments/%d/reactions/react", repo2.FullName(), comment.ID), map[string]string{
+				"_csrf":   GetCSRF(t, session, issue4URL),
+				"content": "eyes",
+			})
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			var respBody reactionResponse
+			DecodeJSON(t, resp, &respBody)
+
+			assert.EqualValues(t, true, respBody.Empty)
+		})
+	})
+
+	// Ensures that the doer and blocked user cannot follow each other.
+	t.Run("Follow", func(t *testing.T) {
+		// Sanity checks to make sure doing these tests are valid.
+		unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: doer.ID, FollowID: blockedUser.ID})
+		unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: blockedUser.ID, FollowID: doer.ID})
+
+		// Doer cannot follow blocked user.
+		t.Run("Doer follow blocked user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, doer.Name)
+
+			req := NewRequestWithValues(t, "POST", "/"+blockedUser.Name, map[string]string{
+				"_csrf":  GetCSRF(t, session, "/"+blockedUser.Name),
+				"action": "follow",
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			// Assert it still doesn't exist.
+			unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: doer.ID, FollowID: blockedUser.ID})
+		})
+
+		// Blocked user cannot follow doer.
+		t.Run("Blocked user follow doer", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, blockedUser.Name)
+
+			req := NewRequestWithValues(t, "POST", "/"+doer.Name, map[string]string{
+				"_csrf":  GetCSRF(t, session, "/"+doer.Name),
+				"action": "follow",
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: blockedUser.ID, FollowID: doer.ID})
+		})
+	})
+
+	// Ensures that the doer and blocked user cannot add each each other as collaborators.
+	t.Run("Add collaborator", func(t *testing.T) {
+		blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
+
+		BlockUser(t, doer, blockedUser)
+
+		t.Run("Doer Add BlockedUser", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, doer.Name)
+			link := fmt.Sprintf("/%s/settings/collaboration", repo2.FullName())
+
+			req := NewRequestWithValues(t, "POST", link, map[string]string{
+				"_csrf":        GetCSRF(t, session, link),
+				"collaborator": blockedUser.Name,
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthe%2Brepository%2Bowner%2Bhas%2Bblocked%2Bthem.", flashCookie.Value)
+		})
+
+		t.Run("BlockedUser Add doer", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 7, OwnerID: blockedUser.ID})
+
+			session := loginUser(t, blockedUser.Name)
+			link := fmt.Sprintf("/%s/settings/collaboration", repo.FullName())
+
+			req := NewRequestWithValues(t, "POST", link, map[string]string{
+				"_csrf":        GetCSRF(t, session, link),
+				"collaborator": doer.Name,
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "error%3DCannot%2Badd%2Bthe%2Bcollaborator%252C%2Bbecause%2Bthey%2Bhave%2Bblocked%2Bthe%2Brepository%2Bowner.", flashCookie.Value)
+		})
 	})
 }
