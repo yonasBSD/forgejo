@@ -1,6 +1,6 @@
 <div class="field">
 	{{template "repo/issue/fields/header" .}}
-	{{$field := .}}
+	{{$field := .item}}
 	{{range $i, $opt := .item.Attributes.options}}
 		<div class="field">
 			<div class="ui checkbox">

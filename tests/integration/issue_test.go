@@ -556,3 +556,60 @@ func TestUpdateIssueDeadline(t *testing.T) {
 
 	assert.EqualValues(t, "2022-04-06", apiIssue.Deadline.Format("2006-01-02"))
 }
+
+func TestIssueForm(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo59 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 59})
+
+	session := loginUser(t, user2.Name)
+
+	t.Run("Listed in /issues/new/choose", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("/%s/issues/new/choose", repo59.FullName()))
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		htmlDoc.AssertElement(t, fmt.Sprintf("a[href='/%s/issues/new?template=ISSUE_TEMPLATE%%2f01-example.yaml']", repo59.FullName()), true)
+	})
+
+	t.Run("Rendered", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("/%s/issues/new?template=ISSUE_TEMPLATE%%2f01-example.yaml", repo59.FullName()))
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		form := htmlDoc.Find("form#new-issue")
+
+		titleInput, exist := form.Find("#issue_title").Attr("value")
+		assert.True(t, exist)
+		assert.EqualValues(t, "[Intro] Hi, I am ...", titleInput)
+
+		// Checkbox
+
+		checkboxName, exist := form.Find(".field .field .checkbox input[type='checkbox']").Attr("name")
+		assert.True(t, exist)
+		assert.EqualValues(t, "form-field-interest-0", checkboxName)
+
+		checkboxName, exist = form.Find(".field .field:last-child .checkbox input[type='checkbox']").Attr("name")
+		assert.True(t, exist)
+		assert.EqualValues(t, "form-field-interest-2", checkboxName)
+
+		// Dropdown
+
+		dropdownName, exist := form.Find(".field .dropdown input").Attr("name")
+		assert.True(t, exist)
+		assert.EqualValues(t, "form-field-version", dropdownName)
+
+		dropdownOptionValue, exist := form.Find(".field .dropdown .menu .item:first-child").Attr("data-value")
+		assert.True(t, exist)
+		assert.EqualValues(t, "0", dropdownOptionValue)
+
+		dropdownOptionValue, exist = form.Find(".field .dropdown .menu .item:last-child").Attr("data-value")
+		assert.True(t, exist)
+		assert.EqualValues(t, "1", dropdownOptionValue)
+	})
+}
