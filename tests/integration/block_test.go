@@ -65,10 +65,8 @@ func TestBlockUser(t *testing.T) {
 			"_csrf":  GetCSRF(t, session, "/"+blockedUser.Name),
 			"action": "unblock",
 		})
-		resp := session.MakeRequest(t, req, http.StatusSeeOther)
+		session.MakeRequest(t, req, http.StatusOK)
 
-		loc := resp.Header().Get("Location")
-		assert.EqualValues(t, "/"+blockedUser.Name, loc)
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{BlockID: blockedUser.ID, UserID: doer.ID})
 	})
 
@@ -296,7 +294,11 @@ func TestBlockActions(t *testing.T) {
 				"_csrf":  GetCSRF(t, session, "/"+blockedUser.Name),
 				"action": "follow",
 			})
-			session.MakeRequest(t, req, http.StatusSeeOther)
+			session.MakeRequest(t, req, http.StatusOK)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "error%3DYou%2Bcannot%2Bfollow%2Bthis%2Buser%2Bbecause%2Byou%2Bhave%2Bblocked%2Bthis%2Buser%2Bor%2Bthis%2Buser%2Bhas%2Bblocked%2Byou.", flashCookie.Value)
 
 			// Assert it still doesn't exist.
 			unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: doer.ID, FollowID: blockedUser.ID})
@@ -312,7 +314,11 @@ func TestBlockActions(t *testing.T) {
 				"_csrf":  GetCSRF(t, session, "/"+doer.Name),
 				"action": "follow",
 			})
-			session.MakeRequest(t, req, http.StatusSeeOther)
+			session.MakeRequest(t, req, http.StatusOK)
+
+			flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "error%3DYou%2Bcannot%2Bfollow%2Bthis%2Buser%2Bbecause%2Byou%2Bhave%2Bblocked%2Bthis%2Buser%2Bor%2Bthis%2Buser%2Bhas%2Bblocked%2Byou.", flashCookie.Value)
 
 			unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: blockedUser.ID, FollowID: doer.ID})
 		})
