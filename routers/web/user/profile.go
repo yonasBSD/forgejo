@@ -333,5 +333,5 @@ func Action(ctx *context.Context) {
 		})
 		return
 	}
-	ctx.RedirectToFirst(ctx.FormString("redirect_to"), ctx.ContextUser.HomeLink())
+	ctx.JSONOK()
 }
