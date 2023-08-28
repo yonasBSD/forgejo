@@ -458,11 +458,6 @@ test-backend:
 	@echo "Running go test with $(GOTESTFLAGS) -tags '$(TEST_TAGS)'..."
 	@$(GO) test $(GOTESTFLAGS) -tags='$(TEST_TAGS)' $(GO_TEST_PACKAGES)
 
-# TO-DO: remove this at the end of PR
-# Just for test the migration so we dont need to compile and build all integration tests
-test-migrate: git-check $(GO_SOURCES)
-	$(GO) test $(GOTESTFLAGS) -v -tags '$(TEST_TAGS)' -run TestRepoMigrate code.gitea.io/gitea/tests/integration
-
 .PHONY: test-frontend
 test-frontend: node_modules
 	npx vitest

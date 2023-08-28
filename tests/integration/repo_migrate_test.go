@@ -49,13 +49,6 @@ func TestRepoMigrate(t *testing.T) {
 	}{
 		{"TestMigrateGithub", "https://github.com/go-gitea/test_repo.git", "git", structs.PlainGitService},
 		{"TestMigrateGithub", "https://github.com/go-gitea/test_repo.git", "github", structs.GithubService},
-		//{"TestMigrateGitlab", "tofill.com", "git", structs.GitlabService},
-		//{"TestMigrateGitea", "tofill.com", "git", structs.GiteaService},
-		//{"TestMigrateForgejo", "tofill.com", "git", structs.ForgejoService},
-		//{"TestMigrateGogs", "tofill.com", "git", structs.GogsService},
-		//{"TestMigrateOneDev", "tofill.com", "git", structs.OneDevService},
-		//{"TestMigrateGitBucket", "tofill.com", "git", structs.GitBucketService},
-		//{"TestMigrateCodebase", "tofill.com", "git", structs.CodebaseService},
 	} {
 		t.Run(s.testName, func(t *testing.T) {
 			testRepoMigrate(t, session, s.cloneAddr, s.repoName, s.service)
