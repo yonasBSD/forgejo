@@ -95,7 +95,7 @@ func checkDatabase(ctx context.Context, checks checks) status {
 	if err := db.GetEngine(ctx).Ping(); err != nil {
 		st.Status = fail
 		st.Time = getCheckTime()
-		log.Error("database ping failed with error: %v", err)
+		log.Error("Database ping failed with the error: %v", err)
 	} else {
 		st.Status = pass
 		st.Time = getCheckTime()
@@ -105,7 +105,7 @@ func checkDatabase(ctx context.Context, checks checks) status {
 		if !setting.EnableSQLite3 {
 			st.Status = fail
 			st.Time = getCheckTime()
-			log.Error("SQLite3 health check failed with error: %v", "this Gitea binary is built without SQLite3 enabled")
+			log.Error("SQLite3 health check failed with error: %v", "this Forgejo binary is built without SQLite3 enabled")
 		} else {
 			if _, err := os.Stat(setting.Database.Path); err != nil {
 				st.Status = fail
@@ -129,7 +129,7 @@ func checkCache(checks checks) status {
 	if err := cache.GetCache().Ping(); err != nil {
 		st.Status = fail
 		st.Time = getCheckTime()
-		log.Error("cache ping failed with error: %v", err)
+		log.Error("Cache ping failed with the error: %v", err)
 	} else {
 		st.Status = pass
 		st.Time = getCheckTime()
