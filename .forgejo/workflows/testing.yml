@@ -72,8 +72,6 @@ jobs:
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: testgitea
-        ports:
-          - "3306:3306"
         #
         # See also https://codeberg.org/forgejo/forgejo/issues/976
         #
@@ -114,8 +112,6 @@ jobs:
         env:
           POSTGRES_DB: test
           POSTGRES_PASSWORD: postgres
-        ports:
-          - "5432:5432"
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
