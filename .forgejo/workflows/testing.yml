@@ -181,17 +181,8 @@ jobs:
       - run: |
           su gitea -c 'make deps-backend'
       - run: |
-          su gitea -c 'make backend'
-        env:
-          TAGS: bindata sqlite sqlite_unlock_notify
-      - run: |
-          su gitea -c 'make gitea'
-          cp -a gitea /tmp/forgejo-development
-        timeout-minutes: 50
-        env:
-          TAGS: bindata sqlite sqlite_unlock_notify
-      - run: |
           script=$(pwd)/.forgejo/upgrades/test-upgrade.sh
-          $script dependencies
+          $script run dependencies
+          $script clobber
           su gitea -c "$script test_upgrades"
 
