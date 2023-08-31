@@ -71,6 +71,11 @@ func convertMinioErr(err error) error {
 	return err
 }
 
+var getBucketVersioning = func(ctx context.Context, minioClient *minio.Client, bucket string) error {
+	_, err := minioClient.GetBucketVersioning(ctx, bucket)
+	return err
+}
+
 // NewMinioStorage returns a minio storage
 func NewMinioStorage(ctx context.Context, cfg *setting.Storage) (ObjectStorage, error) {
 	config := cfg.MinioConfig
@@ -88,6 +93,19 @@ func NewMinioStorage(ctx context.Context, cfg *setting.Storage) (ObjectStorage, 
 	})
 	if err != nil {
 		return nil, convertMinioErr(err)
+	}
+
+	// Check if the connection works
+	err = getBucketVersioning(ctx, minioClient, config.Bucket)
+	if err != nil {
+		errResp, ok := err.(minio.ErrorResponse)
+		if !ok {
+			return nil, err
+		}
+		if errResp.StatusCode == http.StatusBadRequest {
+			log.Error("S3 storage connection failure at %s:%s with base path %s and region: %s", config.Endpoint, config.Bucket, config.Location, errResp.Message)
+			return nil, err
+		}
 	}
 
 	// Check to see if we already own this bucket
