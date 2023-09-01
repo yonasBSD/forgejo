@@ -14,14 +14,14 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/test/mockvariable"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_CmdForgejo_Actions(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		defer test.MockVariableValue(&setting.Actions.Enabled, true)()
+		defer mockvariable.Value(&setting.Actions.Enabled, true)()
 
 		token, err := cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "actions", "generate-runner-token"})
 		assert.NoError(t, err)

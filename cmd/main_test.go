@@ -13,7 +13,7 @@ import (
 
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/test/mockvariable"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
@@ -50,8 +50,8 @@ func runTestApp(app *cli.App, args ...string) (runResult, error) {
 	app.Writer = outBuf
 	app.ErrWriter = errBuf
 	exitCode := -1
-	defer test.MockVariableValue(&cli.ErrWriter, app.ErrWriter)()
-	defer test.MockVariableValue(&cli.OsExiter, func(code int) {
+	defer mockvariable.Value(&cli.ErrWriter, app.ErrWriter)()
+	defer mockvariable.Value(&cli.OsExiter, func(code int) {
 		if exitCode == -1 {
 			exitCode = code // save the exit code once and then reset the writer (to simulate the exit)
 			app.Writer, app.ErrWriter, cli.ErrWriter = io.Discard, io.Discard, io.Discard

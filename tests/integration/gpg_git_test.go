@@ -16,7 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/test/mockvariable"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -40,11 +40,11 @@ func TestGPGGit(t *testing.T) {
 		return
 	}
 
-	defer test.MockVariableValue(&setting.Repository.Signing.SigningKey, rootKeyPair.PrimaryKey.KeyIdShortString())()
-	defer test.MockVariableValue(&setting.Repository.Signing.SigningName, "gitea")()
-	defer test.MockVariableValue(&setting.Repository.Signing.SigningEmail, "gitea@fake.local")()
-	defer test.MockVariableValue(&setting.Repository.Signing.InitialCommit, []string{"never"})()
-	defer test.MockVariableValue(&setting.Repository.Signing.CRUDActions, []string{"never"})()
+	defer mockvariable.Value(&setting.Repository.Signing.SigningKey, rootKeyPair.PrimaryKey.KeyIdShortString())()
+	defer mockvariable.Value(&setting.Repository.Signing.SigningName, "gitea")()
+	defer mockvariable.Value(&setting.Repository.Signing.SigningEmail, "gitea@fake.local")()
+	defer mockvariable.Value(&setting.Repository.Signing.InitialCommit, []string{"never"})()
+	defer mockvariable.Value(&setting.Repository.Signing.CRUDActions, []string{"never"})()
 
 	username := "user2"
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: username})
