@@ -1,4 +1,4 @@
-// Copyright 2019 The Forgejo Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 package mailer
 
@@ -18,6 +18,8 @@ import (
 const (
 	tplNewUserMail base.TplName = "admin_new_user"
 )
+
+var sa = SendAsyncs
 
 // MailNewUser sends notification emails on new user registrations to all admins
 func MailNewUser(ctx context.Context, u *user_model.User) {
@@ -72,6 +74,5 @@ func mailNewUser(ctx context.Context, u *user_model.User, lang string, tos []str
 		msg.Info = subject
 		msgs = append(msgs, msg)
 	}
-
-	SendAsyncs(msgs)
+	sa(msgs)
 }
