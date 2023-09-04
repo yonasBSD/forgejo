@@ -1,0 +1,107 @@
+name: 🔥 Forgejo weekly furnace cleanup
+description: Keeping Forgejo in sync with its dependencies and contributing back to them
+title: "🔥 Furnace cleanup DD/MM/YYYY"
+labels:
+  - "forgejo/furnace cleanup"
+body:
+- type: textarea
+  attributes:
+    label: Checklist
+    value: |
+      ### Archive
+
+      - [x] The current branches are archived using [main.sh archive_branches](https://codeberg.org/forgejo-contrib/soft-fork-tools).
+
+      ### PRs
+
+      Offer assistance to deal with cherry-picking after the rebase
+
+      * ~~all already had a heads up last week or know how to deal with rebase already~~
+      * https://codeberg.org/forgejo/forgejo/pulls/1371#issuecomment-1100806
+
+      ```
+      Heads up: Forgejo is being [rebased on Gitea](https://codeberg.org/forgejo/forgejo/issues?q=Gitea+Rebase) today (that's a weekly occurrence). It means you will need to cherry-pick your commits on top of the newer base branch for this PR and maybe resolve conflicts. You can do that on your own time, you do not need to do that today. It can be in a week or a month and you can keep working in the meantime.
+
+      Ideally Gitea would be a package that can be upgraded as any other Go package. But it is not designed in this way and the weekly rebase is the equivalent of such an upgrade, only it is more work.
+
+      If you need help doing that, feel free to reach out in the [development chatroom](https://matrix.to/#/#forgejo-development:matrix.org).
+      ```
+
+      ### Gitea main & stable
+
+      - [x] push Gitea main, release/v1.19, release/v1.20 in forgejo
+
+      ### test-env
+
+      No change.
+
+      <details>
+      - [ ] rebuild
+        - main https://ci.dachary.org/forgejo/test-env/pipeline/??
+        - 1.20 https://ci.dachary.org/forgejo/test-env/pipeline/??
+      </details>
+
+      ### Rebase milestone
+
+      * Created manually https://codeberg.org/forgejo/forgejo/milestone/4566
+      * All PRs in the milestone are prepared [main.sh rebase_*](https://codeberg.org/forgejo-contrib/soft-fork-tools)
+      * Each PR has comments to document the manual actions
+        * Conflicts are documented
+        * Commits are squashed when possible to keep the commit history readable and minimal
+
+      #### development
+
+      Commits moved from one feature branch to another. One branch cherry-picks them, the other skips them.
+      For each branch `forgejo-{ci,development,privacy,i18n,branding,f3,moderation,dependency}` go over the
+      commits it contains. If one of them does not belong and should be moved to another branch
+      add it to the `forgejo-???` takes commits from `forgejo-???` section.
+
+      * `forgejo-???` takes commits from `forgejo-???`
+
+      Per-branch notes.
+
+      * `forgejo-ci`
+        * squash [CI] enable minio tests in [CI] Forgejo Actions based CI for PR & branches
+      * `forgejo-dependency`
+        * discard [GITEA] MockVariableValue own package to avoid recursion errors it is no longer needed
+
+      Once all branches pass
+
+      * reset to forgejo/main
+      * merge `forgejo-{privacy,i18n,branding,f3,moderation,dependency}` into `forgejo`
+      * push to a temporary PR https://codeberg.org/forgejo/forgejo/pulls/1383
+      * [ ] close the PR when the tests pass
+      * force push to `forgejo`
+      * [ ] branch run
+        * https://codeberg.org/forgejo/forgejo/actions/runs/???
+      * [ ] delete release v1.21.0-0 https://codeberg.org/forgejo-integration/forgejo/releases/tag/v1.21.0-0
+      * [ ] force push tag v1.21.0-0 to https://codeberg.org/forgejo-integration https://codeberg.org/forgejo-integration/forgejo/actions/runs/142
+      * [ ] run setup-forgejo for test https://code.forgejo.org/earl-warren/setup-forgejo/src/branch/wip-dev-test
+        - [ ] https://code.forgejo.org/earl-warren/setup-forgejo/actions/runs/???
+        - [ ] https://code.forgejo.org/earl-warren/setup-forgejo/actions/runs/???
+      * [ ] verify the container image
+        ```
+        docker rmi codeberg.org/forgejo-integration/forgejo:1.21.0-0
+        docker run -d --name forgejo -p 8080:3000 -e FORGEJO__server__LFS_START_SERVER=true -e FORGEJO__security__INSTALL_LOCK=true -e FORGEJO__log__LEVEL=debug -e FORGEJO__server__ROOT_URL=http://0.0.0.0:8080/ -e FORGEJO__actions__ENABLED=true codeberg.org/forgejo-integration/forgejo:1.21.0-0 bash -c '/bin/s6-svscan /etc/s6 & sleep 10 ; su -c "forgejo admin user create --admin --username root --password admin1234 --email root@example.com" git && sleep infinity'
+        firefox 0.0.0.0:8080
+        ```
+      * [ ] verify the binary
+        ```
+        wget -O forgejo https://codeberg.org/forgejo-integration/forgejo/releases/download/v1.21.0-0/forgejo-1.21.0-0-linux-amd64
+        chmod +x forgejo
+        ./forgejo forgejo-cli f3 mirror -h
+        ```
+      * [ ] verify the sources
+        ```
+        wget -O forgejo.tar.gz https://codeberg.org/forgejo-integration/forgejo/releases/download/v1.21.0-0/forgejo-src-1.21.0-0.tar.gz
+        rm -fr forgejo-src-1.21.0-0
+        tar -zxvf forgejo.tar.gz
+        cd forgejo-src-1.21.0-0
+        make TAGS='bindata sqlite sqlite_unlock_notify' forgejo
+        ```
+
+      #### v1.21
+
+      (not yet)
+        validations:
+    required: true
