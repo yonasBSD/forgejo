@@ -53,3 +53,23 @@ func Sorted[S ~[]E, E cmp.Ordered](values S) S {
 	slices.Sort(values)
 	return values
 }
+
+// LeftDiff compare a and b returning every element existent in A (left) but not in B (right).
+// O(n) time complexity
+func LeftDiff[T comparable](a, b []T) []T {
+	m := make(map[T]struct{}, len(b))
+
+	for _, e := range b {
+		m[e] = struct{}{}
+	}
+
+	var diff []T
+	for _, e := range a {
+		if _, ok := m[e]; !ok {
+			// This means b doesn't have that element
+			diff = append(diff, e)
+		}
+	}
+
+	return diff
+}
