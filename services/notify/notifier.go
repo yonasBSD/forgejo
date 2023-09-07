@@ -72,4 +72,5 @@ type Notifier interface {
 
 	PackageCreate(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor)
 	PackageDelete(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor)
+	NewUserSignUp(ctx context.Context, newUser *user_model.User)
 }

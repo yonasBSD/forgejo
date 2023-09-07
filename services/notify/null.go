@@ -204,3 +204,7 @@ func (*NullNotifier) PackageCreate(ctx context.Context, doer *user_model.User, p
 // PackageDelete places a place holder function
 func (*NullNotifier) PackageDelete(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor) {
 }
+
+// NotifyNewUserSignUp notifies deletion of a package to notifiers
+func (*NullNotifier) NewUserSignUp(ctx context.Context, newUser *user_model.User) {
+}
