@@ -137,6 +137,7 @@ func NewMainApp(version, versionExtra string) *cli.App {
 	//
 	if executable == "forgejo-cli" {
 		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdActions(context.Background()))
+		subCmdWithConfig = append(subCmdWithConfig, forgejo.CmdF3(context.Background()))
 	} else {
 		//
 		// Otherwise provide a Gitea compatible CLI which includes Forgejo
