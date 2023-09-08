@@ -49,10 +49,10 @@ func (o *RepositoryProvider) FromFormat(ctx context.Context, p *format.Repositor
 }
 
 func (o *RepositoryProvider) GetObjects(ctx context.Context, user *User, project *Project, page int) []*Repository {
-	if page > 0 {
+	if page > 1 {
 		return make([]*Repository, 0)
 	}
-	repositories := make([]*Repository, len(format.RepositoryNames))
+	repositories := make([]*Repository, 0, len(format.RepositoryNames))
 	for _, name := range format.RepositoryNames {
 		repositories = append(repositories, o.Get(ctx, user, project, &Repository{
 			Repository: format.Repository{
@@ -68,10 +68,12 @@ func (o *RepositoryProvider) ProcessObject(ctx context.Context, user *User, proj
 
 func (o *RepositoryProvider) Get(ctx context.Context, user *User, project *Project, exemplar *Repository) *Repository {
 	repoPath := repo_model.RepoPath(user.Name, project.Name) + exemplar.Name
+	o.g.GetLogger().Debug(repoPath)
 	return &Repository{
 		Repository: format.Repository{
 			Name: exemplar.Name,
 			FetchFunc: func(destination string) {
+				o.g.GetLogger().Debug("RepositoryProvider:Get: git clone %s %s", repoPath, destination)
 				util.Command(ctx, "git", "clone", "--bare", repoPath, destination)
 			},
 		},

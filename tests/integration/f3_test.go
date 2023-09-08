@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/services/f3/util"
+	"code.gitea.io/gitea/services/migrations"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/markbates/goth"
@@ -30,7 +31,7 @@ import (
 	f3_util "lab.forgefriends.org/friendlyforgeformat/gof3/util"
 )
 
-func TestF3_Mirror(t *testing.T) {
+func TestF3_MirrorAPITOLocal(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.F3.Enabled = true
@@ -41,7 +42,9 @@ func TestF3_Mirror(t *testing.T) {
 		defer func() {
 			setting.Migrations.AllowLocalNetworks = AllowLocalNetworks
 			setting.AppVer = AppVer
+			migrations.Init()
 		}()
+		assert.NoError(t, migrations.Init())
 
 		//
 		// Step 1: create a fixture
@@ -80,33 +83,22 @@ func TestF3_Mirror(t *testing.T) {
 		//
 		doer, err := user_model.GetAdminUser(context.Background())
 		assert.NoError(t, err)
-		forgejoLocal := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
+		forgejoLocalUpload := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
+		upload := forgejoLocalUpload.Forge
 		options := f3_common.NewMirrorOptionsRecurse()
-		forgejoLocal.Forge.Mirror(context.Background(), fixture.Forge, options)
+		upload.Mirror(context.Background(), fixture.Forge, options)
 
 		//
 		// Step 3: mirror Forgejo into F3
 		//
-		adminUsername := "user1"
 		logger := util.ToF3Logger(nil)
-		forgejoAPI := f3_forges.NewForgeRoot(&f3_forgejo.Forgejo{}, &f3_forgejo.Options{
-			Options: f3_types.Options{
-				Configuration: f3_types.Configuration{
-					URL:       setting.AppURL,
-					Directory: t.TempDir(),
-				},
-				Features: f3_types.AllFeatures,
-				Logger:   logger,
-			},
-			AuthToken: getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin, auth_model.AccessTokenScopeAll),
-		})
-
 		f3 := f3_forges.FixtureNewF3Forge(t, logger, nil, t.TempDir())
-		apiForge := forgejoAPI.Forge
-		apiUser := apiForge.Users.GetFromFormat(context.Background(), &format.User{UserName: fixture.UserFormat.UserName})
-		apiProject := apiUser.Projects.GetFromFormat(context.Background(), &format.Project{Name: fixture.ProjectFormat.Name})
-		options = f3_common.NewMirrorOptionsRecurse(apiUser, apiProject)
-		f3.Forge.Mirror(context.Background(), apiForge, options)
+		forgejoLocalDownload := util.ForgejoForgeRoot(f3_types.AllFeatures, doer, 0)
+		download := forgejoLocalDownload.Forge
+		downloadUser := download.Users.GetFromFormat(context.Background(), &format.User{UserName: fixture.UserFormat.UserName})
+		downloadProject := downloadUser.Projects.GetFromFormat(context.Background(), &format.Project{Name: fixture.ProjectFormat.Name})
+		options = f3_common.NewMirrorOptionsRecurse(downloadUser, downloadProject)
+		f3.Forge.Mirror(context.Background(), download, options)
 
 		//
 		// Step 4: verify the fixture and F3 are equivalent
