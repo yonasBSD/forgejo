@@ -4,6 +4,46 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.20.1-0 or v1.20.2-0) does not require manual actions but others might (e.g. v1.19, v1.20).
 
+## 1.20.4-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.4-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.3-0..v1.20.4-0
+```
+
+This stable release includes bug fixes and two features.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are upgraded to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.3+0-gitea-1.20.4`
+
+* Features
+
+  * [Log slow SQL queries](https://codeberg.org/forgejo/forgejo/commit/fa25b9eec63c073e16f4595459880e4ee8797913) to help identify bottlenecks on large Forgejo instances
+  * [Add `branch_filter` to hooks API endpoints](https://codeberg.org/forgejo/forgejo/commit/19a49e763a013dec4c3fcf3e9e2be89c7009bb3b)
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Ignore the trailing slashes when comparing oauth2 redirect_uri](https://codeberg.org/forgejo/forgejo/commit/2f6d011503a35a1eede96f5a13b2a9868c06b3ae)
+  * [Fix the reopen logic for agit flow pull request](https://codeberg.org/forgejo/forgejo/commit/5abca17b644ded3c3ab8869db1d34f9bd678f18e)
+  * [Fix the missing display of user projects](https://codeberg.org/forgejo/forgejo/commit/ef46b01168e251fad92ed46102b5faad75a5bcb1)
+  * [Fix](https://codeberg.org/forgejo/forgejo/commit/08762875d7362ee207bbd320123cbb0ad4cf70d2) issue templates [that failed to save checkboxes](https://codeberg.org/forgejo/forgejo/pulls/1317)
+  * [Fix accessibility issues preventing focus and selection](https://codeberg.org/forgejo/forgejo/commit/66016b3fe3a9646e5d9c8b4c2d88b1da7a908ccf)
+  * [Fix being unable to use a repo that prohibits accepting PRs as a PR source](https://codeberg.org/forgejo/forgejo/commit/1d228e6ee93525bd630c4a915febd98d159f1824)
+  * [Forgejo doctor database fix](https://codeberg.org/forgejo/forgejo/commit/0b1175f21b403ff59c0c3f7a759de8d0fe13bee8) to repair a condition preventing the owner of an organization from creating a repository
+  * [Fix dashboard filters having no effect](https://codeberg.org/forgejo/forgejo/commit/a6c2201dd41706a000ca96bdcd3e89df96e342fd)
+  * [Also check the email blocklists when adding new emails to existing accounts](https://codeberg.org/forgejo/forgejo/commit/d5845521a842418ae8f6dfcad8368ba2a6035f54)
+  * [Sync tags when adopting repos](https://codeberg.org/forgejo/forgejo/commit/6b5ef0fad754a863eb7d91eefa8301dd9a5a84b5)
+  * [Fix an error when pushing a new branch and there is a requirement that all commits are signed](https://codeberg.org/forgejo/forgejo/commit/193e04c43b556e0a25c260149429945ba2164efa)
+
 ## 1.20.3-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.3-0` release can be reviewed from the command line with:
