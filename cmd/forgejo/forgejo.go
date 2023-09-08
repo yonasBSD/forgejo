@@ -33,7 +33,11 @@ func CmdForgejo(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:  "forgejo-cli",
 		Usage: "Forgejo CLI",
-		Flags: []cli.Flag{},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name: "debug",
+			},
+		},
 		Subcommands: []*cli.Command{
 			CmdActions(ctx),
 			CmdF3(ctx),

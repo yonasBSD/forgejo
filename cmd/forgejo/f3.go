@@ -7,6 +7,8 @@ import (
 
 	"code.gitea.io/gitea/modules/git"
 
+	_ "code.gitea.io/gitea/services/f3/driver" // register the driver
+
 	"github.com/urfave/cli/v2"
 	f3_cmd "lab.forgefriends.org/friendlyforgeformat/gof3/cmd"
 )
