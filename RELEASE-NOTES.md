@@ -17,7 +17,7 @@ This stable release includes bug fixes and two features.
 
 * Recommended Action
 
-  We recommend that all Forgejo installations are upgraded to the latest version.
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version.
 
 * [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
 
