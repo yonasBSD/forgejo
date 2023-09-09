@@ -100,7 +100,6 @@ func (o *forgejoInstance) Init(t f3_tests.TestingT) {
 				Type: strings.ToLower(Name),
 			},
 			Features: config_types.AllFeatures,
-			Logger:   ToF3Logger(nil),
 		},
 		Doer: doer,
 	}

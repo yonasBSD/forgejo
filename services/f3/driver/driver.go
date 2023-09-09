@@ -8,8 +8,6 @@ import (
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/log"
-	base "code.gitea.io/gitea/modules/migration"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/migrations"
 
@@ -49,27 +47,8 @@ func getAuthenticationSource(ctx context.Context, authenticationSource string) (
 	return source, nil
 }
 
-func ToF3Logger(messenger base.Messenger) *f3_types.Logger {
-	if messenger == nil {
-		messenger = func(message string, args ...interface{}) {
-			log.Info("Message: "+message, args...)
-		}
-	}
-	return &f3_types.Logger{
-		Message:  f3_types.LoggerFun(messenger),
-		Trace:    log.Trace,
-		Debug:    log.Debug,
-		Info:     log.Info,
-		Warn:     log.Warn,
-		Error:    log.Error,
-		Critical: log.Critical,
-		Fatal:    log.Fatal,
-	}
-}
-
 func (o *Options) FromFlags(ctx context.Context, c *cli.Context, prefix string) f3_types.OptionsInterface {
 	o.Options.FromFlags(ctx, c, prefix)
-	o.Options.Logger = ToF3Logger(nil)
 	sourceName := c.String("authentication-source")
 	if sourceName != "" {
 		source, err := getAuthenticationSource(ctx, sourceName)
