@@ -40,17 +40,17 @@
 		</div>
 	</div>
 </div>
-<div class="ui small basic delete modal" id="block-user">
-	<div class="ui icon header">
-		{{svg "octicon-blocked" 16 "blocked inside"}}
+
+<div class="ui g-modal-confirm delete modal" id="block-user">
+	<div class="header">
 		{{$.locale.Tr "user.block_user"}}
 	</div>
 	<div class="content">
 		<p>{{$.locale.Tr "user.block_user.detail"}}</p>
 		<ul>
-				<li>{{$.locale.Tr "user.block_user.detail_1"}}</li>
-				<li>{{$.locale.Tr "user.block_user.detail_2"}}</li>
-				<li>{{$.locale.Tr "user.block_user.detail_3"}}</li>
+			<li>{{$.locale.Tr "user.block_user.detail_1"}}</li>
+			<li>{{$.locale.Tr "user.block_user.detail_2"}}</li>
+			<li>{{$.locale.Tr "user.block_user.detail_3"}}</li>
 		</ul>
 	</div>
 	{{template "base/modal_actions_confirm" .}}
