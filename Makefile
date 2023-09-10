@@ -1016,7 +1016,7 @@ update-translations:
 
 .PHONY: generate-license
 generate-license:
-	$(GO) run build/generate-licenses.go
+	build/generate-licenses.sh
 
 .PHONY: generate-gitignore
 generate-gitignore:
