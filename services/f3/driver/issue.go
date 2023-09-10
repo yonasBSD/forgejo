@@ -116,11 +116,14 @@ func (o *Issue) FromFormat(issue *format.Issue) {
 			IsClosed:    issue.State == "closed",
 			CreatedUnix: timeutil.TimeStamp(issue.Created.Unix()),
 			UpdatedUnix: timeutil.TimeStamp(issue.Updated.Unix()),
-			ClosedUnix:  timeutil.TimeStamp(issue.Closed.Unix()),
 			IsLocked:    issue.IsLocked,
 			Labels:      labels,
 			Assignees:   assignees,
 		},
+	}
+
+	if issue.Closed != nil {
+		o.ClosedUnix = timeutil.TimeStamp(issue.Closed.Unix())
 	}
 }
 
