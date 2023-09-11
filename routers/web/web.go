@@ -1331,6 +1331,11 @@ func registerRoutes(m *web.Route) {
 						Post(web.Bind(actions.ViewRequest{}), actions.ViewPost)
 					m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
 					m.Get("/logs", actions.Logs)
+					m.Group("/attempt/{attempt}", func() {
+						m.Combo("").
+							Get(actions.View).
+							Post(web.Bind(actions.ViewRequest{}), actions.ViewPost)
+					})
 				})
 				m.Post("/cancel", reqRepoActionsWriter, actions.Cancel)
 				m.Post("/approve", reqRepoActionsWriter, actions.Approve)

@@ -44,6 +44,7 @@ const sfc = {
         canApprove: false,
         canRerun: false,
         done: false,
+        attempts: 0,
         jobs: [
           // {
           //   id: 0,
@@ -207,9 +208,21 @@ const sfc = {
         // for example: make cursor=null means the first time to fetch logs, cursor=eof means no more logs, etc
         return {step: idx, cursor: it.cursor, expanded: it.expanded};
       });
-      const resp = await POST(`${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}`, {
+
+	  // Get our current URL and parse the attempt number from the last two elements if it contain "attempt"
+	  const url = window.location.href;
+	  const urlSplit = url.split('/');
+	  const attemptIndex = urlSplit.length - 2;
+	  let endpoint = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}`;
+	  if (urlSplit[attemptIndex] === 'attempt') {
+        const attempt = urlSplit[attemptIndex + 1];
+        endpoint = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}/attempt/${attempt}`;
+	  }
+
+      const resp = await POST(
+        endpoint,
         data: {logCursors},
-      });
+      );
       return await resp.json();
     },
 
@@ -256,6 +269,26 @@ const sfc = {
       } finally {
         this.loading = false;
       }
+    },
+
+    attempt(event) {
+	  if (this.loading) return;
+	  // When selection has changed, navigate to the new selected job
+	  const selectedAttempt = event.target.value;
+	  const url = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}/attempt/${selectedAttempt}`;
+	  // Navigate
+	  window.location.href = url;
+    },
+
+    fetchPost(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Csrf-Token': csrfToken,
+        },
+        body,
+      });
     },
 
     isDone(status) {
@@ -359,6 +392,11 @@ export function initRepositoryActionView() {
             {{ run.title }}
           </h2>
         </div>
+        <select class="ui dropdown" v-if="run.attempts > 1" @change="attempt($event)" v-model="currentJob.attempt">
+          <option v-for="index in run.attempts" :key="index" :value="index">
+            Attempt {{ index }}
+          </option>
+        </select>
         <button class="ui basic small compact button primary" @click="approveRun()" v-if="run.canApprove">
           {{ locale.approve }}
         </button>

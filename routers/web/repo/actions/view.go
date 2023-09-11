@@ -57,6 +57,7 @@ type ViewRequest struct {
 type ViewResponse struct {
 	State struct {
 		Run struct {
+			Attempts   int64      `json:"attempts"`
 			Link       string     `json:"link"`
 			Title      string     `json:"title"`
 			Status     string     `json:"status"`
@@ -68,9 +69,10 @@ type ViewResponse struct {
 			Commit     ViewCommit `json:"commit"`
 		} `json:"run"`
 		CurrentJob struct {
-			Title  string         `json:"title"`
-			Detail string         `json:"detail"`
-			Steps  []*ViewJobStep `json:"steps"`
+			Title   string         `json:"title"`
+			Detail  string         `json:"detail"`
+			Steps   []*ViewJobStep `json:"steps"`
+			Attempt int64          `json:"attempt"`
 		} `json:"currentJob"`
 	} `json:"state"`
 	Logs struct {
@@ -84,6 +86,7 @@ type ViewJob struct {
 	Status   string `json:"status"`
 	CanRerun bool   `json:"canRerun"`
 	Duration string `json:"duration"`
+	Attempt  int64  `json:"attempt"`
 }
 
 type ViewCommit struct {
@@ -128,6 +131,7 @@ func ViewPost(ctx *context_module.Context) {
 	req := web.GetForm(ctx).(*ViewRequest)
 	runIndex := ctx.ParamsInt64("run")
 	jobIndex := ctx.ParamsInt64("job")
+	attemptIndex := ctx.ParamsInt64("attempt")
 
 	current, jobs := getRunJobs(ctx, runIndex, jobIndex)
 	if ctx.Written() {
@@ -156,6 +160,7 @@ func ViewPost(ctx *context_module.Context) {
 			Status:   v.Status.String(),
 			CanRerun: v.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions),
 			Duration: v.Duration().String(),
+			Attempt:  v.Attempt,
 		})
 	}
 
@@ -179,7 +184,15 @@ func ViewPost(ctx *context_module.Context) {
 	var task *actions_model.ActionTask
 	if current.TaskID > 0 {
 		var err error
-		task, err = actions_model.GetTaskByID(ctx, current.TaskID)
+		if attemptIndex > 0 {
+			task, err = actions_model.GetTaskByJobAttempt(ctx, current.ID, attemptIndex)
+			if err != nil {
+				ctx.Error(http.StatusInternalServerError, err.Error())
+				return
+			}
+		} else {
+			task, err = actions_model.GetTaskByID(ctx, current.TaskID)
+		}
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
 			return
@@ -199,6 +212,8 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0) // marshal to '[]' instead fo 'null' in json
 	resp.Logs.StepsLog = make([]*ViewStepLog, 0)          // marshal to '[]' instead fo 'null' in json
 	if task != nil {
+		resp.State.Run.Attempts = task.Attempts(ctx)
+		resp.State.CurrentJob.Attempt = task.Attempt
 		steps := actions.FullSteps(task)
 
 		for _, v := range steps {

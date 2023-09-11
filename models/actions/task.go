@@ -150,6 +150,13 @@ func (task *ActionTask) GenerateToken() (err error) {
 	return err
 }
 
+func (task *ActionTask) Attempts(ctx context.Context) (max int64) {
+	e := db.GetEngine(ctx)
+
+	_, _ = e.SQL("SELECT MAX(attempt) FROM action_task WHERE job_id = ?", task.JobID).Get(&max)
+	return max
+}
+
 func GetTaskByID(ctx context.Context, id int64) (*ActionTask, error) {
 	var task ActionTask
 	has, err := db.GetEngine(ctx).Where("id=?", id).Get(&task)
@@ -157,6 +164,18 @@ func GetTaskByID(ctx context.Context, id int64) (*ActionTask, error) {
 		return nil, err
 	} else if !has {
 		return nil, fmt.Errorf("task with id %d: %w", id, util.ErrNotExist)
+	}
+
+	return &task, nil
+}
+
+func GetTaskByJobAttempt(ctx context.Context, jobID, attempt int64) (*ActionTask, error) {
+	var task ActionTask
+	has, err := db.GetEngine(ctx).Where("job_id=?", jobID).Where("attempt=?", attempt).Get(&task)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, fmt.Errorf("task with id %d and attempt %d: %w", jobID, attempt, util.ErrNotExist)
 	}
 
 	return &task, nil
