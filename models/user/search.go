@@ -39,7 +39,12 @@ type SearchUserOptions struct {
 }
 
 func (opts *SearchUserOptions) toSearchQueryBase() *xorm.Session {
-	var cond builder.Cond = builder.Eq{"type": opts.Type}
+	var cond builder.Cond
+	if opts.Type == UserTypeIndividual {
+		cond = builder.In("type", UserTypeIndividual, UserTypeF3)
+	} else {
+		cond = builder.Eq{"type": opts.Type}
+	}
 	if len(opts.Keyword) > 0 {
 		lowerKeyword := strings.ToLower(opts.Keyword)
 		keywordCond := builder.Or(
