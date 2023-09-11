@@ -1,22 +1,26 @@
-package migrations
+package task
 
 import (
+	"code.gitea.io/gitea/models/user"
+	ctx "code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/services/migrations"
 	"fmt"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/sources"
-	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/services/task"
 )
 
 // SyncSources syncs sources based on user ID.
-func SyncSources(ctx context.Context) error {
-	modelSources := models.GetSourcesByUser(ctx.Doer.ID)
+func SyncSources(ctx *ctx.Context, doer, u *user.User) error {
+	modelSources, err := models.GetSourcesByUserID(u.ID)
+	if err != nil {
+		return err
+	}
+
 	repoNames, err := getUserRepoNames()
+
 	if err != nil {
 		return err
 	}
@@ -30,10 +34,11 @@ func SyncSources(ctx context.Context) error {
 
 			unmatchedRepos := util.LeftDiff(newSources.GetNames(), repoNames)
 			if len(unmatchedRepos) != 0 {
-				// todo: maybe some logs of new repos being mirrored?
 
 				newSources.Filter(unmatchedRepos)
-				err := mirrorRepos(ctx.Doer, nil, newSources, structs.GithubService)
+
+				err := mirrorRepos(doer, u, newSources)
+
 				if err != nil {
 					return err
 				}
@@ -58,17 +63,16 @@ func getUserRepoNames() ([]string, error) {
 }
 
 // mirrorRepos mirrors repositories for a user.
-// todo: diff doer (user) vs u (user)
-func mirrorRepos(doer, u *user.User, repos sources.SourceRepos, serviceType structs.GitServiceType) error {
+func mirrorRepos(doer, u *user.User, repos sources.SourceRepos) error {
+
 	for _, r := range repos {
-		opts := MigrateOptions{
+		migrateOptions := migrations.MigrateOptions{
 			CloneAddr:      r.URL,
 			RepoName:       r.Name,
 			Mirror:         true,
-			GitServiceType: serviceType,
+			GitServiceType: r.Type,
 		}
-
-		err := task.MigrateRepository(doer, u, opts)
+		err := MigrateRepository(doer, u, migrateOptions)
 		if err != nil {
 			return err
 		}

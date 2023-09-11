@@ -3,6 +3,7 @@ package sources
 import (
 	"code.gitea.io/gitea/modules/httplib"
 	"code.gitea.io/gitea/modules/json"
+	"code.gitea.io/gitea/modules/structs"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,8 +11,9 @@ import (
 
 // SourceRepo represents a repository with its URL, Owner, and Name.
 type SourceRepo struct {
-	URL  string `json:"html_url"` // Correct JSON field name for the repo's URL
+	URL  string `json:"html_url"`
 	Name string `json:"name"`
+	Type structs.GitServiceType
 }
 
 type SourceRepos []SourceRepo
@@ -64,6 +66,10 @@ func GithubStars(username, token string) (SourceRepos, error) {
 	}
 	if err := json.Unmarshal(body, &repos); err != nil {
 		return nil, err
+	}
+
+	for _, r := range repos {
+		r.Type = structs.GithubService
 	}
 
 	return repos, nil

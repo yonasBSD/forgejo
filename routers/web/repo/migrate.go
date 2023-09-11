@@ -38,8 +38,6 @@ func Migrate(ctx *context.Context) {
 		return
 	}
 
-	migrations.SyncSources("")
-
 	serviceType := structs.GitServiceType(ctx.FormInt("service_type"))
 
 	setMigrationContextData(ctx, serviceType)
