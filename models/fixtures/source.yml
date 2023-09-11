@@ -1,0 +1,6 @@
+- # Will reference the second user from the fixtures (non-admin user)
+  id: 1
+  user_id: 2
+  type: github_starred
+  remote_username: cassiozareck
+  token: ""

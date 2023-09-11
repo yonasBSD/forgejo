@@ -11,7 +11,7 @@ const (
 
 type Source struct {
 	ID             int64  `xorm:"pk autoincr"`
-	UserID         int64  `xorm:"UNIQUE NOT NULL"`
+	UserID         int64  `xorm:"index UNIQUE NOT NULL"`
 	Type           string `xorm:"NOT NULL"`
 	RemoteUsername string `xorm:"NOT NULL"`
 	Token          string
@@ -35,11 +35,11 @@ func SaveSource(ctx context.Context, source *Source) error {
 	return db.Insert(ctx, source)
 }
 
-func GetSourcesByUserID(userID int64) ([]Source, error) {
+func GetSourcesByUserID(ctx context.Context, userID int64) ([]Source, error) {
 	var sources []Source
 	// SELECT * FROM sources WHERE id = ?
-	err := db.GetEngine(db.DefaultContext).
-		Table("sources").
+	err := db.GetEngine(ctx).
+		Table("source").
 		Where("id = ?", userID).
 		Find(&sources)
 

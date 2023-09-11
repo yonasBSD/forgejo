@@ -45,7 +45,7 @@ func (s *SourceRepos) Filter(names []string) {
 // GithubStars will return starred repos from a given user in GitHub.
 func GithubStars(username, token string) (SourceRepos, error) {
 	url := fmt.Sprintf(
-		"https://api.github.com/users/%s/starred?per_page=20&page=1", username)
+		"https://api.github.com/users/%s/starred?per_page=5&page=1", username)
 	req := httplib.NewRequest(
 		url, "GET")
 
