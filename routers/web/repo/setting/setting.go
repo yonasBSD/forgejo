@@ -682,7 +682,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
-		if repo.Name != form.RepoName {
+		if repo.FullName() != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
 			return
 		}
@@ -713,7 +713,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.ServerError("Convert Fork", err)
 			return
 		}
-		if repo.Name != form.RepoName {
+		if repo.FullName() != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
 			return
 		}
@@ -746,7 +746,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
-		if repo.Name != form.RepoName {
+		if repo.FullName() != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
 			return
 		}
@@ -830,7 +830,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
-		if repo.Name != form.RepoName {
+		if repo.FullName() != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
 			return
 		}
@@ -854,7 +854,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
-		if repo.Name != form.RepoName {
+		if repo.FullName() != form.RepoName {
 			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
 			return
 		}
