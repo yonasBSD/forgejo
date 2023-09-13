@@ -454,14 +454,18 @@ func addRecursiveExclude(w archiver.Writer, insidePath, absPath string, excludeA
 	for _, file := range files {
 		currentAbsPath := path.Join(absPath, file.Name())
 		currentInsidePath := path.Join(insidePath, file.Name())
+
+		if !util.SliceContainsString(excludeAbsPath, currentAbsPath) {
+			log.Debug("Skipping '%s' because it is listed in the exclusions.", currentAbsPath)
+			continue
+		}
+
 		if file.IsDir() {
-			if !util.SliceContainsString(excludeAbsPath, currentAbsPath) {
-				if err := addFile(w, currentInsidePath, currentAbsPath, false); err != nil {
-					return err
-				}
-				if err = addRecursiveExclude(w, currentInsidePath, currentAbsPath, excludeAbsPath, verbose); err != nil {
-					return err
-				}
+			if err := addFile(w, currentInsidePath, currentAbsPath, false); err != nil {
+				return err
+			}
+			if err = addRecursiveExclude(w, currentInsidePath, currentAbsPath, excludeAbsPath, verbose); err != nil {
+				return err
 			}
 		} else {
 			// only copy regular files and symlink regular files, skip non-regular files like socket/pipe/...
