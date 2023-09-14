@@ -44,14 +44,20 @@ function dependencies() {
     if ! which curl daemon jq git-lfs > /dev/null ; then
         $SUDO apt-get install -y -qq curl daemon git-lfs jq
     fi
-    if ! which minio mc > /dev/null ; then
-        $SUDO curl -sS https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+
+    if ! test -f /usr/local/bin/mc || ! test -f /usr/local/bin/minio  > /dev/null ; then
+        $SUDO curl --fail -sS https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+        $SUDO curl --fail -sS https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2023-08-23T10-07-06Z -o /usr/local/bin/minio
+    fi
+    if ! test -x /usr/local/bin/mc || ! test -x /usr/local/bin/minio  > /dev/null ; then
         $SUDO chmod +x /usr/local/bin/mc
-        $SUDO curl -sS https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2023-08-23T10-07-06Z -o /usr/local/bin/minio
         $SUDO chmod +x /usr/local/bin/minio
     fi
-    if ! which garage > /dev/null ; then
-        $SUDO curl -sS https://garagehq.deuxfleurs.fr/_releases/v0.8.2/x86_64-unknown-linux-musl/garage -o /usr/local/bin/garage
+
+    if ! test -f /usr/local/bin/garage > /dev/null ; then
+        $SUDO curl --fail -sS https://garagehq.deuxfleurs.fr/_releases/v0.8.2/x86_64-unknown-linux-musl/garage -o /usr/local/bin/garage
+    fi
+    if ! test -x /usr/local/bin/garage  > /dev/null ; then
         $SUDO chmod +x /usr/local/bin/garage
     fi
 }
