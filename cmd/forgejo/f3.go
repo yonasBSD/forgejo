@@ -5,6 +5,7 @@ package forgejo
 import (
 	"context"
 
+	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 
@@ -61,6 +62,9 @@ func runMirror(ctx context.Context, c *cli.Context, action cli.ActionFunc) error
 		}
 
 		if err := git.InitSimple(ctx); err != nil {
+			return err
+		}
+		if err := models.Init(ctx); err != nil {
 			return err
 		}
 	}
