@@ -19,9 +19,9 @@ type MockMigrator struct {
 func (m *MockMigrator) Migrate(doer, u *user_model.User, opt migrations.MigrateOptions) error {
 	if doer != nil || u != nil || opt.RepoName != "" {
 		m.Repos = append(m.Repos, sources.RemoteRepo{
-			URL:  opt.CloneAddr,
-			Name: opt.RepoName,
-			Type: opt.GitServiceType,
+			CloneURL: opt.CloneAddr,
+			Name:     opt.RepoName,
+			Type:     opt.GitServiceType,
 		})
 		return nil
 	}
@@ -46,7 +46,7 @@ func TestSyncSources(t *testing.T) {
 		Migrator: &mm,
 	}
 
-	err := ss.SyncSources()
+	err := ss.SyncSources(1)
 	assert.NoError(t, err)
 
 	// TODO: in mm.Repos we have every new remote repo that should be mirrored (github starred, gitlab user repos...)

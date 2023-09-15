@@ -25,7 +25,7 @@ func SetupSourcesPost(ctx *ctx.Context) {
 
 	// todo: this should not call SyncSources
 	ss := task.NewSourceSyncer(ctx, ctx.Doer, ctx.Doer)
-	err = ss.SyncSources()
+	err = ss.SyncSources(1)
 	if err != nil {
 		log.Error("Couldn't sync source", err)
 	}

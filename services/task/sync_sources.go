@@ -61,7 +61,7 @@ func (s *SourceSyncer) getUserRepoNames() ([]string, error) {
 func (s *SourceSyncer) mirrorRepos(repos sources.RemoteRepos) error {
 	for _, r := range repos {
 		migrateOptions := migrations.MigrateOptions{
-			CloneAddr:      r.URL,
+			CloneAddr:      r.CloneURL,
 			RepoName:       r.Name,
 			Mirror:         true,
 			GitServiceType: r.Type,
@@ -74,7 +74,16 @@ func (s *SourceSyncer) mirrorRepos(repos sources.RemoteRepos) error {
 	return nil
 }
 
-func (s *SourceSyncer) SyncSources() error {
+func (s *SourceSyncer) fetchReposBySourceType(sourceType models.SourceType, username, token string) (sources.RemoteRepos, error) {
+	switch sourceType {
+	case models.GithubStarred:
+		return sources.GithubStars(username, token)
+	default:
+		return nil, fmt.Errorf("unsupported source type: %v", sourceType)
+	}
+}
+
+func (s *SourceSyncer) SyncSources(limit int) error {
 	modelSources, err := models.GetSourcesByUserID(s.Context, s.User.ID)
 	if err != nil {
 		return err
@@ -86,21 +95,23 @@ func (s *SourceSyncer) SyncSources() error {
 	}
 
 	for _, source := range modelSources {
-		if source.Type == models.GithubStarred {
-			newSources, err := sources.GithubStars(source.RemoteUsername, source.Token)
-			if err != nil {
-				return fmt.Errorf("failed to get GitHub starred repos: %w", err)
+		newSources, err := s.fetchReposBySourceType(source.Type, source.RemoteUsername, source.Token)
+		if err != nil {
+			return fmt.Errorf("failed to get repos for source type %v: %w", source.Type, err)
+		}
+
+		unmatchedRepos := util.LeftDiff(newSources.GetNames(), repoNames)
+		if len(unmatchedRepos) != 0 {
+			// Limit the number of unmatched repos
+			if len(unmatchedRepos) > limit {
+				unmatchedRepos = unmatchedRepos[:limit]
 			}
 
-			unmatchedRepos := util.LeftDiff(newSources.GetNames(), repoNames)
-			if len(unmatchedRepos) != 0 {
-
-				// Keep only new repositories from a remote source the user doesn't own in local inst.
-				newSources.Filter(unmatchedRepos)
-				err := s.mirrorRepos(newSources)
-				if err != nil {
-					return err
-				}
+			// Keep only new repositories from a remote source the user doesn't own in local inst.
+			newSources.Filter(unmatchedRepos)
+			err := s.mirrorRepos(newSources)
+			if err != nil {
+				return err
 			}
 		}
 	}

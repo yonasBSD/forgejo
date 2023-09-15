@@ -12,9 +12,9 @@ import (
 
 // RemoteRepo represents a repository with its URL, Owner, and Name.
 type RemoteRepo struct {
-	URL  string
-	Name string
-	Type structs.GitServiceType
+	CloneURL string `json:"clone_url"`
+	Name     string `json:"name"`
+	Type     structs.GitServiceType
 }
 
 type RemoteRepos []RemoteRepo

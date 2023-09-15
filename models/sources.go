@@ -5,15 +5,17 @@ import (
 	"context"
 )
 
+type SourceType string
+
 const (
 	GithubStarred = "github_starred"
 )
 
 type Source struct {
-	ID             int64  `xorm:"pk autoincr"`
-	UserID         int64  `xorm:"index UNIQUE NOT NULL"`
-	Type           string `xorm:"NOT NULL"`
-	RemoteUsername string `xorm:"NOT NULL"`
+	ID             int64      `xorm:"pk autoincr"`
+	UserID         int64      `xorm:"index UNIQUE NOT NULL"`
+	Type           SourceType `xorm:"NOT NULL"`
+	RemoteUsername string     `xorm:"NOT NULL"`
 	Token          string
 }
 
@@ -21,7 +23,7 @@ func init() {
 	db.RegisterModel(new(Source))
 }
 
-func CreateNewSource(userId int64, typ, remoteUser, token string) Source {
+func CreateNewSource(userId int64, typ SourceType, remoteUser, token string) Source {
 	return Source{
 		UserID:         userId,
 		Type:           typ,
