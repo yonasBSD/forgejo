@@ -40,7 +40,7 @@ func GetSourcesByUserID(ctx context.Context, userID int64) ([]Source, error) {
 	// SELECT * FROM sources WHERE id = ?
 	err := db.GetEngine(ctx).
 		Table("source").
-		Where("id = ?", userID).
+		Where("user_id = ?", userID).
 		Find(&sources)
 
 	return sources, err

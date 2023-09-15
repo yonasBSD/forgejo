@@ -58,7 +58,7 @@ func (s *SourceSyncer) getUserRepoNames() ([]string, error) {
 	return repoNames, nil
 }
 
-func (s *SourceSyncer) mirrorRepos(repos sources.SourceRepos) error {
+func (s *SourceSyncer) mirrorRepos(repos sources.RemoteRepos) error {
 	for _, r := range repos {
 		migrateOptions := migrations.MigrateOptions{
 			CloneAddr:      r.URL,

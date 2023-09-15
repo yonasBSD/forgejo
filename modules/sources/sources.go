@@ -7,70 +7,92 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
-// SourceRepo represents a repository with its URL, Owner, and Name.
-type SourceRepo struct {
-	URL  string `json:"html_url"`
-	Name string `json:"name"`
+// RemoteRepo represents a repository with its URL, Owner, and Name.
+type RemoteRepo struct {
+	URL  string
+	Name string
 	Type structs.GitServiceType
 }
 
-type SourceRepos []SourceRepo
+type RemoteRepos []RemoteRepo
 
-// GetNames extracts the names of the repositories from the SourceRepos slice.
-func (s *SourceRepos) GetNames() []string {
-	var names []string
-	for _, repo := range *s {
-		names = append(names, repo.Name)
+// GetNames extracts the names of the repositories from the RemoteRepos slice.
+func (r *RemoteRepos) GetNames() []string {
+	names := make([]string, len(*r))
+	for i, repo := range *r {
+		names[i] = repo.Name
 	}
 	return names
 }
 
-// Filter filters the SourceRepos based on the provided names.
-// todo: decrease time complexity
-func (s *SourceRepos) Filter(names []string) {
-	var filteredRepos SourceRepos
-	for _, repo := range *s {
-		for _, name := range names {
-			if repo.Name == name {
-				filteredRepos = append(filteredRepos, repo)
-				break
-			}
+// Filter filters the RemoteRepos based on the provided names.
+func (r *RemoteRepos) Filter(names []string) {
+	nameMap := make(map[string]bool)
+	for _, name := range names {
+		nameMap[name] = true
+	}
+
+	var filteredRepos RemoteRepos
+	for _, repo := range *r {
+		if nameMap[repo.Name] {
+			filteredRepos = append(filteredRepos, repo)
 		}
 	}
-	*s = filteredRepos
+	*r = filteredRepos
 }
 
 // GithubStars will return starred repos from a given user in GitHub.
-func GithubStars(username, token string) (SourceRepos, error) {
-	url := fmt.Sprintf(
-		"https://api.github.com/users/%s/starred?per_page=5&page=1", username)
-	req := httplib.NewRequest(
-		url, "GET")
+// This gets every repo the user owns.
+// Token should allow more requests and private repos
+func GithubStars(username, token string) (RemoteRepos, error) {
+	var allRepos RemoteRepos
+	page := 1
+	perPage := 100 // Set to maximum allowed by GitHub to minimize requests
 
-	if token != "" {
-		req.Header("Authorization", "token "+token)
+	for {
+		url := fmt.Sprintf("https://api.github.com/users/%s/starred?per_page=%d&page=%d", username, perPage, page)
+		req := httplib.NewRequest(url, "GET")
+
+		if token != "" {
+			req.Header("Authorization", "token "+token)
+		}
+
+		res, err := req.Response()
+		if err != nil || res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to fetch data, status: %s, %s", res.Status, err)
+		}
+
+		var repos RemoteRepos
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(body, &repos); err != nil {
+			return nil, err
+		}
+
+		for i := range repos {
+			repos[i].Type = structs.GithubService
+		}
+
+		allRepos = append(allRepos, repos...)
+
+		// Check if there are more pages
+		links := res.Header.Get("Link")
+		if !containsRelNext(links) {
+			break
+		}
+
+		page++
 	}
 
-	res, err := req.Response()
-	if err != nil || res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch data, status: %s, %s", res.Status, err)
-	}
+	return allRepos, nil
+}
 
-	var repos SourceRepos
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(body, &repos); err != nil {
-		return nil, err
-	}
-
-	for _, r := range repos {
-		r.Type = structs.GithubService
-	}
-
-	return repos, nil
+// containsRelNext checks if the Link header contains rel="next", indicating more pages.
+func containsRelNext(linkHeader string) bool {
+	return strings.Contains(linkHeader, `rel="next"`)
 }

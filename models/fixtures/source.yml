@@ -2,5 +2,5 @@
   id: 1
   user_id: 2
   type: github_starred
-  remote_username: cassiozareck
+  remote_username: cassiozareck  # The user should not be me but a safe forgejo/gitea account
   token: ""
