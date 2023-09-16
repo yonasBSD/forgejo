@@ -74,7 +74,7 @@ func (o *RepositoryProvider) Get(ctx context.Context, user *User, project *Proje
 			Name: exemplar.Name,
 			FetchFunc: func(destination string) {
 				o.g.GetLogger().Debug("RepositoryProvider:Get: git clone %s %s", repoPath, destination)
-				util.Command(ctx, "git", "clone", "--bare", repoPath, destination)
+				util.Command(ctx, "git", "clone", "--mirror", repoPath, destination)
 			},
 		},
 	}
