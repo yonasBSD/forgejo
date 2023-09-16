@@ -64,11 +64,11 @@
 }
 
 .repository.releases #release-list > li .detail .download .list li:first-of-type {
-  border-radius: var(--border-radius) 0 0 var(--border-radius);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 .repository.releases #release-list > li .detail .download .list li:last-of-type {
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .repository.releases #release-list > li .detail .dot {
