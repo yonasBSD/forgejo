@@ -220,6 +220,7 @@ func (o *PullRequest) FromFormat(pullRequest *format.PullRequest) {
 
 	*o = PullRequest{
 		PullRequest: pr,
+		FetchFunc:   pullRequest.FetchFunc,
 	}
 }
 
@@ -333,6 +334,21 @@ func (o *PullRequestProvider) Put(ctx context.Context, user *User, project *Proj
 			if _, err := db.GetEngine(ctx).ID(existing.Issue.ID).Cols(cols...).Update(u); err != nil {
 				panic(err)
 			}
+		}
+	}
+
+	if pullRequest.FetchFunc != nil {
+		repoPath := repo_model.RepoPath(user.Name, project.Name)
+		fromHead := pullRequest.FetchFunc(repoPath)
+		gitRepo, err := git.OpenRepository(ctx, repoPath)
+		if err != nil {
+			panic(err)
+		}
+		defer gitRepo.Close()
+
+		toHead := fmt.Sprintf("%s%d/head", git.PullPrefix, pullRequest.GetID())
+		if err := git.NewCommand(ctx, "update-ref").AddDynamicArguments(toHead, fromHead).Run(&git.RunOpts{Dir: repoPath}); err != nil {
+			panic(err)
 		}
 	}
 
