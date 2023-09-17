@@ -9,6 +9,7 @@ type SourceType string
 
 const (
 	GithubStarred = "github_starred"
+	Dummy         = "dummy" // just for tests
 )
 
 type Source struct {
@@ -23,15 +24,6 @@ func init() {
 	db.RegisterModel(new(Source))
 }
 
-func CreateNewSource(userId int64, typ SourceType, remoteUser, token string) Source {
-	return Source{
-		UserID:         userId,
-		Type:           typ,
-		RemoteUsername: remoteUser,
-		Token:          token,
-	}
-}
-
 // SaveSource insert a new source into the database
 func SaveSource(ctx context.Context, source *Source) error {
 	return db.Insert(ctx, source)
@@ -39,7 +31,6 @@ func SaveSource(ctx context.Context, source *Source) error {
 
 func GetSourcesByUserID(ctx context.Context, userID int64) ([]Source, error) {
 	var sources []Source
-	// SELECT * FROM sources WHERE id = ?
 	err := db.GetEngine(ctx).
 		Table("source").
 		Where("user_id = ?", userID).

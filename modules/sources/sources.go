@@ -28,8 +28,9 @@ func (r *RemoteRepos) GetNames() []string {
 	return names
 }
 
-// Filter filters the RemoteRepos based on the provided names.
-func (r *RemoteRepos) Filter(names []string) {
+// FilterBy filters the RemoteRepos based on the provided names.
+// FilterBy will overwrite the list with just repos containing names
+func (r *RemoteRepos) FilterBy(names []string) {
 	nameMap := make(map[string]bool)
 	for _, name := range names {
 		nameMap[name] = true
@@ -45,7 +46,6 @@ func (r *RemoteRepos) Filter(names []string) {
 }
 
 // GithubStars will return starred repos from a given user in GitHub.
-// This gets every repo the user owns.
 // Token should allow more requests and private repos
 func GithubStars(username, token string) (RemoteRepos, error) {
 	var allRepos RemoteRepos
