@@ -182,16 +182,36 @@ func (o *IssueProvider) Get(ctx context.Context, user *User, project *Project, e
 func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, issue, existing *Issue) *Issue {
 	i := issue.Issue
 	i.RepoID = project.GetID()
-	labels := make([]int64, 0, len(i.Labels))
-	for _, label := range i.Labels {
-		labels = append(labels, label.ID)
+	makeLabels := func(issueID int64) []issues_model.IssueLabel {
+		labels := make([]issues_model.IssueLabel, 0, len(i.Labels))
+		for _, label := range i.Labels {
+			o.g.GetLogger().Trace("%d with label %d", issueID, label.ID)
+			labels = append(labels, issues_model.IssueLabel{
+				IssueID: issueID,
+				LabelID: label.ID,
+			})
+		}
+		return labels
 	}
 
 	var result *Issue
 
+	sess := db.GetEngine(ctx)
 	if existing == nil || existing.IsNil() {
-		if err := issues_model.NewIssue(&project.Repository, &i, labels, []string{}); err != nil {
+		idx, err := db.GetNextResourceIndex(ctx, "issue_index", project.Repository.ID)
+		if err != nil {
+			panic(fmt.Errorf("generate issue index failed: %w", err))
+		}
+		i.Index = idx
+
+		if _, err = sess.NoAutoTime().Insert(&i); err != nil {
 			panic(err)
+		}
+		labels := makeLabels(i.ID)
+		if len(labels) > 0 {
+			if _, err := sess.Insert(labels); err != nil {
+				panic(err)
+			}
 		}
 		result = IssueConverter(&i)
 	} else {
@@ -209,7 +229,7 @@ func (o *IssueProvider) Put(ctx context.Context, user *User, project *Project, i
 		}
 
 		if len(cols) > 0 {
-			if _, err := db.GetEngine(ctx).ID(existing.ID).Cols(cols...).Update(u); err != nil {
+			if _, err := sess.ID(existing.ID).Cols(cols...).Update(u); err != nil {
 				panic(err)
 			}
 		}
