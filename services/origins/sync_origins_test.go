@@ -1,9 +1,10 @@
-package sources
+package origins
 
 import (
+	_ "code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/sources"
+	"code.gitea.io/gitea/modules/origin"
 	"code.gitea.io/gitea/services/migrations"
 	"context"
 	"fmt"
@@ -14,14 +15,14 @@ import (
 )
 
 type MockMigrator struct {
-	Repos []sources.RemoteRepo
+	Repos origin.RemoteRepos
 }
 
 // Migrate in this case do a reverse engineering to retrieve form opt the
 // struct in form of RemoteRepos
 func (m *MockMigrator) Migrate(doer, u *user_model.User, opt migrations.MigrateOptions) error {
 	if doer != nil && u != nil && opt.RepoName != "" {
-		m.Repos = append(m.Repos, sources.RemoteRepo{
+		m.Repos = append(m.Repos, origin.RemoteRepo{
 			CloneURL: opt.CloneAddr,
 			Name:     opt.RepoName,
 			Type:     opt.GitServiceType,
@@ -42,11 +43,12 @@ func TestSyncSources(t *testing.T) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
 
 	mm := MockMigrator{}
-	ss := SourceSyncer{
+	ss := OriginSyncer{
 		Context:  context.Background(),
 		Doer:     user,
 		User:     user,
 		Migrator: &mm,
+		Limit:    5,
 	}
 
 	t.Run("Unmatched repo tests", func(t *testing.T) {
@@ -54,25 +56,25 @@ func TestSyncSources(t *testing.T) {
 		existingRepoNames := []string{"repo1", "repo2", "repo3", "repo4", "repo5", "repo6", "repo7", "repo8", "repo9", "repo10"}
 
 		// Create 5 mock RemoteRepos.
-		testSources := sources.RemoteRepos{
-			sources.RemoteRepo{Name: "repo1"},
-			sources.RemoteRepo{Name: "repo2"},
-			sources.RemoteRepo{Name: "repo3"},
-			sources.RemoteRepo{Name: "repo4"},
-			sources.RemoteRepo{Name: "repo5"},
+		testSources := origin.RemoteRepos{
+			origin.RemoteRepo{Name: "repo1"},
+			origin.RemoteRepo{Name: "repo2"},
+			origin.RemoteRepo{Name: "repo3"},
+			origin.RemoteRepo{Name: "repo4"},
+			origin.RemoteRepo{Name: "repo5"},
 		}
 
 		unmatched := ss.getUnmatchedRepos(testSources, existingRepoNames)
-		assert.Len(t, unmatched, 5) // Expecting 5 unmatched repos (repo6 to repo10).
+		assert.Len(t, unmatched, 0) // Expecting no unmatched repos.
 
 		existingRepoNames = []string{"repo2", "repo3", "repo4"}
-		testSources = sources.RemoteRepos{
-			sources.RemoteRepo{Name: "repo2"},
-			sources.RemoteRepo{Name: "repo5"},
+		testSources = origin.RemoteRepos{
+			origin.RemoteRepo{Name: "repo2"},
+			origin.RemoteRepo{Name: "repo5"},
 		}
 
 		unmatched = ss.getUnmatchedRepos(testSources, existingRepoNames)
-		assert.Len(t, unmatched, 1) // Expecting 5 unmatched repos (repo6 to repo10).
+		assert.Len(t, unmatched, 1) // Expecting one unmatched repo.
 	})
 
 	t.Run("Integration", func(t *testing.T) {

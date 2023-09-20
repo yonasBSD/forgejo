@@ -6,7 +6,7 @@ import (
 )
 
 func AddSourceTable(x *xorm.Engine) error {
-	type Source struct {
+	type Origin struct {
 		ID             int64  `xorm:"pk autoincr"`
 		UserID         int64  `xorm:"UNIQUE NOT NULL"`
 		Type           string `xorm:"NOT NULL"`
@@ -15,6 +15,6 @@ func AddSourceTable(x *xorm.Engine) error {
 	}
 
 	return x.Sync(
-		new(models.Source),
+		new(models.Origin),
 	)
 }

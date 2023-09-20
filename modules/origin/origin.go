@@ -1,4 +1,4 @@
-package sources
+package origin
 
 import (
 	"code.gitea.io/gitea/modules/httplib"
@@ -28,9 +28,9 @@ func (r *RemoteRepos) GetNames() []string {
 	return names
 }
 
-// FilterBy filters the RemoteRepos based on the provided names.
-// FilterBy will overwrite the list with just repos containing names
-func (r *RemoteRepos) FilterBy(names []string) {
+// FilterBy filters the RemoteRepos based on the provided names and returns a new RemoteRepos.
+// FilterBy just keeps repos within names array
+func (r *RemoteRepos) FilterBy(names []string) RemoteRepos {
 	nameMap := make(map[string]bool)
 	for _, name := range names {
 		nameMap[name] = true
@@ -42,7 +42,7 @@ func (r *RemoteRepos) FilterBy(names []string) {
 			filteredRepos = append(filteredRepos, repo)
 		}
 	}
-	*r = filteredRepos
+	return filteredRepos
 }
 
 // GithubStars will return starred repos from a given user in GitHub.
