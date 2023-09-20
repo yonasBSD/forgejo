@@ -4,6 +4,32 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.20.1-0 or v1.20.2-0) does not require manual actions but others might (e.g. v1.19, v1.20).
 
+## 1.20.4-1
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.4-1` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.4-0..v1.20.4-1
+```
+
+This stable release includes bug fixes.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.4+0-gitea-1.20.4`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix the followers and following list that only showed the first page](https://codeberg.org/forgejo/forgejo/commit/c041114a20fcaaf0931da81dcb542a930e8f9c5f)
+  * [Fix issue templates preventing the creation of any new issues when blank issues are not authorized](https://codeberg.org/forgejo/forgejo/commit/64a418dfc778665f56cb20d678f3c10dbb62ddca) (regression introduced in v1.20.4-0)
+
 ## 1.20.4-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.4-0` release can be reviewed from the command line with:
