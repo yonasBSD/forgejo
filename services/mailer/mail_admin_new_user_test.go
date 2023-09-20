@@ -21,13 +21,13 @@ func getTestUsers() []*user_model.User {
 	admin.Name = "admin"
 	admin.IsAdmin = true
 	admin.Language = "en_US"
-	admin.Email = "admin@forgejo.org"
+	admin.Email = "admin@example.com"
 
 	newUser := new(user_model.User)
 	newUser.Name = "new_user"
 	newUser.Language = "en_US"
 	newUser.IsAdmin = false
-	newUser.Email = "new_user@forgejo.org"
+	newUser.Email = "new_user@example.com"
 	newUser.LastLoginUnix = 1693648327
 	newUser.CreatedUnix = 1693648027
 
@@ -49,7 +49,7 @@ func cleanUpUsers(ctx context.Context, users []*user_model.User) {
 
 func TestAdminNotificationMail_test(t *testing.T) {
 	mailService := setting.Mailer{
-		From:     "test@forgejo.org",
+		From:     "test@example.com",
 		Protocol: "dummy",
 	}
 
@@ -57,8 +57,8 @@ func TestAdminNotificationMail_test(t *testing.T) {
 	setting.Domain = "localhost"
 	setting.AppSubURL = "http://localhost"
 
-	// test with NOTIFY_NEW_SIGNUPS enabled
-	setting.Admin.NotifyNewSignUps = true
+	// test with SEND_NOTIFICATION_EMAIL_ON_NEW_USER enabled
+	setting.Admin.SendNotificationEmailOnNewUser = true
 
 	ctx := context.Background()
 	NewContext(ctx)
@@ -78,10 +78,10 @@ func TestAdminNotificationMail_test(t *testing.T) {
 	}
 	MailNewUser(ctx, users[1])
 
-	// test with NOTIFY_NEW_SIGNUPS disabled; emails shouldn't be sent
-	setting.Admin.NotifyNewSignUps = false
+	// test with SEND_NOTIFICATION_EMAIL_ON_NEW_USER disabled; emails shouldn't be sent
+	setting.Admin.SendNotificationEmailOnNewUser = false
 	sa = func(msgs []*Message) {
-		assert.Equal(t, 1, 0, "this shouldn't execute. MailNewUser must exit early since NOTIFY_NEW_SIGNUPS is disabled")
+		assert.Equal(t, 1, 0, "this shouldn't execute. MailNewUser must exit early since SEND_NOTIFICATION_EMAIL_ON_NEW_USER is disabled")
 	}
 
 	MailNewUser(ctx, users[1])
