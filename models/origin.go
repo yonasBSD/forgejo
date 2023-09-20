@@ -14,6 +14,16 @@ const (
 	Dummy         = "dummy" // just for tests
 )
 
+func (ot OriginType) GetName() string {
+	switch ot {
+	case GithubStarred:
+		return "Github Starred Repositories"
+	case Dummy:
+		return "Dummy"
+	}
+	return "Not valid type"
+}
+
 type Origin struct {
 	ID             int64      `xorm:"pk autoincr"`
 	UserID         int64      `xorm:"index UNIQUE NOT NULL"`

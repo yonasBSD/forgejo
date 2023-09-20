@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 type MockMigrator struct {
@@ -78,10 +79,14 @@ func TestSyncSources(t *testing.T) {
 	})
 
 	t.Run("Integration", func(t *testing.T) {
-		err := ss.Sync()
+		err := ss.Fetch()
 		assert.NoError(t, err)
 
 		expected := DummyData
-		assert.Equal(t, expected, mm.Repos)
+		assert.Equal(t, expected, ss.GetIncomingRepos())
+
+		ss.Sync()
+		time.Sleep(MIGRATIONS_DELAY * 2) // After this time, at two repos will have reached at Migrator
+		assert.Len(t, mm.Repos, 2)
 	})
 }

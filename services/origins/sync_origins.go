@@ -56,13 +56,16 @@ type OriginSyncer struct {
 	User     *user.User // The user whose new repositories are supposed to be mirrored (can be an org.).
 	Migrator Migrator   // Will call this to migrate and mirror a repo
 	Limit    int        // The maximum number of repositories to sync.
+
+	incomingRepos origin_module.RemoteRepos
+	cancel        context.CancelFunc
 }
 
-// SyncOrigins initializes an OriginSyncer and starts the synchronization process.
+// NewOriginSyncer initializes an OriginSyncer and starts the synchronization process.
 // You can initialize OriginSyncer by yourself if you want to test it.
-// SyncOrigins will also return a cancel function which can be used to stop scheduling
+// NewOriginSyncer will also return a cancel function which can be used to stop scheduling
 // of new migrations
-func SyncOrigins(ctx context.Context, doer, u *user.User, limit int) (context.CancelFunc, error) {
+func NewOriginSyncer(ctx context.Context, doer, u *user.User, limit int) *OriginSyncer {
 	os := &OriginSyncer{
 		Doer:     doer,
 		User:     u,
@@ -70,7 +73,7 @@ func SyncOrigins(ctx context.Context, doer, u *user.User, limit int) (context.Ca
 		Migrator: RealMigrator{},
 		Limit:    limit,
 	}
-	return os.Sync()
+	return os
 }
 
 // getUserRepoNames retrieves the names of all repositories owned by the user.
@@ -115,14 +118,30 @@ func (s *OriginSyncer) getUnmatchedRepos(newSources origin_module.RemoteRepos,
 	return newSources.FilterBy(unmatchedRepoNames)
 }
 
-// mirrorRepos mirrors the provided repositories.
-func (s *OriginSyncer) mirrorRepos(repos origin_module.RemoteRepos) context.CancelFunc {
+func (s *OriginSyncer) Cancel() {
+	if s.cancel != nil {
+		s.cancel()
+	}
+}
+
+// GetIncomingRepos will return every new repository found after fetching remote origins
+func (s *OriginSyncer) GetIncomingRepos() origin_module.RemoteRepos {
+	return s.incomingRepos
+}
+
+// Sync mirrors the fetched repositories.
+func (s *OriginSyncer) Sync() {
+	if len(s.incomingRepos) == 0 {
+		return
+	}
+
 	ctx, cancel := context.WithCancel(s.Context)
+	s.cancel = cancel
 
 	go func() {
 		defer cancel()
 
-		for _, r := range repos {
+		for _, r := range s.incomingRepos {
 			select {
 			case <-ctx.Done():
 				log.Info("Migration from remote origins stopped")
@@ -146,41 +165,33 @@ func (s *OriginSyncer) mirrorRepos(repos origin_module.RemoteRepos) context.Canc
 		}
 	}()
 
-	return cancel
 }
 
-// Sync orchestrates the entire process of getting origins defined by user from a database,
-// identifying, check unmatched repos, and mirror them.
-func (s *OriginSyncer) Sync() (context.CancelFunc, error) {
+// Fetch orchestrates the entire process of getting origins defined by user from a database,
+// identifying and check unmatched repos
+func (s *OriginSyncer) Fetch() error {
 	modelSources, err := models.GetOriginsByUserID(s.Context, s.User.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	existentRepos, err := s.getUserRepoNames()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	var allUnmatchedRepos origin_module.RemoteRepos
 
 	for _, source := range modelSources {
 		newSources, err := s.fetchReposBySourceType(source)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get repos for source type %v: %w", source.Type, err)
+			return fmt.Errorf("failed to get repos for source type %v: %w", source.Type.GetName(), err)
 		}
 
 		unmatchedRepos := s.getUnmatchedRepos(newSources, existentRepos)
 		if len(unmatchedRepos) != 0 {
-			log.Info("New unmatched repositories found on %v: %v.", source.Type, unmatchedRepos) //todo
+			log.Info("New unmatched repositories found on %v: %v.", source.Type.GetName(), unmatchedRepos)
 		}
-		allUnmatchedRepos = append(allUnmatchedRepos, unmatchedRepos...)
+		s.incomingRepos = append(s.incomingRepos, unmatchedRepos...)
 	}
 
-	if len(allUnmatchedRepos) > 0 {
-		cancel := s.mirrorRepos(allUnmatchedRepos)
-		return cancel, nil
-	}
-
-	return nil, nil
+	return nil
 }

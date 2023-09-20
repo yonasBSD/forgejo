@@ -24,8 +24,11 @@ func SetupSourcesPost(ctx *ctx.Context) {
 
 // SyncSourcesPost synchronizes the sources
 func SyncSourcesPost(ctx *ctx.Context) {
-	err := origins.SyncOrigins(ctx, ctx.Doer, ctx.Doer, 1)
+	originSyncer := origins.NewOriginSyncer(ctx, ctx.Doer, ctx.Doer, 4)
+	err := originSyncer.Fetch()
 	if err != nil {
-		log.Error("Couldn't sync source", err)
+		log.Error("Couldn't fetch origin", err)
 	}
+
+	originSyncer.Sync()
 }
