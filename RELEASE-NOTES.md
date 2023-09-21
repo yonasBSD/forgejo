@@ -2,7 +2,30 @@
 
 A Forgejo release is published shortly after a Gitea release is published and they have [matching release numbers](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/RELEASE.md#release-numbering). Additional Forgejo releases may be published to address urgent security issues or bug fixes.
 
-The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.20.1-0 or v1.20.2-0) does not require manual actions but others might (e.g. v1.19, v1.20).
+The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
+
+## 1.21.0-0 (DRAFT)
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.0-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/forgejo
+```
+
+- **[Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/):**
+  The semantic version was updated to `6.0.0+0-gitea-1.21.0` because it contains breaking changes.
+
+- **Breaking:**
+  Note that the modifications related to CSS, templates or assets (images, fonts, etc.) are not documented here.
+  Although they can be extracted and modified, Forgejo does not provide any guarantee that such changes
+  will be portable from one version to another (even a patch version).
+  - [Restrict certificate type for builtin SSH server](https://codeberg.org/forgejo/forgejo/pulls/1172). This is a breaking change for setups where the builtin SSH server is being used and for some reason host certificates were being used for authentication.
+  - [Some Forgejo CLI options have changed](https://codeberg.org/forgejo/forgejo/commit/d0dbe52e76f3038777c3b50066e3636105387ca3) and scripts may need to be updated. For instance `--verbose` is no longer a global option and is implemented on a per sub-command basis. Check `forgejo --help` or `forgejo docs` for more information.
+  - [Remove "CHARSET" config option for MySQL and always use "utf8mb4"](https://codeberg.org/forgejo/forgejo/commit/ce46834b938eb687152a680669ada95a26304178). It has been a requirement for years and specifying anything else is likely to cause issues.
+  - [Set SSH_AUTHORIZED_KEYS_BACKUP to false by default](https://codeberg.org/forgejo/forgejo/commit/469d89b95a1ce18dd34808a95c7230375e828e24). There is no automatic cleanup of these backups and can end up using a significant amount of disk space over time.
+
+(More items to be added here)
 
 ## 1.20.4-1
 
