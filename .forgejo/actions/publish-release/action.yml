@@ -50,8 +50,8 @@ runs:
         echo "value=$version" >> "$GITHUB_OUTPUT"
 
     - name: Create the release notes
-        id: release-notes
-        run: |
+      id: release-notes
+      run: |
           anchor=${{ steps.tag-version.outputs.value }}
           anchor=${anchor//./-}
           cat >> "$GITHUB_OUTPUT" <<EOF
