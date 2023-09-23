@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/services/task"
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"code.gitea.io/gitea/models"
@@ -33,20 +34,20 @@ const MIGRATIONS_DELAY = 1 * time.Second
 // Migrator defines an interface for migrating repositories. This is useful
 // because we want to test this package without making real cloning operations
 type Migrator interface {
-	Migrate(doer, u *user.User, opt migrations.MigrateOptions) error
+	Migrate(ctx context.Context, doer, u *user.User, opt migrations.MigrateOptions) error
 }
 
 type RealMigrator struct{}
 
-func (m RealMigrator) Migrate(doer, u *user.User, opt migrations.MigrateOptions) error {
-	return task.MigrateRepository(doer, u, opt)
+func (m RealMigrator) Migrate(ctx context.Context, doer, u *user.User, opt migrations.MigrateOptions) error {
+	return task.MigrateRepository(ctx, doer, u, opt)
 }
 
 // DummyData represents a set of mock repositories for testing purposes.
 var DummyData = origin_module.RemoteRepos{
-	origin_module.RemoteRepo{Name: "dummy1", CloneURL: "null.com/r1.git", Type: structs.NotMigrated},
-	origin_module.RemoteRepo{Name: "dummy2", CloneURL: "null.com/r2.git", Type: structs.NotMigrated},
-	origin_module.RemoteRepo{Name: "dummy3", CloneURL: "null.com/r3.git", Type: structs.NotMigrated},
+	origin_module.RemoteRepo{Name: "fake_repo1", CloneURL: "null.com/r1.git", Type: structs.NotMigrated},
+	origin_module.RemoteRepo{Name: "fake_repo2", CloneURL: "null.com/r2.git", Type: structs.NotMigrated},
+	origin_module.RemoteRepo{Name: "fake_repo3", CloneURL: "null.com/r3.git", Type: structs.NotMigrated},
 }
 
 // OriginSyncer is responsible for synchronizing repositories from external origins.
@@ -54,11 +55,17 @@ type OriginSyncer struct {
 	Context  context.Context
 	Doer     *user.User // The logged user performing the sync operation.
 	User     *user.User // The user whose new repositories are supposed to be mirrored (can be an org.).
-	Migrator Migrator   // Will call this to migrate and mirror a repo
+	Migrator Migrator   // Func to migrate a repo
 	Limit    int        // The maximum number of repositories to sync.
 
 	incomingRepos origin_module.RemoteRepos
 	cancel        context.CancelFunc
+
+	inProgress      bool
+	inProgressMu    sync.Mutex
+	actualMigration *origin_module.RemoteRepo
+
+	err chan error
 }
 
 // NewOriginSyncer initializes an OriginSyncer and starts the synchronization process.
@@ -124,16 +131,38 @@ func (s *OriginSyncer) Cancel() {
 	}
 }
 
+func (s *OriginSyncer) Error() chan error {
+	return s.err
+}
+
 // GetIncomingRepos will return every new repository found after fetching remote origins
 func (s *OriginSyncer) GetIncomingRepos() origin_module.RemoteRepos {
 	return s.incomingRepos
 }
 
+func (s *OriginSyncer) InProgress() bool {
+	s.inProgressMu.Lock()
+	defer s.inProgressMu.Unlock()
+	return s.inProgress
+}
+
+// GetActualMigration will return which repository Sync is currently migrating.
+func (s *OriginSyncer) GetActualMigration() *origin_module.RemoteRepo {
+	return s.actualMigration
+}
+
 // Sync mirrors the fetched repositories.
-func (s *OriginSyncer) Sync() {
+func (s *OriginSyncer) Sync() error {
 	if len(s.incomingRepos) == 0 {
-		return
+		return nil
 	}
+
+	s.inProgressMu.Lock()
+	if s.inProgress {
+		return fmt.Errorf("origins synchronization already in progress")
+	}
+	s.inProgress = true
+	s.inProgressMu.Unlock()
 
 	ctx, cancel := context.WithCancel(s.Context)
 	s.cancel = cancel
@@ -145,26 +174,33 @@ func (s *OriginSyncer) Sync() {
 			select {
 			case <-ctx.Done():
 				log.Info("Migration from remote origins stopped")
+				s.inProgressMu.Lock()
+				s.inProgress = false
+				s.inProgressMu.Unlock()
 				return
 			default:
-				time.Sleep(MIGRATIONS_DELAY)
 				migrateOptions := migrations.MigrateOptions{
 					CloneAddr:      r.CloneURL,
 					RepoName:       r.Name,
 					Mirror:         true,
 					GitServiceType: r.Type,
 				}
-				err := s.Migrator.Migrate(s.Doer, s.User, migrateOptions)
+				s.actualMigration = &r
+				err := s.Migrator.Migrate(ctx, s.Doer, s.User, migrateOptions)
 				if err != nil {
-					log.Error("Error while scheduling migration for repo %s: %v", r.Name, err)
+					log.Error("Error while adding migration for repo %s: %v", r.Name, err)
+					s.err <- err
 					return
 				}
-
-				log.Info("Repository migration %v from %v scheduled", r.Name, r.Type)
+				log.Info("Repository migration %v from %v started/scheduled", r.Name, r.Type)
+				time.Sleep(MIGRATIONS_DELAY) // The user must have the right to cancel
 			}
 		}
+		s.inProgressMu.Lock()
+		s.inProgress = false
+		s.inProgressMu.Unlock()
 	}()
-
+	return nil
 }
 
 // Fetch orchestrates the entire process of getting origins defined by user from a database,

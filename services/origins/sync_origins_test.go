@@ -21,7 +21,7 @@ type MockMigrator struct {
 
 // Migrate in this case do a reverse engineering to retrieve form opt the
 // struct in form of RemoteRepos
-func (m *MockMigrator) Migrate(doer, u *user_model.User, opt migrations.MigrateOptions) error {
+func (m *MockMigrator) Migrate(ctx context.Context, doer, u *user_model.User, opt migrations.MigrateOptions) error {
 	if doer != nil && u != nil && opt.RepoName != "" {
 		m.Repos = append(m.Repos, origin.RemoteRepo{
 			CloneURL: opt.CloneAddr,
@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	})
 }
 
-func TestSyncSources(t *testing.T) {
+func TestSyncOrigins(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
 
@@ -85,8 +85,50 @@ func TestSyncSources(t *testing.T) {
 		expected := DummyData
 		assert.Equal(t, expected, ss.GetIncomingRepos())
 
-		ss.Sync()
-		time.Sleep(MIGRATIONS_DELAY * 2) // After this time, at two repos will have reached at Migrator
-		assert.Len(t, mm.Repos, 2)
+		err = ss.Sync()
+		assert.NoError(t, err)
+		assert.True(t, ss.InProgress())
+
+		time.Sleep(MIGRATIONS_DELAY * 3) // After this time, three repos will be reached at migrator
+		assert.Equal(t, len(mm.Repos), 3)
+
+		// Check for errors
+		select {
+		case err := <-ss.Error():
+			t.Fatalf("Received unexpected error: %v", err) // Fail the test if there's an error
+		default:
+			// No errors, which is expected
+		}
 	})
+}
+
+func TestSyncOriginsCancel(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+
+	mm := MockMigrator{}
+	ss := OriginSyncer{
+		Context:  context.Background(),
+		Doer:     user,
+		User:     user,
+		Migrator: &mm,
+		Limit:    5,
+	}
+
+	err := ss.Fetch()
+	assert.NoError(t, err)
+
+	expected := DummyData
+	assert.Equal(t, expected, ss.GetIncomingRepos())
+
+	err = ss.Sync()
+	assert.NoError(t, err)
+
+	time.Sleep(MIGRATIONS_DELAY / 2) // Wait 1 repo be synced
+	ss.Cancel()
+	time.Sleep(MIGRATIONS_DELAY / 2) // Wait a bit till context be canceled
+
+	assert.False(t, ss.InProgress())
+	assert.Equal(t, mm.Repos, DummyData[:1])
+
 }
