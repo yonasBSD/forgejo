@@ -6,13 +6,16 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/origins"
 	"fmt"
+	"net/http"
 	"time"
 )
 
 // TODO: hello frontender here you will can work on UI and forms retrieve
 
-// SetupSourcesPost save a new source into database
-func SetupSourcesPost(ctx *ctx.Context) {
+var originSyncer *origins.OriginSyncer
+
+// SetupOriginPost saves a new source into the database and returns relevant responses.
+func SetupOriginPost(ctx *ctx.Context) {
 	err := models.SaveOrigin(ctx, &models.Origin{
 		UserID:         ctx.Doer.ID,
 		Type:           models.GithubStarred,
@@ -20,47 +23,80 @@ func SetupSourcesPost(ctx *ctx.Context) {
 		Token:          ""})
 
 	if err != nil {
-		log.Error("Couldn't save source into database: ", err)
+		ctx.Error(http.StatusInternalServerError, "SaveOriginError", fmt.Sprintf("Couldn't save source into database: %v", err))
+		return
+	}
+	ctx.JSON(http.StatusOK, map[string]string{"message": "Source saved successfully."})
+}
+
+// FetchedRepositories returns new repositories found under chosen origins
+func FetchedRepositories(ctx *ctx.Context) {
+	if originSyncer == nil {
+		ctx.Error(http.StatusForbidden, "OriginSyncerNotInitialized", "OriginSyncer not initialized.")
+		return
+	}
+
+	if originSyncer.InProgress() {
+		repos := originSyncer.GetIncomingRepos()
+		ctx.JSON(http.StatusOK, repos)
+	} else {
+		ctx.JSON(http.StatusOK, map[string]string{"message": "OriginSyncer not in synchronization process."})
 	}
 }
 
-var originSyncer *origins.OriginSyncer
-
-// SyncOriginsPost synchronizes the origins
-func SyncOriginsPost(ctx *ctx.Context) {
+// CancelOriginSyncer cancels the OriginSyncer if it is in progress.
+func CancelOriginSyncer(ctx *ctx.Context) {
 	if originSyncer == nil {
-		originSyncer = origins.NewOriginSyncer(ctx, ctx.Doer, ctx.Doer, 20)
+		ctx.Error(http.StatusForbidden, "OriginSyncerNotInitialized", "OriginSyncer not initialized.")
+		return
 	}
+
 	if originSyncer.InProgress() {
-		log.Error("Origins synchronization already in progress")
+		originSyncer.Cancel()
+		ctx.JSON(http.StatusOK, map[string]string{"message": "OriginSyncer cancelled."})
+	} else {
+		ctx.JSON(http.StatusOK, map[string]string{"message": "OriginSyncer not in progress. Nothing to cancel."})
 	}
+}
+
+// SyncOriginsPost synchronizes the origins and returns relevant responses.
+func SyncOriginsPost(ctx *ctx.Context) {
+	if originSyncer != nil && originSyncer.InProgress() {
+		ctx.Error(http.StatusBadRequest, "SyncInProgressError", "Origins synchronization already in progress")
+		return
+	}
+
+	originSyncer = origins.NewOriginSyncer(ctx, ctx.Doer, ctx.ContextUser, 20)
 
 	err := originSyncer.Fetch()
 	if err != nil {
-		log.Error("Couldn't fetch origins", err)
+		ctx.Error(http.StatusInternalServerError, "FetchOriginsError", fmt.Sprintf("Couldn't fetch origins: %v", err))
+		return
 	}
 
 	err = originSyncer.Sync()
 	if err != nil {
-		log.Error("Couldn't sync origins", err)
+		ctx.Error(500, "SyncOriginsError", fmt.Sprintf("Couldn't sync origins: %v", err))
+		return
 	}
 
-	// Flash a message saying origins are being synced and flash when it's done
 	go func() {
-		time.Sleep(50 * time.Millisecond) // Guarantee it is already working on a repository
 		for {
 			select {
 			case err := <-originSyncer.Error():
-				ctx.Flash.Error(fmt.Sprintf("Error during migration: %v", err))
+				log.Error(fmt.Sprintf("Error during migration: %v", err))
 				return
-			default:
-				if !originSyncer.InProgress() {
-					ctx.Flash.Info("Origins synced")
-					return
-				}
-				ctx.Flash.Info(fmt.Sprintf("Currently migrating: %v", originSyncer.GetActualMigration()))
-				time.Sleep(5 * time.Second) // Add sleep to avoid tight looping.
+			case n := <-originSyncer.Finished():
+				log.Info(fmt.Sprintf("Successfully migrated %v repositories", n))
+				return
+			case repo := <-originSyncer.GetActualMigration():
+				log.Info(fmt.Sprintf("Currently migrating: %v", repo))
+			case <-time.After(1 * time.Minute):
+				log.Warn("Timeout reached while waiting for migration events.")
+				return
 			}
+			time.Sleep(5 * time.Second) // Add sleep to avoid tight looping.
 		}
 	}()
+	ctx.JSON(http.StatusOK, map[string]string{"message": "Origins synchronization initiated."})
 }

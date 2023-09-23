@@ -969,7 +969,8 @@ func registerRoutes(m *web.Route) {
 		m.Post("/migrate", web.Bind(forms.MigrateRepoForm{}), repo.MigratePost)
 		m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
 		m.Get("/search", repo.SearchRepo)
-		m.Get("/sources", web.Bind(forms.MigrateRepoForm{}), repo.SetupSourcesPost)
+		//m.Get("/sources", repo.SetupOriginPost)
+		m.Get("/sources", web.Bind(forms.MigrateRepoForm{}), repo.SyncOriginsPost)
 	}, reqSignIn)
 
 	m.Group("/{username}/-", func() {

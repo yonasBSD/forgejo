@@ -29,7 +29,11 @@ import (
 	"code.gitea.io/gitea/modules/util"
 )
 
-const MIGRATIONS_DELAY = 1 * time.Second
+// This MIGRATION_DELAY is important if we want to let the user cancel the migrations.
+// After migration tasks are pushed to queue, It's hard to retrieve repository ID
+// currently in a migration process, so the best thing to do is not push everything once,
+// so the users have time to cancel the scheduling
+const MIGRATIONS_DELAY = 2 * time.Second
 
 // Migrator defines an interface for migrating repositories. This is useful
 // because we want to test this package without making real cloning operations
@@ -58,27 +62,27 @@ type OriginSyncer struct {
 	Migrator Migrator   // Func to migrate a repo
 	Limit    int        // The maximum number of repositories to sync.
 
-	incomingRepos origin_module.RemoteRepos
-	cancel        context.CancelFunc
-
+	incomingRepos   origin_module.RemoteRepos
+	cancel          context.CancelFunc
 	inProgress      bool
 	inProgressMu    sync.Mutex
-	actualMigration *origin_module.RemoteRepo
-
-	err chan error
+	actualMigration chan *origin_module.RemoteRepo
+	finished        chan int
+	err             chan error
 }
 
 // NewOriginSyncer initializes an OriginSyncer and starts the synchronization process.
 // You can initialize OriginSyncer by yourself if you want to test it.
-// NewOriginSyncer will also return a cancel function which can be used to stop scheduling
-// of new migrations
 func NewOriginSyncer(ctx context.Context, doer, u *user.User, limit int) *OriginSyncer {
 	os := &OriginSyncer{
-		Doer:     doer,
-		User:     u,
-		Context:  ctx,
-		Migrator: RealMigrator{},
-		Limit:    limit,
+		Doer:            doer,
+		User:            u,
+		Context:         ctx,
+		Migrator:        RealMigrator{},
+		Limit:           limit,
+		actualMigration: make(chan *origin_module.RemoteRepo),
+		finished:        make(chan int),
+		err:             make(chan error),
 	}
 	return os
 }
@@ -131,7 +135,7 @@ func (s *OriginSyncer) Cancel() {
 	}
 }
 
-func (s *OriginSyncer) Error() chan error {
+func (s *OriginSyncer) Error() <-chan error {
 	return s.err
 }
 
@@ -147,8 +151,12 @@ func (s *OriginSyncer) InProgress() bool {
 }
 
 // GetActualMigration will return which repository Sync is currently migrating.
-func (s *OriginSyncer) GetActualMigration() *origin_module.RemoteRepo {
+func (s *OriginSyncer) GetActualMigration() <-chan *origin_module.RemoteRepo {
 	return s.actualMigration
+}
+
+func (s *OriginSyncer) Finished() <-chan int {
+	return s.finished
 }
 
 // Sync mirrors the fetched repositories.
@@ -164,20 +172,18 @@ func (s *OriginSyncer) Sync() error {
 	s.inProgress = true
 	s.inProgressMu.Unlock()
 
-	ctx, cancel := context.WithCancel(s.Context)
+	// This requires independent context because http context is canceled as soon as the request ends.
+	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 
 	go func() {
 		defer cancel()
-
+	loop: // avoid duplication when ctx done
 		for _, r := range s.incomingRepos {
 			select {
 			case <-ctx.Done():
 				log.Info("Migration from remote origins stopped")
-				s.inProgressMu.Lock()
-				s.inProgress = false
-				s.inProgressMu.Unlock()
-				return
+				break loop
 			default:
 				migrateOptions := migrations.MigrateOptions{
 					CloneAddr:      r.CloneURL,
@@ -185,20 +191,23 @@ func (s *OriginSyncer) Sync() error {
 					Mirror:         true,
 					GitServiceType: r.Type,
 				}
-				s.actualMigration = &r
+				s.actualMigration <- &r
 				err := s.Migrator.Migrate(ctx, s.Doer, s.User, migrateOptions)
 				if err != nil {
 					log.Error("Error while adding migration for repo %s: %v", r.Name, err)
 					s.err <- err
+					s.finished <- -1
 					return
 				}
 				log.Info("Repository migration %v from %v started/scheduled", r.Name, r.Type)
-				time.Sleep(MIGRATIONS_DELAY) // The user must have the right to cancel
+				time.Sleep(MIGRATIONS_DELAY)
 			}
 		}
 		s.inProgressMu.Lock()
 		s.inProgress = false
 		s.inProgressMu.Unlock()
+		s.finished <- len(s.incomingRepos)
+		s.incomingRepos = origin_module.RemoteRepos{}
 	}()
 	return nil
 }
