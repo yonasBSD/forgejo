@@ -24,8 +24,66 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Some Forgejo CLI options have changed](https://codeberg.org/forgejo/forgejo/commit/d0dbe52e76f3038777c3b50066e3636105387ca3) and scripts may need to be updated. For instance `--verbose` is no longer a global option and is implemented on a per sub-command basis. Check `forgejo --help` or `forgejo docs` for more information.
   - [Remove "CHARSET" config option for MySQL and always use "utf8mb4"](https://codeberg.org/forgejo/forgejo/commit/ce46834b938eb687152a680669ada95a26304178). It has been a requirement for years and specifying anything else is likely to cause issues.
   - [Set SSH_AUTHORIZED_KEYS_BACKUP to false by default](https://codeberg.org/forgejo/forgejo/commit/469d89b95a1ce18dd34808a95c7230375e828e24). There is no automatic cleanup of these backups and can end up using a significant amount of disk space over time.
-
-(More items to be added here)
+- **Forgejo Actions:**
+  It is now enabled by default but should still be considered alpha stage and subject to unannounced breaking changes.
+  - The API can now be used to manage secrets for [users](https://code.forgejo.org/api/swagger/#/user/updateUserSecret), [organizations](https://code.forgejo.org/api/swagger/#/organization/orgListActionsSecrets) and [repositories](https://code.forgejo.org/api/swagger/#/repository/updateRepoSecret).
+  - [Registration tokens can register multiple runners](https://codeberg.org/forgejo/forgejo/commit/9b698362a333de2c388499f1a64d39545b0263bd) instead of a single one. Read more [about runner registration](https://forgejo.org/docs/v1.21/admin/actions/#registration).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/35a653d7edbe0d693649604b8309bfc578dd988b) support for [variables in addition to secrets](https://forgejo.org/docs/v1.21/user/actions/#variables).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/0d55f64e6cd3de2e1e5c0ee795605823efb14231) support for [recurring actions similar to cron jobs](https://forgejo.org/docs/v1.21/user/actions/#onschedule).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/19872063a3c14256a1d89b2a104d63e7538a3a28) the possibility to [disable workflows from the user interface](https://forgejo.org/docs/v1.21/user/actions/#the-list-of-tasks-in-a-repository).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/460a2b0edffe71d9e64633beaa1071fcf4a33369) automatic [cleanup of artificats](https://forgejo.org/docs/v1.21/user/actions/#artifacts).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/44781f9f5c4ede618660d8cfe42437f0e8dc22a0) automatic cancelation [of jobs when pushing new commits](https://forgejo.org/docs/v1.21/user/actions/#auto-cancelation-of-workflows) to a PR.
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/f3d293d2bbe0b2eab047bdd403046069cffbc0c4) support for [uploading multiple artificats](https://forgejo.org/docs/v1.21/user/actions/#artifacts).
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/48e5a74f215d78813a816c57fc5a85a909a003d5) support for the [`pull_request_target` event](https://forgejo.org/docs/v1.21/user/actions/#onpull_request_target) which has access to secrets because it runs using the workflows from the base branch instead of the pull request.
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/8228751c55d6a4263f0fec2932ca16181c09c97d) support for reading labels from the runner [instead of specifying them during registration](https://forgejo.org/docs/v1.21/admin/actions/#registration).
+- **Features:**
+  - [Newly pushed branches show in the web UI with a link to create a PR](https://codeberg.org/forgejo/forgejo/commit/6375419468edc95fdfac94aac3b0e10b23743557).
+  - Labels that are no longer useful [can be archived](https://codeberg.org/forgejo/forgejo/commit/cafce3b4b5afb3f254a48e87f1516d7b5dc209b6). They can no longer be selected but they remain on existing issues.
+  - The blame view now [takes into account](https://codeberg.org/forgejo/forgejo/commit/ed64f1c2b835bf9332bf8347be9675ef29c8274b) the [`.git-blame-ignore-revs`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-blameignoreRevsFile) file.
+  - [Pre-register OAuth2 applications for git credential helpers](https://codeberg.org/forgejo/forgejo/commit/63ab92d7971e4931e98f014f2c5385d2242fa780).
+  - Admins can be [notified via email](https://codeberg.org/forgejo/forgejo/commit/7d2d9970115c94954dacb45684f9e3c16117ebfe) when a new user registers to help fight spam bots.
+  - Packages [can be configured to redirect requests to the S3 server](https://codeberg.org/forgejo/forgejo/commit/c890454769562e0ec2978e123aaf3d9a43e5ef4f) for clients that support this feature.
+  - When a PR contains multiple commits, it is now possible [review to each commit independently](https://codeberg.org/forgejo/forgejo/commit/55532061c83d38d33ef48bdc5eeac0f652844e8a).
+  - Issues can [be deleted in batch](https://codeberg.org/forgejo/forgejo/commit/a1c5057fe81c25dfd1777e9625eb5480c45897ea).
+  - An email can be associated with [an Organisations](https://codeberg.org/forgejo/forgejo/commit/6598d0291cf7dfeb00cb5e5d18faf2bf46fad596).
+  - The CODEOWNERS file is [interpreted to automatically set reviewers on PRs](https://codeberg.org/forgejo/forgejo/commit/3bdd48016f659c440d6e8bb57386fab7ad7b357b).
+  - Issue search [were reworked entirely](https://codeberg.org/forgejo/forgejo/commit/1e76a824bcd71acd59cdfb2c4547806bc34b3d86) to fix the shortcomings of the previous implementation.
+  - [Allow "latest" to be used as a release tag when downloading a file](https://codeberg.org/forgejo/forgejo/commit/a7d9a70552410d797cefc87b177b33ca4a1a60c4).
+  - [Authentication via reverse proxy is available and disabled by default](https://codeberg.org/forgejo/forgejo/commit/e97e883ad50774f249c8c694598c25a17227299b).
+  - [Add API for changing avatars](https://codeberg.org/forgejo/forgejo/commit/254a82842addb1475611789107c3720e37394879).
+- **User Interface:**
+  - [Show OpenID Connect and OAuth on the signup page](https://codeberg.org/forgejo/forgejo/commit/63b53af933d748f9b4e0f1273e3701b4c3d08ac3).
+  - [Add 'Show on a map' button to the location in the usr profile](https://codeberg.org/forgejo/forgejo/commit/d58c5425799335ea57f27461f99ddd1078e9b2de).
+  - [Render plaintext task list items for markdown files](https://codeberg.org/forgejo/forgejo/commit/eaea530d6bc84b23e6ff14ff8c2a74aa3b67ecd0).
+  - The administrators user details page [was modified](https://codeberg.org/forgejo/forgejo/commit/5b5bb8d3546e6504b689b01d3ac4897dda3aee3d).
+  - When mirroring a repository fails, [a `Retry` button allows to re-create it](https://codeberg.org/forgejo/forgejo/commit/865d2221c0f4b2a8623ff9299930c9bab0da2c78).
+  - Package cleanup [can be triggered from from administration web interface](https://codeberg.org/forgejo/forgejo/commit/0c6ae61229bce9d9ad3d359cee927464968a2dd1).
+  - When a commit is displayed, the [branches and tags that contain it are shown](https://codeberg.org/forgejo/forgejo/commit/bd6ef718548767ff209048eb8443a067106908bf).
+  - In the page displaying the [list of branches, it is now possible to search them by name](https://codeberg.org/forgejo/forgejo/commit/47b878858ada27fc4c74eeadcc1e467d2da90e04).
+  - [Display all user types (including bots) org types on the administration web interface](https://codeberg.org/forgejo/forgejo/commit/198a9ca6350954a6d3327a408021fec2bc0fc805).
+  - [Improve opengraph previews](https://codeberg.org/forgejo/forgejo/commit/5743d7cb5bcd85c88ad7d128e0162893a074418b).
+  - [Render code blocks in the repository description](https://codeberg.org/forgejo/forgejo/commit/3d109861ddf95846905143b4cf39129bf253161e).
+  - [Add `member`, `collaborator`, `contributor`, and `first-time contributor` roles and tooltips](https://codeberg.org/forgejo/forgejo/commit/d2e4039def61d9cc9952be462216001125327270) next to the author.
+  - It is no longer possible to [change the run user in the installation page](https://codeberg.org/forgejo/forgejo/commit/d17a848fe275c3e8734a4dfcaf2eae8ca0dc361c).
+  - [Update emoji set](https://codeberg.org/forgejo/forgejo/commit/e882398c5acb99db555553acc2da89db73713710)  to [Unicode 15](https://unicode.org/versions/Unicode15.0.0/).
+  - [Improve the image Diff user interface](https://codeberg.org/forgejo/forgejo/commit/09faf43ef822ca4dbdfb2a2714ad43a782acf6e8).
+* **Enhancements:**
+  - [Improve the privacy of the user profile settings](https://codeberg.org/forgejo/forgejo/commit/ff90c87c878b03e7beabac5f19396e0db2c25a1e).
+  - [Add the upload URL to the release API](https://codeberg.org/forgejo/forgejo/commit/a9ce570298d4541bc1b5598dc080d9e4541de17b).
+  - [Allow editing existing push mirrors from the settings page of a repository](https://codeberg.org/forgejo/forgejo/commit/ab388deb0e52c058a19dbd844bdd890f7cf84d51).
+  - [Add a link to the OpenID issuer URL in the WebFinger response](https://codeberg.org/forgejo/forgejo/commit/df55f9b189174767296e562389948e5250f1df73).
+  - [Support copy protected branches with template repositories](https://codeberg.org/forgejo/forgejo/commit/037c9895a7406b42f88991295382db18f98dbef9).
+  - [In the administration web interface, split the lfs size from repository size](https://codeberg.org/forgejo/forgejo/commit/4aba8a6a5ff96f0995ada7e183c7864f8f5bc05c).
+- **Bug fixes:**
+  - [Allow empty Conan files](https://codeberg.org/forgejo/forgejo/commit/d513628db90415a27e887c3cf349309b3ad44d55).
+  - [Fix the incorrect route path in the user edit page. ](https://codeberg.org/forgejo/forgejo/commit/323135b97b219d7fb10557fb9d9156c6bef3ae62).
+  - [Rewrite the DiffFileTreeItem and fix misalignment ](https://codeberg.org/forgejo/forgejo/commit/48c4a7e75cf2717f00c9691ca26688aa4db0a17a).
+  - [Do not "guess" the file encoding/BOM when using API to upload files](https://codeberg.org/forgejo/forgejo/commit/22eeede885327fca0328b7d5b153e7a6c4211ffa).
+* **Performances:**
+  - Git [branches are stored in the databases](https://codeberg.org/forgejo/forgejo/commit/6e19484f4d3bf372212f2da462110a1a8c10cbf2) to reduce the calls to a git process and improve performances.
+* **Security:**
+  - [Do not show the profile README when a repository is private](https://codeberg.org/forgejo/forgejo/commit/6a7a5ea32ab61a608b52029f778e8df76b04f489).
+  - A [security.txt files is provided by default](https://codeberg.org/forgejo/forgejo/pulls/1201/files) and other static files [can also be added](https://codeberg.org/forgejo/forgejo/commit/52fb9367734100847249d074e2bc17f2aa91053e).
 
 ## 1.20.5-0
 
