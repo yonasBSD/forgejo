@@ -47,8 +47,8 @@ func (m RealMigrator) Migrate(ctx context.Context, doer, u *user.User, opt migra
 	return task.MigrateRepository(ctx, doer, u, opt)
 }
 
-// DummyData represents a set of mock repositories for testing purposes.
-var DummyData = origin_module.RemoteRepos{
+// DummyRepos represents a set of mock repositories for testing purposes.
+var DummyRepos = origin_module.RemoteRepos{
 	origin_module.RemoteRepo{Name: "fake_repo1", CloneURL: "null.com/r1.git", Type: structs.NotMigrated},
 	origin_module.RemoteRepo{Name: "fake_repo2", CloneURL: "null.com/r2.git", Type: structs.NotMigrated},
 	origin_module.RemoteRepo{Name: "fake_repo3", CloneURL: "null.com/r3.git", Type: structs.NotMigrated},
@@ -67,7 +67,7 @@ type OriginSyncer struct {
 	inProgress      bool
 	inProgressMu    sync.Mutex
 	actualMigration chan *origin_module.RemoteRepo
-	finished        chan int
+	finished        chan struct{}
 	err             chan error
 }
 
@@ -80,9 +80,9 @@ func NewOriginSyncer(ctx context.Context, doer, u *user.User, limit int) *Origin
 		Context:         ctx,
 		Migrator:        RealMigrator{},
 		Limit:           limit,
-		actualMigration: make(chan *origin_module.RemoteRepo),
-		finished:        make(chan int),
-		err:             make(chan error),
+		actualMigration: make(chan *origin_module.RemoteRepo, limit),
+		finished:        make(chan struct{}, 2), // two make this channel non-blocking if the caller doesn't want to handle finish
+		err:             make(chan error, 2),
 	}
 	return os
 }
@@ -110,7 +110,7 @@ func (s *OriginSyncer) fetchReposBySourceType(source models.Origin) (origin_modu
 		return origin_module.GithubStars(source.RemoteUsername, source.Token)
 	case models.Dummy:
 		// Create a dummy set of RemoteRepos, for tests
-		return DummyData, nil
+		return DummyRepos, nil
 	default:
 		return nil, fmt.Errorf("unsupported source type: %v", source.Type)
 	}
@@ -155,64 +155,21 @@ func (s *OriginSyncer) GetActualMigration() <-chan *origin_module.RemoteRepo {
 	return s.actualMigration
 }
 
-func (s *OriginSyncer) Finished() <-chan int {
+func (s *OriginSyncer) Finished() <-chan struct{} {
 	return s.finished
 }
 
-// Sync mirrors the fetched repositories.
-func (s *OriginSyncer) Sync() error {
-	if len(s.incomingRepos) == 0 {
-		return nil
-	}
-
+func (s *OriginSyncer) finish() {
 	s.inProgressMu.Lock()
-	if s.inProgress {
-		return fmt.Errorf("origins synchronization already in progress")
-	}
-	s.inProgress = true
+	s.inProgress = false
 	s.inProgressMu.Unlock()
+	s.finished <- struct{}{}
+	s.incomingRepos = origin_module.RemoteRepos{}
 
-	// This requires independent context because http context is canceled as soon as the request ends.
-	ctx, cancel := context.WithCancel(context.Background())
-	s.cancel = cancel
-
-	go func() {
-		defer cancel()
-	loop: // avoid duplication when ctx done
-		for _, r := range s.incomingRepos {
-			select {
-			case <-ctx.Done():
-				log.Info("Migration from remote origins stopped")
-				break loop
-			default:
-				migrateOptions := migrations.MigrateOptions{
-					CloneAddr:      r.CloneURL,
-					RepoName:       r.Name,
-					Mirror:         true,
-					GitServiceType: r.Type,
-				}
-				s.actualMigration <- &r
-				err := s.Migrator.Migrate(ctx, s.Doer, s.User, migrateOptions)
-				if err != nil {
-					log.Error("Error while adding migration for repo %s: %v", r.Name, err)
-					s.err <- err
-					s.finished <- -1
-					return
-				}
-				log.Info("Repository migration %v from %v started/scheduled", r.Name, r.Type)
-				time.Sleep(MIGRATIONS_DELAY)
-			}
-		}
-		s.inProgressMu.Lock()
-		s.inProgress = false
-		s.inProgressMu.Unlock()
-		s.finished <- len(s.incomingRepos)
-		s.incomingRepos = origin_module.RemoteRepos{}
-	}()
-	return nil
+	close(s.actualMigration)
 }
 
-// Fetch orchestrates the entire process of getting origins defined by user from a database,
+// Fetch orchestrates the process of getting origins defined by user from a database,
 // identifying and check unmatched repos
 func (s *OriginSyncer) Fetch() error {
 	modelSources, err := models.GetOriginsByUserID(s.Context, s.User.ID)
@@ -240,3 +197,53 @@ func (s *OriginSyncer) Fetch() error {
 
 	return nil
 }
+
+// Sync mirrors the fetched repositories.
+func (s *OriginSyncer) Sync() error {
+	if len(s.incomingRepos) == 0 {
+		return nil
+	}
+
+	s.inProgressMu.Lock()
+	if s.inProgress {
+		return fmt.Errorf("origins synchronization already in progress")
+	}
+	s.inProgress = true
+	s.inProgressMu.Unlock()
+
+	// This requires independent context because http context is canceled as soon as the request ends.
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+
+	go func() {
+		defer cancel()
+	loop:
+		for _, r := range s.incomingRepos {
+			select {
+			case <-ctx.Done():
+				log.Info("Migration from remote origins stopped")
+				break loop
+			default:
+				migrateOptions := migrations.MigrateOptions{
+					CloneAddr:      r.CloneURL,
+					RepoName:       r.Name,
+					Mirror:         true,
+					GitServiceType: r.Type,
+				}
+				s.actualMigration <- &r
+				err := s.Migrator.Migrate(ctx, s.Doer, s.User, migrateOptions)
+				if err != nil {
+					log.Error("Error while adding migration for repo %s: %v", r.Name, err)
+					s.err <- err
+					break loop
+				}
+				log.Info("Repository migration %v from %v started/scheduled", r.Name, r.Type.Title())
+				time.Sleep(MIGRATIONS_DELAY)
+			}
+		}
+		s.finish()
+	}()
+	return nil
+}
+
+// todo close finished
