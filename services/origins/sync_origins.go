@@ -33,7 +33,7 @@ import (
 // After migration tasks are pushed to queue, It's hard to retrieve repository ID
 // currently in a migration process, so the best thing to do is not push everything once,
 // so the users have time to cancel the scheduling
-const MIGRATIONS_DELAY = 2 * time.Second
+const MIGRATIONS_DELAY = 5 * time.Second
 
 // Migrator defines an interface for migrating repositories. This is useful
 // because we want to test this package without making real cloning operations
@@ -245,5 +245,3 @@ func (s *OriginSyncer) Sync() error {
 	}()
 	return nil
 }
-
-// todo close finished

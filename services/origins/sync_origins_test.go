@@ -170,7 +170,7 @@ func TestSyncOriginsCancel(t *testing.T) {
 	time.Sleep(MIGRATIONS_DELAY) // Wait a bit till context be canceled
 
 	assert.False(t, ss.InProgress())
-	assert.Equal(t, DummyRepos[:1], mm.Repos)
+	assert.Equal(t, DummyRepos[:1], mm.Repos) // Only one should reach at migrator
 }
 
 func TestSyncOriginsError(t *testing.T) {
