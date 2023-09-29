@@ -644,6 +644,36 @@ export function initSingleCommentEditor($commentForm) {
   initComboMarkdownEditor($commentForm.find('.combo-markdown-editor'), opts);
 }
 
+export function initSpamCommentScorer($commentForm) {
+  // Bind the spam check function to the commentForm
+  $commentForm.on('submit', (($commentForm) => {
+    const formData = new FormData($commentForm[0]);
+    const spamStringArray = JSON.parse(spamStringsJson);
+
+    let totalSpamScore = 0;
+    // This algorithm is only a quick hack to add a bit of friction
+    totalSpamScore += getStringArrayAppearancesInString(formData.get('content'), spamStringArray);
+    totalSpamScore += getStringArrayAppearancesInString(formData.get('title'), spamStringArray);
+
+    if (totalSpamScore > 2) {
+      confirmModal(
+        {
+          content: 'Our scan flagged your text as suspicious or spam. ' +
+            'If you post it nevertheless, our moderation team will review it shortly. ' +
+            'To submit the text, confirm this dialog and submit again.',
+          buttonColor: 'yellow'
+        }
+      ).then((value) => {
+        if (value === true) {
+          // If the user clicks on confirm, unbind all the functions from submit
+          $commentForm.off('submit');
+        }
+      });
+      return false;
+    }
+  })($commentForm));
+}
+
 export function initIssueTemplateCommentEditors($commentForm) {
   // pages:
   // * new issue with issue template

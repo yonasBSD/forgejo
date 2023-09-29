@@ -128,3 +128,14 @@ export function decodeURLEncodedBase64(base64url) {
     .replace(/_/g, '/')
     .replace(/-/g, '+'));
 }
+
+// Returns how many strings from an array are present in a string to check
+export function getStringArrayAppearancesInString(textToCheck, stringArray) {
+  const lowerCaseText = textToCheck.toLowerCase;
+  let stringsFound = 0;
+
+  for (const stringOfArray of stringArray) {
+    if (lowerCaseText.includes(stringOfArray)) stringsFound += 1;
+  }
+  return stringsFound;
+}
