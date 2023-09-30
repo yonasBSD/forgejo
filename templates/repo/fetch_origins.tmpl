@@ -1,0 +1,23 @@
+{{template "base/head" .}}
+
+<div role="main" class="page-content home">
+	<div class="ui stackable middle very relaxed page grid">
+		<div class="sixteen wide center column">
+			<h1 class="hero ui icon header">
+				{{svg "octicon-repo"}} {{ctx.Locale.Tr "incoming_repos"}}
+			</h1>
+			<ul>
+				{{range .IncomingRepos}}
+					<li>{{.}}</li>
+				{{end}}
+			</ul>s
+
+			<!-- Cancel Sync Button -->
+			<form action="/repo/cancel_sync/" method="get">
+				<button type="submit" class="ui button red">Cancel Sync</button>
+			</form>
+		</div>
+	</div>
+</div>
+
+{{template "base/footer" .}}

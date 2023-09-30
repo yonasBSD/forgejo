@@ -13,6 +13,7 @@
 package origins
 
 import (
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/structs"
@@ -22,9 +23,9 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"xorm.io/builder"
 
 	"code.gitea.io/gitea/models"
-	"code.gitea.io/gitea/models/repo"
 	origin_module "code.gitea.io/gitea/modules/origin"
 	"code.gitea.io/gitea/modules/util"
 )
@@ -89,21 +90,19 @@ func NewOriginSyncer(ctx context.Context, doer, u *user.User, limit int) *Origin
 
 // getUserRepoNames retrieves the names of all repositories owned by the user.
 func (s *OriginSyncer) getUserRepoNames() ([]string, error) {
-	userRepos, _, err := repo.GetUserRepositories(&repo.SearchRepoOptions{
-		Actor: s.User,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user repositories: %w", err)
-	}
+	sess := db.GetEngine(s.Context)
 	var repoNames []string
-	for _, r := range userRepos {
-		repoNames = append(repoNames, r.Name)
+
+	cond := builder.Eq{"owner_id": s.User.ID}
+
+	err := sess.Table("repository").Where(cond).Cols("name").Find(&repoNames)
+	if err != nil {
+		return nil, err
 	}
 	return repoNames, nil
 }
 
-// fetchReposBySourceType fetches repositories based on the provided source type.
+// fetchReposBySourceType will check the type of the origin and call external API to retrieve RemoteRepos
 func (s *OriginSyncer) fetchReposBySourceType(source models.Origin) (origin_module.RemoteRepos, error) {
 	switch source.Type {
 	case models.GithubStarred:
@@ -212,17 +211,17 @@ func (s *OriginSyncer) Sync() error {
 	s.inProgressMu.Unlock()
 
 	// This requires independent context because http context is canceled as soon as the request ends.
-	ctx, cancel := context.WithCancel(context.Background())
+	ctxBack := context.Background()
+	ctx, cancel := context.WithCancel(ctxBack)
 	s.cancel = cancel
 
 	go func() {
-		defer cancel()
-	loop:
+		defer s.finish()
 		for _, r := range s.incomingRepos {
 			select {
 			case <-ctx.Done():
 				log.Info("Migration from remote origins stopped")
-				break loop
+				return
 			default:
 				migrateOptions := migrations.MigrateOptions{
 					CloneAddr:      r.CloneURL,
@@ -231,17 +230,16 @@ func (s *OriginSyncer) Sync() error {
 					GitServiceType: r.Type,
 				}
 				s.actualMigration <- &r
-				err := s.Migrator.Migrate(ctx, s.Doer, s.User, migrateOptions)
+				err := s.Migrator.Migrate(ctxBack, s.Doer, s.User, migrateOptions)
 				if err != nil {
 					log.Error("Error while adding migration for repo %s: %v", r.Name, err)
 					s.err <- err
-					break loop
+					return
 				}
 				log.Info("Repository migration %v from %v started/scheduled", r.Name, r.Type.Title())
 				time.Sleep(MIGRATIONS_DELAY)
 			}
 		}
-		s.finish()
 	}()
 	return nil
 }

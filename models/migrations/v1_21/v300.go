@@ -8,7 +8,7 @@ import (
 func AddSourceTable(x *xorm.Engine) error {
 	type Origin struct {
 		ID             int64  `xorm:"pk autoincr"`
-		UserID         int64  `xorm:"UNIQUE NOT NULL"`
+		UserID         int64  `xorm:"NOT NULL"`
 		Type           string `xorm:"NOT NULL"`
 		RemoteUsername string `xorm:"NOT NULL"`
 		Token          string

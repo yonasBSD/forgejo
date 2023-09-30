@@ -7,32 +7,32 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 // This should follow a hybrid-singleton. It will be created and reused both in fetch and sync operations.
 // But it should be set to nil/recreated after the process finish because contexts are ephemeral
 var originSyncer *origins.OriginSyncer
 
-// SetupOriginPost saves a new source into the database and returns
+// SetupOriginPost saves a new origin into the database and returns
 func SetupOriginPost(ctx *ctx.Context) {
 
 	// of course retrieve from forms when there is a ui
 	originType := models.OriginType(ctx.Params(":type"))
 	remoteUsername := ctx.Params(":username")
 
-	// in theory, here we would retrieve values from a form
 	err := models.SaveOrigin(ctx, &models.Origin{
 		UserID:         ctx.Doer.ID,
 		Type:           originType,
 		RemoteUsername: remoteUsername,
+		Token:          "",
 	})
 
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SaveOriginError", fmt.Sprintf("Couldn't save source into database: %v", err))
 		return
 	}
-	ctx.JSON(http.StatusOK, map[string]string{"message": "Source saved successfully."})
+	ctx.Flash.Info("Saved")
+	ctx.Redirect("/")
 }
 
 // CancelOriginSyncer cancels the OriginSyncer if it is in progress.
@@ -44,13 +44,16 @@ func CancelOriginSyncerPost(ctx *ctx.Context) {
 
 	if originSyncer.InProgress() {
 		originSyncer.Cancel()
-		ctx.JSON(http.StatusOK, map[string]string{"message": "OriginSyncer cancelled."})
+		ctx.Flash.Info("Canceled")
+		ctx.Redirect("/")
 	} else {
-		ctx.JSON(http.StatusOK, map[string]string{"message": "OriginSyncer not in progress. Nothing to cancel."})
+		ctx.Flash.Info("Nothing in progress")
+		ctx.Redirect("/")
 	}
 }
 
-// FetchAndSyncOrigins handles fetching and syncing operations in one function.
+// FetchAndSyncOrigins get and mirror repositories from chosen origins like starred repositories from
+// github and others
 func FetchAndSyncOrigins(ctx *ctx.Context) {
 	// Check if an origin sync is already in progress
 	if originSyncer != nil && originSyncer.InProgress() {
@@ -76,34 +79,13 @@ func FetchAndSyncOrigins(ctx *ctx.Context) {
 	err = originSyncer.Sync()
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "SyncOriginsError", fmt.Sprintf("Couldn't sync origins: %v", err))
+		originSyncer.Cancel()
 		return
 	}
 
 	// Respond to the client
 	ctx.Data["IncomingRepos"] = originSyncer.GetIncomingRepos() // if the frontend wants he can use this to show every repo being cloned
-	ctx.Redirect("/")                                           // in my mind here should be some ui showing these incomin_repos
-}
-
-// Utility function to monitor sync progress
-func monitorSyncProgress(ctx *ctx.Context, syncer *origins.OriginSyncer) {
-	for {
-		select {
-		case err := <-syncer.Error():
-			ctx.Flash.Info(fmt.Sprintf("Error during migration: %v", err))
-			return
-		case n := <-syncer.Finished():
-			ctx.Flash.Info(fmt.Sprintf("Successfully migrated %v repositories", n))
-			reset()
-			return
-		case repo := <-syncer.GetActualMigration():
-			ctx.Flash.Info(fmt.Sprintf("Currently migrating: %v", repo))
-		case <-time.After(5 * time.Minute):
-			ctx.Flash.Info("Timeout reached while waiting for migration events.")
-			syncer.Cancel()
-			return
-		}
-		time.Sleep(5 * time.Second) // Add sleep to avoid tight looping.
-	}
+	ctx.HTML(http.StatusOK, "repo/fetch_origins")               // in my mind here should be some ui showing these incomin_repos
 }
 
 func reset() {

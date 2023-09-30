@@ -26,7 +26,7 @@ func (ot OriginType) GetName() string {
 
 type Origin struct {
 	ID             int64      `xorm:"pk autoincr"`
-	UserID         int64      `xorm:"index UNIQUE NOT NULL"`
+	UserID         int64      `xorm:"index NOT NULL"`
 	Type           OriginType `xorm:"NOT NULL"`
 	RemoteUsername string     `xorm:"NOT NULL"`
 	Token          string

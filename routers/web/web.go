@@ -971,8 +971,8 @@ func registerRoutes(m *web.Route) {
 		m.Get("/search", repo.SearchRepo)
 		// New routes for testing
 		m.Get("/setup_origin/{type}/{username}", repo.SetupOriginPost) // Example URL: /repo/setup_origin/github_starred/cassiozareck
-		m.Get("/cancel_sync", repo.CancelOriginSyncerPost)             // No params needed for cancelation
-		m.Get("/fetch_sync/{limit}", repo.FetchAndSyncOrigins)         // limit: how many repos to mirror
+		m.Get("/cancel_sync", repo.CancelOriginSyncerPost)             // No params needed for cancellation
+		m.Get("/sync_origins/{limit}", repo.FetchAndSyncOrigins)       // limit: how many repos to mirror
 
 	}, reqSignIn)
 
