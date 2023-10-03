@@ -27,6 +27,35 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
 
 (More items to be added here)
 
+## 1.20.5-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.5-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.4-1..v1.20.5-0
+```
+
+This stable release includes bug fixes.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.5+0-gitea-1.20.5`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix the display of pull requests waiting for review](https://codeberg.org/forgejo/forgejo/commit/4b23f11864) on the `/pulls` page. It incorrectly included all reviews.
+  * [Fix a v1.20 regression preventing access to files with OAuth2 tokens](https://codeberg.org/forgejo/forgejo/commit/3e8c3b7c09) in private repositories.
+  * [Fix](https://codeberg.org/forgejo/forgejo/commit/101cfc1f82) a bug by which the `doctor` command [complains the `deleted_branch` table is missing](https://codeberg.org/forgejo/forgejo/issues/1522) although it should not.
+  * [Fix the release URL in webhooks](https://codeberg.org/forgejo/forgejo/commit/1b1f878204) so that `URL` points to the API URL and `HTMLURL` points to the web page.
+  * [Fix organization field being null in POST /orgs/{orgid}/teams](https://codeberg.org/forgejo/forgejo/commit/f8bf284794).
+
 ## 1.20.4-1
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.4-1` release can be reviewed from the command line with:
