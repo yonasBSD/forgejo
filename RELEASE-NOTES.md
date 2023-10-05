@@ -52,7 +52,7 @@ This stable release contains **important security fixes**, as explained in the [
 
 * Bug fixes
 
-  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+  The most prominent bug fixes are described below. Others can be found in the list of commits included in the release as described above.
 
   * [Fix the display of pull requests waiting for review](https://codeberg.org/forgejo/forgejo/commit/4b23f11864) on the `/pulls` page. It incorrectly included all reviews.
   * [Fix a v1.20 regression preventing access to files with OAuth2 tokens](https://codeberg.org/forgejo/forgejo/commit/3e8c3b7c09) in private repositories.
