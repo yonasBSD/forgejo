@@ -36,7 +36,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.20.4-1..v1.20.5-0
 ```
 
-This stable release contains **important security fixes**, as explained in the [v1.20.5-0 companion blog post](https://forgejo.org/2023-10-release-v1205-0/).
+This stable release contains **important security fixes**, as explained in the [v1.20.5-0 companion blog post](https://forgejo.org/2023-10-release-v1-20-5-0/).
 
 * Recommended Action
 
@@ -48,7 +48,7 @@ This stable release contains **important security fixes**, as explained in the [
 
 * Security fix
 
-  * When a user logs into Forgejo, they can click the **Remember This Device** checkbox and their browser will store a **Long-term authentication** token provided by the server, in a cookie that will allow them to stay logged in for an extended period of time. The implementation was inherently insecure and was [reworked](https://codeberg.org/forgejo/forgejo/commit/51988ef52bc93b63184d28395d10bf3b76914ad0). Read more about this issue in the [v1.20.5-0 blog post](https://forgejo.org/2023-10-release-v1205-0/).
+  * When a user logs into Forgejo, they can click the **Remember This Device** checkbox and their browser will store a **Long-term authentication** token provided by the server, in a cookie that will allow them to stay logged in for an extended period of time. The implementation was inherently insecure and was [reworked](https://codeberg.org/forgejo/forgejo/commit/51988ef52bc93b63184d28395d10bf3b76914ad0). Read more about this issue in the [v1.20.5-0 blog post](https://forgejo.org/2023-10-release-v1-20-5-0/).
 
 * Bug fixes
 
