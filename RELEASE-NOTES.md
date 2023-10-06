@@ -36,7 +36,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.20.4-1..v1.20.5-0
 ```
 
-This stable release contains **important security fixes**, as explained in the [v1.20.5-0 companion blog post](https://forgejo.org/2023-10-release-v1-20-5-0/).
+This stable release contains an **important security fix**, as explained in the [v1.20.5-0 companion blog post](https://forgejo.org/2023-10-release-v1-20-5-0/).
 
 * Recommended Action
 
