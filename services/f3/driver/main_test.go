@@ -20,6 +20,8 @@ func TestForgejoDriverMethods(t *testing.T) {
 }
 
 func TestForgeMethods(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+
 	testUsersProviderOptions := f3_tests.TestUsersProviderOptions
 	testUsersProviderOptions.ModifiedPut = true
 
