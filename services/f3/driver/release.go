@@ -188,7 +188,7 @@ func (o *ReleaseProvider) Put(ctx context.Context, user *User, project *Project,
 func (o *ReleaseProvider) Delete(ctx context.Context, user *User, project *Project, release *Release) *Release {
 	m := o.Get(ctx, user, project, release)
 	if !m.IsNil() {
-		if err := release_service.DeleteReleaseByID(ctx, release.GetID(), o.g.GetDoer(), false); err != nil {
+		if err := release_service.DeleteReleaseByID(ctx, &project.Repository, &release.Release, o.g.GetDoer(), false); err != nil {
 			panic(err)
 		}
 	}
