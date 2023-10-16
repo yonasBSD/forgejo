@@ -10,7 +10,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/modules/setting"
-	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"lab.forgefriends.org/friendlyforgeformat/gof3/format"
@@ -133,16 +132,15 @@ func (o *MilestoneProvider) FromFormat(ctx context.Context, m *format.Milestone)
 }
 
 func (o *MilestoneProvider) GetObjects(ctx context.Context, user *User, project *Project, page int) []*Milestone {
-	milestones, _, err := issues_model.GetMilestones(issues_model.GetMilestonesOption{
+	milestones, err := db.Find[issues_model.Milestone](ctx, issues_model.FindMilestoneOptions{
 		ListOptions: db.ListOptions{Page: page, PageSize: o.g.perPage},
 		RepoID:      project.GetID(),
-		State:       api.StateAll,
 	})
 	if err != nil {
 		panic(fmt.Errorf("error while listing milestones: %v", err))
 	}
 
-	r := util.ConvertMap[*issues_model.Milestone, *Milestone](([]*issues_model.Milestone)(milestones), MilestoneConverter)
+	r := util.ConvertMap[*issues_model.Milestone, *Milestone](milestones, MilestoneConverter)
 	if o.project != nil {
 		o.project.milestones = util.NewNameIDMap[*Milestone](r)
 	}
