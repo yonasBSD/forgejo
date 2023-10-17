@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/util"
@@ -65,6 +66,38 @@ func renderMarkdown(ctx *context.Context, act *activities_model.Action, content 
 		return content
 	}
 	return markdown
+}
+
+func commitEntryToFeedItem(ctx *context.Context, act *activities_model.Action, commitIndex int, commit *repository.PushCommit) (item *feeds.Item, err error) {
+	commitURL := html.EscapeString(fmt.Sprintf("%s/commit/%s", act.GetRepoAbsoluteLink(ctx), commit.Sha1))
+	// Sometimes commit messages have junk whitespace trailing, so we trim it.
+	commitMessage := strings.TrimSpace(commit.Message)
+	title := act.ActUser.DisplayName() + " "
+	title += ctx.TrHTMLEscapeArgs("action.add_commit",
+		act.GetRepoAbsoluteLink(ctx),
+		toBranchLink(ctx, act),
+		act.GetBranch(),
+		act.ShortRepoPath(ctx),
+		commitURL,
+		strings.Split(commitMessage, "\n")[0], // Use short version of message in title.
+	)
+	plainTitle, err := html2text.FromString(title, html2text.Options{OmitLinks: true})
+	if err != nil {
+		return nil, err
+	}
+	return &feeds.Item{
+		Title:       plainTitle,
+		Link:        &feeds.Link{Href: commitURL},
+		Description: commitMessage,
+		Author: &feeds.Author{
+			Name:  act.ActUser.DisplayName(),
+			Email: act.ActUser.GetEmail(),
+		},
+		// Here we add a commit index to action ID to make <guid> elements of items unique.
+		Id:      fmt.Sprintf("%v-%v: %v", strconv.FormatInt(act.ID, 10), commitIndex, commitURL),
+		Created: commit.Timestamp,
+		Content: commitMessage,
+	}, nil
 }
 
 // feedActionsToFeedItems convert gitea's Action feed to feeds Item
@@ -202,7 +235,7 @@ func feedActionsToFeedItems(ctx *context.Context, actions activities_model.Actio
 				push := templates.ActionContent2Commits(act)
 				repoLink := act.GetRepoAbsoluteLink(ctx)
 
-				for _, commit := range push.Commits {
+				for index, commit := range push.Commits {
 					if len(desc) != 0 {
 						desc += "\n\n"
 					}
@@ -211,6 +244,11 @@ func feedActionsToFeedItems(ctx *context.Context, actions activities_model.Actio
 						commit.Sha1,
 						templates.RenderCommitMessage(ctx, commit.Message, repoLink, nil),
 					)
+					item, err := commitEntryToFeedItem(ctx, act, index, commit)
+					if err != nil {
+						return nil, err
+					}
+					items = append(items, item)
 				}
 
 				if push.Len > 1 {
