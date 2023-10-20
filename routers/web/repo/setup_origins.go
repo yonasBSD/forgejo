@@ -3,6 +3,7 @@ package repo
 import (
 	"code.gitea.io/gitea/models"
 	ctx "code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/origins"
 	"fmt"
 	"net/http"
@@ -13,17 +14,20 @@ import (
 // But it should be set to nil/recreated after the process finish because contexts are ephemeral
 var originSyncer *origins.OriginSyncer
 
+type SetupOriginForm struct {
+	Type           string `json:"type" binding:"Required"`
+	RemoteUsername string `json:"remote_username" binding:"Required"`
+}
+
 // SetupOriginPost saves a new origin into the database and returns
 func SetupOriginPost(ctx *ctx.Context) {
 
-	// of course retrieve from forms when there is a ui
-	originType := models.OriginType(ctx.Params(":type"))
-	remoteUsername := ctx.Params(":username")
+	form := web.GetForm(ctx).(*SetupOriginForm)
 
 	err := models.SaveOrigin(ctx, &models.Origin{
 		UserID:         ctx.Doer.ID,
-		Type:           originType,
-		RemoteUsername: remoteUsername,
+		Type:           models.OriginType(form.Type),
+		RemoteUsername: form.RemoteUsername,
 		Token:          "",
 	})
 
@@ -84,8 +88,8 @@ func FetchAndSyncOrigins(ctx *ctx.Context) {
 	}
 
 	// Respond to the client
-	ctx.Data["IncomingRepos"] = originSyncer.GetIncomingRepos() // if the frontend wants he can use this to show every repo being cloned
-	ctx.HTML(http.StatusOK, "repo/fetch_origins")               // in my mind here should be some ui showing these incomin_repos
+	ctx.Data["IncomingRepos"] = originSyncer.GetIncomingRepos() // use this to show every repo being cloned
+	ctx.HTML(http.StatusOK, "repo/fetch_origins")
 }
 
 func reset() {
