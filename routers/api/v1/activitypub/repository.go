@@ -4,17 +4,9 @@
 package activitypub
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
-	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
-
-	ap "github.com/go-ap/activitypub"
-	"github.com/go-ap/jsonld"
 )
 
 // Repository function returns the Repository actor for a repo
