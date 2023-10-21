@@ -147,7 +147,7 @@ ifdef DEPS_PLAYWRIGHT
 	PLAYWRIGHT_FLAGS += --with-deps
 endif
 
-FORGEJO_API_SPEC := public/forgejo/api.v1.yml
+FORGEJO_API_SPEC := public/assets/forgejo/api.v1.yml
 
 SWAGGER_SPEC := templates/swagger/v1_json.tmpl
 SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|g
