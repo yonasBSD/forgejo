@@ -1212,6 +1212,15 @@ func registerRoutes(m *web.Route) {
 		}, context.RepoMustNotBeArchived(), reqRepoCodeWriter, repo.MustBeNotEmpty)
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes())
 
+	// Commits
+	m.Group("/{username}/{reponame}", func() {
+		m.Group("/commits", func() {
+			m.Get(".rss", feedEnabled, repo.CommitsFeedRSS)
+			m.Get(".atom", feedEnabled, repo.CommitsFeedAtom)
+		},
+			repo.MustBeNotEmpty, reqRepoCodeReader)
+	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
+
 	// Tags
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/tags", func() {

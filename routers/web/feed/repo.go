@@ -14,7 +14,7 @@ import (
 )
 
 // ShowRepoFeed shows user activity on the repo as RSS / Atom feed
-func ShowRepoFeed(ctx *context.Context, repo *repo_model.Repository, formatType string) {
+func ShowRepoFeed(ctx *context.Context, repo *repo_model.Repository, isCommitsOnly bool, formatType string) {
 	actions, _, err := activities_model.GetFeeds(ctx, activities_model.GetFeedsOptions{
 		RequestedRepo:  repo,
 		Actor:          ctx.Doer,
@@ -27,13 +27,18 @@ func ShowRepoFeed(ctx *context.Context, repo *repo_model.Repository, formatType 
 	}
 
 	feed := &feeds.Feed{
-		Title:       ctx.Tr("home.feed_of", repo.FullName()),
 		Link:        &feeds.Link{Href: repo.HTMLURL()},
 		Description: repo.Description,
 		Created:     time.Now(),
 	}
 
-	feed.Items, err = feedActionsToFeedItems(ctx, actions)
+	if isCommitsOnly {
+		feed.Title = ctx.Tr("repo.release.commits_for", repo.FullName())
+		feed.Items, err = commitsToFeedItems(ctx, actions)
+	} else {
+		feed.Title = ctx.Tr("home.feed_of", repo.FullName())
+		feed.Items, err = feedActionsToFeedItems(ctx, actions)
+	}
 	if err != nil {
 		ctx.ServerError("convert feed", err)
 		return

@@ -22,6 +22,7 @@ import (
 	"code.gitea.io/gitea/modules/gitgraph"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/services/gitdiff"
 	git_service "code.gitea.io/gitea/services/repository"
 )
@@ -432,4 +433,14 @@ func RawDiff(ctx *context.Context) {
 		ctx.ServerError("GetRawDiff", err)
 		return
 	}
+}
+
+// CommitsFeedAtom get feed for commits in Atom format
+func CommitsFeedAtom(ctx *context.Context) {
+	feed.ShowRepoFeed(ctx, ctx.Repo.Repository, true, "atom")
+}
+
+// CommitsFeedRSS get feed for commits in RSS format
+func CommitsFeedRSS(ctx *context.Context) {
+	feed.ShowRepoFeed(ctx, ctx.Repo.Repository, true, "rss")
 }

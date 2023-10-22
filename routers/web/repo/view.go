@@ -736,7 +736,7 @@ func Home(ctx *context.Context) {
 		if isFeed {
 			switch {
 			case ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType):
-				feed.ShowRepoFeed(ctx, ctx.Repo.Repository, showFeedType)
+				feed.ShowRepoFeed(ctx, ctx.Repo.Repository, false, showFeedType)
 			case ctx.Repo.TreePath == "":
 				feed.ShowBranchFeed(ctx, ctx.Repo.Repository, showFeedType)
 			case ctx.Repo.TreePath != "":
