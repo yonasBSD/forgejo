@@ -48,6 +48,8 @@ func runMigrateTask(ctx context.Context, t *admin_model.Task) (err error) {
 			log.Critical("PANIC during runMigrateTask[%d] by DoerID[%d] to RepoID[%d] for OwnerID[%d]: %v\nStacktrace: %v", t.ID, t.DoerID, t.RepoID, t.OwnerID, e, log.Stack(2))
 		}
 
+		// fixme: Because ctx is canceled here, so the db.DefaultContext is needed.
+		ctx := db.DefaultContext
 		if err == nil {
 			err = admin_model.FinishMigrateTask(ctx, t)
 			if err == nil {
