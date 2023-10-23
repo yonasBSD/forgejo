@@ -894,6 +894,11 @@ func Routes() *web.Route {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
 				}, context_service.UserIDAssignmentAPI())
+				// TODO: implement ctx
+				m.Group("/repository-id/{repsitory-id}", func() {
+					m.Get("", activitypub.Repository)
+					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepositoryInbox)
+				}, context_service.RepositoryAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
 
@@ -1081,7 +1086,10 @@ func Routes() *web.Route {
 			repo.CreateOrgRepoDeprecated)
 
 		// requires repo scope
-		m.Combo("/repositories/{id}", reqToken(), tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository)).Get(repo.GetByID)
+		m.Combo("/repositories/{id}", 
+			reqToken(), 
+			tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository)
+		).Get(repo.GetByID)
 
 		// Repos (requires repo scope)
 		m.Group("/repos", func() {
