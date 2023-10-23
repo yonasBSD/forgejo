@@ -10,7 +10,6 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
-	"path/filepath"
 	"testing"
 	"time"
 )
@@ -56,9 +55,7 @@ func NewOriginSyncerTest(ctx context.Context, doer, u *user_model.User, limit in
 }
 
 func TestMain(m *testing.M) {
-	unittest.MainTest(m, &unittest.TestOptions{
-		GiteaRootPath: filepath.Join("..", ".."),
-	})
+	unittest.MainTest(m)
 }
 
 func TestSyncOrigins(t *testing.T) {

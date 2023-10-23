@@ -105,10 +105,11 @@ func (s *OriginSyncer) getUserRepoNames() ([]string, error) {
 // fetchReposBySourceType will check the type of the origin and call external API to retrieve RemoteRepos
 func (s *OriginSyncer) fetchReposBySourceType(source models.Origin) (origin_module.RemoteRepos, error) {
 	switch source.Type {
+	case models.CodebergStarred:
+		return origin_module.CodebergStars(source.RemoteUsername)
 	case models.GithubStarred:
 		return origin_module.GithubStars(source.RemoteUsername, source.Token)
 	case models.Dummy:
-		// Create a dummy set of RemoteRepos, for tests
 		return DummyRepos, nil
 	default:
 		return nil, fmt.Errorf("unsupported source type: %v", source.Type)

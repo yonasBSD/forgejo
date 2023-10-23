@@ -10,12 +10,15 @@ import (
 type OriginType string
 
 const (
-	GithubStarred = "github_starred"
-	Dummy         = "dummy" // just for tests
+	CodebergStarred = "codeberg_starred"
+	GithubStarred   = "github_starred"
+	Dummy           = "dummy" // just for tests
 )
 
 func (ot OriginType) GetName() string {
 	switch ot {
+	case CodebergStarred:
+		return "Codeberg Starred Repositories"
 	case GithubStarred:
 		return "Github Starred Repositories"
 	case Dummy:

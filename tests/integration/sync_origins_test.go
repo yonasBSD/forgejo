@@ -11,11 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestSyncOrigins(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	user := unittest.AssertExistsAndLoadBean(t, user_model.User{ID: 1})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
 	session := loginUser(t, user.Name)
 	req := NewRequest(t, "GET", fmt.Sprintf("/"))
@@ -27,16 +28,18 @@ func TestSyncOrigins(t *testing.T) {
 		"remote_username": "Codeberg.org",
 		"type":            "codeberg_starred",
 	})
-	session.MakeRequest(t, req, http.StatusOK)
-	unittest.AssertExistsAndLoadBean(t, models.Origin{
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	unittest.AssertExistsAndLoadBean(t, &models.Origin{
 		UserID:         user.ID,
 		RemoteUsername: "Codeberg.org",
 		Type:           "codeberg_starred",
 	})
 
-	req = NewRequestWithValues(t, "POST", "/sync_origins/1", nil)
-	session.MakeRequest(t, req, http.StatusOK)
-	exist, err := repo.IsRepositoryModelExist(context.Background(), &user, "tegfs")
+	req = NewRequestWithValues(t, "POST", "/repo/sync_origins/1", nil)
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	time.Sleep(1 * time.Second)
+
+	exist, err := repo.IsRepositoryModelExist(context.Background(), user, "tegfs")
 	assert.NoError(t, err)
 	assert.True(t, exist)
 

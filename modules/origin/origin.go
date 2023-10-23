@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// Repositories per page. This number should be big enough to avoid too many
+// requests but yet don't exceed limits
+const PageSize = 100
+
 // RemoteRepo represents a repository with its URL, Owner, and Name.
 type RemoteRepo struct {
 	CloneURL string `json:"clone_url"`
@@ -50,10 +54,9 @@ func (r *RemoteRepos) FilterBy(names []string) RemoteRepos {
 func GithubStars(username, token string) (RemoteRepos, error) {
 	var allRepos RemoteRepos
 	page := 1
-	perPage := 100 // Set to maximum allowed by GitHub to minimize requests
 
 	for {
-		url := fmt.Sprintf("https://api.github.com/users/%s/starred?per_page=%d&page=%d", username, perPage, page)
+		url := fmt.Sprintf("https://api.github.com/users/%s/starred?per_page=%d&page=%d", username, PageSize, page)
 		req := httplib.NewRequest(url, "GET")
 
 		if token != "" {
@@ -83,6 +86,49 @@ func GithubStars(username, token string) (RemoteRepos, error) {
 		// Check if there are more pages
 		links := res.Header.Get("Link")
 		if !containsRelNext(links) {
+			break
+		}
+
+		page++
+	}
+
+	return allRepos, nil
+}
+
+func CodebergStars(username string) (RemoteRepos, error) {
+	var allRepos RemoteRepos
+	page := 1
+
+	baseURL := "https://codeberg.org/api/v1"
+
+	for {
+		url := fmt.Sprintf("%s/users/%s/starred?page=%d&limit=%d", baseURL, username, page, PageSize)
+		res, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to fetch data, status: %s", res.Status)
+		}
+
+		var repos RemoteRepos
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(body, &repos); err != nil {
+			return nil, err
+		}
+
+		for i := range repos {
+			repos[i].Type = structs.ForgejoService
+		}
+
+		allRepos = append(allRepos, repos...)
+
+		// Assuming that if the number of repos returned is less than the PageSize, there are no more pages.
+		if len(repos) < PageSize {
 			break
 		}
 

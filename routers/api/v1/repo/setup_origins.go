@@ -17,13 +17,8 @@ type SetupOriginForm struct {
 	RemoteUsername string `json:"remote_username" binding:"Required"`
 }
 
-func init() {
-	originSyncer = origins.NewOriginSyncer(nil, nil, nil, 0)
-}
-
 // SetupOriginPost saves a new origin into the database and returns
-func SetupOriginPost(ctx *ctx.Context) {
-
+func SetupOriginPost(ctx *ctx.APIContext) {
 	form := web.GetForm(ctx).(*SetupOriginForm)
 
 	err := models.SaveOrigin(ctx, &models.Origin{
@@ -37,12 +32,11 @@ func SetupOriginPost(ctx *ctx.Context) {
 		ctx.Error(http.StatusInternalServerError, "SaveOriginError", fmt.Sprintf("Couldn't save source into database: %v", err))
 		return
 	}
-	ctx.Flash.Info("Saved")
-	ctx.Redirect("/")
+	ctx.JSON(http.StatusOK, map[string]string{"message": "Origin saved successfully."})
 }
 
 // CancelOriginSyncer cancels the OriginSyncer if it is in progress.
-func CancelOriginSyncerPost(ctx *ctx.Context) {
+func CancelOriginSyncerPost(ctx *ctx.APIContext) {
 	if originSyncer == nil {
 		ctx.Error(http.StatusForbidden, "OriginSyncerNotInitialized", "OriginSyncer not initialized.")
 		return
@@ -50,17 +44,15 @@ func CancelOriginSyncerPost(ctx *ctx.Context) {
 
 	if originSyncer.InProgress() {
 		originSyncer.Cancel()
-		ctx.Flash.Info("Canceled")
-		ctx.Redirect("/")
+		ctx.JSON(http.StatusOK, map[string]string{"message": "Origin syncer canceled successfully."})
 	} else {
-		ctx.Flash.Info("Nothing in progress")
-		ctx.Redirect("/")
+		ctx.JSON(http.StatusOK, map[string]string{"message": "Origin syncer not in progress."})
 	}
 }
 
 // FetchAndSyncOrigins get and mirror repositories from chosen origins like starred repositories from
 // github, codeberg and others
-func FetchAndSyncOrigins(ctx *ctx.Context) {
+func FetchAndSyncOrigins(ctx *ctx.APIContext) {
 	// Check if an origin sync is already in progress
 	if originSyncer.InProgress() {
 		ctx.Error(http.StatusBadRequest, "SyncInProgressError", "Origins synchronization already in progress")
@@ -91,7 +83,8 @@ func FetchAndSyncOrigins(ctx *ctx.Context) {
 		return
 	}
 
-	// Respond to the client
-	ctx.Data["IncomingRepos"] = originSyncer.GetIncomingRepos() // use this to show every repo being cloned
-	ctx.HTML(http.StatusOK, "repo/fetch_origins")
+	// Respond to the client with the list of incoming repositories
+	ctx.JSON(http.StatusOK, map[string]interface{}{
+		"IncomingRepos": originSyncer.GetIncomingRepos(),
+	})
 }
