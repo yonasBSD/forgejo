@@ -39,6 +39,25 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Add](https://codeberg.org/forgejo/forgejo/commit/8228751c55d6a4263f0fec2932ca16181c09c97d) support for reading labels from the runner [instead of specifying them during registration](https://forgejo.org/docs/v1.21/admin/actions/#registration).
 - **Features:**
   - Syntax highlighting is now available for [Smali](https://github.com/alecthomas/chroma/pull/765), [DHCP](https://github.com/alecthomas/chroma/pull/772), [WebGPU Shading Language](https://github.com/alecthomas/chroma/pull/776), [AutoHotkey](https://github.com/alecthomas/chroma/commit/4779f9035a3aaea3ec650f0923657c12e12dd35a), [AutoIt](https://github.com/alecthomas/chroma/commit/029798b351baa9c3d0dd5ec16e87ab98486d843c), [tal (uxntal)](https://github.com/alecthomas/chroma/commit/e422a6286fdc61393deb09afd270293eb590d023), [ArangoDB Query Language (AQL)](https://github.com/alecthomas/chroma/pull/794), [BIND DNS Zone](https://github.com/alecthomas/chroma/pull/796), [Odin](https://github.com/alecthomas/chroma/pull/802), [Sourcepawn](https://github.com/alecthomas/chroma/pull/804), [CPP](https://github.com/alecthomas/chroma/pull/813), [C](https://github.com/alecthomas/chroma/pull/815). New files and extensions are associated as follows: [.tpp as a c++](https://github.com/alecthomas/chroma/pull/817), [.eex as a Elixir](https://github.com/alecthomas/chroma/pull/820), [Pipfile and poetry.lock as a TOML](https://github.com/alecthomas/chroma/pull/821), [ISCdhcpd filename](https://github.com/alecthomas/chroma/pull/822), [.twig](https://github.com/alecthomas/chroma/pull/833), [Mathematica](https://github.com/alecthomas/chroma/pull/836).
+  - Language detection in the repository now includes:
+    - Bluespec BH: [atom-haskell/language-haskell](https://github.com/atom-haskell/language-haskell)
+    - D2: [terrastruct/d2-vscode](https://github.com/terrastruct/d2-vscode)
+    - Go Workspace: [golang/vscode-go](https://github.com/golang/vscode-go)
+    - Gradle Kotlin DSL: [nishtahir/language-kotlin](https://github.com/nishtahir/language-kotlin)
+    - Hosts File: [Alhadis/language-etc](https://github.com/Alhadis/language-etc)
+    - LOLCODE: [KrazIvan/LOLCODE-grammar-vscode](https://github.com/KrazIvan/LOLCODE-grammar-vscode)
+    - MDX: [wooorm/markdown-tm-language](https://github.com/wooorm/markdown-tm-language)
+    - Nasal: [BobDotCom/Nasal.tmbundle](https://github.com/BobDotCom/Nasal.tmbundle)
+    - Nushell: [hustcer/nu-grammar](https://github.com/hustcer/nu-grammar)
+    - Pact: [kadena-io/pact-atom](https://github.com/kadena-io/pact-atom)
+    - RBS: [soutaro/vscode-rbs-syntax](https://github.com/soutaro/vscode-rbs-syntax)
+    - Rez: [textmate/rez.tmbundle](https://github.com/textmate/rez.tmbundle)
+    - Sweave: [textmate/sweave.tmbundle](https://github.com/textmate/sweave.tmbundle)
+    - TL-Verilog: [adamint/tlv-vscode](https://github.com/adamint/tlv-vscode)
+    - Typst: [michidk/typst-grammar](https://github.com/michidk/typst-grammar)
+    - WDL: [broadinstitute/wdl-sublime-syntax-highlighter](https://github.com/broadinstitute/wdl-sublime-syntax-highlighter)
+    - WGSL: [wgsl-analyzer/wgsl-analyzer](https://github.com/wgsl-analyzer/wgsl-analyzer)
+    - WebAssembly Interface Type: [bytecodealliance/vscode-wit](https://github.com/bytecodealliance/vscode-wit)
   - [Newly pushed branches show in the web UI with a link to create a PR](https://codeberg.org/forgejo/forgejo/commit/6375419468edc95fdfac94aac3b0e10b23743557).
   - Labels that are no longer useful [can be archived](https://codeberg.org/forgejo/forgejo/commit/cafce3b4b5afb3f254a48e87f1516d7b5dc209b6). They can no longer be selected but they remain on existing issues.
   - The blame view now [takes into account](https://codeberg.org/forgejo/forgejo/commit/ed64f1c2b835bf9332bf8347be9675ef29c8274b) the [`.git-blame-ignore-revs`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-blameignoreRevsFile) file.
