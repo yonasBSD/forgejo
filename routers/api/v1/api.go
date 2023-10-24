@@ -898,7 +898,7 @@ func Routes() *web.Route {
 				m.Group("/repository-id/{repsitory-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepositoryInbox)
-				}, context_service.RepositoryAssignmentAPI())
+				}, context_service.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
 

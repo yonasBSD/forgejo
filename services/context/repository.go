@@ -23,10 +23,14 @@ func RepositoryIDAssignmentAPI() func(ctx *context.APIContext) {
 		}
 
 		var err error
-		ctx.Repo, err = repo_model.GetRepositoryByID(ctx, repositoryID)
+		repository := new(context.Repository)
+		// TODO: does repository struct need more infos?
+		repository.Repository, err = repo_model.GetRepositoryByID(ctx, repositoryID)
 
+		// TODO: check & convert errors
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetRepositoryByID", err)
 		}
+		ctx.Repo = repository
 	}
 }
