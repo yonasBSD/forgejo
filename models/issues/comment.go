@@ -788,6 +788,7 @@ func CreateComment(ctx context.Context, opts *CreateCommentOptions) (_ *Comment,
 		PosterID:         opts.Doer.ID,
 		Poster:           opts.Doer,
 		IssueID:          opts.Issue.ID,
+		Issue:            opts.Issue,
 		LabelID:          LabelID,
 		OldMilestoneID:   opts.OldMilestoneID,
 		MilestoneID:      opts.MilestoneID,
@@ -1102,11 +1103,12 @@ func UpdateComment(ctx context.Context, c *Comment, doer *user_model.User) error
 	defer committer.Close()
 
 	sess := db.GetEngine(ctx).ID(c.ID).AllCols()
-	if c.Issue.NoAutoTime {
+	noAutoTime := c.Issue.NoAutoTime
+	if noAutoTime {
 		// update the DataBase
 		sess = sess.NoAutoTime().SetExpr("updated_unix", c.Issue.UpdatedUnix)
 		// the UpdatedUnix value of the Comment also has to be set,
-		// to return the adequate valuè
+		// to return the adequate value
 		// see https://codeberg.org/forgejo/forgejo/pulls/764#issuecomment-1023801
 		c.UpdatedUnix = c.Issue.UpdatedUnix
 	}
@@ -1116,6 +1118,9 @@ func UpdateComment(ctx context.Context, c *Comment, doer *user_model.User) error
 	if err := c.LoadIssue(ctx); err != nil {
 		return err
 	}
+	// re-set the issue's NoAutoTime, to apply it on the cross-ref comment
+	// that will be created
+	c.Issue.NoAutoTime = noAutoTime
 	if err := c.AddCrossReferences(ctx, doer, true); err != nil {
 		return err
 	}
