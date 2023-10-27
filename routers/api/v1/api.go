@@ -894,7 +894,6 @@ func Routes() *web.Route {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
 				}, context_service.UserIDAssignmentAPI())
-				// TODO: implement ctx
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepositoryInbox)
