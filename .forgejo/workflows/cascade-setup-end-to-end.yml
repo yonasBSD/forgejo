@@ -26,14 +26,11 @@ jobs:
     container:
       image: node:20-bookworm
     if: >
-      github.event.pull_request.head.repo.fork == false &&
       (
-        (
-          github.event.action == 'closed' && github.event.pull_request.merged
-        ) ||
-        (
-          github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'ready-to-merge')
-        )
+        github.event.action == 'closed' && github.event.pull_request.merged
+      ) ||
+      (
+        github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'ready-to-merge')
       )
     steps:
       - uses: actions/checkout@v4
