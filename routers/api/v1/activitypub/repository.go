@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 )
 
 // Repository function returns the Repository actor for a repo
@@ -26,6 +27,7 @@ func Repository(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/ActivityPub"
 
+	log.Error("Repository")
 	ctx.Status(http.StatusNoContent)
 }
 
