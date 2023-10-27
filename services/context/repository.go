@@ -20,10 +20,10 @@ func RepositoryIDAssignmentAPI() func(ctx *context.APIContext) {
 		log.Info("RepositoryIDAssignmentAPI: %v", repositoryID)
 
 		//TODO: check auth here ?
-		if !ctx.Repo.HasAccess() && !ctx.IsUserSiteAdmin() {
-			ctx.Error(http.StatusForbidden, "reqAnyRepoReader", "user should have any permission to read repository or permissions of site admin")
-			return
-		}
+		//if !ctx.Repo.HasAccess() && !ctx.IsUserSiteAdmin() {
+		//	ctx.Error(http.StatusForbidden, "reqAnyRepoReader", "user should have any permission to read repository or permissions of site admin")
+		//	return
+		//}
 
 		var err error
 		repository := new(context.Repository)
