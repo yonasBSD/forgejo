@@ -72,9 +72,9 @@ type ViewResponse struct {
 			Attempt    int64      `json:"attempt"`
 		} `json:"run"`
 		CurrentJob struct {
-			Title   string         `json:"title"`
-			Detail  string         `json:"detail"`
-			Steps   []*ViewJobStep `json:"steps"`
+			Title  string         `json:"title"`
+			Detail string         `json:"detail"`
+			Steps  []*ViewJobStep `json:"steps"`
 		} `json:"currentJob"`
 	} `json:"state"`
 	Logs struct {
