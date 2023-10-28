@@ -35,9 +35,11 @@ func View(ctx *context_module.Context) {
 	ctx.Data["PageIsActions"] = true
 	runIndex := ctx.ParamsInt64("run")
 	jobIndex := ctx.ParamsInt64("job")
+	attemptIndex := ctx.ParamsInt64("attempt")
 	ctx.Data["RunIndex"] = runIndex
 	ctx.Data["JobIndex"] = jobIndex
 	ctx.Data["ActionsURL"] = ctx.Repo.RepoLink + "/actions"
+	ctx.Data["AttemptIndex"] = attemptIndex
 
 	if getRunJobs(ctx, runIndex, jobIndex); ctx.Written() {
 		return

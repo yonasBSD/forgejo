@@ -16,6 +16,7 @@ const sfc = {
   props: {
     runIndex: String,
     jobIndex: String,
+	attemptIndex: String,
     actionsURL: String,
     locale: Object,
   },
@@ -209,20 +210,15 @@ const sfc = {
         return {step: idx, cursor: it.cursor, expanded: it.expanded};
       });
 
-	  // Get our current URL and parse the attempt number from the last two elements if it contain "attempt"
-	  const url = window.location.href;
-	  const urlSplit = url.split('/');
-	  const attemptIndex = urlSplit.length - 2;
 	  let endpoint = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}`;
-	  if (urlSplit[attemptIndex] === 'attempt') {
-        const attempt = urlSplit[attemptIndex + 1];
-        endpoint = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}/attempt/${attempt}`;
+	  if (this.attemptIndex > 0) {
+        endpoint = `${this.actionsURL}/runs/${this.runIndex}/jobs/${this.jobIndex}/attempt/${this.attemptIndex}`;
 	  }
 
-      const resp = await POST(
-        endpoint,
+      const resp = await POST(endpoint, {
         data: {logCursors},
-      );
+      });
+
       return await resp.json();
     },
 
@@ -356,6 +352,7 @@ export function initRepositoryActionView() {
   const view = createApp(sfc, {
     runIndex: el.getAttribute('data-run-index'),
     jobIndex: el.getAttribute('data-job-index'),
+	attemptIndex: el.getAttribute('data-attempt-index'),
     actionsURL: el.getAttribute('data-actions-url'),
     locale: {
       approve: el.getAttribute('data-locale-approve'),
@@ -392,9 +389,9 @@ export function initRepositoryActionView() {
             {{ run.title }}
           </h2>
         </div>
-        <select class="ui dropdown" v-if="run.attempts > 1" @change="attempt($event)" v-model="currentJob.attempt">
-          <option v-for="index in run.attempts" :key="index" :value="index">
-            Attempt {{ index }}
+        <select class="ui dropdown" v-if="run.attempts > 1" @change="attempt($event)">
+          <option :selected="index + 1 == attemptIndex" v-for="index in [...Array(run.attempts).keys()].slice().reverse()" :key="index" :value="index+1">
+            Attempt {{ index + 1 }}
           </option>
         </select>
         <button class="ui basic small compact button primary" @click="approveRun()" v-if="run.canApprove">
