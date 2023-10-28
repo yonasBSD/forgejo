@@ -69,12 +69,12 @@ type ViewResponse struct {
 			Done       bool       `json:"done"`
 			Jobs       []*ViewJob `json:"jobs"`
 			Commit     ViewCommit `json:"commit"`
+			Attempt    int64      `json:"attempt"`
 		} `json:"run"`
 		CurrentJob struct {
 			Title   string         `json:"title"`
 			Detail  string         `json:"detail"`
 			Steps   []*ViewJobStep `json:"steps"`
-			Attempt int64          `json:"attempt"`
 		} `json:"currentJob"`
 	} `json:"state"`
 	Logs struct {
@@ -188,10 +188,6 @@ func ViewPost(ctx *context_module.Context) {
 		var err error
 		if attemptIndex > 0 {
 			task, err = actions_model.GetTaskByJobAttempt(ctx, current.ID, attemptIndex)
-			if err != nil {
-				ctx.Error(http.StatusInternalServerError, err.Error())
-				return
-			}
 		} else {
 			task, err = actions_model.GetTaskByID(ctx, current.TaskID)
 		}
@@ -214,8 +210,12 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0) // marshal to '[]' instead fo 'null' in json
 	resp.Logs.StepsLog = make([]*ViewStepLog, 0)          // marshal to '[]' instead fo 'null' in json
 	if task != nil {
-		resp.State.Run.Attempts = task.Attempts(ctx)
-		resp.State.CurrentJob.Attempt = task.Attempt
+		attempts, err := task.NumAttempts(ctx)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return
+		}
+		resp.State.Run.Attempts = attempts
 		steps := actions.FullSteps(task)
 
 		for _, v := range steps {
