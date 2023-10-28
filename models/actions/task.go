@@ -150,11 +150,13 @@ func (task *ActionTask) GenerateToken() (err error) {
 	return err
 }
 
-func (task *ActionTask) Attempts(ctx context.Context) (max int64) {
-	e := db.GetEngine(ctx)
+func (task *ActionTask) NumAttempts(ctx context.Context) (int64, error) {
+	var max int64
+	if _, err := db.GetEngine(ctx).Select("MAX(`attempt`)").Table("action_task").Where("job_id=?", task.JobID).Get(&max); err != nil {
+		return 0, err
+	}
 
-	_, _ = e.SQL("SELECT MAX(attempt) FROM action_task WHERE job_id = ?", task.JobID).Get(&max)
-	return max
+	return max, nil
 }
 
 func GetTaskByID(ctx context.Context, id int64) (*ActionTask, error) {
