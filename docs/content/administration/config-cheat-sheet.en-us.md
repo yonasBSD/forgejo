@@ -454,6 +454,7 @@ The following configuration set `Content-Type: application/vnd.android.package-a
 - `MAX_IDLE_CONNS` **2**: Max idle database connections on connection pool, default is 2 - this will be capped to `MAX_OPEN_CONNS`.
 - `CONN_MAX_LIFETIME` **0 or 3s**: Sets the maximum amount of time a DB connection may be reused - default is 0, meaning there is no limit (except on MySQL where it is 3s - see #6804 & #7071).
 - `AUTO_MIGRATION` **true**: Whether execute database models migrations automatically.
+- `SLOW_QUERY_TRESHOLD` **5s**: Threshold value in seconds beyond which query execution time is logged as a warning in the xorm logger.
 
 Please see #8540 & #8273 for further discussion of the appropriate values for `MAX_OPEN_CONNS`, `MAX_IDLE_CONNS` & `CONN_MAX_LIFETIME` and their
 relation to port exhaustion.
@@ -511,6 +512,7 @@ And the following unique queues:
 
 - `DEFAULT_EMAIL_NOTIFICATIONS`: **enabled**: Default configuration for email notifications for users (user configurable). Options: enabled, onmention, disabled
 - `DISABLE_REGULAR_ORG_CREATION`: **false**: Disallow regular (non-admin) users from creating organizations.
+- `SEND_NOTIFICATION_EMAIL_ON_NEW_USER`: **false**: Send an email to all admins when a new user signs up to inform the admins about this act.
 
 ## Security (`security`)
 
