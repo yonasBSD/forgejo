@@ -69,5 +69,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
+	log.Info("RepositoryInbox: %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+
 	ctx.Status(http.StatusNoContent)
 }
