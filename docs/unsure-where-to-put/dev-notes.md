@@ -17,7 +17,7 @@ TAGS="sqlite" make build generate-swagger
 git remote add git@codeberg.org:forgejo/forgejo.git
 
 git checkout forgejo-development
-git rebase forgejo/forgejo-development
+git rebase --onto forgejo/forgejo-development
 git push --force
 
 git checkout forgejo-federated-star
