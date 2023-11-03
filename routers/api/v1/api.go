@@ -896,7 +896,9 @@ func Routes() *web.Route {
 				}, context_service.UserIDAssignmentAPI())
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
-					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepositoryInbox)
+					m.Post("/inbox",
+						//activitypub.ReqHTTPSignature(),
+						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
