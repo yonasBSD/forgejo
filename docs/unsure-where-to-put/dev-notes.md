@@ -23,4 +23,6 @@ git push --force
 git checkout forgejo-federated-star
 git rebase forgejo-development
 git push --force
+
+git reset --hard origin/forgejo-federated-star
 ```
