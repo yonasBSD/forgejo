@@ -14,13 +14,11 @@ TAGS="sqlite" make build generate-swagger
 # sync base branch
 
 ```
+# setup a second repo for excosy implementation
+git clone https://git.exozy.me/a/gitea.git exosy
+
 # add remotes
 git remote add forgejo git@codeberg.org:forgejo/forgejo.git
-git remote add exozy https://git.exozy.me/a/gitea.git
-
-# get the exozy development local
-git fetch exozy
-git switch -c exozy exozy/main
 
 # rebase on top of forgejo/forge-development
 git checkout forgejo-development
