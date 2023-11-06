@@ -8,14 +8,13 @@ import (
 	"net/http"
 	"strings"
 
-	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 
 	ap "github.com/go-ap/activitypub"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
-	"github.com/go-ap/jsonld"
 )
 
 // Repository function returns the Repository actor for a repo
@@ -37,19 +36,16 @@ func Repository(ctx *context.APIContext) {
 
 	// TODO: Mabe we should use F3 Repo instead?
 	link := fmt.Sprintf("%s/api/v1/activitypub/repoistory-id/%d", strings.TrimSuffix(setting.AppURL, "/"), ctx.Repo.Repository.ID)
-	repository := ap.ApplicationNew(ap.IRI(link))
-	repository.Name.Set("en", ap.Content(ctx.Repo.Repository.Name))
+	repo := forgefed.RepositoryNew(ap.IRI(link))
 
-	binary, err := jsonld.WithContext(jsonld.IRI(ap.ActivityBaseURI), jsonld.IRI(ap.SecurityContextURI)).Marshal(repository)
+	repo.Name = ap.NaturalLanguageValuesNew()
+	err := repo.Name.Set("en", ap.Content(ctx.Repo.Repository.Name))
 	if err != nil {
-		ctx.ServerError("MarshalJSON", err)
+		ctx.ServerError("Set Name", err)
 		return
 	}
-	ctx.Resp.Header().Add("Content-Type", activitypub.ActivityStreamsContentType)
-	ctx.Resp.WriteHeader(http.StatusOK)
-	if _, err = ctx.Resp.Write(binary); err != nil {
-		log.Error("write to resp err: %v", err)
-	}
+
+	response(ctx, repo)
 }
 
 // PersonInbox function handles the incoming data for a repository inbox
