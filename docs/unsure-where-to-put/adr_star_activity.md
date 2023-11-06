@@ -6,7 +6,7 @@
   ::as/type "Star",
   ::forge/source "forgejo",
   ::as/actor "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-  ::as/object "https://codeberg.org/api/repos/forgejo/forgejo"
+  ::as/object "https://codeberg.org/api/activitypub/repository-id/12"
 }
 ```
 
