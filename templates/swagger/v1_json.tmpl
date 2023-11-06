@@ -23,6 +23,58 @@
   },
   "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
   "paths": {
+    "/activitypub/repository-id/{repository-id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Repository actor for a repo",
+        "operationId": "activitypubRepository",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "repository ID of the repo",
+            "name": "repository-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/repository-id/{repository-id}/inbox": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Send to the inbox",
+        "operationId": "activitypubRepository",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "repository ID of the repo",
+            "name": "repository-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          }
+        }
+      }
+    },
     "/activitypub/user-id/{user-id}": {
       "get": {
         "produces": [

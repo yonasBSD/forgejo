@@ -897,6 +897,7 @@ func Routes() *web.Route {
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox",
+						bind(api.CreateRepoOption{}),
 						//activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())
