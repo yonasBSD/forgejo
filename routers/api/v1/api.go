@@ -81,6 +81,7 @@ import (
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -897,7 +898,8 @@ func Routes() *web.Route {
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox",
-						bind(api.CreateRepoOption{}),
+						// TODO: bind ativities here
+						bind(forgefed.Star{}),
 						//activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())
