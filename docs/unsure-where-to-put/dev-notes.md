@@ -22,6 +22,7 @@ git remote add forgejo git@codeberg.org:forgejo/forgejo.git
 
 # rebase on top of forgejo/forge-development
 git checkout forgejo-development
+git fetch forgejo
 git rebase --onto forgejo/forgejo-development
 git push --force
 
