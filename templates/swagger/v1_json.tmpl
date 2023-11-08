@@ -66,6 +66,13 @@
             "name": "repository-id",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Star"
+            }
           }
         ],
         "responses": {

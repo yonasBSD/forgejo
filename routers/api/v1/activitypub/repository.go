@@ -34,7 +34,6 @@ func Repository(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/ActivityPub"
 
-	// TODO: Mabe we should use F3 Repo instead?
 	link := fmt.Sprintf("%s/api/v1/activitypub/repoistory-id/%d", strings.TrimSuffix(setting.AppURL, "/"), ctx.Repo.Repository.ID)
 	repo := forgefed.RepositoryNew(ap.IRI(link))
 
@@ -61,6 +60,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//   description: repository ID of the repo
 	//   type: integer
 	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     "$ref": "#/definitions/Star"
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
