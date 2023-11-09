@@ -4,6 +4,7 @@
 package forgefed
 
 import (
+	"code.gitea.io/gitea/modules/context"
 	ap "github.com/go-ap/activitypub"
 )
 
@@ -26,7 +27,6 @@ var KnownSourceTypes = SourceTypes{
 }
 
 // Star activity data type
-// swagger:model
 type Star struct {
 	// swagger:ignore
 	ap.Activity
@@ -34,12 +34,20 @@ type Star struct {
 	Source SourceType `jsonld:"source,omitempty"`
 }
 
-// RepositoryNew initializes a Repository type actor
+// Infos needed to star a repo
+type StarRepo struct {
+	StargazerID int `json:"Stargazer"`
+	RepoID      int `json:"RepoToStar"`
+}
+
+// StarNew initializes a Star type activity
+// Guess: no return value needed, we may need to add the star to the context
 func StarNew(id ap.ID, ob ap.ID) *Star {
 	a := ap.ActivityNew(id, StarType, ob)
-	// TODO: is this not handeld by ActivityNew??
-	a.Type = StarType
-	o := Star{Activity: *a}
-	o.Source = ForgejoSourceType
+	o := Star{Activity: *a, Source: ForgejoSourceType}
 	return &o
+}
+
+func AddStar(ctx *context.APIContext) {
+
 }
