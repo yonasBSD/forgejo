@@ -28,7 +28,7 @@ var KnownSourceTypes = SourceTypes{
 // Star activity for adding a star to an repository
 // swagger:model
 type Star struct {
-	// swagger: ignore
+	// swagger:ignore
 	ap.Activity
 	// Source identifies the system generated this Activity. Exact one value has to be specified.
 	Source SourceType `jsonld:"source,omitempty"`

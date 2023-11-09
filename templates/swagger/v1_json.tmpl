@@ -21,7 +21,7 @@
     },
     "version": "{{AppVer | JSEscape | Safe}}"
   },
-  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
+  "basePath": "/api/v1",
   "paths": {
     "/activitypub/repository-id/{repository-id}": {
       "get": {
@@ -23177,6 +23177,20 @@
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "SourceType": {
+      "type": "string",
+      "x-go-package": "code.gitea.io/gitea/modules/forgefed"
+    },
+    "Star": {
+      "description": "Star activity for adding a star to an repository",
+      "type": "object",
+      "properties": {
+        "Source": {
+          "$ref": "#/definitions/SourceType"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/forgefed"
     },
     "StateType": {
       "description": "StateType issue state type",
