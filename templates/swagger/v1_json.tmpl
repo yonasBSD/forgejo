@@ -21,7 +21,7 @@
     },
     "version": "{{AppVer | JSEscape | Safe}}"
   },
-  "basePath": "/api/v1",
+  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
   "paths": {
     "/activitypub/repository-id/{repository-id}": {
       "get": {
@@ -23183,7 +23183,7 @@
       "x-go-package": "code.gitea.io/gitea/modules/forgefed"
     },
     "Star": {
-      "description": "Star activity for adding a star to an repository",
+      "description": "Star activity data type",
       "type": "object",
       "properties": {
         "Source": {

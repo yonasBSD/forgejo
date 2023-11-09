@@ -27,6 +27,7 @@ var KnownSourceTypes = SourceTypes{
 }
 
 // Star activity data type
+// swagger:model
 type Star struct {
 	// swagger:ignore
 	ap.Activity
