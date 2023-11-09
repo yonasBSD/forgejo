@@ -25,12 +25,12 @@ var KnownSourceTypes = SourceTypes{
 	ForgejoSourceType,
 }
 
-// Star activity for adding a star to an repository
+// Star activity data type
 // swagger:model
 type Star struct {
 	// swagger:ignore
 	ap.Activity
-	// Source identifies the system generated this Activity. Exact one value has to be specified.
+	// Source identifies the system which generated this activity. Exactly one value has to be specified.
 	Source SourceType `jsonld:"source,omitempty"`
 }
 
