@@ -75,6 +75,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	log.Info("RepositoryInbox: Activity Source %v,", opt.Source)
 
+	// assume actor is: "actor": "https://codeberg.org/api/activitypub/user-id/12345"
+
 	ctx.Status(http.StatusNoContent)
 
 }

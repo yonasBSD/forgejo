@@ -1,4 +1,5 @@
 ```
+# edn notation
 {@context [
     "as":    "https://www.w3.org/ns/activitystreams#",
     "forge": "https://forgefed.org/ns#",],
@@ -7,6 +8,14 @@
   ::forge/source "forgejo",
   ::as/actor "https://repo.prod.meissa.de/api/activitypub/user-id/1",
   ::as/object "https://codeberg.org/api/activitypub/repository-id/12"
+}
+
+# json notation
+{"id": "https://repo.prod.meissa.de/api/activitypub/user-id/1/outbox/12345",
+  "type": "Star",
+  "source": "forgejo",
+  "actor": "https://repo.prod.meissa.de/api/activitypub/user-id/1",
+  "object": "https://codeberg.org/api/activitypub/repository-id/1"
 }
 ```
 
