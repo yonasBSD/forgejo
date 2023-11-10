@@ -6,6 +6,7 @@ package forgefed
 import (
 	"code.gitea.io/gitea/modules/context"
 	ap "github.com/go-ap/activitypub"
+	"github.com/valyala/fastjson"
 )
 
 type (
@@ -63,4 +64,24 @@ func (a Star) MarshalJSON() ([]byte, error) {
 	}
 	ap.JSONWrite(&b, '}')
 	return b, nil
+}
+
+func JSONLoadStar(val *fastjson.Value, s *Star) error {
+	if err := ap.OnActivity(&s.Activity, func(a *ap.Activity) error {
+		return ap.JSONLoadActivity(val, a)
+	}); err != nil {
+		return err
+	}
+
+	s.Source = SourceType(ap.JSONGetString(val, "source"))
+	return nil
+}
+
+func (s *Star) UnmarshalJSON(data []byte) error {
+	p := fastjson.Parser{}
+	val, err := p.ParseBytes(data)
+	if err != nil {
+		return err
+	}
+	return JSONLoadStar(val, s)
 }
