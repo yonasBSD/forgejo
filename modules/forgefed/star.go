@@ -52,3 +52,15 @@ func StarNew(id ap.ID, ob ap.ID) *Star {
 func AddStar(ctx *context.APIContext) {
 
 }
+
+func (a Star) MarshalJSON() ([]byte, error) {
+	b := make([]byte, 0)
+	ap.JSONWrite(&b, '{')
+
+	ap.JSONWriteStringProp(&b, "source", string(a.Source))
+	if !ap.JSONWriteActivityValue(&b, a.Activity) {
+		return nil, nil
+	}
+	ap.JSONWrite(&b, '}')
+	return b, nil
+}

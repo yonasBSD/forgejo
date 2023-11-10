@@ -26,19 +26,12 @@ func Test_StarMarshalJSON(t *testing.T) {
 			item: Star{
 				Source: "forgejo",
 				Activity: ap.Activity{
-					ID:   "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-					Type: "Star",
-					Object: ap.Object{
-						ID: "https://codeberg.org/api/activitypub/repository-id/1",
-					},
+					Actor:  ap.IRI("https://repo.prod.meissa.de/api/activitypub/user-id/1"),
+					Type:   "Star",
+					Object: ap.IRI("https://codeberg.org/api/activitypub/repository-id/1"),
 				},
 			},
-			want: []byte(`{
-			"type": "Star",
-			"source": "forgejo",
-			"actor": "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-			"object": "https://codeberg.org/api/activitypub/repository-id/1"
-		  }`),
+			want: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
 		},
 	}
 
