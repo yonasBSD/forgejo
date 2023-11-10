@@ -72,7 +72,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
 	opt := web.GetForm(ctx).(*forgefed.Star)
 
-	log.Info("RepositoryInbox: Activity Source %v,", opt.Source)
+	log.Info("RepositoryInbox: Activity.Source %v", opt.Source)
+	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/activitypub/user-id/12345"
 
