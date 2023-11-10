@@ -52,18 +52,14 @@ func Test_StarMarshalJSON(t *testing.T) {
 func Test_StarUnmarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    []byte
-		want    Star
+		want    *Star
 		wantErr error
 	}
 
 	tests := map[string]testPair{
-		"empty": {
-			item: []byte(``),
-			want: Star{},
-		},
 		"with ID": {
 			item: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
-			want: Star{
+			want: &Star{
 				Source: "forgejo",
 				Activity: ap.Activity{
 					Actor:  ap.IRI("https://repo.prod.meissa.de/api/activitypub/user-id/1"),

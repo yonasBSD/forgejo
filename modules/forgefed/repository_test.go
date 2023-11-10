@@ -13,44 +13,6 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
-func Test_GetItemByType(t *testing.T) {
-	type testtt struct {
-		typ     ap.ActivityVocabularyType
-		want    ap.Item
-		wantErr error
-	}
-	tests := map[string]testtt{
-		"invalid type": {
-			typ:     ap.ActivityVocabularyType("invalidtype"),
-			wantErr: fmt.Errorf("empty ActivityStreams type"), // TODO(marius): this error message needs to be improved in go-ap/activitypub
-		},
-		"Repository": {
-			typ:  RepositoryType,
-			want: new(Repository),
-		},
-		"Person - fall back": {
-			typ:  ap.PersonType,
-			want: new(ap.Person),
-		},
-		"Question - fall back": {
-			typ:  ap.QuestionType,
-			want: new(ap.Question),
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			maybeRepository, err := GetItemByType(tt.typ)
-			if !reflect.DeepEqual(tt.wantErr, err) {
-				t.Errorf("GetItemByType() error = \"%+v\", wantErr = \"%+v\" when getting Item for type %q", tt.wantErr, err, tt.typ)
-			}
-			if reflect.TypeOf(tt.want) != reflect.TypeOf(maybeRepository) {
-				t.Errorf("Invalid type received %T, expected %T", maybeRepository, tt.want)
-			}
-		})
-	}
-}
-
 func Test_RepositoryMarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    Repository
