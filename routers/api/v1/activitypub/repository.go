@@ -70,7 +70,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
-	log.Info("RepositoryInbox: doer %v, %v", ctx.Doer.Name, ctx.Doer.ID)
 	opt := web.GetForm(ctx).(*forgefed.Star)
 
 	log.Info("RepositoryInbox: Activity Source %v,", opt.Source)
