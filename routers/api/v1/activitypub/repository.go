@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/web"
 
 	ap "github.com/go-ap/activitypub"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
@@ -70,6 +71,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
 	log.Info("RepositoryInbox: doer %v, %v", ctx.Doer.Name, ctx.Doer.ID)
+	opt := web.GetForm(ctx).(*forgefed.Star)
+
+	log.Info("RepositoryInbox: Activity Source %v,", opt.Source)
 
 	ctx.Status(http.StatusNoContent)
+
 }
