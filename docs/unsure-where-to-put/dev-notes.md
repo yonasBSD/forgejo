@@ -1,3 +1,8 @@
+# enable federation
+
+copy the app.ini in this folder in custom/conf in the forgejo root directory.
+Then change the paths in app.ini accordingly to you local environment.
+
 # build
 
 ```
