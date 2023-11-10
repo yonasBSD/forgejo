@@ -3,6 +3,31 @@
 copy the app.ini in this folder in custom/conf in the forgejo root directory.
 Then change the paths in app.ini accordingly to you local environment.
 
+```
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ;
+; ; SQLite Configuration
+; ;
+DB_TYPE = sqlite3
+; defaults to data/gitea.db
+PATH = /home/jem/repo/opensource/forgejo/data/gitea.db
+; Query timeout defaults to: 500
+SQLITE_TIMEOUT = 
+; defaults to sqlite database default (often DELETE), can be used to enable WAL mode. https://www.sqlite.org/pragma.html#pragma_journal_mode
+SQLITE_JOURNAL_MODE = 
+HOST = 
+NAME = 
+USER = 
+PASSWD = 
+SCHEMA = 
+SSL_MODE = disable
+LOG_SQL = false
+
+
+[federation]
+ENABLED = true
+```
+
 # build
 
 ```
