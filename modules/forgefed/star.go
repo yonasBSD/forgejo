@@ -36,7 +36,7 @@ type Star struct {
 }
 
 // StarNew initializes a Star type activity
-func StarNew(id ap.ID, ob ap.ID) *Star {
+func StarNew(id ap.ID, ob ap.ID) *Star { // ToDo: Currently this function is not used anywhere, so we don't create stars?
 	a := ap.ActivityNew(id, StarType, ob)
 	o := Star{Activity: *a, Source: ForgejoSourceType}
 	return &o
