@@ -42,6 +42,7 @@ func StarNew(id ap.ID, ob ap.ID) *Star {
 	return &o
 }
 
+// ToDo: should Star be *Star?
 func (a Star) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
 	ap.JSONWrite(&b, '{')
