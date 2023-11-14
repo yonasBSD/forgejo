@@ -30,7 +30,7 @@ var KnownSourceTypes = SourceTypes{
 // swagger:model
 type Star struct {
 	// swagger:ignore
-	ap.Activity
+	Activity ap.Activity
 	// Source identifies the system which generated this activity. Exactly one value has to be specified.
 	Source SourceType `jsonld:"source,omitempty"`
 }
