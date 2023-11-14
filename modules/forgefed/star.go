@@ -4,7 +4,6 @@
 package forgefed
 
 import (
-	"code.gitea.io/gitea/modules/context"
 	ap "github.com/go-ap/activitypub"
 	"github.com/valyala/fastjson"
 )
@@ -36,22 +35,11 @@ type Star struct {
 	Source SourceType `jsonld:"source,omitempty"`
 }
 
-// Infos needed to star a repo
-type StarRepo struct {
-	StargazerID int `json:"Stargazer"`
-	RepoID      int `json:"RepoToStar"`
-}
-
 // StarNew initializes a Star type activity
-// Guess: no return value needed, we may need to add the star to the context
 func StarNew(id ap.ID, ob ap.ID) *Star {
 	a := ap.ActivityNew(id, StarType, ob)
 	o := Star{Activity: *a, Source: ForgejoSourceType}
 	return &o
-}
-
-func AddStar(ctx *context.APIContext) {
-
 }
 
 func (a Star) MarshalJSON() ([]byte, error) {
