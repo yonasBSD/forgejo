@@ -959,7 +959,6 @@ func SignInOAuthCallback(ctx *context.Context) {
 				err = fmt.Errorf("OAuth2 Provider %s returned empty or missing field: UserID", authSource.Name)
 				ctx.ServerError("CreateUser", err)
 				return
-
 			}
 			var missingFields []string
 			if gothUser.Email == "" {
