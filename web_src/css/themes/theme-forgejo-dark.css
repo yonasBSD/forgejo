@@ -212,13 +212,18 @@
   /* should ideally be --color-text-dark, see #15651 */
   --color-reaction-bg: #ffffff12;
   --color-reaction-active-bg: var(--color-primary-alpha-30);
+  --color-tooltip-text: #ffffff;
+  --color-tooltip-bg: #000000f0;
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
-  --color-label-active-bg: #4c525e;
   --color-label-text: #fff;
+  --color-label-bg: #393939;
+  --color-label-hover-bg: #5f5f5f;
+  --color-label-active-bg: #4c4c4c;
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
   --color-active-line: var(--color-primary-alpha-20);
+  --color-overlay-backdrop: #080808c0;
   accent-color: var(--color-accent);
   color-scheme: dark;
 }
