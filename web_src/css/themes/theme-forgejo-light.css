@@ -1,3 +1,6 @@
+@import "../chroma/light.css";
+@import "../codemirror/light.css";
+
 :root {
   --steel-900: #10161D;
   --steel-850: #131A21;
@@ -227,12 +230,17 @@
   /* should ideally be --color-text-dark, see #15651 */
   --color-reaction-bg: #0000000a;
   --color-reaction-active-bg: var(--color-primary-alpha-20);
+  --color-tooltip-text: #ffffff;
+  --color-tooltip-bg: #000000f0;
   --color-nav-bg: var(--zinc-100);
   --color-nav-hover-bg: var(--zinc-300);
-  --color-label-active-bg: #4c525e;
+  --color-label-bg: #cacaca5b;
+  --color-label-hover-bg: #cacacaa0;
+  --color-label-active-bg: #cacacaff;
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
   --color-active-line: var(--color-primary-light-6);
+  --color-overlay-backdrop: #080808c0;
   accent-color: var(--color-accent);
   color-scheme: light;
 }
