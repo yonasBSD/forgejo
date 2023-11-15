@@ -35,7 +35,7 @@ func Repository(ctx *context.APIContext) {
 	//   "200":
 	//     "$ref": "#/responses/ActivityPub"
 
-	link := fmt.Sprintf("%s/api/v1/activitypub/repoistory-id/%d", strings.TrimSuffix(setting.AppURL, "/"), ctx.Repo.Repository.ID)
+	link := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%d", strings.TrimSuffix(setting.AppURL, "/"), ctx.Repo.Repository.ID)
 	repo := forgefed.RepositoryNew(ap.IRI(link))
 
 	repo.Name = ap.NaturalLanguageValuesNew()
