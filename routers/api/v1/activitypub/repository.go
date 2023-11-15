@@ -123,7 +123,7 @@ func parseActor(actor string) (ActorData, error) {
 	}
 
 	if !strings.Contains(u.Path, "api/v1/activitypub/user-id") {
-		return ActorData{}, fmt.Errorf("the Path to the API was invalid: %v\n the full URL is: %v\n", u.Path, actor)
+		return ActorData{}, fmt.Errorf("the Path to the API was invalid: %v\n the full URL is: %v", u.Path, actor)
 	}
 
 	pathWithUserID := strings.Split(u.Path, "/")
