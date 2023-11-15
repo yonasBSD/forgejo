@@ -26,6 +26,40 @@ type (
 	Port   string
 )
 
+type ActorData struct {
+	schema string
+	userId string
+	host   string
+	port   string // optional
+}
+
+func parseActor(actor string) (ActorData, error) {
+	u, err := url.Parse(actor)
+
+	// check if userID IRI is well formed url
+	if err != nil {
+		return ActorData{}, fmt.Errorf("the actor ID was not valid: %v", err)
+	}
+
+	if u.Scheme == "" || u.Host == "" {
+		return ActorData{}, fmt.Errorf("the actor ID was not valid: Invalid Schema or Host")
+	}
+
+	if !strings.Contains(u.Path, "api/v1/activitypub/user-id") {
+		return ActorData{}, fmt.Errorf("the Path to the API was invalid: %v\n the full URL is: %v", u.Path, actor)
+	}
+
+	pathWithUserID := strings.Split(u.Path, "/")
+	userId := pathWithUserID[len(pathWithUserID)-1]
+
+	return ActorData{
+		schema: u.Scheme,
+		userId: userId,
+		host:   u.Host,
+		port:   u.Port(),
+	}, nil
+}
+
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
 	// swagger:operation GET /activitypub/repository-id/{repository-id} activitypub activitypubRepository
@@ -83,17 +117,17 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Activity.Source %v", opt.Source)
 	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
 
-	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345"
+	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// parse actor
 	actor, err := parseActor(opt.Actor.GetID().String())
 
+	// if not actor.isValid() then exit_with_error
 	if err != nil {
 		panic(err)
 	}
 
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
 
-	// if not actor.isValid() then exit_with_error
 	// get_person_by_rest
 	// create_user_from_person (if not alreaydy present)
 
@@ -101,38 +135,4 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	ctx.Status(http.StatusNoContent)
 
-}
-
-type ActorData struct {
-	schema string
-	userId string
-	host   string
-	port   string
-}
-
-func parseActor(actor string) (ActorData, error) {
-	u, err := url.Parse(actor)
-
-	// check if userID IRI is well formed url
-	if err != nil {
-		return ActorData{}, fmt.Errorf("the actor ID was not valid: %v", err)
-	}
-
-	if u.Scheme == "" || u.Host == "" {
-		return ActorData{}, fmt.Errorf("the actor ID was not valid: Invalid Schema or Host")
-	}
-
-	if !strings.Contains(u.Path, "api/v1/activitypub/user-id") {
-		return ActorData{}, fmt.Errorf("the Path to the API was invalid: %v\n the full URL is: %v", u.Path, actor)
-	}
-
-	pathWithUserID := strings.Split(u.Path, "/")
-	userId := pathWithUserID[len(pathWithUserID)-1]
-
-	return ActorData{
-		schema: u.Scheme,
-		userId: userId,
-		host:   u.Host,
-		port:   u.Port(),
-	}, nil
 }
