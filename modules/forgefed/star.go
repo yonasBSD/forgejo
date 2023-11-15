@@ -30,19 +30,18 @@ var KnownSourceTypes = SourceTypes{
 // swagger:model
 type Star struct {
 	// swagger:ignore
-	Activity ap.Activity
+	ap.Activity
 	// Source identifies the system which generated this activity. Exactly one value has to be specified.
 	Source SourceType `jsonld:"source,omitempty"`
 }
 
 // StarNew initializes a Star type activity
-func StarNew(id ap.ID, ob ap.ID) *Star { // ToDo: Currently this function is not used anywhere, so we don't create stars?
+func StarNew(id ap.ID, ob ap.ID) *Star { // ToDo: May be used later in creating signed activities
 	a := ap.ActivityNew(id, StarType, ob)
 	o := Star{Activity: *a, Source: ForgejoSourceType}
 	return &o
 }
 
-// ToDo: should Star be *Star?
 func (a Star) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
 	ap.JSONWrite(&b, '{')

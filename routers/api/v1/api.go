@@ -897,11 +897,11 @@ func Routes() *web.Route {
 				}, context_service.UserIDAssignmentAPI())
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
-					m.Post("/inbox", // ToDo: We may want a m.Patch method here, as we are not replacing stars
+					m.Post("/inbox", // ToDo: Post or Put?
 						// TODO: bind ativities here
 						bind(forgefed.Star{}),
 						//activitypub.ReqHTTPSignature(),
-						activitypub.RepositoryInbox) // ToDo: We may need to use another method to add a star to the repo
+						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
