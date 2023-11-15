@@ -76,6 +76,12 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/activitypub/user-id/12345"
+	// parse actor
+	// if not actor.isValid() then exit_with_error
+	// get_person_by_rest
+	// create_user_from_person (if not alreaydy present)
+
+	// wait 15 sec.
 
 	ctx.Status(http.StatusNoContent)
 
