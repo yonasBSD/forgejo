@@ -11,11 +11,11 @@
 }
 
 # json notation
-{"id": "https://repo.prod.meissa.de/api/activitypub/user-id/1/outbox/12345",
+{"id": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12345",
   "type": "Star",
   "source": "forgejo",
-  "actor": "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-  "object": "https://codeberg.org/api/activitypub/repository-id/1"
+  "actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
+  "object": "https://codeberg.org/api/v1/activitypub/repository-id/1"
 }
 ```
 
