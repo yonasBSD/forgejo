@@ -5,17 +5,7 @@ package activitypub
 
 import (
 	"testing"
-
-	"code.gitea.io/gitea/models/activitypub"
 )
-
-type ActorData struct { // ToDo: is a mock struct a good idea?
-	schema string
-	userId string
-	path   string
-	host   string
-	port   string // optional
-}
 
 func Test_ActorParser(t *testing.T) {
 	type testPair struct {
@@ -52,7 +42,7 @@ func Test_ActorParser(t *testing.T) {
 
 	for name, _ := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := activitypub.ParseActorData(tests[name].item)
+			_, err := ParseActorData(tests[name].item)
 
 			if err != nil {
 				t.Errorf("parseActor() error = \"%v\"", err)
