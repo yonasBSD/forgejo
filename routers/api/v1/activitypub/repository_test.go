@@ -5,13 +5,22 @@ package activitypub
 
 import (
 	"testing"
+
+	"code.gitea.io/gitea/models/activitypub"
 )
+
+type ActorData struct { // ToDo: is a mock struct a good idea?
+	schema string
+	userId string
+	path   string
+	host   string
+	port   string // optional
+}
 
 func Test_ActorParser(t *testing.T) {
 	type testPair struct {
-		item    string
-		want    ActorData
-		wantErr error
+		item string
+		want ActorData
 	}
 
 	tests := map[string]testPair{
@@ -19,25 +28,37 @@ func Test_ActorParser(t *testing.T) {
 			item: "",
 			want: ActorData{},
 		},
-		"withActorID": {
+		"withValidActorID": {
 			item: "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
 			want: ActorData{
-				schema: "https://",
+				schema: "https",
 				userId: "1",
+				path:   "/api/v1/activitypub/user-id/1",
+				host:   "repo.prod.meissa.de",
+				port:   "",
+			},
+		},
+		"withInvalidActorID": {
+			item: "https://repo.prod.meissa.de/api/activitypub/user-id/1",
+			want: ActorData{
+				schema: "https",
+				userId: "1",
+				path:   "/api/v1/activitypub/user-id/1",
 				host:   "repo.prod.meissa.de",
 				port:   "",
 			},
 		},
 	}
 
-	for name, tt := range tests {
+	for name, _ := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := tt.want.parseActor(tests[name].item)
+			_, err := activitypub.ParseActorData(tests[name].item)
 
-			if (err != nil || tt.wantErr != nil) && tt.wantErr.Error() != err.Error() {
-				t.Errorf("parseActor() error = \"%v\", wantErr \"%v\"", err, tt.wantErr)
+			if err != nil {
+				t.Errorf("parseActor() error = \"%v\"", err)
 				return
 			}
+
 		})
 	}
 }
