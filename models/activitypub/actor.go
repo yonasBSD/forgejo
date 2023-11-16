@@ -14,7 +14,7 @@ type ActorData struct {
 	port   string // optional
 }
 
-func (a ActorData) ValidateActor() error {
+func (a ActorData) ValidateActorData() error {
 
 	if a.schema == "" || a.host == "" {
 		return fmt.Errorf("the actor ID was not valid: Invalid Schema or Host")
@@ -28,7 +28,7 @@ func (a ActorData) ValidateActor() error {
 
 }
 
-func ParseActor(actor string) (ActorData, error) {
+func ParseActorData(actor string) (ActorData, error) {
 	u, err := url.Parse(actor)
 
 	// check if userID IRI is well formed url
