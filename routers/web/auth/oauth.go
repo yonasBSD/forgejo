@@ -970,6 +970,7 @@ func SignInOAuthCallback(ctx *context.Context) {
 			if len(missingFields) > 0 {
 				// we don't have enough information to create an account automatically,
 				// so we prompt the user for the remaining bits
+				log.Trace("OAuth2 Provider %s returned empty or missing fields: %s, prompting the user for them", authSource.Name, missingFields)
 				showLinkingLogin(ctx, gothUser)
 				return
 			}
