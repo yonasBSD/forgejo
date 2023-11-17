@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// TODO: Name ActorId ?
 type ActorData struct {
 	schema string
 	userId string
@@ -14,6 +15,7 @@ type ActorData struct {
 	port   string // optional
 }
 
+// TODO: Align validation-api to example from dda-devops-build
 func (a ActorData) ValidateActorData() error {
 
 	if a.schema == "" || a.host == "" {
