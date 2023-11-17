@@ -66,5 +66,5 @@ git reset --hard origin/forgejo-federated-star
 
 # generate swagger api client
 
-go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f './templates/swagger/v1_json.tmpl' -c "code.gitea.io/sdk" --operation 'GET /activitypub/user-id/{user-id} activitypub activitypubPerson' --skip-validation
+go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f './templates/swagger/v1_json.tmpl' -c "code.gitea.io/sdk" --operation 'activitypubPerson' --skip-validation
 
