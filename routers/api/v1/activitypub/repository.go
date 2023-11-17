@@ -83,6 +83,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
+	// TODO: validate input in front of parsing.
 	// parse actor
 	actor, err := activitypub.ParseActorData(opt.Actor.GetID().String())
 
