@@ -9,13 +9,16 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
+	api "code.gitea.io/gitea/modules/activitypub2"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
 
+	apiPerson "code.gitea.io/gitea/modules/activitypub2/activitypub"
 	ap "github.com/go-ap/activitypub"
+	"github.com/go-openapi/strfmt"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
 
@@ -102,6 +105,15 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
 
 	// get_person_by_rest
+	c := api.NewHTTPClientWithConfig(strfmt.Default,
+		api.DefaultTransportConfig().WithHost("localhost:3000").WithBasePath("/api/v1/").WithSchemes([]string{"http"}))
+	//c := client.Default
+	person, err := c.Activitypub.ActivitypubPerson(
+		apiPerson.NewActivitypubPersonParams().WithUserID(1), nil)
+
+	log.Info("http client. %v", c)
+	log.Info("person. %v", person)
+
 	// create_user_from_person (if not alreaydy present)
 
 	// wait 15 sec.
