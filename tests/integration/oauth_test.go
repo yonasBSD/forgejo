@@ -473,7 +473,11 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	// enable auto-creation of accounts via OAuth2
+	enableAutoRegistration := setting.OAuth2Client.EnableAutoRegistration
 	setting.OAuth2Client.EnableAutoRegistration = true
+	defer func() {
+		setting.OAuth2Client.EnableAutoRegistration = enableAutoRegistration
+	}()
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
