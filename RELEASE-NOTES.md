@@ -4,7 +4,7 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
-## 1.21.0-0 (DRAFT)
+## 1.21.0-9
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.0-0` release can be reviewed from the command line with:
 
@@ -20,9 +20,9 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   Note that the modifications related to CSS, templates or assets (images, fonts, etc.) are not documented here.
   Although they can be extracted and modified, Forgejo does not provide any guarantee that such changes
   will be portable from one version to another (even a patch version).
-  - [Restrict certificate type for builtin SSH server](https://codeberg.org/forgejo/forgejo/pulls/1172). This is a breaking change for setups where the builtin SSH server is being used and for some reason host certificates were being used for authentication.
   - [Some Forgejo CLI options have changed](https://codeberg.org/forgejo/forgejo/commit/d0dbe52e76f3038777c3b50066e3636105387ca3) and scripts may need to be updated. For instance `--verbose` is no longer a global option and is implemented on a per sub-command basis. Check `forgejo --help` or `forgejo docs` for more information.
   - [Remove "CHARSET" config option for MySQL and always use "utf8mb4"](https://codeberg.org/forgejo/forgejo/commit/ce46834b938eb687152a680669ada95a26304178). It has been a requirement for years and specifying anything else is likely to cause issues. Existing MySQL databases still using `utf8` can be converted using the CLI: `forgejo doctor convert`.
+  - [Restrict certificate type for builtin SSH server](https://codeberg.org/forgejo/forgejo/pulls/1172). This is a breaking change for setups where the builtin SSH server is being used and for some reason host certificates were being used for authentication.
   - [Set SSH_AUTHORIZED_KEYS_BACKUP to false by default](https://codeberg.org/forgejo/forgejo/commit/469d89b95a1ce18dd34808a95c7230375e828e24). There is no automatic cleanup of these backups and can end up using a significant amount of disk space over time.
   - [The minimum RSA keylength is now 3072 instead of 2048](https://codeberg.org/forgejo/forgejo/commit/c533991519816313dfaa0ddcec183756a97b9348).
 - **Forgejo Actions:**
@@ -63,6 +63,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - The blame view now [takes into account](https://codeberg.org/forgejo/forgejo/commit/ed64f1c2b835bf9332bf8347be9675ef29c8274b) the [`.git-blame-ignore-revs`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-blameignoreRevsFile) file.
   - [Pre-register OAuth2 applications for git credential helpers](https://codeberg.org/forgejo/forgejo/commit/63ab92d7971e4931e98f014f2c5385d2242fa780). Read more in the git authentication section of the [user guide](https://forgejo.org/docs/v1.21/user/oauth2-provider/#git-authentication) and the [administrator guide](https://forgejo.org/docs/v1.21/admin/oauth2-provider/#git-authentication).
   - Admins can be [notified via email](https://codeberg.org/forgejo/forgejo/commit/7d2d9970115c94954dacb45684f9e3c16117ebfe) when a new user registers to help fight spam bots.
+  - When a page display the history of changes for a file, [file rename are detected and displayed](https://codeberg.org/forgejo/forgejo/commit/ea23594cdbb12c32dc28638f65bf40e37d344e5f).
   - Packages [can be configured to redirect requests to the S3 server](https://codeberg.org/forgejo/forgejo/commit/c890454769562e0ec2978e123aaf3d9a43e5ef4f) for clients that support this feature.
   - When a PR contains multiple commits, it is now possible [review to each commit independently](https://codeberg.org/forgejo/forgejo/commit/55532061c83d38d33ef48bdc5eeac0f652844e8a). Read more [about selecting commits for review](https://forgejo.org/docs/v1.21/user/pull-requests-and-git-flow/#reviews).
   - Issues can [be deleted in batch](https://codeberg.org/forgejo/forgejo/commit/a1c5057fe81c25dfd1777e9625eb5480c45897ea).
