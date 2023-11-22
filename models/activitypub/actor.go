@@ -21,8 +21,12 @@ type ActorID struct {
 // TODO: Align validation-api to example from dda-devops-build
 func (a ActorID) Validate() error {
 
-	if a.schema == "" || a.host == "" {
-		return fmt.Errorf("the actor ID was not valid: Invalid Schema or Host")
+	if a.schema == "" {
+		return fmt.Errorf("the actor ID was not valid: Invalid Schema")
+	}
+
+	if a.host == "" {
+		return fmt.Errorf("the actor ID was not valid: Invalid Host")
 	}
 
 	if !strings.Contains(a.path, "api/v1/activitypub/user-id") {
