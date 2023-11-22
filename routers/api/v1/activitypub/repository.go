@@ -88,7 +88,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// TODO: validate input in front of parsing.
 	// parse actor
-	actor, err := activitypub.ParseActorData(opt.Actor.GetID().String())
+	actor, err := activitypub.ParseActorID(opt.Actor.GetID().String())
 
 	// Is the actor IRI well formed?
 	if err != nil {
@@ -96,7 +96,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// Is the ActorData Struct valid?
-	err = actor.ValidateActorData()
+	err = actor.ValidateActorID()
 
 	if err != nil {
 		panic(err)

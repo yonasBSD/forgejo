@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-// TODO: Name ActorId ?
-type ActorData struct {
+type ActorID struct {
 	schema string
 	userId string
 	path   string
@@ -16,7 +15,7 @@ type ActorData struct {
 }
 
 // TODO: Align validation-api to example from dda-devops-build
-func (a ActorData) ValidateActorData() error {
+func (a ActorID) ValidateActorID() error {
 
 	if a.schema == "" || a.host == "" {
 		return fmt.Errorf("the actor ID was not valid: Invalid Schema or Host")
@@ -30,18 +29,18 @@ func (a ActorData) ValidateActorData() error {
 
 }
 
-func ParseActorData(actor string) (ActorData, error) {
+func ParseActorID(actor string) (ActorID, error) {
 	u, err := url.Parse(actor)
 
 	// check if userID IRI is well formed url
 	if err != nil {
-		return ActorData{}, fmt.Errorf("the actor ID was not a valid IRI: %v", err)
+		return ActorID{}, fmt.Errorf("the actor ID was not a valid IRI: %v", err)
 	}
 
 	pathWithUserID := strings.Split(u.Path, "/")
 	userId := pathWithUserID[len(pathWithUserID)-1]
 
-	return ActorData{
+	return ActorID{
 		schema: u.Scheme,
 		userId: userId,
 		host:   u.Host,

@@ -10,17 +10,17 @@ import (
 func Test_ActorParser(t *testing.T) {
 	type testPair struct {
 		item string
-		want ActorData
+		want ActorID
 	}
 
 	tests := map[string]testPair{
 		"empty": {
 			item: "",
-			want: ActorData{},
+			want: ActorID{},
 		},
 		"withValidActorID": {
 			item: "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
-			want: ActorData{
+			want: ActorID{
 				schema: "https",
 				userId: "1",
 				path:   "/api/v1/activitypub/user-id/1",
@@ -30,7 +30,7 @@ func Test_ActorParser(t *testing.T) {
 		},
 		"withInvalidActorID": {
 			item: "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-			want: ActorData{
+			want: ActorID{
 				schema: "https",
 				userId: "1",
 				path:   "/api/v1/activitypub/user-id/1",
@@ -42,7 +42,7 @@ func Test_ActorParser(t *testing.T) {
 
 	for name, _ := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := ParseActorData(tests[name].item)
+			_, err := ParseActorID(tests[name].item)
 
 			if err != nil {
 				t.Errorf("parseActor() error = \"%v\"", err)
