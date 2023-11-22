@@ -7,6 +7,8 @@ import (
 )
 
 type Validatable interface {
+	validate_is_not_nil() error
+	validate_is_not_empty() error
 	Validate() error
 }
 
@@ -18,15 +20,24 @@ type ActorID struct {
 	port   string // optional
 }
 
+func (a ActorID) validate_is_not_empty(str string, field string) error {
+
+	if str != "" {
+		return fmt.Errorf("field %v was empty", field)
+	}
+
+	return nil
+}
+
 // TODO: Align validation-api to example from dda-devops-build
 func (a ActorID) Validate() error {
 
-	if a.schema == "" {
-		return fmt.Errorf("the actor ID was not valid: Invalid Schema")
+	if err := a.validate_is_not_empty(a.schema, "schema"); err != nil {
+		return err
 	}
 
-	if a.host == "" {
-		return fmt.Errorf("the actor ID was not valid: Invalid Host")
+	if err := a.validate_is_not_empty(a.host, "host"); err != nil {
+		return err
 	}
 
 	if !strings.Contains(a.path, "api/v1/activitypub/user-id") {
