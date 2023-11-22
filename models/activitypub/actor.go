@@ -22,7 +22,7 @@ type ActorID struct {
 
 func (a ActorID) validate_is_not_empty(str string, field string) error {
 
-	if str != "" {
+	if str == "" {
 		return fmt.Errorf("field %v was empty", field)
 	}
 
