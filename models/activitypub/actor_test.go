@@ -7,48 +7,54 @@ import (
 	"testing"
 )
 
-func Test_ActorParser(t *testing.T) {
-	type testPair struct {
-		item string
-		want ActorID
+func TestActorParserEmpty(t *testing.T) {
+	item := ""
+	want := ActorID{}
+
+	got, _ := ParseActorID(item)
+
+	if got != want {
+		t.Errorf("ParseActorID returned non empty actor id for empty input.")
+	}
+}
+
+func TestActorParserValid(t *testing.T) {
+	item := "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1"
+	want := ActorID{
+		schema: "https",
+		userId: "1",
+		path:   "/api/v1/activitypub/user-id/1",
+		host:   "repo.prod.meissa.de",
+		port:   "",
 	}
 
-	tests := map[string]testPair{
-		"empty": {
-			item: "",
-			want: ActorID{},
-		},
-		"withValidActorID": {
-			item: "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
-			want: ActorID{
-				schema: "https",
-				userId: "1",
-				path:   "/api/v1/activitypub/user-id/1",
-				host:   "repo.prod.meissa.de",
-				port:   "",
-			},
-		},
-		"withInvalidActorID": {
-			item: "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-			want: ActorID{
-				schema: "https",
-				userId: "1",
-				path:   "/api/v1/activitypub/user-id/1",
-				host:   "repo.prod.meissa.de",
-				port:   "",
-			},
-		},
+	got, _ := ParseActorID(item)
+
+	if got != want {
+		t.Errorf("Test Fail: ParseActorID did not return want: %v.", want)
+	}
+}
+
+func TestValidateValid(t *testing.T) {
+	item := ActorID{
+		schema: "https",
+		userId: "1",
+		path:   "/api/v1/activitypub/user-id/1",
+		host:   "repo.prod.meissa.de",
+		port:   "",
 	}
 
-	for name, _ := range tests {
-		t.Run(name, func(t *testing.T) {
-			_, err := ParseActorID(tests[name].item)
+	if err := item.Validate(); err != nil {
+		t.Errorf("Test Fail: Validating actor returned non nil with valid input.")
+	}
+}
 
-			if err != nil {
-				t.Errorf("parseActor() error = \"%v\"", err)
-				return
-			}
+func TestValidateInvalid(t *testing.T) {
+	item := "123456"
 
-		})
+	actor, _ := ParseActorID(item)
+
+	if err := actor.Validate(); err == nil {
+		t.Errorf("Test Fail: Validating actor returned nil with false input.")
 	}
 }
