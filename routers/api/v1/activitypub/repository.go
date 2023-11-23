@@ -112,7 +112,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		apiPerson.NewActivitypubPersonParams().WithUserID(1), nil)
 
 	log.Info("http client. %v", c)
-	log.Info("person. %v", person)
+	log.Info("person: %v\n error: ", person, err)
 
 	// create_user_from_person (if not alreaydy present)
 
