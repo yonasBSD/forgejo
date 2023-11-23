@@ -58,3 +58,21 @@ func TestValidateInvalid(t *testing.T) {
 		t.Errorf("Validating actor returned nil with false input.")
 	}
 }
+
+func TestGetHostAndPort(t *testing.T) {
+	item := ActorID{
+		schema: "https",
+		userId: "1",
+		path:   "/api/v1/activitypub/user-id/1",
+		host:   "repo.prod.meissa.de",
+		port:   "80",
+	}
+	want := "repo.prod.meissa.de:80"
+
+	hostAndPort := item.GetHostAndPort()
+
+	if hostAndPort != want {
+		t.Errorf("GetHostAndPort did not return correct host and port combination: %v", hostAndPort)
+	}
+
+}
