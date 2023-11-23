@@ -31,7 +31,7 @@ func TestActorParserValid(t *testing.T) {
 	got, _ := ParseActorID(item)
 
 	if got != want {
-		t.Errorf("Test Fail: ParseActorID did not return want: %v.", want)
+		t.Errorf("ParseActorID did not return want: %v.", want)
 	}
 }
 
@@ -45,7 +45,7 @@ func TestValidateValid(t *testing.T) {
 	}
 
 	if err := item.Validate(); err != nil {
-		t.Errorf("Test Fail: Validating actor returned non nil with valid input.")
+		t.Errorf("Validating actor returned non nil with valid input.")
 	}
 }
 
@@ -55,6 +55,6 @@ func TestValidateInvalid(t *testing.T) {
 	actor, _ := ParseActorID(item)
 
 	if err := actor.Validate(); err == nil {
-		t.Errorf("Test Fail: Validating actor returned nil with false input.")
+		t.Errorf("Validating actor returned nil with false input.")
 	}
 }
