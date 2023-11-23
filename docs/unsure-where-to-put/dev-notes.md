@@ -36,9 +36,31 @@ TAGS="sqlite" make build generate-swagger
 
 # launch local
 
-```
+```bash
+# create a user
 ./gitea admin user create --name me --password me --email "buero@meissa.de"
+
+# create a token
 ./gitea admin user generate-access-token -u me -t token --scopes write:activitypub,write:repository,write:user
+
+# create a repo
+curl -X 'POST' \
+  'http://localhost:3000/api/v1/user/repos?token=ReplaceThisWithYourGeneratedToken' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "auto_init": false,
+  "default_branch": "main",
+  "description": "none",
+  "gitignores": "none",
+  "issue_labels": "",
+  "license": "apache",
+  "name": "repo",
+  "private": true,
+  "readme": "This is a readme",
+  "template": false,
+  "trust_model": "default"
+}'
 ```
 
 # sync base branch
