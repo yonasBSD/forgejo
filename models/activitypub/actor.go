@@ -3,6 +3,7 @@ package activitypub
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -27,6 +28,26 @@ func (a ActorID) validate_is_not_empty(str string, field string) error {
 	}
 
 	return nil
+}
+
+func (a ActorID) GetUserId() int {
+	result, err := strconv.Atoi(a.userId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return result
+}
+
+// Returns the combination of host:port if port exists, host otherwise
+func (a ActorID) GetHostAndPort() string {
+
+	if a.port != "" {
+		return strings.Join([]string{a.host, a.port}, ":")
+	}
+
+	return a.host
 }
 
 // TODO: Align validation-api to example from dda-devops-build
