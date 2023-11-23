@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Validatable interface {
+type Validatable interface { // ToDo: What is the right package for this interface?
 	validate_is_not_nil() error
 	validate_is_not_empty() error
 	Validate() error
