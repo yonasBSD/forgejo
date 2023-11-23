@@ -105,11 +105,17 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
 
 	// get_person_by_rest
-	c := api.NewHTTPClientWithConfig(strfmt.Default,
-		api.DefaultTransportConfig().WithHost("localhost:3000").WithBasePath("/api/v1/").WithSchemes([]string{"http"}))
+	c := api.NewHTTPClientWithConfig(
+		strfmt.Default,
+		api.DefaultTransportConfig().
+			WithHost(actor.GetHostAndPort()).
+			WithBasePath("/api/v1/"). // ToDo: Is there a need to get the base path dynamically?
+			WithSchemes([]string{"http", "https"}))
 	//c := client.Default
+
 	person, err := c.Activitypub.ActivitypubPerson(
-		apiPerson.NewActivitypubPersonParams().WithUserID(1), nil)
+		apiPerson.NewActivitypubPersonParams().
+			WithUserID(int64(actor.GetUserId())), nil)
 
 	log.Info("http client. %v", c)
 	log.Info("person: %v\n error: ", person, err)
