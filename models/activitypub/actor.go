@@ -43,7 +43,7 @@ TODO: Align validation-api to example from dda-devops-build
 */
 func (a ActorID) Validate() []string {
 
-	err := make([]string, 0, 3)
+	err := make([]string, 0, 3) // ToDo: Solve this dynamically
 
 	if res := a.validate_is_not_empty(a.schema, "schema"); res != nil {
 		err = append(err, res.Error())
