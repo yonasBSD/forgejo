@@ -95,11 +95,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// Is the ActorData Struct valid?
-	err = actor.Validate()
-
-	if err != nil {
-		panic(err)
-	}
+	actor.PanicIfInvalid()
 
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
 
