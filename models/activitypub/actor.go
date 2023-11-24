@@ -18,31 +18,12 @@ type Validatable interface { // ToDo: What is the right package for this interfa
 }
 
 type ActorID struct {
-	schema string
 	userId string
+	source forgefed.SourceType
+	schema string
 	path   string
 	host   string
 	port   string // optional
-}
-
-func (a ActorID) GetUserId() int {
-	result, err := strconv.Atoi(a.userId)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return result
-}
-
-// Returns the combination of host:port if port exists, host otherwise
-func (a ActorID) GetHostAndPort() string {
-
-	if a.port != "" {
-		return strings.Join([]string{a.host, a.port}, ":")
-	}
-
-	return a.host
 }
 
 // ToDo: validate_is_not_empty maybe not as an extra method
@@ -99,8 +80,28 @@ func (a ActorID) PanicIfInvalid() {
 	}
 }
 
-func ParseActorID(actor string) (ActorID, error) {
-	u, err := url.Parse(actor)
+func (a ActorID) GetUserId() int {
+	result, err := strconv.Atoi(a.userId)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return result
+}
+
+// Returns the combination of host:port if port exists, host otherwise
+func (a ActorID) GetHostAndPort() string {
+
+	if a.port != "" {
+		return strings.Join([]string{a.host, a.port}, ":")
+	}
+
+	return a.host
+}
+
+func ParseActorFromStarActivity(star *forgefed.Star) (ActorID, error) {
+	u, err := url.Parse(star.Actor.GetID().String())
 
 	// check if userID IRI is well formed url
 	if err != nil {
