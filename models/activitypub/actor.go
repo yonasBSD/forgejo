@@ -8,9 +8,11 @@ import (
 )
 
 type Validatable interface { // ToDo: What is the right package for this interface?
-	validate_is_not_nil() error // ToDo: We may want an IsValid and a ThrowIfInvalid method, that collects errors and throws them at RepositoryInbox level
+	validate_is_not_nil() error
 	validate_is_not_empty() error
 	Validate() error
+	IsValid() (bool, error)
+	PanicIfInvalid()
 }
 
 type ActorID struct {
@@ -19,16 +21,6 @@ type ActorID struct {
 	path   string
 	host   string
 	port   string // optional
-}
-
-// ToDo: validate_is_not_empty maybe not as an extra method
-func (a ActorID) validate_is_not_empty(str string, field string) error {
-
-	if str == "" {
-		return fmt.Errorf("field %v was empty", field)
-	}
-
-	return nil
 }
 
 func (a ActorID) GetUserId() int {
@@ -51,23 +43,53 @@ func (a ActorID) GetHostAndPort() string {
 	return a.host
 }
 
-// TODO: Align validation-api to example from dda-devops-build
-func (a ActorID) Validate() error {
+// ToDo: validate_is_not_empty maybe not as an extra method
+func (a ActorID) validate_is_not_empty(str string, field string) error {
 
-	if err := a.validate_is_not_empty(a.schema, "schema"); err != nil {
-		return err
-	}
-
-	if err := a.validate_is_not_empty(a.host, "host"); err != nil {
-		return err
-	}
-
-	if !strings.Contains(a.path, "api/v1/activitypub/user-id") { // This needs to happen in dependence to the star source type.
-		return fmt.Errorf("the Path to the API was invalid: %v", a.path)
+	if str == "" {
+		return fmt.Errorf("field %v was empty", field)
 	}
 
 	return nil
+}
 
+/*
+Validate collects error strings, concatenates and returns them
+
+TODO: Align validation-api to example from dda-devops-build
+*/
+func (a ActorID) Validate() []string {
+
+	err := make([]string, 0, 3)
+
+	if res := a.validate_is_not_empty(a.schema, "schema"); res != nil {
+		err = append(err, res.Error())
+	}
+
+	if res := a.validate_is_not_empty(a.host, "host"); res != nil {
+		err = append(err, res.Error())
+	}
+
+	if !strings.Contains(a.path, "api/v1/activitypub/user-id") { // This needs to happen in dependence to the star source type.
+		err = append(err, fmt.Errorf("the Path to the API was invalid: %v", a.path).Error())
+	}
+
+	return err
+
+}
+
+func (a ActorID) IsValid() (bool, error) {
+	if err := a.Validate(); len(err) > 0 {
+		errString := strings.Join(err, "\n")
+		return false, fmt.Errorf(errString)
+	}
+	return true, nil
+}
+
+func (a ActorID) PanicIfInvalid() {
+	if valid, err := a.IsValid(); !valid {
+		panic(err)
+	}
 }
 
 func ParseActorID(actor string) (ActorID, error) {
