@@ -8,7 +8,7 @@ import (
 )
 
 type Validatable interface { // ToDo: What is the right package for this interface?
-	validate_is_not_nil() error
+	validate_is_not_nil() error // ToDo: We may want an IsValid and a ThrowIfInvalid method, that collects errors and throws them at RepositoryInbox level
 	validate_is_not_empty() error
 	Validate() error
 }
@@ -21,6 +21,7 @@ type ActorID struct {
 	port   string // optional
 }
 
+// ToDo: validate_is_not_empty maybe not as an extra method
 func (a ActorID) validate_is_not_empty(str string, field string) error {
 
 	if str == "" {
@@ -61,7 +62,7 @@ func (a ActorID) Validate() error {
 		return err
 	}
 
-	if !strings.Contains(a.path, "api/v1/activitypub/user-id") {
+	if !strings.Contains(a.path, "api/v1/activitypub/user-id") { // This needs to happen in dependence to the star source type.
 		return fmt.Errorf("the Path to the API was invalid: %v", a.path)
 	}
 
@@ -80,8 +81,8 @@ func ParseActorID(actor string) (ActorID, error) {
 	pathWithUserID := strings.Split(u.Path, "/")
 	userId := pathWithUserID[len(pathWithUserID)-1]
 
-	return ActorID{
-		schema: u.Scheme,
+	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
+		schema: u.Scheme, // ToDo: Add source type field
 		userId: userId,
 		host:   u.Host,
 		path:   u.Path,
