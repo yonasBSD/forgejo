@@ -76,18 +76,12 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
 	opt := web.GetForm(ctx).(*forgefed.Star)
 
-	err := opt.ValidateStar()
-
-	if err != nil {
-		panic(err)
-	}
-
 	log.Info("RepositoryInbox: Activity.Source %v", opt.Source)
 	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// parse actor
-	actor, err := activitypub.ParseActorID(opt.Actor.GetID().String()) // ToDo: somehow extract source from star activity
+	actor, err := activitypub.ParseActorFromStarActivity(opt) // ToDo: somehow extract source from star activity
 
 	// Is the actor IRI well formed?
 	if err != nil {
