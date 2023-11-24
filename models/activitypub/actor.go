@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"code.gitea.io/gitea/modules/forgefed"
 )
 
 type Validatable interface { // ToDo: What is the right package for this interface?
@@ -70,8 +72,13 @@ func (a ActorID) Validate() []string {
 		err = append(err, res.Error())
 	}
 
-	if !strings.Contains(a.path, "api/v1/activitypub/user-id") { // This needs to happen in dependence to the star source type.
-		err = append(err, fmt.Errorf("the Path to the API was invalid: %v", a.path).Error())
+	switch a.source {
+	case "forgejo", "gitea":
+		if !strings.Contains(a.path, "api/v1/activitypub/user-id") {
+			err = append(err, fmt.Errorf("the Path to the API was invalid: %v", a.path).Error())
+		}
+	default:
+		err = append(err, fmt.Errorf("currently only forgeo and gitea sources are allowed from actor id").Error())
 	}
 
 	return err
@@ -104,8 +111,9 @@ func ParseActorID(actor string) (ActorID, error) {
 	userId := pathWithUserID[len(pathWithUserID)-1]
 
 	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
-		schema: u.Scheme, // ToDo: Add source type field
 		userId: userId,
+		source: star.Source,
+		schema: u.Scheme, // ToDo: Add source type field
 		host:   u.Host,
 		path:   u.Path,
 		port:   u.Port(),
