@@ -4,8 +4,6 @@
 package forgefed
 
 import (
-	"fmt"
-
 	ap "github.com/go-ap/activitypub"
 	"github.com/valyala/fastjson"
 )
@@ -42,16 +40,6 @@ func StarNew(id ap.ID, ob ap.ID) *Star { // ToDo: May be used later in creating 
 	a := ap.ActivityNew(id, StarType, ob)
 	o := Star{Activity: *a, Source: ForgejoSourceType}
 	return &o
-}
-
-func (a Star) ValidateStar() error {
-
-	if a.Source != "forgejo" {
-		return fmt.Errorf("currently, only a forgejo source is supported")
-	}
-
-	return nil
-
 }
 
 func (a Star) MarshalJSON() ([]byte, error) {
