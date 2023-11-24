@@ -44,8 +44,8 @@ func TestValidateValid(t *testing.T) {
 		port:   "",
 	}
 
-	if err := item.Validate(); err != nil {
-		t.Errorf("Validating actor returned non nil with valid input.")
+	if valid, _ := item.IsValid(); !valid {
+		t.Errorf("Actor was invalid with valid input.")
 	}
 }
 
@@ -54,8 +54,8 @@ func TestValidateInvalid(t *testing.T) {
 
 	actor, _ := ParseActorID(item)
 
-	if err := actor.Validate(); err == nil {
-		t.Errorf("Validating actor returned nil with false input.")
+	if valid, _ := actor.IsValid(); valid {
+		t.Errorf("Actor was valid with invalid input.")
 	}
 }
 
