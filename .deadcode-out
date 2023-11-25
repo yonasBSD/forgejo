@@ -31,7 +31,6 @@ package "code.gitea.io/gitea/models/asymkey"
 	func HasDeployKey
 
 package "code.gitea.io/gitea/models/auth"
-	func DeleteAuthTokenByID
 	func GetSourceByName
 	func GetWebAuthnCredentialByID
 	func WebAuthnCredentials
@@ -317,10 +316,6 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Tr
 	func (MockLocale).TrN
 	func (MockLocale).PrettyNumber
-
-package "code.gitea.io/gitea/modules/util"
-	func AESGCMEncrypt
-	func AESGCMDecrypt
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
