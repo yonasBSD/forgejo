@@ -109,6 +109,41 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Do not show the profile README when a repository is private](https://codeberg.org/forgejo/forgejo/commit/6a7a5ea32ab61a608b52029f778e8df76b04f489).
   - A [security.txt files is provided by default](https://codeberg.org/forgejo/forgejo/pulls/1201/files) and other static files [can also be added](https://codeberg.org/forgejo/forgejo/commit/52fb9367734100847249d074e2bc17f2aa91053e).
 
+## 1.20.5-1
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.5-1` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.5-0..v1.20.5-1
+```
+
+This stable release contains **critical security fixes**, as explained in the [v1.20.5-1 companion blog post](https://forgejo.org/2023-11-release-v1-20-5-1/).
+
+* Recommended Action
+
+  We **strongly recommend** that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.6+0-gitea-1.20.5`
+
+* Security fixes
+
+  * API and web [endpoints now fail](https://forgejo.org/2023-11-release-v1-20-5-1/) when given manually crafted identifiers.
+  * When an extension is added to the URL of a user profile (e.g. `/myuser.rss`) it is now [verified to be visible](https://codeberg.org/forgejo/forgejo/commit/d7408d8b0b04afd2a3c8e23cc908e7bd3849f34d).
+  * `docker login` now fails with basic auth [when 2FA is enabled](https://codeberg.org/forgejo/forgejo/commit/44df78edd40076b349d50dc5fb02af417a44cfab).
+
+* Bug fixes
+
+  The most prominent bug fixes are described below. Others can be found in the list of commits included in the release as described above.
+
+  * Create the ActionTaskOutput [table for new Forgejo instances](https://codeberg.org/forgejo/forgejo/commit/c0ccd4c2d7ac586276ab65bd2dfbf4eba7e71cd6).
+  * [Restricted users only see repos in orgs which their team was assigned to](https://codeberg.org/forgejo/forgejo/commit/f302373eb4ea04f3b655d8f8bb27bc3ff3027276).
+  * Release assets are now [taken into account during a migration](https://codeberg.org/forgejo/forgejo/commit/1fd3cc32170ff9a36419083541bb2e1ad612df92) from GitLab, Forgejo or Gitea.
+  * When `webhook.PROXY_URL` is set, the `ALLOWED_HOST_LIST` setting is [now properly enforced](https://codeberg.org/forgejo/forgejo/commit/d6798ae0159e58b427e9ad894ca3e0ee272efdb2).
+  * It is now possible to access `/<username>/<reponame>/attachments/<uuid>` [with an application token](https://codeberg.org/forgejo/forgejo/commit/f142ae18c093d4cb5ccc7eeec8beac0212e466a0) and the attachments API download URL is usable.
+
 ## 1.20.5-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.5-0` release can be reviewed from the command line with:
