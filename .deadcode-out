@@ -28,6 +28,8 @@ package "code.gitea.io/gitea/models/actions"
 	func GetVariableByID
 
 package "code.gitea.io/gitea/models/asymkey"
+	func (ErrGPGKeyAccessDenied).Error
+	func (ErrGPGKeyAccessDenied).Unwrap
 	func HasDeployKey
 
 package "code.gitea.io/gitea/models/auth"
