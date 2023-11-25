@@ -129,6 +129,10 @@ func GetContentHistoryDetail(ctx *context.Context) {
 		})
 		return
 	}
+	if history.IssueID != issue.ID {
+		ctx.NotFound("CompareRepoID", issues_model.ErrCommentNotExist{})
+		return
+	}
 
 	// get the related comment if this history revision is for a comment, otherwise the history revision is for an issue.
 	var comment *issues_model.Comment
@@ -198,9 +202,17 @@ func SoftDeleteContentHistory(ctx *context.Context) {
 			log.Error("can not get comment for issue content history %v. err=%v", historyID, err)
 			return
 		}
+		if comment.IssueID != issue.ID {
+			ctx.NotFound("CompareRepoID", issues_model.ErrCommentNotExist{})
+			return
+		}
 	}
 	if history, err = issues_model.GetIssueContentHistoryByID(ctx, historyID); err != nil {
 		log.Error("can not get issue content history %v. err=%v", historyID, err)
+		return
+	}
+	if history.IssueID != issue.ID {
+		ctx.NotFound("CompareRepoID", issues_model.ErrCommentNotExist{})
 		return
 	}
 
