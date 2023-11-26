@@ -107,6 +107,29 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Do not show the profile README when a repository is private](https://codeberg.org/forgejo/forgejo/commit/6a7a5ea32ab61a608b52029f778e8df76b04f489).
   - A [security.txt files is provided by default](https://codeberg.org/forgejo/forgejo/pulls/1201/files) and other static files [can also be added](https://codeberg.org/forgejo/forgejo/commit/52fb9367734100847249d074e2bc17f2aa91053e).
 
+## 1.20.6-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.6-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.5-1..v1.20.6-0
+```
+
+This stable release contains a **security fix**, as explained in the [v1.20.6-0 companion blog post](https://forgejo.org/2023-11-release-v1-20-6-0/).
+
+* Recommended Action
+
+  We **strongly recommend** that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.7+0-gitea-1.20.6`
+
+* Security fix
+
+  Additional API and web [endpoints now fail](https://forgejo.org/2023-11-release-v1-20-6-0/) when given manually crafted identifiers.
+
 ## 1.20.5-1
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.5-1` release can be reviewed from the command line with:
