@@ -117,3 +117,6 @@ prime/
 
 # Generated merged Forgejo+Gitea language files
 /options/locale/locale_*
+
+# folder for project related local files
+/local/
