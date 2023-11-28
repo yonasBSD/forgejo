@@ -97,9 +97,9 @@ func NewClient(ctx context.Context, user *user_model.User, pubID string) (c *Cli
 }
 
 // NewRequest function
-func (c *Client) NewRequest(b []byte, to string) (req *http.Request, err error) {
+func (c *Client) NewRequest(method string, b []byte, to string) (req *http.Request, err error) {
 	buf := bytes.NewBuffer(b)
-	req, err = http.NewRequest(http.MethodPost, to, buf)
+	req, err = http.NewRequest(method, to, buf)
 	if err != nil {
 		return nil, err
 	}
