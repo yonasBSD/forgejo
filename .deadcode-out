@@ -103,6 +103,8 @@ package "code.gitea.io/gitea/models/unittest"
 	func LoadFixtures
 	func Copy
 	func CopyDir
+	func NewMockWebServer
+	func NormalizedFullPath
 	func FixturesDir
 	func fatalTestError
 	func InitSettings
