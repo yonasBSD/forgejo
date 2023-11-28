@@ -117,7 +117,17 @@ func (c *Client) NewRequest(method string, b []byte, to string) (req *http.Reque
 // Post function
 func (c *Client) Post(b []byte, to string) (resp *http.Response, err error) {
 	var req *http.Request
-	if req, err = c.NewRequest(b, to); err != nil {
+	if req, err = c.NewRequest(http.MethodPost, b, to); err != nil {
+		return nil, err
+	}
+	resp, err = c.client.Do(req)
+	return resp, err
+}
+
+// Create an http GET request with forgejo/gitea specific headers
+func (c *Client) Get(b []byte, to string) (resp *http.Response, err error) {
+	var req *http.Request
+	if req, err = c.NewRequest(http.MethodGet, b, to); err != nil {
 		return nil, err
 	}
 	resp, err = c.client.Do(req)
