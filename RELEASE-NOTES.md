@@ -28,6 +28,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Restrict certificate type for builtin SSH server](https://codeberg.org/forgejo/forgejo/pulls/1172). This is a breaking change for setups where the builtin SSH server is being used and for some reason host certificates were being used for authentication.
   - [Set SSH_AUTHORIZED_KEYS_BACKUP to false by default](https://codeberg.org/forgejo/forgejo/commit/469d89b95a1ce18dd34808a95c7230375e828e24). There is no automatic cleanup of these backups and can end up using a significant amount of disk space over time.
   - [The minimum RSA keylength is now 3072 instead of 2048](https://codeberg.org/forgejo/forgejo/commit/c533991519816313dfaa0ddcec183756a97b9348).
+  - Prior to this release, a token scoped to read or write permissions on issues was allowed to access both issues and pull requests, regardless of the restrictions imposed to the team in which they belong. In a team it is possible to grant finer grained permissions, for instance to allow a user to access issues but not pull requests. These restrictions are [now enforced](https://codeberg.org/forgejo/forgejo/commit/f4310d74ee65500ef02064256808530e09da76a0) and API calls that previously succeeded on `/api/v1/repos/{org}/{repo}/issues` or other endpoints common to both issues and pull requests could return 404. Granting the user the necessary permissions in the team in which they belong will allow them to use that endpoint again.
 - **Forgejo Actions:**
   It is now enabled by default but should still be considered alpha stage and subject to unannounced breaking changes.
   - The API can now be used to manage secrets for [users](https://code.forgejo.org/api/swagger/#/user/updateUserSecret), [organizations](https://code.forgejo.org/api/swagger/#/organization/orgListActionsSecrets) and [repositories](https://code.forgejo.org/api/swagger/#/repository/updateRepoSecret).
@@ -127,6 +128,10 @@ This stable release contains a **security fix**, as explained in the [v1.20.6-0 
 * [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
 
   The semantic version was updated to `5.0.7+0-gitea-1.20.6`
+
+* Breaking change
+
+  Prior to this release, a token scoped to read or write permissions on issues was allowed to access both issues and pull requests, regardless of the restrictions imposed to the team in which they belong. In a team it is possible to grant finer grained permissions, for instance to allow a user to access issues but not pull requests. These restrictions are now enforced and API calls that previously succeeded on `/api/v1/repos/{org}/{repo}/issues` or other endpoints common to both issues and pull requests could return 404. Granting the user the necessary permissions in the team in which they belong will allow them to use that endpoint again.
 
 * Security fix
 
