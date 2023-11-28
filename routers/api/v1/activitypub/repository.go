@@ -9,16 +9,14 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
-	api "code.gitea.io/gitea/modules/activitypub2"
+	api "code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
 
-	apiPerson "code.gitea.io/gitea/modules/activitypub2/activitypub"
 	ap "github.com/go-ap/activitypub"
-	"github.com/go-openapi/strfmt"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
 
@@ -81,7 +79,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// parse actor
-	actor, err := activitypub.ParseActorFromStarActivity(opt) // ToDo: somehow extract source from star activity
+	actor, err := activitypub.ParseActorFromStarActivity(opt)
 
 	// Is the actor IRI well formed?
 	if err != nil {
@@ -93,21 +91,26 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
 
+	/*
+		Make http client, this should make a get request on given url
+		We then need to parse the answer and put it into a person-struct
+		fill the person struct using some kind of unmarshall function given in
+		activitypub package/actor.go
+	*/
+
+	// make http client
+	client, err := api.NewClient(ctx, ctx.Doer, opt.To.GetID().String()) // ToDo: This is hacky, we need a hostname from somewhere
+	if err != nil {
+		panic(err)
+	}
+
 	// get_person_by_rest
-	c := api.NewHTTPClientWithConfig(
-		strfmt.Default,
-		api.DefaultTransportConfig().
-			WithHost(actor.GetHostAndPort()).
-			WithBasePath("/api/v1/"). // ToDo: Is there a need to get the base path dynamically?
-			WithSchemes([]string{"http", "https"}))
-	//c := client.Default
+	bytes := []byte{0}
+	target := opt.ID.GetID().String()
+	response, err := client.Get(bytes, target)
 
-	person, err := c.Activitypub.ActivitypubPerson(
-		apiPerson.NewActivitypubPersonParams().
-			WithUserID(int64(actor.GetUserId())), nil)
-
-	log.Info("http client. %v", c)
-	log.Info("person: %v\n error: ", person, err)
+	log.Info("http client. %v", client)
+	log.Info("person: %v\n error: ", response, err)
 
 	// create_user_from_person (if not alreaydy present)
 
