@@ -291,7 +291,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			},
 			Base: base.PullRequestBranch{
 				Ref:       "master",
-				SHA:       "",
+				SHA:       "c59c9b451acca9d106cc19d61d87afe3fbbb8b83",
 				OwnerName: "lafriks",
 				RepoName:  "test_repo",
 			},
@@ -309,16 +309,16 @@ func TestGitlabDownloadRepo(t *testing.T) {
 	assertReviewsEqual(t, []*base.Review{
 		{
 			IssueIndex:   1,
-			ReviewerID:   4102996,
-			ReviewerName: "zeripath",
-			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
+			ReviewerID:   527793,
+			ReviewerName: "axifive",
+			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
 			State:        "APPROVED",
 		},
 		{
 			IssueIndex:   1,
-			ReviewerID:   527793,
-			ReviewerName: "axifive",
-			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
+			ReviewerID:   4102996,
+			ReviewerName: "zeripath",
+			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)
@@ -330,7 +330,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			IssueIndex:   2,
 			ReviewerID:   4575606,
 			ReviewerName: "real6543",
-			CreatedAt:    time.Date(2020, 4, 19, 19, 24, 21, 108000000, time.UTC),
+			CreatedAt:    time.Date(2019, 11, 28, 15, 56, 54, 108000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)
