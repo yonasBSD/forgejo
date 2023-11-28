@@ -105,12 +105,13 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// get_person_by_rest
-	bytes := []byte{0}
-	target := opt.ID.GetID().String()
+	bytes := []byte{0}                   // no body needed for getting user actor
+	target := opt.Actor.GetID().String() // target is the person actor that originally performed the star activity
 	response, err := client.Get(bytes, target)
 
+	log.Info("target: %v", target)
 	log.Info("http client. %v", client)
-	log.Info("person: %v\n error: ", response, err)
+	log.Info("response: %v\n error: ", response, err)
 
 	// create_user_from_person (if not alreaydy present)
 
