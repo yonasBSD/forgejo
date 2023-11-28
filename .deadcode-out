@@ -48,10 +48,6 @@ package "code.gitea.io/gitea/models/forgejo/semver"
 	func SetVersionString
 	func SetVersion
 
-package "code.gitea.io/gitea/models/forgejo_migrations"
-	func GetCurrentDBVersion
-	func EnsureUpToDate
-
 package "code.gitea.io/gitea/models/git"
 	func RemoveDeletedBranchByID
 
