@@ -27,7 +27,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 	// If no access token is available, those cached responses will be used instead.
 	gitlabPersonalAccessToken := os.Getenv("GITLAB_READ_TOKEN")
 	fixturePath := "./testdata/gitlab/full_download"
-	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, true)
+	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, gitlabPersonalAccessToken != "")
 	defer server.Close()
 
 	downloader, err := NewGitlabDownloader(context.Background(), server.URL, "gitea/test_repo", "", "", gitlabPersonalAccessToken)
