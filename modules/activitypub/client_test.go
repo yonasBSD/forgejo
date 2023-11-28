@@ -14,10 +14,23 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestNewClientReturnsClient(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	pubID := "https://codeberg.org/api/v1/activitypub/user-id/12345"
+	c, err := NewClient(db.DefaultContext, user, pubID)
+
+	log.Debug("Client: %v\nError: %v", c, err)
+	assert.NoError(t, err)
+
+}
 
 func TestActivityPubSignedPost(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
