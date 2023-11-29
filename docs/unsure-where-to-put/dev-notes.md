@@ -63,6 +63,20 @@ curl -X 'POST' \
 }'
 ```
 
+# Datastructures handy for local tests
+
+## Star activity
+
+```json
+{
+  "id": "http://localhost:3000/api/v1/activitypub/user-id/1/outbox/12345",
+  "type": "Star",
+  "source": "forgejo",
+  "actor": "http://localhost:3000/api/v1/activitypub/user-id/1",
+  "object": "http://localhost:3000/api/v1/activitypub/repository-id/1"
+}
+```
+
 # sync base branch
 
 ```
