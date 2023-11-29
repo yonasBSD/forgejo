@@ -38,8 +38,6 @@ func (a ActorID) validate_is_not_empty(str string, field string) error {
 
 /*
 Validate collects error strings, concatenates and returns them
-
-TODO: Align validation-api to example from dda-devops-build
 */
 func (a ActorID) Validate() []string {
 
@@ -114,7 +112,7 @@ func ParseActorFromStarActivity(star *forgefed.Star) (ActorID, error) {
 	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
 		userId: userId,
 		source: star.Source,
-		schema: u.Scheme, // ToDo: Add source type field
+		schema: u.Scheme,
 		host:   u.Host,
 		path:   u.Path,
 		port:   u.Port(),
