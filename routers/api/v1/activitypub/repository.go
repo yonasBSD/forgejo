@@ -5,6 +5,7 @@ package activitypub
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -106,13 +107,28 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// get_person_by_rest
-	bytes := []byte{0}                   // no body needed for getting user actor
-	target := opt.Actor.GetID().String() // target is the person actor that originally performed the star activity
-	response, err := client.Get(bytes, target)
+	bytes := []byte{0}                         // no body needed for getting user actor
+	target := opt.Actor.GetID().String()       // target is the person actor that originally performed the star activity
+	response, err := client.Get(bytes, target) // ToDo: Close body, maybe use in extra function
+	if err != nil {
+		panic(err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	// parse resonse
+	person, err := forgefed.ParsePersonJson(body)
+	if err != nil {
+		panic(err)
+	}
 
 	log.Info("target: %v", target)
 	log.Info("http client. %v", client)
 	log.Info("response: %v\n error: ", response, err)
+	log.Info("Person is: %v", person)
 
 	// create_user_from_person (if not alreaydy present)
 
