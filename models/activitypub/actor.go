@@ -98,7 +98,7 @@ func (a ActorID) GetHostAndPort() string {
 	return a.host
 }
 
-func ParseActorFromStarActivity(star *forgefed.Star) (ActorID, error) {
+func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
 	u, err := url.Parse(star.Actor.GetID().String())
 
 	// check if userID IRI is well formed url

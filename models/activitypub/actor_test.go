@@ -32,7 +32,7 @@ func TestActorParserEmpty(t *testing.T) {
 	item := emptyMockStar
 	want := ActorID{}
 
-	got, _ := ParseActorFromStarActivity(item)
+	got, _ := ParseActorIDFromStarActivity(item)
 
 	if got != want {
 		t.Errorf("ParseActorID returned non empty actor id for empty input.")
@@ -50,7 +50,7 @@ func TestActorParserValid(t *testing.T) {
 		port:   "",
 	}
 
-	got, _ := ParseActorFromStarActivity(item)
+	got, _ := ParseActorIDFromStarActivity(item)
 
 	if got != want {
 		t.Errorf("\nParseActorID did not return want: %v\n but %v", want, got)
@@ -75,7 +75,7 @@ func TestValidateValid(t *testing.T) {
 func TestValidateInvalid(t *testing.T) {
 	item := emptyMockStar
 
-	actor, _ := ParseActorFromStarActivity(item)
+	actor, _ := ParseActorIDFromStarActivity(item)
 
 	if valid, _ := actor.IsValid(); valid {
 		t.Errorf("Actor was valid with invalid input.")

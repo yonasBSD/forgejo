@@ -79,7 +79,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// parse actor
-	actor, err := activitypub.ParseActorFromStarActivity(opt)
+	actor, err := activitypub.ParseActorIDFromStarActivity(opt)
 
 	// Is the actor IRI well formed?
 	if err != nil {
