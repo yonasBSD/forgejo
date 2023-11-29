@@ -107,9 +107,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// get_person_by_rest
-	bytes := []byte{0}                         // no body needed for getting user actor
-	target := opt.Actor.GetID().String()       // target is the person actor that originally performed the star activity
-	response, err := client.Get(bytes, target) // ToDo: Close body, maybe use in extra function
+	bytes := []byte{0}                   // no body needed for getting user actor
+	target := opt.Actor.GetID().String() // target is the person actor that originally performed the star activity
+	response, err := client.Get(bytes, target)
 	if err != nil {
 		panic(err)
 	}
@@ -119,7 +119,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		panic(err)
 	}
 
-	// parse resonse
+	// parse response
 	person, err := forgefed.ParsePersonJson(body)
 	if err != nil {
 		panic(err)
