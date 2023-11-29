@@ -103,3 +103,5 @@ git reset --hard origin/forgejo-federated-star
 # generate swagger api client
 
 go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f './templates/swagger/v1_json.tmpl' -c "modules/activitypub2" --operation 'activitypubPerson' --skip-models --existing-models 'github.com/go-ap/activitypub' --skip-validation
+
+# Documentation for learn & reference

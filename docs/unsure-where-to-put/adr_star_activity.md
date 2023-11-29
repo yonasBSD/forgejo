@@ -3,11 +3,11 @@
 {@context [
     "as":    "https://www.w3.org/ns/activitystreams#",
     "forge": "https://forgefed.org/ns#",],
-  ::as/id "https://repo.prod.meissa.de/api/activitypub/user-id/1/outbox/12345",
+  ::as/id "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12345",
   ::as/type "Star",
   ::forge/source "forgejo",
-  ::as/actor "https://repo.prod.meissa.de/api/activitypub/user-id/1",
-  ::as/object "https://codeberg.org/api/activitypub/repository-id/12"
+  ::as/actor "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
+  ::as/object "https://codeberg.org/api/v1/activitypub/repository-id/12"
 }
 
 # json notation
