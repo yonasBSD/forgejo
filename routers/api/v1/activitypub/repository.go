@@ -99,7 +99,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	*/
 
 	// make http client
-	client, err := api.NewClient(ctx, ctx.Doer, opt.To.GetID().String()) // ToDo: This is hacky, we need a hostname from somewhere
+	host := opt.To.GetID().String()
+	client, err := api.NewClient(ctx, ctx.Doer, host) // ToDo: This is hacky, we need a hostname from somewhere
 	if err != nil {
 		panic(err)
 	}
