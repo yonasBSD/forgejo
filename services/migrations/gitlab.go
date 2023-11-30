@@ -663,10 +663,10 @@ func (g *GitlabDownloader) GetReviews(reviewable base.Reviewable) ([]*base.Revie
 	}
 
 	var createdAt time.Time
-	if approvals.CreatedAt != nil {
-		createdAt = *approvals.CreatedAt
-	} else if approvals.UpdatedAt != nil {
+	if approvals.UpdatedAt != nil {
 		createdAt = *approvals.UpdatedAt
+	} else if approvals.CreatedAt != nil {
+		createdAt = *approvals.CreatedAt
 	} else {
 		createdAt = time.Now()
 	}

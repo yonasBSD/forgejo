@@ -309,14 +309,14 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			IssueIndex:   1,
 			ReviewerID:   527793,
 			ReviewerName: "axifive",
-			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
+			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
 			State:        "APPROVED",
 		},
 		{
 			IssueIndex:   1,
 			ReviewerID:   4102996,
 			ReviewerName: "zeripath",
-			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
+			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)
@@ -328,7 +328,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			IssueIndex:   2,
 			ReviewerID:   4575606,
 			ReviewerName: "real6543",
-			CreatedAt:    time.Date(2019, 11, 28, 15, 56, 54, 108000000, time.UTC),
+			CreatedAt:    time.Date(2020, 4, 19, 19, 24, 21, 108000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)
@@ -429,6 +429,7 @@ func TestGitlabGetReviews(t *testing.T) {
 	}
 
 	createdAt := time.Date(2020, 4, 19, 19, 24, 21, 0, time.UTC)
+	updatedAt := time.Date(2022, 5, 23, 21, 27, 29, 0, time.UTC)
 
 	for _, testCase := range []reviewTestCase{
 		{
@@ -436,13 +437,22 @@ func TestGitlabGetReviews(t *testing.T) {
 			prID:              1,
 			reviewerID:        801,
 			reviewerName:      "someone1",
-			createdAt:         nil,
-			updatedAt:         &createdAt,
-			expectedCreatedAt: createdAt,
+			createdAt:         &createdAt,
+			updatedAt:         &updatedAt,
+			expectedCreatedAt: updatedAt,
 		},
 		{
 			repoID:            repoID,
 			prID:              2,
+			reviewerID:        801,
+			reviewerName:      "someone1",
+			createdAt:         nil,
+			updatedAt:         &updatedAt,
+			expectedCreatedAt: updatedAt,
+		},
+		{
+			repoID:            repoID,
+			prID:              3,
 			reviewerID:        802,
 			reviewerName:      "someone2",
 			createdAt:         &createdAt,
@@ -451,7 +461,7 @@ func TestGitlabGetReviews(t *testing.T) {
 		},
 		{
 			repoID:            repoID,
-			prID:              3,
+			prID:              4,
 			reviewerID:        803,
 			reviewerName:      "someone3",
 			createdAt:         nil,
