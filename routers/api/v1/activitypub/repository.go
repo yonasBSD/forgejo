@@ -130,8 +130,38 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("http client. %v", client)
 	log.Info("response: %v\n error: ", response, err)
 	log.Info("Person is: %v", person)
+	log.Info("Person Name is: %v", person.PreferredUsername)
+	log.Info("Person URL is: %v", person.URL)
 
 	// create_user_from_person (if not alreaydy present)
+
+	/*
+		ToDo:
+		This might be a forgefed specification question?
+
+		How do we identify users from other places?	Do we get the information needed to actually create a user?
+		E.g. email adress seems not to be part of the person actor (and may be considered sensitive info by some)
+		cmd/admin_user_create.go seems to require an EMail adress for user creation.
+
+		We might just create a user with a random email adress and a random password.
+		But what if that user wants to create an account at our instance with the same user name?
+
+		Or might it just be easier to change the data structure of the star and
+		save identifying info of a remote user there? That would make the star structure quite bloaty though.
+		It would also implicate that every other feature to be federated might need their own struct to be changed.
+
+		Or create a federated user struct?
+		That way, we could save the user info apart from any federated feature but tie it to that.
+		On a new registration we could check whether that user has already been seen as federated user and maybe ask if they want to connect these information.
+		Features to be federated in the future might benefit from that
+		The database of federated features will have to be updated with the new user values then.
+
+		The "if not already present" part might be easy:
+		Check the user database for given user id.
+		This could happen with something like: user_model.SearchUsers() as seen in routers/api/v1/user.go
+		SearchUsers is defined in models/user/search.go
+		And depending on implementation check if the person already exists in federated user db.
+	*/
 
 	// wait 15 sec.
 
