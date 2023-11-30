@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -27,6 +28,7 @@ import (
 //     test data files
 func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveMode bool) *httptest.Server {
 	mockServerBaseURL := ""
+	ignoredHeaders := []string{"cf-ray", "server", "date", "report-to", "nel", "x-request-id"}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := NormalizedFullPath(r.URL)
@@ -37,9 +39,7 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 			liveURL := fmt.Sprintf("%s%s", liveServerBaseURL, path)
 
 			request, err := http.NewRequest(r.Method, liveURL, nil)
-			if err != nil {
-				assert.Fail(t, "constructing an HTTP request to %s failed", liveURL, err)
-			}
+			assert.NoError(t, err, "constructing an HTTP request to %s failed", liveURL)
 			for headerName, headerValues := range r.Header {
 				// do not pass on the encoding: let the Transport of the HTTP client handle that for us
 				if strings.ToLower(headerName) != "accept-encoding" {
@@ -50,57 +50,42 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 			}
 
 			response, err := http.DefaultClient.Do(request)
-			if err != nil {
-				assert.Fail(t, "HTTP request to %s failed: %s", liveURL, err)
-			}
+			assert.NoError(t, err, "HTTP request to %s failed: %s", liveURL)
 
 			fixture, err := os.Create(fixturePath)
-			if err != nil {
-				assert.Fail(t, fmt.Sprintf("failed to open the fixture file %s for writing", fixturePath), err)
-			}
+			assert.NoError(t, err, "failed to open the fixture file %s for writing", fixturePath)
 			defer fixture.Close()
 			fixtureWriter := bufio.NewWriter(fixture)
 
 			for headerName, headerValues := range response.Header {
 				for _, headerValue := range headerValues {
-					if strings.ToLower(headerName) != "host" {
+					if !slices.Contains(ignoredHeaders, strings.ToLower(headerName)) {
 						_, err := fixtureWriter.WriteString(fmt.Sprintf("%s: %s\n", headerName, headerValue))
-						if err != nil {
-							assert.Fail(t, "writing the header of the HTTP response to the fixture file failed", err)
-						}
+						assert.NoError(t, err, "writing the header of the HTTP response to the fixture file failed")
 					}
 				}
 			}
-			if _, err := fixtureWriter.WriteString("\n"); err != nil {
-				assert.Fail(t, "writing the header of the HTTP response to the fixture file failed")
-			}
+			_, err = fixtureWriter.WriteString("\n")
+			assert.NoError(t, err, "writing the header of the HTTP response to the fixture file failed")
 			fixtureWriter.Flush()
 
-			reader := response.Body
-			content, err := io.ReadAll(reader)
-			if err != nil {
-				assert.Fail(t, "reading the response of the HTTP request to %s failed: %s", liveURL, err)
-			}
 			log.Info("Mock HTTP Server: writing response to %s", fixturePath)
-			if _, err := fixture.Write(content); err != nil {
-				assert.Fail(t, "writing the body of the HTTP response to the fixture file failed", err)
-			}
+			_, err = io.Copy(fixture, response.Body)
+			assert.NoError(t, err, "writing the body of the HTTP response to %s failed", liveURL)
 
-			if err := fixture.Sync(); err != nil {
-				assert.Fail(t, "writing the body of the HTTP response to the fixture file failed", err)
-			}
+			err = fixture.Sync()
+			assert.NoError(t, err, "writing the body of the HTTP response to the fixture file failed")
 		}
 
 		fixture, err := os.ReadFile(fixturePath)
-		if err != nil {
-			assert.Fail(t, "missing mock HTTP response: "+fixturePath)
-			return
-		}
+		assert.NoError(t, err, "missing mock HTTP response: "+fixturePath)
 
 		w.WriteHeader(http.StatusOK)
 
+		// replace any mention of the live HTTP service by the mocked host
+		stringFixture := strings.ReplaceAll(string(fixture), liveServerBaseURL, mockServerBaseURL)
 		// parse back the fixture file into a series of HTTP headers followed by response body
-		lines := strings.Split(string(fixture), "\n")
+		lines := strings.Split(stringFixture, "\n")
 		for idx, line := range lines {
 			colonIndex := strings.Index(line, ": ")
 			if colonIndex != -1 {
@@ -108,11 +93,8 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 			} else {
 				// we reached the end of the headers (empty line), so what follows is the body
 				responseBody := strings.Join(lines[idx+1:], "\n")
-				// replace any mention of the live HTTP service by the mocked host
-				responseBody = strings.ReplaceAll(responseBody, liveServerBaseURL, mockServerBaseURL)
-				if _, err := w.Write([]byte(responseBody)); err != nil {
-					assert.Fail(t, "writing the body of the HTTP response failed", err)
-				}
+				_, err := w.Write([]byte(responseBody))
+				assert.NoError(t, err, "writing the body of the HTTP response failed")
 				break
 			}
 		}
