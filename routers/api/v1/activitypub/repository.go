@@ -120,7 +120,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// parse response
-	person, err := forgefed.ParsePersonJson(body)
+	person := ap.Person{}
+	err = person.UnmarshalJSON(body)
 	if err != nil {
 		panic(err)
 	}
