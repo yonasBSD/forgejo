@@ -38,7 +38,7 @@ TAGS="sqlite" make build generate-swagger
 
 ```bash
 # create a user
-./gitea admin user create --name me --password me --email "buero@meissa.de"
+./gitea admin user create --name me --password me --email "buero@meissa.de" --config 
 
 # create a token
 ./gitea admin user generate-access-token -u me -t token --scopes write:activitypub,write:repository,write:user
@@ -105,3 +105,24 @@ git reset --hard origin/forgejo-federated-star
 go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f './templates/swagger/v1_json.tmpl' -c "modules/activitypub2" --operation 'activitypubPerson' --skip-models --existing-models 'github.com/go-ap/activitypub' --skip-validation
 
 # Documentation for learn & reference
+
+
+# Thoughts on testing
+
+I would like to be able to quickly test a change in the repo code.
+For that i need:
+A test server with federation enabled
+A test user
+A test repo
+A test auth token (?)
+
+A test request as input value to the API
+An expected result for comparison with the output value.
+
+Tests that provide some examples are:
+
+tests/integration/api_activitypub_person_test.go
+
+tests/integration/api_token_test.go
+
+maybe tests/integration/api_repo_test.go
