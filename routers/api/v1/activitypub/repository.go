@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
+	"code.gitea.io/gitea/models/db"
 	api "code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 
 	user_model "code.gitea.io/gitea/models/user"
@@ -75,14 +75,14 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//     "$ref": "#/responses/empty"
 
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
-	opt := web.GetForm(ctx).(*forgefed.Star)
+	activity := web.GetForm(ctx).(*forgefed.Star)
 
-	log.Info("RepositoryInbox: Activity.Source %v", opt.Source)
-	log.Info("RepositoryInbox: Activity.Actor %v", opt.Actor)
+	log.Info("RepositoryInbox: Activity.Source %v", activity.Source)
+	log.Info("RepositoryInbox: Activity.Actor %v", activity.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	// parse actor
-	actor, err := activitypub.ParseActorIDFromStarActivity(opt)
+	actor, err := activitypub.ParseActorIDFromStarActivity(activity)
 
 	// Is the actor IRI well formed?
 	if err != nil {
@@ -102,15 +102,16 @@ func RepositoryInbox(ctx *context.APIContext) {
 	*/
 
 	// make http client
-	host := opt.To.GetID().String()
-	client, err := api.NewClient(ctx, ctx.Doer, host) // ToDo: This is hacky, we need a hostname from somewhere
+	// TODO: this should also work without autorizing the api call // doer might be empty
+	host := activity.To.GetID().String()
+	client, err := api.NewClient(ctx, ctx.ContextUser, host) // ToDo: This is hacky, we need a hostname from somewhere
 	if err != nil {
 		panic(err)
 	}
 
 	// get_person_by_rest
-	bytes := []byte{0}                   // no body needed for getting user actor
-	target := opt.Actor.GetID().String() // target is the person actor that originally performed the star activity
+	bytes := []byte{0}                        // no body needed for getting user actor
+	target := activity.Actor.GetID().String() // target is the person actor that originally performed the star activity
 	response, err := client.Get(bytes, target)
 	if err != nil {
 		panic(err)
@@ -135,59 +136,84 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("Person Name is: %v", person.PreferredUsername)
 	log.Info("Person URL is: %v", person.URL)
 
-	// create_user_from_person (if not alreaydy present)
-
 	// Check if user already exists
-
-	// Create user
-	email := generateUUIDMail(person)
-	username := getUserName(person)
-
-	u := &user_model.User{
-		LowerName:                    username.ToLower(),
-		Name:                         username,
-		Email:                        email,
-		EmailNotificationsPreference: "disabled",
-		Passwd:                       generateRandomPassword(),
-		MustChangePassword:           false,
-		Type:                         UserType.UserTypeRemoteUser,
-		Location:                     getUserLocation(person),
-		Website:                      getAPUserID(person),
-		IsAdmin:                      false,
+	// TODO: If we where able to search for federated id there would be no need to get the remote person.
+	options := &user_model.SearchUserOptions{
+		Keyword: person.PreferredUsername.Get("en").String(),
+		Actor:   ctx.Doer,
+		Type:    user_model.UserTypeRemoteUser,
+		OrderBy: db.SearchOrderByAlphabetically,
+		ListOptions: db.ListOptions{
+			Page:     0,
+			PageSize: 1,
+			ListAll:  true,
+		},
 	}
+	users, usersCount, err := user_model.SearchUsers(db.DefaultContext, options)
 
-	overwriteDefault := &user_model.CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolFalse,
-		IsRestricted: util.OptionalBoolFalse,
+	log.Info("local found users: %v", usersCount)
+
+	if usersCount == 0 {
+		// create user
+
+		/*
+			ToDo: Make user
+
+
+			Fill in user There is a usertype remote in models/user/user.go
+			In Location maybe the federated user ID
+			isActive to false
+			isAdmin to false
+			maybe static email as userid@hostname.tld
+			- maybe test if we can do user without e-mail
+			- then test if two users can have the same adress
+			-	otherwise uuid@hostname.tld
+			fill in names correctly
+			etc
+
+			We need a remote server with federation enabled to test this
+
+			The "if not already present" part might be easy:
+			Check the user database for given user id.
+			This could happen with something like: user_model.SearchUsers() as seen in routers/api/v1/user.go
+			SearchUsers is defined in models/user/search.go
+			And depending on implementation check if the person already exists in federated user db.
+		*/
+
+		/*
+			email := generateUUIDMail(person)
+			username := getUserName(person)
+
+			user := &user_model.User{
+				LowerName:                    username.ToLower(),
+				Name:                         username,
+				Email:                        email,
+				EmailNotificationsPreference: "disabled",
+				Passwd:                       generateRandomPassword(),
+				MustChangePassword:           false,
+				Type:                         UserType.UserTypeRemoteUser,
+				Location:                     getUserLocation(person),
+				Website:                      getAPUserID(person),
+				IsAdmin:                      false,
+			}
+
+			overwriteDefault := &user_model.CreateUserOverwriteOptions{
+				IsActive:     util.OptionalBoolFalse,
+				IsRestricted: util.OptionalBoolFalse,
+			}
+
+			if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
+				panic(fmt.Errorf("CreateUser: %w", err))
+			}
+		*/
+	} else {
+		// use first user
+		user := users[0]
+		log.Info("%v", user)
 	}
+	// TODO: handle case of count > 1
 
-	if err := user_model.CreateUser(ctx, u, overwriteDefault); err != nil {
-		panic(fmt.Errorf("CreateUser: %w", err))
-	}
-
-	/*
-		ToDo: Make user
-
-
-		Fill in user There is a usertype remote in models/user/user.go
-		In Location maybe the federated user ID
-		isActive to false
-		isAdmin to false
-		maybe static email as userid@hostname.tld
-		- maybe test if we can do user without e-mail
-		- then test if two users can have the same adress
-		-	otherwise uuid@hostname.tld
-		fill in names correctly
-		etc
-
-		We need a remote server with federation enabled to test this
-
-		The "if not already present" part might be easy:
-		Check the user database for given user id.
-		This could happen with something like: user_model.SearchUsers() as seen in routers/api/v1/user.go
-		SearchUsers is defined in models/user/search.go
-		And depending on implementation check if the person already exists in federated user db.
-	*/
+	// execute star action
 
 	// wait 15 sec.
 
