@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 
+	user_model "code.gitea.io/gitea/models/user"
 	ap "github.com/go-ap/activitypub"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
@@ -136,7 +137,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// create_user_from_person (if not alreaydy present)
 
-	// ToDo
+	// Check if user already exists
+
+	// Create user
 	email := generateUUIDMail(person)
 	username := getUserName(person)
 
@@ -150,17 +153,16 @@ func RepositoryInbox(ctx *context.APIContext) {
 		Type:                         UserType.UserTypeRemoteUser,
 		Location:                     getUserLocation(person),
 		Website:                      getAPUserID(person),
-		IsActive:                     false,
 		IsAdmin:                      false,
 	}
 
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolTrue,
-		IsRestricted: restricted,
+		IsActive:     util.OptionalBoolFalse,
+		IsRestricted: util.OptionalBoolFalse,
 	}
 
 	if err := user_model.CreateUser(ctx, u, overwriteDefault); err != nil {
-		return fmt.Errorf("CreateUser: %w", err)
+		panic(fmt.Errorf("CreateUser: %w", err))
 	}
 
 	/*
@@ -179,8 +181,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 		etc
 
 		We need a remote server with federation enabled to test this
-
-
 
 		The "if not already present" part might be easy:
 		Check the user database for given user id.
