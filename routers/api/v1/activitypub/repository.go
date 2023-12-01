@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 
 	ap "github.com/go-ap/activitypub"
@@ -135,26 +136,51 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// create_user_from_person (if not alreaydy present)
 
+	// ToDo
+	email := generateUUIDMail(person)
+	username := getUserName(person)
+
+	u := &user_model.User{
+		LowerName:                    username.ToLower(),
+		Name:                         username,
+		Email:                        email,
+		EmailNotificationsPreference: "disabled",
+		Passwd:                       generateRandomPassword(),
+		MustChangePassword:           false,
+		Type:                         UserType.UserTypeRemoteUser,
+		Location:                     getUserLocation(person),
+		Website:                      getAPUserID(person),
+		IsActive:                     false,
+		IsAdmin:                      false,
+	}
+
+	overwriteDefault := &user_model.CreateUserOverwriteOptions{
+		IsActive:     util.OptionalBoolTrue,
+		IsRestricted: restricted,
+	}
+
+	if err := user_model.CreateUser(ctx, u, overwriteDefault); err != nil {
+		return fmt.Errorf("CreateUser: %w", err)
+	}
+
 	/*
-		ToDo:
-		This might be a forgefed specification question?
+		ToDo: Make user
 
-		How do we identify users from other places?	Do we get the information needed to actually create a user?
-		E.g. email adress seems not to be part of the person actor (and may be considered sensitive info by some)
-		cmd/admin_user_create.go seems to require an EMail adress for user creation.
 
-		We might just create a user with a random email adress and a random password.
-		But what if that user wants to create an account at our instance with the same user name?
+		Fill in user There is a usertype remote in models/user/user.go
+		In Location maybe the federated user ID
+		isActive to false
+		isAdmin to false
+		maybe static email as userid@hostname.tld
+		- maybe test if we can do user without e-mail
+		- then test if two users can have the same adress
+		-	otherwise uuid@hostname.tld
+		fill in names correctly
+		etc
 
-		Or might it just be easier to change the data structure of the star and
-		save identifying info of a remote user there? That would make the star structure quite bloaty though.
-		It would also implicate that every other feature to be federated might need their own struct to be changed.
+		We need a remote server with federation enabled to test this
 
-		Or create a federated user struct?
-		That way, we could save the user info apart from any federated feature but tie it to that.
-		On a new registration we could check whether that user has already been seen as federated user and maybe ask if they want to connect these information.
-		Features to be federated in the future might benefit from that
-		The database of federated features will have to be updated with the new user values then.
+
 
 		The "if not already present" part might be easy:
 		Check the user database for given user id.
