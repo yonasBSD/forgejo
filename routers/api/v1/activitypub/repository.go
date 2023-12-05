@@ -181,9 +181,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// get_person_by_rest
-	bytes := []byte{0}                        // no body needed for getting user actor
-	target := activity.Actor.GetID().String() // target is the person actor that originally performed the star activity
-	response, err := client.Get(bytes, target)
+	bytes := []byte{0}                                 // no body needed for getting user actor
+	remoteStargazer := activity.Actor.GetID().String() // used as LoginName in newly created user
+	response, err := client.Get(bytes, remoteStargazer)
 	if err != nil {
 		panic(err)
 	}
@@ -200,7 +200,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		panic(err)
 	}
 
-	log.Info("target: %v", target)
+	log.Info("remoteStargazer: %v", remoteStargazer)
 	log.Info("http client. %v", client)
 	log.Info("response: %v\n error: ", response, err)
 	log.Info("Person is: %v", person)
@@ -245,7 +245,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			EmailNotificationsPreference: "disabled",
 			Passwd:                       password,
 			MustChangePassword:           false,
-			LoginName:                    target,
+			LoginName:                    remoteStargazer,
 			Type:                         user_model.UserTypeRemoteUser,
 			IsAdmin:                      false,
 		}
