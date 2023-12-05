@@ -174,7 +174,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 	*/
 
 	// make http client
-	// TODO: this should also work without autorizing the api call // doer might be empty
 	host := activity.To.GetID().String()
 	client, err := api.NewClient(ctx, actionsUser, host) // ToDo: This is hacky, we need a hostname from somewhere
 	if err != nil {
@@ -210,19 +209,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// Check if user already exists
 	// TODO: If we where able to search for federated id there would be no need to get the remote person.
-	// Search for login_name
-	options := &user_model.SearchUserOptions{
-		Keyword: target,
-		Actor:   ctx.Doer,
-		Type:    user_model.UserTypeRemoteUser,
-		OrderBy: db.SearchOrderByAlphabetically,
-		ListOptions: db.ListOptions{
-			Page:     0,
-			PageSize: 1,
-			ListAll:  true,
-		},
-	}
-	users, usersCount, err := user_model.SearchUsers(db.DefaultContext, options)
+	//			 N.B. We need the username as a display name from the remote host. This requires us to make another request
+	//			 			We might extend the Star Activity by the username, then this request would become redundant
+
+	users, err := searchUsersByPerson(remoteStargazer, person)
 	if err != nil {
 		fmt.Errorf("Search failed: %v", err)
 	}
@@ -231,29 +221,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	if usersCount == 0 {
 		// create user
+		//	ToDo:	We need a remote server with federation enabled to properly test this
 
-		/*
-			ToDo: Make user
-
-			Fill in user There is a usertype remote in models/user/user.go
-			In Location maybe the federated user ID
-			isActive to false
-			isAdmin to false
-			maybe static email as userid@hostname.tld
-			- maybe test if we can do user without e-mail
-			- then test if two users can have the same adress
-			-	otherwise uuid@hostname.tld
-			fill in names correctly
-			etc
-
-			We need a remote server with federation enabled to test this
-
-			The "if not already present" part might be easy:
-			Check the user database for given user id.
-			This could happen with something like: user_model.SearchUsers() as seen in routers/api/v1/user.go
-			SearchUsers is defined in models/user/search.go
-			And depending on implementation check if the person already exists in federated user db.
-		*/
 		email, err := generateUUIDMail(person)
 		if err != nil {
 			fmt.Errorf("Generate user failed: %v", err)
