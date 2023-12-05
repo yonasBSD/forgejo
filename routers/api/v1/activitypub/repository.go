@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
@@ -244,11 +243,11 @@ func generateUUIDMail(person ap.Actor) (string, error) {
 	// UUID@remote.host
 	id := uuid.New().String()
 
-	url, err := url.Parse(person.URL.GetID().String())
+	//url, err := url.Parse(person.URL.GetID().String())
 
-	host := url.Host
+	//host := url.Host
 
-	return strings.Join([]string{id, host}, "@"), err
+	return strings.Join([]string{id, "example.com"}, "@"), nil
 }
 
 func getUserName(person ap.Actor) (string, error) {
