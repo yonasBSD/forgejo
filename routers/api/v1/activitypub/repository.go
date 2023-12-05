@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
@@ -16,7 +17,9 @@ import (
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"github.com/google/uuid"
 
 	user_model "code.gitea.io/gitea/models/user"
 	ap "github.com/go-ap/activitypub"
@@ -107,7 +110,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// make http client
 	// TODO: this should also work without autorizing the api call // doer might be empty
 	host := activity.To.GetID().String()
-	client, err := api.NewClient(ctx, ctx.ContextUser, host) // ToDo: This is hacky, we need a hostname from somewhere
+	client, err := api.NewClient(ctx, ctx.Doer, host) // ToDo: This is hacky, we need a hostname from somewhere
 	if err != nil {
 		panic(err)
 	}
@@ -141,8 +144,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// Check if user already exists
 	// TODO: If we where able to search for federated id there would be no need to get the remote person.
+	// Search for login_name
 	options := &user_model.SearchUserOptions{
-		Keyword: person.PreferredUsername.Get("en").String(),
+		Keyword: target,
 		Actor:   ctx.Doer,
 		Type:    user_model.UserTypeRemoteUser,
 		OrderBy: db.SearchOrderByAlphabetically,
@@ -153,6 +157,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 		},
 	}
 	users, usersCount, err := user_model.SearchUsers(db.DefaultContext, options)
+	if err != nil {
+		fmt.Errorf("Search failed: %v", err)
+	}
 
 	log.Info("local found users: %v", usersCount)
 
@@ -161,7 +168,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 		/*
 			ToDo: Make user
-
 
 			Fill in user There is a usertype remote in models/user/user.go
 			In Location maybe the federated user ID
@@ -182,38 +188,36 @@ func RepositoryInbox(ctx *context.APIContext) {
 			SearchUsers is defined in models/user/search.go
 			And depending on implementation check if the person already exists in federated user db.
 		*/
+		email, err := generateUUIDMail(person)
+		username := getUserName(person)
 
-		/*
-			email := generateUUIDMail(person)
-			username := getUserName(person)
+		user := &user_model.User{
+			LowerName:                    username.ToLower(),
+			Name:                         username,
+			Email:                        email,
+			EmailNotificationsPreference: "disabled",
+			Passwd:                       generateRandomPassword(),
+			MustChangePassword:           false,
+			LoginName:                    target,
+			Type:                         UserType.UserTypeRemoteUser,
+			IsAdmin:                      false,
+		}
 
-			user := &user_model.User{
-				LowerName:                    username.ToLower(),
-				Name:                         username,
-				Email:                        email,
-				EmailNotificationsPreference: "disabled",
-				Passwd:                       generateRandomPassword(),
-				MustChangePassword:           false,
-				Type:                         UserType.UserTypeRemoteUser,
-				Location:                     getUserLocation(person),
-				Website:                      getAPUserID(person),
-				IsAdmin:                      false,
-			}
+		overwriteDefault := &user_model.CreateUserOverwriteOptions{
+			IsActive:     util.OptionalBoolFalse,
+			IsRestricted: util.OptionalBoolFalse,
+		}
 
-			overwriteDefault := &user_model.CreateUserOverwriteOptions{
-				IsActive:     util.OptionalBoolFalse,
-				IsRestricted: util.OptionalBoolFalse,
-			}
+		if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
+			panic(fmt.Errorf("CreateUser: %w", err))
+		}
 
-			if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
-				panic(fmt.Errorf("CreateUser: %w", err))
-			}
-		*/
 	} else {
 		// use first user
 		user := users[0]
 		log.Info("%v", user)
 	}
+
 	// TODO: handle case of count > 1
 
 	// execute star action
@@ -222,4 +226,15 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	ctx.Status(http.StatusNoContent)
 
+}
+
+func generateUUIDMail(person ap.Actor) (string, error) {
+	// UUID@remote.host
+	id := uuid.New().String()
+
+	url, err := url.Parse(person.URL.GetID().String())
+
+	host := url.Host
+
+	return strings.Join([]string{id, host}, "@"), err
 }
