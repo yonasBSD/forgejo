@@ -23,6 +23,7 @@ import (
 
 	user_model "code.gitea.io/gitea/models/user"
 	ap "github.com/go-ap/activitypub"
+	pwd_gen "github.com/sethvargo/go-password/password"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
 
@@ -189,17 +190,29 @@ func RepositoryInbox(ctx *context.APIContext) {
 			And depending on implementation check if the person already exists in federated user db.
 		*/
 		email, err := generateUUIDMail(person)
-		username := getUserName(person)
+		if err != nil {
+			fmt.Errorf("Generate user failed: %v", err)
+		}
+
+		username, err := getUserName(person)
+		if err != nil {
+			fmt.Errorf("Generate user failed: %v", err)
+		}
+
+		password, err := generateRandomPassword()
+		if err != nil {
+			fmt.Errorf("Generate password failed: %v", err)
+		}
 
 		user := &user_model.User{
-			LowerName:                    username.ToLower(),
+			LowerName:                    strings.ToLower(username),
 			Name:                         username,
 			Email:                        email,
 			EmailNotificationsPreference: "disabled",
-			Passwd:                       generateRandomPassword(),
+			Passwd:                       password,
 			MustChangePassword:           false,
 			LoginName:                    target,
-			Type:                         UserType.UserTypeRemoteUser,
+			Type:                         user_model.UserTypeRemoteUser,
 			IsAdmin:                      false,
 		}
 
@@ -219,7 +232,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// TODO: handle case of count > 1
-
 	// execute star action
 
 	// wait 15 sec.
@@ -237,4 +249,24 @@ func generateUUIDMail(person ap.Actor) (string, error) {
 	host := url.Host
 
 	return strings.Join([]string{id, host}, "@"), err
+}
+
+func getUserName(person ap.Actor) (string, error) {
+	if name := person.PreferredUsername.String(); name != "" {
+		return name, nil
+	}
+	if name := person.Name.String(); name != "" {
+		return name, nil
+	}
+	return "", fmt.Errorf("Empty name, preferredUsername field")
+}
+
+func generateRandomPassword() (string, error) {
+	// Generate a password that is 64 characters long with 10 digits, 10 symbols,
+	// allowing upper and lower case letters, disallowing repeat characters.
+	res, err := pwd_gen.Generate(32, 10, 10, false, false)
+	if err != nil {
+		return "", err
+	}
+	return res, err
 }
