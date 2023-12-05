@@ -224,7 +224,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
 			panic(fmt.Errorf("CreateUser: %w", err))
 		}
-
+		log.Info("User created!")
 	} else {
 		// use first user
 		user := users[0]
