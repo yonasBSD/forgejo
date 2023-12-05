@@ -214,28 +214,25 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	users, err := searchUsersByPerson(remoteStargazer, person)
 	if err != nil {
-		fmt.Errorf("Search failed: %v", err)
+		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
-
-	log.Info("local found users: %v", usersCount)
-
-	if usersCount == 0 {
+	if len(users) == 0 {
 		// create user
 		//	ToDo:	We need a remote server with federation enabled to properly test this
 
 		email, err := generateUUIDMail(person)
 		if err != nil {
-			fmt.Errorf("Generate user failed: %v", err)
+			panic(fmt.Errorf("generate user failed: %v", err))
 		}
 
-		username, err := getUserName(person)
+		username, err := generateRemoteUserName(person)
 		if err != nil {
-			fmt.Errorf("Generate user failed: %v", err)
+			panic(fmt.Errorf("generate user failed: %v", err))
 		}
 
 		password, err := generateRandomPassword()
 		if err != nil {
-			fmt.Errorf("Generate password failed: %v", err)
+			panic(fmt.Errorf("generate password failed: %v", err))
 		}
 
 		user := &user_model.User{
@@ -256,7 +253,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 
 		if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
-			panic(fmt.Errorf("CreateUser: %w", err))
+			panic(fmt.Errorf("createUser: %w", err))
 		}
 		log.Info("User created!")
 	} else {
