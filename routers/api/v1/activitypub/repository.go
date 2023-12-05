@@ -176,7 +176,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// make http client
 	// TODO: this should also work without autorizing the api call // doer might be empty
 	host := activity.To.GetID().String()
-	client, err := api.NewClient(ctx, ctx.Doer, host) // ToDo: This is hacky, we need a hostname from somewhere
+	client, err := api.NewClient(ctx, actionsUser, host) // ToDo: This is hacky, we need a hostname from somewhere
 	if err != nil {
 		panic(err)
 	}
