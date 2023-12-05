@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/activitypub"
@@ -25,6 +26,71 @@ import (
 	pwd_gen "github.com/sethvargo/go-password/password"
 	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
+
+var actionsUser = user_model.NewActionsUser()
+
+func generateUUIDMail(person ap.Actor) (string, error) {
+	// UUID@remote.host
+	id := uuid.New().String()
+
+	//url, err := url.Parse(person.URL.GetID().String())
+
+	//host := url.Host
+
+	return strings.Join([]string{id, "example.com"}, "@"), nil
+}
+
+func generateRemoteUserName(person ap.Actor) (string, error) {
+	u, err := url.Parse(person.URL.GetID().String())
+	if err != nil {
+		return "", err
+	}
+
+	host := strings.Split(u.Host, ":")[0] // no port in username
+
+	if name := person.PreferredUsername.String(); name != "" {
+		return strings.Join([]string{name, host}, "_"), nil
+	}
+	if name := person.Name.String(); name != "" {
+		return strings.Join([]string{name, host}, "_"), nil
+	}
+
+	return "", fmt.Errorf("empty name, preferredUsername field")
+}
+
+func generateRandomPassword() (string, error) {
+	// Generate a password that is 64 characters long with 10 digits, 10 symbols,
+	// allowing upper and lower case letters, disallowing repeat characters.
+	res, err := pwd_gen.Generate(32, 10, 10, false, false)
+	if err != nil {
+		return "", err
+	}
+	return res, err
+}
+
+func searchUsersByPerson(remoteStargazer string, person ap.Actor) ([]*user_model.User, error) {
+
+	actionsUser.IsAdmin = true
+
+	options := &user_model.SearchUserOptions{
+		LoginName:       remoteStargazer,
+		Actor:           actionsUser,
+		Type:            user_model.UserTypeRemoteUser,
+		OrderBy:         db.SearchOrderByAlphabetically,
+		ListOptions:     db.ListOptions{PageSize: 1},
+		IsActive:        util.OptionalBoolFalse,
+		IncludeReserved: true,
+	}
+	users, _, err := user_model.SearchUsers(db.DefaultContext, options)
+	if err != nil {
+		return []*user_model.User{}, fmt.Errorf("search failed: %v", err)
+	}
+
+	log.Info("local found users: %v", len(users))
+
+	return users, nil
+
+}
 
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
@@ -237,35 +303,4 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	ctx.Status(http.StatusNoContent)
 
-}
-
-func generateUUIDMail(person ap.Actor) (string, error) {
-	// UUID@remote.host
-	id := uuid.New().String()
-
-	//url, err := url.Parse(person.URL.GetID().String())
-
-	//host := url.Host
-
-	return strings.Join([]string{id, "example.com"}, "@"), nil
-}
-
-func getUserName(person ap.Actor) (string, error) {
-	if name := person.PreferredUsername.String(); name != "" {
-		return name, nil
-	}
-	if name := person.Name.String(); name != "" {
-		return name, nil
-	}
-	return "", fmt.Errorf("Empty name, preferredUsername field")
-}
-
-func generateRandomPassword() (string, error) {
-	// Generate a password that is 64 characters long with 10 digits, 10 symbols,
-	// allowing upper and lower case letters, disallowing repeat characters.
-	res, err := pwd_gen.Generate(32, 10, 10, false, false)
-	if err != nil {
-		return "", err
-	}
-	return res, err
 }
