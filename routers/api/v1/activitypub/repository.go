@@ -81,6 +81,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Activity.Actor %v", activity.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
+	//    "https://Codeberg.org/api/v1/activitypub/user-id/12345"
+	//    "https:443//codeberg.org/api/v1/activitypub/user-id/12345"
+	//    "https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345"
 	// parse actor
 	actor, err := activitypub.ParseActorIDFromStarActivity(activity)
 
