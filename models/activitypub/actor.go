@@ -127,6 +127,10 @@ func removeEmptyStrings(ls []string) []string {
 }
 
 func ParseActorID(unvalidatedIRI, source string) (ActorID, error) {
+	if unvalidatedIRI == "" {
+		return ActorID{}, fmt.Errorf("the given IRI was empty")
+	}
+
 	u, err := url.Parse(unvalidatedIRI)
 
 	// check if userID IRI is well formed url
