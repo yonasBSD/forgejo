@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/forgefed"
+	"code.gitea.io/gitea/modules/log"
 )
 
 type Validatable interface { // ToDo: What is the right package for this interface?
@@ -106,6 +107,25 @@ func (a ActorID) GetHostAndPort() string {
 	return a.host
 }
 
+func containsEmptyString(ar []string) bool {
+	for _, elem := range ar {
+		if elem == "" {
+			return true
+		}
+	}
+	return false
+}
+
+func removeEmptyStrings(ls []string) []string {
+	var rs []string
+	for _, str := range ls {
+		if str != "" {
+			rs = append(rs, str)
+		}
+	}
+	return rs
+}
+
 func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
 	u, err := url.Parse(star.Actor.GetID().String())
 
@@ -115,14 +135,25 @@ func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
 	}
 
 	pathWithUserID := strings.Split(u.Path, "/")
-	userId := pathWithUserID[len(pathWithUserID)-1]
+
+	if containsEmptyString(pathWithUserID) {
+		pathWithUserID = removeEmptyStrings(pathWithUserID)
+	}
+
+	length := len(pathWithUserID)
+	pathWithoutUserID := strings.Join(pathWithUserID[0:length-1], "/")
+	userId := pathWithUserID[length-1]
+
+	log.Info("Actor: pathWithUserID: %s", pathWithUserID)
+	log.Info("Actor: pathWithoutUserID: %s", pathWithoutUserID)
+	log.Info("Actor: UserID: %s", userId)
 
 	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
 		userId: userId,
 		source: star.Source,
 		schema: u.Scheme,
 		host:   u.Hostname(), // u.Host returns hostname:port
-		path:   u.Path,
+		path:   pathWithoutUserID,
 		port:   u.Port(),
 	}, nil
 }
