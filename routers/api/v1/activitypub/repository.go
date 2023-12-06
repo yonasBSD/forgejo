@@ -92,7 +92,43 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 }
 
-// func getPersonByRest()
+func getPersonByRest(remoteStargazer, starReceiver string, ctx *context.APIContext) (ap.Person, error) {
+
+	client, err := api.NewClient(ctx, actionsUser, starReceiver) // The star receiver signs the http get request
+	if err != nil {
+		return ap.Person{}, err
+	}
+
+	// get_person_by_rest
+	bytes := []byte{0} // no body needed for getting user actor
+	response, err := client.Get(bytes, remoteStargazer)
+	if err != nil {
+		return ap.Person{}, err
+	}
+
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return ap.Person{}, err
+	}
+
+	// parse response
+	person := ap.Person{}
+	err = person.UnmarshalJSON(body)
+	if err != nil {
+		return ap.Person{}, err
+	}
+
+	log.Info("remoteStargazer: %v", remoteStargazer)
+	log.Info("http client. %v", client)
+	log.Info("response: %v\n error: ", response, err)
+	log.Info("Person is: %v", person)
+	log.Info("Person Name is: %v", person.PreferredUsername)
+	log.Info("Person URL is: %v", person.URL)
+
+	return person, nil
+
+}
 
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
@@ -198,40 +234,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	if len(users) == 0 {
-		// make http client
-		// TODO: Never use unvalidated input for actions - we have a validated actor already!
 
-		client, err := api.NewClient(ctx, actionsUser, starReceiver) // The star receiver signs the http get request
-		if err != nil {
-			panic(err)
-		}
-
-		// get_person_by_rest
-		bytes := []byte{0} // no body needed for getting user actor
-		response, err := client.Get(bytes, remoteStargazer)
-		if err != nil {
-			panic(err)
-		}
-		defer response.Body.Close()
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			panic(err)
-		}
-
-		// parse response
-		person := ap.Person{}
-		err = person.UnmarshalJSON(body)
-		if err != nil {
-			panic(err)
-		}
-
-		log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
-		log.Info("remoteStargazer: %v", remoteStargazer)
-		log.Info("http client. %v", client)
-		log.Info("response: %v\n error: ", response, err)
-		log.Info("Person is: %v", person)
-		log.Info("Person Name is: %v", person.PreferredUsername)
-		log.Info("Person URL is: %v", person.URL)
+		person, err := getPersonByRest(remoteStargazer, starReceiver, ctx)
 
 		// create user
 		//	ToDo:	We need a remote server with federation enabled to properly test this
