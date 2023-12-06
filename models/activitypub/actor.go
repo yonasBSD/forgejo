@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 )
 
@@ -20,7 +19,7 @@ type Validatable interface { // ToDo: What is the right package for this interfa
 
 type ActorID struct {
 	userId string
-	source forgefed.SourceType
+	source string
 	schema string
 	path   string
 	host   string
@@ -126,8 +125,8 @@ func removeEmptyStrings(ls []string) []string {
 	return rs
 }
 
-func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
-	u, err := url.Parse(star.Actor.GetID().String())
+func ParseActorID(unvalidatedIRI, source string) (ActorID, error) {
+	u, err := url.Parse(unvalidatedIRI)
 
 	// check if userID IRI is well formed url
 	if err != nil {
@@ -150,7 +149,7 @@ func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
 
 	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
 		userId: userId,
-		source: star.Source,
+		source: source,
 		schema: u.Scheme,
 		host:   u.Hostname(), // u.Host returns hostname:port
 		path:   pathWithoutUserID,
