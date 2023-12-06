@@ -206,7 +206,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		panic(err)
 	}
 
-	// validate receiverActorId against repo owner
+	// validate receiverActorId against context repo
 	repositoryID := ctx.Repo.Repository.ID
 	if repositoryID != int64(receivedRepoId.GetUserId()) {
 		panic(
@@ -234,14 +234,14 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	if len(users) == 0 {
+		//	ToDo:	We need a remote server with federation enabled to properly test this
 
 		person, err := getPersonByRest(remoteStargazer, starReceiver, ctx)
 		if err != nil {
 			panic(fmt.Errorf("getting user failed: %v", err))
 		}
-		// create user
-		//	ToDo:	We need a remote server with federation enabled to properly test this
 
+		// create user
 		email, err := generateUUIDMail(person)
 		if err != nil {
 			panic(fmt.Errorf("generate user failed: %v", err))
