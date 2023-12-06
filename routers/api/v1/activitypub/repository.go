@@ -236,7 +236,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	if len(users) == 0 {
 
 		person, err := getPersonByRest(remoteStargazer, starReceiver, ctx)
-
+		if err != nil {
+			panic(fmt.Errorf("getting user failed: %v", err))
+		}
 		// create user
 		//	ToDo:	We need a remote server with federation enabled to properly test this
 
