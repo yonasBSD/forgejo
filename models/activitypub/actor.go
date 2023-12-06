@@ -121,7 +121,7 @@ func ParseActorIDFromStarActivity(star *forgefed.Star) (ActorID, error) {
 		userId: userId,
 		source: star.Source,
 		schema: u.Scheme,
-		host:   u.Host,
+		host:   u.Hostname(), // u.Host returns hostname:port
 		path:   u.Path,
 		port:   u.Port(),
 	}, nil
