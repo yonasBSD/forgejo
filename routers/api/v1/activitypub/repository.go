@@ -92,6 +92,8 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 }
 
+// func getPersonByRest()
+
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
 	// swagger:operation GET /activitypub/repository-id/{repository-id} activitypub activitypubRepository
@@ -154,44 +156,58 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//    "https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345"
 	//    "https://user:password@codeberg.org/api/v1/activitypub/user-id/12345"
 	//    "https://codeberg.org/api/v1/activitypub//user-id/12345"
-	// parse actor
-	actor, err := activitypub.ParseActorIDFromStarActivity(activity)
-	// Is the actor IRI well formed?
+
+	// parse senderActorId
+	// senderActorId holds the data to construct the sender of the star
+	log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
+	senderActorId, err := activitypub.ParseActorID(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		panic(err)
 	}
-	// Is the ActorData Struct valid?
-	actor.PanicIfInvalid()
-	log.Info("RepositoryInbox: Actor parsed. %v", actor)
+
+	receivedRepoId, err := activitypub.ParseActorID(activity.Activity.Object.GetID().String(), string(activity.Source))
+	if err != nil {
+		panic(err)
+	}
+
+	// validate receiverActorId against repo owner
+	repositoryID := ctx.Repo.Repository.ID
+	if repositoryID != int64(receivedRepoId.GetUserId()) {
+		panic(
+			fmt.Errorf("received repo id and repo id were not identical:\nreceived id: %v\nrepo id:%v", receivedRepoId, repositoryID))
+	}
+
+	// Is the ActorID Struct valid?
+	senderActorId.PanicIfInvalid()
+	receivedRepoId.PanicIfInvalid()
+	log.Info("RepositoryInbox: Actor parsed. %v", senderActorId)
+	log.Info("RepositoryInbox: Actor parsed. %v", receivedRepoId)
+
+	remoteStargazer := senderActorId.GetNormailzedUri() // used as LoginName in newly created user
+	starReceiver := receivedRepoId.GetNormailzedUri()
+	log.Info("remotStargazer: %v", remoteStargazer)
+	log.Info("starReceiver: %v", starReceiver)
 
 	// Check if user already exists
 	// TODO: If we where able to search for federated id there would be no need to get the remote person.
 	//			 N.B. We need the username as a display name from the remote host. This requires us to make another request
 	//			 			We might extend the Star Activity by the username, then this request would become redundant
-	users, err := searchUsersByPerson(actor.GetNormailzedUri())
+	users, err := searchUsersByPerson(remoteStargazer)
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
+
 	if len(users) == 0 {
-
-		/*
-			Make http client, this should make a get request on given url
-			We then need to parse the answer and put it into a person-struct
-			fill the person struct using some kind of unmarshall function given in
-			activitypub package/actor.go
-		*/
-
 		// make http client
 		// TODO: Never use unvalidated input for actions - we have a validated actor already!
-		actorId := activity.To.GetID().String()
-		client, err := api.NewClient(ctx, actionsUser, actorId) // ToDo: This is hacky, we need a hostname from somewhere
+
+		client, err := api.NewClient(ctx, actionsUser, starReceiver) // The star receiver signs the http get request
 		if err != nil {
 			panic(err)
 		}
 
 		// get_person_by_rest
-		bytes := []byte{0}                                 // no body needed for getting user actor
-		remoteStargazer := activity.Actor.GetID().String() // used as LoginName in newly created user
+		bytes := []byte{0} // no body needed for getting user actor
 		response, err := client.Get(bytes, remoteStargazer)
 		if err != nil {
 			panic(err)
@@ -209,6 +225,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			panic(err)
 		}
 
+		log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
 		log.Info("remoteStargazer: %v", remoteStargazer)
 		log.Info("http client. %v", client)
 		log.Info("response: %v\n error: ", response, err)
