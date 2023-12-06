@@ -130,6 +130,46 @@ func getPersonByRest(remoteStargazer, starReceiver string, ctx *context.APIConte
 
 }
 
+func createFederatedUserFromPerson(ctx *context.APIContext, person ap.Person, remoteStargazer string) error {
+	email, err := generateUUIDMail(person)
+	if err != nil {
+		return err
+	}
+
+	username, err := generateRemoteUserName(person)
+	if err != nil {
+		return err
+	}
+
+	password, err := generateRandomPassword()
+	if err != nil {
+		return err
+	}
+
+	user := &user_model.User{
+		LowerName:                    strings.ToLower(username),
+		Name:                         username,
+		Email:                        email,
+		EmailNotificationsPreference: "disabled",
+		Passwd:                       password,
+		MustChangePassword:           false,
+		LoginName:                    remoteStargazer,
+		Type:                         user_model.UserTypeRemoteUser,
+		IsAdmin:                      false,
+	}
+
+	overwriteDefault := &user_model.CreateUserOverwriteOptions{
+		IsActive:     util.OptionalBoolFalse,
+		IsRestricted: util.OptionalBoolFalse,
+	}
+
+	if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
+		return err
+	}
+	log.Info("User created!")
+	return nil
+}
+
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
 	// swagger:operation GET /activitypub/repository-id/{repository-id} activitypub activitypubRepository
@@ -242,42 +282,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 
 		// create user
-		email, err := generateUUIDMail(person)
+		err = createFederatedUserFromPerson(ctx, person, remoteStargazer)
 		if err != nil {
-			panic(fmt.Errorf("generate user failed: %v", err))
-		}
-
-		username, err := generateRemoteUserName(person)
-		if err != nil {
-			panic(fmt.Errorf("generate user failed: %v", err))
-		}
-
-		password, err := generateRandomPassword()
-		if err != nil {
-			panic(fmt.Errorf("generate password failed: %v", err))
-		}
-
-		user := &user_model.User{
-			LowerName:                    strings.ToLower(username),
-			Name:                         username,
-			Email:                        email,
-			EmailNotificationsPreference: "disabled",
-			Passwd:                       password,
-			MustChangePassword:           false,
-			LoginName:                    remoteStargazer,
-			Type:                         user_model.UserTypeRemoteUser,
-			IsAdmin:                      false,
-		}
-
-		overwriteDefault := &user_model.CreateUserOverwriteOptions{
-			IsActive:     util.OptionalBoolFalse,
-			IsRestricted: util.OptionalBoolFalse,
-		}
-
-		if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
 			panic(fmt.Errorf("createUser: %w", err))
 		}
-		log.Info("User created!")
+
 	} else {
 		// use first user
 		user := users[0]
