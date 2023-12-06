@@ -219,8 +219,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Actor parsed. %v", senderActorId)
 	log.Info("RepositoryInbox: Actor parsed. %v", receivedRepoId)
 
-	remoteStargazer := senderActorId.GetNormailzedUri() // used as LoginName in newly created user
-	starReceiver := receivedRepoId.GetNormailzedUri()
+	remoteStargazer := senderActorId.GetNormalizedUri() // used as LoginName in newly created user
+	starReceiver := receivedRepoId.GetNormalizedUri()
 	log.Info("remotStargazer: %v", remoteStargazer)
 	log.Info("starReceiver: %v", starReceiver)
 

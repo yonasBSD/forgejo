@@ -92,7 +92,7 @@ func (a ActorID) GetUserId() int {
 	return result
 }
 
-func (a ActorID) GetNormailzedUri() string { // ToDo: Port might be empty
+func (a ActorID) GetNormalizedUri() string { // ToDo: Port might be empty
 	result := fmt.Sprintf("%s://%s:%s/%s/%s", a.schema, a.host, a.port, a.path, a.userId)
 	return result
 }
