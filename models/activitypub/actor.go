@@ -88,6 +88,11 @@ func (a ActorID) GetUserId() int {
 	return result
 }
 
+func (a ActorID) GetNormailzedUri() string {
+	result := fmt.Sprintf("%s://%s:%s/%s/%s", a.schema, a.host, a.port, a.path, a.userId)
+	return result
+}
+
 // Returns the combination of host:port if port exists, host otherwise
 func (a ActorID) GetHostAndPort() string {
 

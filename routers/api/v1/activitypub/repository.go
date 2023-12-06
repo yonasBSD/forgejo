@@ -68,12 +68,12 @@ func generateRandomPassword() (string, error) {
 	return res, err
 }
 
-func searchUsersByPerson(remoteStargazer string, person ap.Actor) ([]*user_model.User, error) {
+func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 	actionsUser.IsAdmin = true
 
 	options := &user_model.SearchUserOptions{
-		LoginName:       remoteStargazer,
+		LoginName:       actorId,
 		Actor:           actionsUser,
 		Type:            user_model.UserTypeRemoteUser,
 		OrderBy:         db.SearchOrderByAlphabetically,
@@ -145,78 +145,77 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
 	activity := web.GetForm(ctx).(*forgefed.Star)
-
 	log.Info("RepositoryInbox: Activity.Source %v", activity.Source)
 	log.Info("RepositoryInbox: Activity.Actor %v", activity.Actor)
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	//    "https://Codeberg.org/api/v1/activitypub/user-id/12345"
-	//    "https:443//codeberg.org/api/v1/activitypub/user-id/12345"
+	//    "https://codeberg.org:443/api/v1/activitypub/user-id/12345"
 	//    "https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345"
+	//    "https://user:password@codeberg.org/api/v1/activitypub/user-id/12345"
+	//    "https://codeberg.org/api/v1/activitypub//user-id/12345"
 	// parse actor
 	actor, err := activitypub.ParseActorIDFromStarActivity(activity)
-
 	// Is the actor IRI well formed?
 	if err != nil {
 		panic(err)
 	}
-
 	// Is the ActorData Struct valid?
 	actor.PanicIfInvalid()
-
 	log.Info("RepositoryInbox: Actor parsed. %v", actor)
-
-	/*
-		Make http client, this should make a get request on given url
-		We then need to parse the answer and put it into a person-struct
-		fill the person struct using some kind of unmarshall function given in
-		activitypub package/actor.go
-	*/
-
-	// make http client
-	host := activity.To.GetID().String()
-	client, err := api.NewClient(ctx, actionsUser, host) // ToDo: This is hacky, we need a hostname from somewhere
-	if err != nil {
-		panic(err)
-	}
-
-	// get_person_by_rest
-	bytes := []byte{0}                                 // no body needed for getting user actor
-	remoteStargazer := activity.Actor.GetID().String() // used as LoginName in newly created user
-	response, err := client.Get(bytes, remoteStargazer)
-	if err != nil {
-		panic(err)
-	}
-	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	// parse response
-	person := ap.Person{}
-	err = person.UnmarshalJSON(body)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Info("remoteStargazer: %v", remoteStargazer)
-	log.Info("http client. %v", client)
-	log.Info("response: %v\n error: ", response, err)
-	log.Info("Person is: %v", person)
-	log.Info("Person Name is: %v", person.PreferredUsername)
-	log.Info("Person URL is: %v", person.URL)
 
 	// Check if user already exists
 	// TODO: If we where able to search for federated id there would be no need to get the remote person.
 	//			 N.B. We need the username as a display name from the remote host. This requires us to make another request
 	//			 			We might extend the Star Activity by the username, then this request would become redundant
-
-	users, err := searchUsersByPerson(remoteStargazer, person)
+	users, err := searchUsersByPerson(actor.GetNormailzedUri())
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
 	if len(users) == 0 {
+
+		/*
+			Make http client, this should make a get request on given url
+			We then need to parse the answer and put it into a person-struct
+			fill the person struct using some kind of unmarshall function given in
+			activitypub package/actor.go
+		*/
+
+		// make http client
+		// TODO: Never use unvalidated input for actions - we have a validated actor already!
+		actorId := activity.To.GetID().String()
+		client, err := api.NewClient(ctx, actionsUser, actorId) // ToDo: This is hacky, we need a hostname from somewhere
+		if err != nil {
+			panic(err)
+		}
+
+		// get_person_by_rest
+		bytes := []byte{0}                                 // no body needed for getting user actor
+		remoteStargazer := activity.Actor.GetID().String() // used as LoginName in newly created user
+		response, err := client.Get(bytes, remoteStargazer)
+		if err != nil {
+			panic(err)
+		}
+		defer response.Body.Close()
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		// parse response
+		person := ap.Person{}
+		err = person.UnmarshalJSON(body)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Info("remoteStargazer: %v", remoteStargazer)
+		log.Info("http client. %v", client)
+		log.Info("response: %v\n error: ", response, err)
+		log.Info("Person is: %v", person)
+		log.Info("Person Name is: %v", person.PreferredUsername)
+		log.Info("Person URL is: %v", person.URL)
+
 		// create user
 		//	ToDo:	We need a remote server with federation enabled to properly test this
 
@@ -268,5 +267,4 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// wait 15 sec.
 
 	ctx.Status(http.StatusNoContent)
-
 }
