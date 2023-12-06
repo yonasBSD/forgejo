@@ -29,10 +29,10 @@ var mockStar *forgefed.Star = &forgefed.Star{
 }
 
 func TestActorParserEmpty(t *testing.T) {
-	item := emptyMockStar
+	item := ""
 	want := ActorID{}
 
-	got, _ := ParseActorIDFromStarActivity(item)
+	got, _ := ParseActorID(item, "forgejo")
 
 	if got != want {
 		t.Errorf("ParseActorID returned non empty actor id for empty input.")
@@ -40,17 +40,17 @@ func TestActorParserEmpty(t *testing.T) {
 }
 
 func TestActorParserValid(t *testing.T) {
-	item := mockStar
+	item := mockStar.Actor.GetID().String()
 	want := ActorID{
 		userId: "1",
 		source: "forgejo",
 		schema: "https",
-		path:   "/api/v1/activitypub/user-id/1",
+		path:   "api/v1/activitypub/user-id",
 		host:   "repo.prod.meissa.de",
 		port:   "",
 	}
 
-	got, _ := ParseActorIDFromStarActivity(item)
+	got, _ := ParseActorID(item, "forgejo")
 
 	if got != want {
 		t.Errorf("\nParseActorID did not return want: %v\n but %v", want, got)
@@ -73,9 +73,9 @@ func TestValidateValid(t *testing.T) {
 }
 
 func TestValidateInvalid(t *testing.T) {
-	item := emptyMockStar
+	item := emptyMockStar.Actor.GetID().String()
 
-	actor, _ := ParseActorIDFromStarActivity(item)
+	actor, _ := ParseActorID(item, "forgejo")
 
 	if valid, _ := actor.IsValid(); valid {
 		t.Errorf("Actor was valid with invalid input.")
