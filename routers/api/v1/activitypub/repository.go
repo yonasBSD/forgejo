@@ -94,12 +94,16 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 func getPersonByRest(remoteStargazer, starReceiver string, ctx *context.APIContext) (ap.Person, error) {
 
-	client, err := api.NewClient(ctx, actionsUser, starReceiver) // The star receiver signs the http get request
+	// TODO: The star receiver signs the http get request will maybe not work.
+	// The remote repo has probably diferent keys as the local one.
+	// Why should we use a signed request here at all?
+	client, err := api.NewClient(ctx, actionsUser, starReceiver)
 	if err != nil {
 		return ap.Person{}, err
 	}
 
 	// get_person_by_rest
+	// TODO: I would expect this to be encapsulated in Get function. As Get never has a body.
 	bytes := []byte{0} // no body needed for getting user actor
 	response, err := client.Get(bytes, remoteStargazer)
 	if err != nil {
@@ -237,16 +241,19 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// senderActorId holds the data to construct the sender of the star
 	log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
 	senderActorId, err := activitypub.ParseActorID(activity.Actor.GetID().String(), string(activity.Source))
+	// TODO: Why have we to check error here & in case of PanicIfInvalid? Seems to be doubled ...
 	if err != nil {
 		panic(err)
 	}
 
+	// TODO: We dont need the repo-id here any more as we resolve repo outside (see line 224)
 	receivedRepoId, err := activitypub.ParseActorID(activity.Activity.Object.GetID().String(), string(activity.Source))
 	if err != nil {
 		panic(err)
 	}
 
 	// validate receiverActorId against context repo
+	// TODO: makes no sense as we load the repo from the given id already.
 	repositoryID := ctx.Repo.Repository.ID
 	if repositoryID != int64(receivedRepoId.GetUserId()) {
 		panic(
@@ -265,9 +272,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("starReceiver: %v", starReceiver)
 
 	// Check if user already exists
-	// TODO: If we where able to search for federated id there would be no need to get the remote person.
-	//			 N.B. We need the username as a display name from the remote host. This requires us to make another request
-	//			 			We might extend the Star Activity by the username, then this request would become redundant
+	// TODO: If the usesrs-id points to our current host, we've to use an alterantive search ...
 	users, err := searchUsersByPerson(remoteStargazer)
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))

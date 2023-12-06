@@ -126,6 +126,7 @@ func removeEmptyStrings(ls []string) []string {
 	return rs
 }
 
+// TODO: This parsing is very Person-Specific. We should adjust the name & move to a better location (maybe forgefed package?)
 func ParseActorID(unvalidatedIRI, source string) (ActorID, error) {
 	if unvalidatedIRI == "" {
 		return ActorID{}, fmt.Errorf("the given IRI was empty")
