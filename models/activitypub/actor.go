@@ -37,7 +37,7 @@ func (a ActorID) validate_is_not_empty(str string, field string) error {
 }
 
 /*
-Validate collects error strings, concatenates and returns them
+Validate collects error strings in a slice and returns this
 */
 func (a ActorID) Validate() []string {
 
@@ -64,6 +64,9 @@ func (a ActorID) Validate() []string {
 
 }
 
+/*
+IsValid concatenates the error messages with newlines and returns them if there are any
+*/
 func (a ActorID) IsValid() (bool, error) {
 	if err := a.Validate(); len(err) > 0 {
 		errString := strings.Join(err, "\n")
@@ -88,7 +91,7 @@ func (a ActorID) GetUserId() int {
 	return result
 }
 
-func (a ActorID) GetNormailzedUri() string {
+func (a ActorID) GetNormailzedUri() string { // ToDo: Port might be empty
 	result := fmt.Sprintf("%s://%s:%s/%s/%s", a.schema, a.host, a.port, a.path, a.userId)
 	return result
 }
