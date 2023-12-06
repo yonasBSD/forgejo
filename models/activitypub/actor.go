@@ -53,8 +53,9 @@ func (a ActorID) Validate() []string {
 
 	switch a.source {
 	case "forgejo", "gitea":
-		if !strings.Contains(a.path, "api/v1/activitypub/user-id") {
-			err = append(err, fmt.Errorf("the Path to the API was invalid: %v", a.path).Error())
+		if !strings.Contains(a.path, "api/v1/activitypub/user-id") &&
+			!strings.Contains(a.path, "api/v1/activitypub/repository-id") {
+			err = append(err, fmt.Errorf("the Path to the API was invalid: ---%v---", a.path).Error())
 		}
 	default:
 		err = append(err, fmt.Errorf("currently only forgeo and gitea sources are allowed from actor id").Error())
