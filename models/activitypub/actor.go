@@ -38,14 +38,14 @@ Validate collects error strings in a slice and returns this
 */
 func (a ActorID) Validate() []string {
 
-	err := make([]string, 0, 3) // ToDo: Solve this dynamically
+	var err = []string{}
 
-	if res := a.validate_is_not_empty(a.schema, "schema"); res != nil {
-		err = append(err, res.Error())
+	if res := validate_is_not_empty(a.schema); res != nil {
+		err = append(err, strings.Join([]string{res.Error(), "for schema field"}, " "))
 	}
 
-	if res := a.validate_is_not_empty(a.host, "host"); res != nil {
-		err = append(err, res.Error())
+	if res := validate_is_not_empty(a.host); res != nil {
+		err = append(err, strings.Join([]string{res.Error(), "for host field"}, " "))
 	}
 
 	switch a.source {
