@@ -139,22 +139,19 @@ func unmarshallPersonJSON(body []byte) (ap.Person, error) {
 
 }
 
-func createFederatedUserFromPerson(ctx *context.APIContext, person ap.Person, remoteStargazer string) error {
+func createFederatedUserFromPerson(person ap.Person, remoteStargazer string) (*user_model.User, error) {
 	email, err := generateUUIDMail(person)
 	if err != nil {
-		return err
+		return &user_model.User{}, err
 	}
-
 	username, err := generateRemoteUserName(person)
 	if err != nil {
-		return err
+		return &user_model.User{}, err
 	}
-
 	password, err := generateRandomPassword()
 	if err != nil {
-		return err
+		return &user_model.User{}, err
 	}
-
 	user := &user_model.User{
 		LowerName:                    strings.ToLower(username),
 		Name:                         username,
@@ -166,12 +163,14 @@ func createFederatedUserFromPerson(ctx *context.APIContext, person ap.Person, re
 		Type:                         user_model.UserTypeRemoteUser,
 		IsAdmin:                      false,
 	}
+	return user, nil
+}
 
+func saveFederatedUserRecord(ctx *context.APIContext, user *user_model.User) error {
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{
 		IsActive:     util.OptionalBoolFalse,
 		IsRestricted: util.OptionalBoolFalse,
 	}
-
 	if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
 		return err
 	}
