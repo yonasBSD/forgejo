@@ -38,7 +38,7 @@ TAGS="sqlite" make build generate-swagger
 
 ```bash
 # create a user
-./gitea admin user create --name me --password me --email "buero@meissa.de" --config 
+./gitea admin user create --username me --password me --email "buero@meissa.de"
 
 # create a token
 ./gitea admin user generate-access-token -u me -t token --scopes write:activitypub,write:repository,write:user
