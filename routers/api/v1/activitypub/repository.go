@@ -246,35 +246,13 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// senderActorId holds the data to construct the sender of the star
 	log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
 	senderActorId, err := activitypub.ParseActorID(activity.Actor.GetID().String(), string(activity.Source))
-	// TODO: Why have we to check error here & in case of PanicIfInvalid? Seems to be doubled ...
-	if err != nil {
-		panic(err)
-	}
-
-	// TODO: We dont need the repo-id here any more as we resolve repo outside (see line 224)
-	receivedRepoId, err := activitypub.ParseActorID(activity.Activity.Object.GetID().String(), string(activity.Source))
-	if err != nil {
-		panic(err)
-	}
-
-	// validate receiverActorId against context repo
-	// TODO: makes no sense as we load the repo from the given id already.
-	repositoryID := ctx.Repo.Repository.ID
-	if repositoryID != int64(receivedRepoId.GetUserId()) {
-		panic(
-			fmt.Errorf("received repo id and repo id were not identical:\nreceived id: %v\nrepo id:%v", receivedRepoId, repositoryID))
-	}
 
 	// Is the ActorID Struct valid?
 	senderActorId.PanicIfInvalid()
-	receivedRepoId.PanicIfInvalid()
 	log.Info("RepositoryInbox: Actor parsed. %v", senderActorId)
-	log.Info("RepositoryInbox: Actor parsed. %v", receivedRepoId)
 
 	remoteStargazer := senderActorId.GetNormalizedUri() // used as LoginName in newly created user
-	starReceiver := receivedRepoId.GetNormalizedUri()
 	log.Info("remotStargazer: %v", remoteStargazer)
-	log.Info("starReceiver: %v", starReceiver)
 
 	// Check if user already exists
 	// TODO: If the usesrs-id points to our current host, we've to use an alterantive search ...
@@ -286,7 +264,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	if len(users) == 0 {
 		//	ToDo:	We need a remote server with federation enabled to properly test this
 
-		body, err := getBody(remoteStargazer, starReceiver, ctx)
+		body, err := getBody(remoteStargazer, ctx.Repo.Owner.HTMLURL(), ctx)
 		if err != nil {
 			panic(fmt.Errorf("http get failed: %v", err))
 		}
