@@ -229,6 +229,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	//   "204":
 	//     "$ref": "#/responses/empty"
 
+	var user *user_model.User
+
 	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
 	activity := web.GetForm(ctx).(*forgefed.Star)
 	log.Info("RepositoryInbox: Activity.Source %v", activity.Source)
@@ -264,24 +266,36 @@ func RepositoryInbox(ctx *context.APIContext) {
 		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
 
-	if len(users) == 0 {
-		//	ToDo:	We need a remote server with federation enabled to properly test this
-
-		body, err := getBody(remoteStargazer, ctx.Repo.Owner.HTMLURL(), ctx)
-		if err != nil {
-			panic(fmt.Errorf("http get failed: %v", err))
+	switch len(users) {
+	case 0:
+		{
+			body, err := getBody(remoteStargazer, ctx.Repo.Owner.HTMLURL(), ctx)
+			if err != nil {
+				panic(fmt.Errorf("http get failed: %v", err))
+			}
+			person, err := unmarshallPersonJSON(body)
+			if err != nil {
+				panic(fmt.Errorf("getting user failed: %v", err))
+			}
+			user, err = createFederatedUserFromPerson(person, remoteStargazer)
+			if err != nil {
+				panic(fmt.Errorf("create federated user: %w", err))
+			}
+			err = saveFederatedUserRecord(ctx, user)
+			if err != nil {
+				panic(fmt.Errorf("save user: %w", err))
+			}
 		}
-
-		person, err := unmarshallPersonJSON(body)
-		if err != nil {
-			panic(fmt.Errorf("getting user failed: %v", err))
+	case 1:
+		{
+			user = users[0]
+			log.Info("%v", user)
 		}
-
-		// create user
-		err = createFederatedUserFromPerson(ctx, person, remoteStargazer)
-		if err != nil {
-			panic(fmt.Errorf("createUser: %w", err))
+	default:
+		{
+			panic(fmt.Errorf("found more than one matches for federated users"))
 		}
+	}
 
 	} else {
 		// use first user
