@@ -262,6 +262,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// Check if user already exists
 	// TODO: If the usesrs-id points to our current host, we've to use an alterantive search ...
+	// > We might need to discuss this further with the community, because when we execute this bit of code here, the federated api has been called.
+	// > Thus the searching for non-federated users could facilitate spoofing of already existing user-ids for some (malicious) purposes.
 	users, err := searchUsersByPerson(remoteStargazer)
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))
