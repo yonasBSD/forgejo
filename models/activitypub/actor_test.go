@@ -19,6 +19,15 @@ var emptyMockStar *forgefed.Star = &forgefed.Star{
 	},
 }
 
+var invalidMockStar *forgefed.Star = &forgefed.Star{
+	Source: "",
+	Activity: ap.Activity{
+		Actor:  ap.IRI(""),
+		Type:   "Star",
+		Object: ap.IRI("https://example.com/"),
+	},
+}
+
 var mockStar *forgefed.Star = &forgefed.Star{
 	Source: "forgejo",
 	Activity: ap.Activity{
@@ -28,19 +37,28 @@ var mockStar *forgefed.Star = &forgefed.Star{
 	},
 }
 
-func TestActorParserEmpty(t *testing.T) {
-	item := ""
-	want := ActorID{}
+func TestValidateAndParseIRIEmpty(t *testing.T) {
+	item := emptyMockStar.Object.GetLink().String()
 
-	got, _ := ParseActorID(item, "forgejo")
+	_, err := ValidateAndParseIRI(item)
 
-	if got != want {
-		t.Errorf("ParseActorID returned non empty actor id for empty input.")
+	if err == nil {
+		t.Errorf("ValidateAndParseIRI returned no error for empty input.")
+	}
+}
+
+func TestValidateAndParseIRINoPath(t *testing.T) {
+	item := emptyMockStar.Object.GetLink().String()
+
+	_, err := ValidateAndParseIRI(item)
+
+	if err == nil {
+		t.Errorf("ValidateAndParseIRI returned no error for empty path.")
 	}
 }
 
 func TestActorParserValid(t *testing.T) {
-	item := mockStar.Actor.GetID().String()
+	item, _ := ValidateAndParseIRI(mockStar.Actor.GetID().String())
 	want := ActorID{
 		userId: "1",
 		source: "forgejo",
@@ -50,7 +68,7 @@ func TestActorParserValid(t *testing.T) {
 		port:   "",
 	}
 
-	got, _ := ParseActorID(item, "forgejo")
+	got := ParseActorID(item, "forgejo")
 
 	if got != want {
 		t.Errorf("\nParseActorID did not return want: %v\n but %v", want, got)
@@ -73,9 +91,9 @@ func TestValidateValid(t *testing.T) {
 }
 
 func TestValidateInvalid(t *testing.T) {
-	item := emptyMockStar.Actor.GetID().String()
+	item, _ := ValidateAndParseIRI("https://example.org/some-path/to/nowhere/")
 
-	actor, _ := ParseActorID(item, "forgejo")
+	actor := ParseActorID(item, "forgejo")
 
 	if valid, _ := actor.IsValid(); valid {
 		t.Errorf("Actor was valid with invalid input.")
