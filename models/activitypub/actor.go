@@ -134,6 +134,10 @@ func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) {
 		return url.URL{}, err
 	}
 
+	if len(validatedURL.Path) <= 1 {
+		return url.URL{}, fmt.Errorf("path was empty")
+	}
+
 	return *validatedURL, nil
 }
 
