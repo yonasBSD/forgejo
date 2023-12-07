@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models/activitypub"
 	"code.gitea.io/gitea/models/db"
@@ -324,7 +325,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	}
 
-	// wait 15 sec.
+	// wait 5 sec.
+	time.Sleep(5 * time.Second)
 
 	ctx.Status(http.StatusNoContent)
 }
