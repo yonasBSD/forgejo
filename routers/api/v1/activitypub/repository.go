@@ -12,6 +12,8 @@ import (
 
 	"code.gitea.io/gitea/models/activitypub"
 	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
@@ -21,10 +23,8 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"github.com/google/uuid"
 
-	user_model "code.gitea.io/gitea/models/user"
 	ap "github.com/go-ap/activitypub"
 	pwd_gen "github.com/sethvargo/go-password/password"
-	//f3 "lab.forgefriends.org/friendlyforgeformat/gof3"
 )
 
 var actionsUser = user_model.NewActionsUser()
