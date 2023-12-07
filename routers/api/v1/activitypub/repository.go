@@ -92,40 +92,45 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 }
 
-func getPersonByRest(remoteStargazer, starReceiver string, ctx *context.APIContext) (ap.Person, error) {
+func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]byte, error) {
 
 	// TODO: The star receiver signs the http get request will maybe not work.
 	// The remote repo has probably diferent keys as the local one.
+	// > The local user signs the request with their private key, the public key is publicly available to anyone. I do not see an issue here.
 	// Why should we use a signed request here at all?
+	// > To provide an extra layer of security against in flight tampering: https://github.com/go-fed/httpsig/blob/55836744818e/httpsig.go#L116
+
 	client, err := api.NewClient(ctx, actionsUser, starReceiver)
 	if err != nil {
-		return ap.Person{}, err
+		return []byte{0}, err
 	}
-
 	// get_person_by_rest
-	// TODO: I would expect this to be encapsulated in Get function. As Get never has a body.
-	bytes := []byte{0} // no body needed for getting user actor
-	response, err := client.Get(bytes, remoteStargazer)
+	response, err := client.Get([]byte{0}, remoteStargazer)
 	if err != nil {
-		return ap.Person{}, err
+		return []byte{0}, err
 	}
-
 	defer response.Body.Close()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return ap.Person{}, err
-	}
-
-	// parse response
-	person := ap.Person{}
-	err = person.UnmarshalJSON(body)
-	if err != nil {
-		return ap.Person{}, err
+		return []byte{0}, err
 	}
 
 	log.Info("remoteStargazer: %v", remoteStargazer)
 	log.Info("http client. %v", client)
 	log.Info("response: %v\n error: ", response, err)
+
+	return body, nil
+}
+
+func unmarshallPersonJSON(body []byte) (ap.Person, error) {
+
+	// parse response
+	person := ap.Person{}
+	err := person.UnmarshalJSON(body)
+	if err != nil {
+		return ap.Person{}, err
+	}
+
 	log.Info("Person is: %v", person)
 	log.Info("Person Name is: %v", person.PreferredUsername)
 	log.Info("Person URL is: %v", person.URL)
@@ -281,7 +286,12 @@ func RepositoryInbox(ctx *context.APIContext) {
 	if len(users) == 0 {
 		//	ToDo:	We need a remote server with federation enabled to properly test this
 
-		person, err := getPersonByRest(remoteStargazer, starReceiver, ctx)
+		body, err := getBody(remoteStargazer, starReceiver, ctx)
+		if err != nil {
+			panic(fmt.Errorf("http get failed: %v", err))
+		}
+
+		person, err := unmarshallPersonJSON(body)
 		if err != nil {
 			panic(fmt.Errorf("getting user failed: %v", err))
 		}
