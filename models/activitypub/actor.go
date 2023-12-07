@@ -26,13 +26,10 @@ type ActorID struct {
 	port   string // optional
 }
 
-// ToDo: validate_is_not_empty maybe not as an extra method
-func (a ActorID) validate_is_not_empty(str string, field string) error {
-
+func validate_is_not_empty(str string) error {
 	if str == "" {
-		return fmt.Errorf("field %v was empty", field)
+		return fmt.Errorf("the given string was empty")
 	}
-
 	return nil
 }
 
