@@ -297,14 +297,32 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	}
 
-	} else {
-		// use first user
-		user := users[0]
-		log.Info("%v", user)
+	remoteUser, err := user_model.GetUserByEmail(ctx, user.Email)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+		return
 	}
 
-	// TODO: handle case of count > 1
-	// execute star action
+	// check if already starred by this user
+	alreadyStared := repo_model.IsStaring(ctx, remoteUser.ID, ctx.Repo.Repository.ID)
+	switch alreadyStared {
+	case true: // execute unstar action
+		{
+			err = repo_model.StarRepo(ctx, remoteUser.ID, ctx.Repo.Repository.ID, false)
+			if err != nil {
+				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+				return
+			}
+		}
+	case false: // execute star action
+		{
+			err = repo_model.StarRepo(ctx, remoteUser.ID, ctx.Repo.Repository.ID, true)
+			if err != nil {
+				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+				return
+			}
+		}
+	}
 
 	// wait 15 sec.
 
