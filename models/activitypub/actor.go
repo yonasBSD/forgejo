@@ -123,20 +123,24 @@ func removeEmptyStrings(ls []string) []string {
 	return rs
 }
 
-// TODO: This parsing is very Person-Specific. We should adjust the name & move to a better location (maybe forgefed package?)
-func ParseActorID(unvalidatedIRI, source string) (ActorID, error) {
-	if unvalidatedIRI == "" {
-		return ActorID{}, fmt.Errorf("the given IRI was empty")
-	}
-
-	u, err := url.Parse(unvalidatedIRI)
-
-	// check if userID IRI is well formed url
+func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) {
+	err := validate_is_not_empty(unvalidatedIRI) // url.Parse seems to accept empty strings?
 	if err != nil {
-		return ActorID{}, fmt.Errorf("the actor ID was not a valid IRI: %v", err)
+		return url.URL{}, err
 	}
 
-	pathWithUserID := strings.Split(u.Path, "/")
+	validatedURL, err := url.Parse(unvalidatedIRI)
+	if err != nil {
+		return url.URL{}, err
+	}
+
+	return *validatedURL, nil
+}
+
+// TODO: This parsing is very Person-Specific. We should adjust the name & move to a better location (maybe forgefed package?)
+func ParseActorID(validatedURL url.URL, source string) ActorID {
+
+	pathWithUserID := strings.Split(validatedURL.Path, "/")
 
 	if containsEmptyString(pathWithUserID) {
 		pathWithUserID = removeEmptyStrings(pathWithUserID)
@@ -153,9 +157,9 @@ func ParseActorID(unvalidatedIRI, source string) (ActorID, error) {
 	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
 		userId: userId,
 		source: source,
-		schema: u.Scheme,
-		host:   u.Hostname(), // u.Host returns hostname:port
+		schema: validatedURL.Scheme,
+		host:   validatedURL.Hostname(), // u.Host returns hostname:port
 		path:   pathWithoutUserID,
-		port:   u.Port(),
-	}, nil
+		port:   validatedURL.Port(),
+	}
 }
