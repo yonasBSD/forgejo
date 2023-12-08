@@ -4,6 +4,46 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.2-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.2-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.1-0..v1.21.2-0
+```
+
+This stable release includes bug fixes. It was built with Go v1.21.5 that fixes [CVE-2023-39326](https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo) which a malicious HTTP client can exploit to cause a server to automatically read a large amount of data.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.1+0-gitea-1.21.2`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [OAuth2 uses the link_account page when the email or username is missing](https://codeberg.org/forgejo/forgejo/commit/e6fb2107f2843a09c3a72c3629bcee50c4797a6c)
+  * [Avoid conflicts of issue and PR numbers in GitLab migration](https://codeberg.org/forgejo/forgejo/commit/272d0a4c20987e33fa132fc94d996e0c6fdb86d7)
+  * [Only pass selected repository IDs to pagination](https://codeberg.org/forgejo/forgejo/commit/2552bb7b6ec51a094c9d800589991b1556fba798)
+  * [Add download URL for executable files](https://codeberg.org/forgejo/forgejo/commit/958a20865b897daaa4c26a3ba4b195ba2e854223)
+  * [Fix Forgejo repositories migration to also include issues, prs etc.](https://codeberg.org/forgejo/forgejo/commit/61fc5c514a6b3f99560b0df5e4cdb7df94763984)
+  * [Fix template substitution bug preventing notifications to be sent on new user registration](https://codeberg.org/forgejo/forgejo/commit/bc0078a50a6ab341ca4af15ce5d3fd221e6e9e0d)
+  * [When searching for issues, require that all terms are matched instead of one of them](https://codeberg.org/forgejo/forgejo/commit/13c0df40de319db2c4c2ec11a9a9dc5cf9eaf681)
+  * [Ignore temporary files when calculating the size of a repository](https://codeberg.org/forgejo/forgejo/commit/b17113bb06b57211b9c264b6953a783e7d0bb9a2)
+  * [Convert git commit summary to valid UTF8](https://codeberg.org/forgejo/forgejo/commit/346635605da024c3a0a6e7f4d63de1632459f4d6)
+  * [Fix incorrect default value of `[attachment].MAX_SIZE`](https://codeberg.org/forgejo/forgejo/commit/52f8fde69f121af6f72685fd08dc45b4b3e89004)
+  * [Fix object does not exist error when checking citation file](https://codeberg.org/forgejo/forgejo/commit/1ce155c5a695f07a9252b4ffc8c9ae7d48ebf7ec)
+
+* Improvements
+
+  * [new doctor check: fix-push-mirrors-without-git-remote](https://codeberg.org/forgejo/forgejo/commit/1fea3ce6592afca7f8d16c147effd343244746fa)
+  * [Add `HEAD` support for RPM registry](https://codeberg.org/forgejo/forgejo/commit/ce3a24ef5f80413514e8de28ff47e77acccf0d2b)
+
 ## 1.21.1-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.1-0` release can be reviewed from the command line with:
