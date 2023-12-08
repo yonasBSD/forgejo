@@ -18,7 +18,7 @@ type Validatable interface { // ToDo: What is the right package for this interfa
 	PanicIfInvalid()
 }
 
-type ActorID struct {
+type ActorId struct {
 	userId string
 	source string
 	schema string
@@ -37,7 +37,7 @@ func validate_is_not_empty(str string) error {
 /*
 Validate collects error strings in a slice and returns this
 */
-func (a ActorID) Validate() []string {
+func (a ActorId) Validate() []string {
 
 	var err = []string{}
 
@@ -66,7 +66,7 @@ func (a ActorID) Validate() []string {
 /*
 IsValid concatenates the error messages with newlines and returns them if there are any
 */
-func (a ActorID) IsValid() (bool, error) {
+func (a ActorId) IsValid() (bool, error) {
 	if err := a.Validate(); len(err) > 0 {
 		errString := strings.Join(err, "\n")
 		return false, fmt.Errorf(errString)
@@ -74,13 +74,13 @@ func (a ActorID) IsValid() (bool, error) {
 	return true, nil
 }
 
-func (a ActorID) PanicIfInvalid() {
+func (a ActorId) PanicIfInvalid() {
 	if valid, err := a.IsValid(); !valid {
 		panic(err)
 	}
 }
 
-func (a ActorID) GetUserId() int {
+func (a ActorId) GetUserId() int {
 	result, err := strconv.Atoi(a.userId)
 
 	if err != nil {
@@ -90,13 +90,13 @@ func (a ActorID) GetUserId() int {
 	return result
 }
 
-func (a ActorID) GetNormalizedUri() string {
+func (a ActorId) GetNormalizedUri() string {
 	result := fmt.Sprintf("%s://%s:%s/%s/%s", a.schema, a.host, a.port, a.path, a.userId)
 	return result
 }
 
 // Returns the combination of host:port if port exists, host otherwise
-func (a ActorID) GetHostAndPort() string {
+func (a ActorId) GetHostAndPort() string {
 
 	if a.port != "" {
 		return strings.Join([]string{a.host, a.port}, ":")
@@ -143,7 +143,7 @@ func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) { // ToDo: Vali
 }
 
 // TODO: This parsing is very Person-Specific. We should adjust the name & move to a better location (maybe forgefed package?)
-func ParseActorID(validatedURL url.URL, source string) ActorID { // ToDo: Turn this into a factory function and do not split parsing and validation rigurously
+func ParseActorID(validatedURL url.URL, source string) ActorId { // ToDo: Turn this into a factory function and do not split parsing and validation rigurously
 
 	pathWithUserID := strings.Split(validatedURL.Path, "/")
 
@@ -159,7 +159,7 @@ func ParseActorID(validatedURL url.URL, source string) ActorID { // ToDo: Turn t
 	log.Info("Actor: pathWithoutUserID: %s", pathWithoutUserID)
 	log.Info("Actor: UserID: %s", userId)
 
-	return ActorID{ // ToDo: maybe keep original input to validate against (maybe extra method)
+	return ActorId{ // ToDo: maybe keep original input to validate against (maybe extra method)
 		userId: userId,
 		source: source,
 		schema: validatedURL.Scheme,
@@ -169,9 +169,9 @@ func ParseActorID(validatedURL url.URL, source string) ActorID { // ToDo: Turn t
 	}
 }
 
-func NewActorId(uri string, source string) (ActorID, error) {
+func NewActorId(uri string, source string) (ActorId, error) {
 	if !validation.IsValidExternalURL(uri) {
-		return ActorID{}, fmt.Errorf("uri %s is not a valid external url.", uri)
+		return ActorId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	}
-	return ActorID{}, nil
+	return ActorId{}, nil
 }

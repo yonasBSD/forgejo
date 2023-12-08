@@ -59,7 +59,7 @@ func TestValidateAndParseIRINoPath(t *testing.T) {
 
 func TestActorParserValid(t *testing.T) {
 	item, _ := ValidateAndParseIRI(mockStar.Actor.GetID().String())
-	want := ActorID{
+	want := ActorId{
 		userId: "1",
 		source: "forgejo",
 		schema: "https",
@@ -76,7 +76,7 @@ func TestActorParserValid(t *testing.T) {
 }
 
 func TestValidateValid(t *testing.T) {
-	item := ActorID{
+	item := ActorId{
 		userId: "1",
 		source: "forgejo",
 		schema: "https",
@@ -101,7 +101,7 @@ func TestValidateInvalid(t *testing.T) {
 }
 
 func TestGetHostAndPort(t *testing.T) {
-	item := ActorID{
+	item := ActorId{
 		schema: "https",
 		userId: "1",
 		path:   "/api/v1/activitypub/user-id/1",
@@ -127,6 +127,10 @@ func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
 	_, err = NewActorId("http://localhost:3000/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("localhost uris are not external")
+	}
+	_, err = NewActorId("./api/v1/something", "forgejo")
+	if err == nil {
+		t.Errorf("relative uris are not alowed.")
 	}
 
 	_, err = NewActorId("https://an.other.host/api/v1/activitypub/person-id/1", "forgejo")
