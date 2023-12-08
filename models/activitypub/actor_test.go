@@ -117,3 +117,20 @@ func TestGetHostAndPort(t *testing.T) {
 	}
 
 }
+
+func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
+	_, err := NewActorId("", "forgejo")
+	if err == nil {
+		t.Errorf("empty input should be invalid.")
+	}
+
+	_, err = NewActorId("http://localhost:3000/api/v1/something", "forgejo")
+	if err == nil {
+		t.Errorf("localhost uris are not external")
+	}
+
+	_, err = NewActorId("https://an.other.host/api/v1/activitypub/person-id/1", "forgejo")
+	if err != nil {
+		t.Errorf("this uri should be valid")
+	}
+}

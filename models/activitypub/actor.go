@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/validation"
 )
 
 type Validatable interface { // ToDo: What is the right package for this interface?
@@ -40,8 +41,8 @@ func (a ActorID) Validate() []string {
 
 	var err = []string{}
 
-	if res := validate_is_not_empty(a.schema); res != nil {
-		err = append(err, strings.Join([]string{res.Error(), "for schema field"}, " "))
+	if res := validation.ValidateNotEmpty(a.schema, "schema"); res != nil {
+		err = append(err, res.Error())
 	}
 
 	if res := validate_is_not_empty(a.host); res != nil {
@@ -166,4 +167,11 @@ func ParseActorID(validatedURL url.URL, source string) ActorID { // ToDo: Turn t
 		path:   pathWithoutUserID,
 		port:   validatedURL.Port(),
 	}
+}
+
+func NewActorId(uri string, source string) (ActorID, error) {
+	if !validation.IsValidExternalURL(uri) {
+		return ActorID{}, fmt.Errorf("uri %s is not a valid external url.", uri)
+	}
+	return ActorID{}, nil
 }
