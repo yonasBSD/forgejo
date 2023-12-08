@@ -272,7 +272,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			body, err := getBody(remoteStargazer, ctx.Repo.Owner.HTMLURL(), ctx)
+			body, err := getBody(remoteStargazer, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
 			if err != nil {
 				panic(fmt.Errorf("http get failed: %v", err))
 			}
@@ -292,6 +292,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	case 1:
 		{
 			user = users[0]
+			log.Info("Found user full name was: %v", user.FullName)
+			log.Info("Found user name was: %v", user.Name)
+			log.Info("Found user name was: %v", user.LoginName)
 			log.Info("%v", user)
 		}
 	default:
