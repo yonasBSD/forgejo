@@ -13,7 +13,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.21.1-0..v1.21.2-0
 ```
 
-This stable release includes bug fixes. It was built with Go v1.21.5 that fixes [CVE-2023-39326](https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo) which a malicious HTTP client can exploit to cause a server to automatically read a large amount of data.
+This stable release includes bug fixes. It was built with Go v1.21.5 that fixes [CVE-2023-39326](https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo) which a malicious HTTP client can exploit to cause a server to automatically read a large amount of data. It allows for memory exhaustion in the situation that HTTP chuncked encoding requests can reach Forgejo.
 
 * Recommended Action
 
