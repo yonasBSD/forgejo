@@ -93,7 +93,7 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 }
 
-func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]byte, error) {
+func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]byte, error) { // ToDo: We could split this: move body reading to unmarshall
 
 	// TODO: The star receiver signs the http get request will maybe not work.
 	// The remote repo has probably diferent keys as the local one.
@@ -101,7 +101,7 @@ func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]b
 	// Why should we use a signed request here at all?
 	// > To provide an extra layer of security against in flight tampering: https://github.com/go-fed/httpsig/blob/55836744818e/httpsig.go#L116
 
-	client, err := api.NewClient(ctx, actionsUser, starReceiver)
+	client, err := api.NewClient(ctx, actionsUser, starReceiver) // ToDo: Do we get a publicKeyId of owner or repo?
 	if err != nil {
 		return []byte{0}, err
 	}

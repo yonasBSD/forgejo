@@ -125,7 +125,7 @@ func (c *Client) Post(b []byte, to string) (resp *http.Response, err error) {
 }
 
 // Create an http GET request with forgejo/gitea specific headers
-func (c *Client) Get(b []byte, to string) (resp *http.Response, err error) {
+func (c *Client) Get(b []byte, to string) (resp *http.Response, err error) { // ToDo: we might not need the b parameter
 	var req *http.Request
 	if req, err = c.NewRequest(http.MethodGet, b, to); err != nil {
 		return nil, err

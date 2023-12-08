@@ -123,7 +123,7 @@ func removeEmptyStrings(ls []string) []string {
 	return rs
 }
 
-func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) {
+func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) { // ToDo: Validate that it is not the same host as ours.
 	err := validate_is_not_empty(unvalidatedIRI) // url.Parse seems to accept empty strings?
 	if err != nil {
 		return url.URL{}, err
@@ -142,7 +142,7 @@ func ValidateAndParseIRI(unvalidatedIRI string) (url.URL, error) {
 }
 
 // TODO: This parsing is very Person-Specific. We should adjust the name & move to a better location (maybe forgefed package?)
-func ParseActorID(validatedURL url.URL, source string) ActorID {
+func ParseActorID(validatedURL url.URL, source string) ActorID { // ToDo: Turn this into a factory function and do not split parsing and validation rigurously
 
 	pathWithUserID := strings.Split(validatedURL.Path, "/")
 
