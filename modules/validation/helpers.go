@@ -4,6 +4,7 @@
 package validation
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"regexp"
@@ -133,4 +134,11 @@ func IsValidUsername(name string) bool {
 	}
 
 	return validUsernamePatternWithoutDots.MatchString(name) && !invalidUsernamePattern.MatchString(name)
+}
+
+func ValidateNotEmpty(value string, fieldName string) error {
+	if value == "" {
+		return fmt.Errorf("Field %v may not be empty.", fieldName)
+	}
+	return nil
 }
