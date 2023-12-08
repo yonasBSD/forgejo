@@ -136,9 +136,18 @@ func IsValidUsername(name string) bool {
 	return validUsernamePatternWithoutDots.MatchString(name) && !invalidUsernamePattern.MatchString(name)
 }
 
-func ValidateNotEmpty(value string, fieldName string) error {
+func ValidateNotEmpty(value string, fieldName string) []string {
 	if value == "" {
-		return fmt.Errorf("Field %v may not be empty.", fieldName)
+		return []string{fmt.Sprintf("Field %v may not be empty.", fieldName)}
 	}
-	return nil
+	return []string{}
+}
+
+func ValidateOneOf(value string, allowed []string) []string {
+	for _, allowedElem := range allowed {
+		if value == allowedElem {
+			return []string{}
+		}
+	}
+	return []string{fmt.Sprintf("Value %v is not contained in allowed values [%v]", value, allowed)}
 }

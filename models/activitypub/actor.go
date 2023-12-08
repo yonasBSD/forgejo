@@ -19,12 +19,13 @@ type Validatable interface { // ToDo: What is the right package for this interfa
 }
 
 type ActorId struct {
-	userId string
-	source string
-	schema string
-	path   string
-	host   string
-	port   string // optional
+	userId           string
+	source           string
+	schema           string
+	path             string
+	host             string
+	port             string
+	unvalidatedInput string
 }
 
 func validate_is_not_empty(str string) error {
@@ -37,30 +38,24 @@ func validate_is_not_empty(str string) error {
 /*
 Validate collects error strings in a slice and returns this
 */
-func (a ActorId) Validate() []string {
+func (value ActorId) Validate() []string {
+	var result = []string{}
+	result = append(result, validation.ValidateNotEmpty(value.userId, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(value.source, "source")...)
+	result = append(result, validation.ValidateNotEmpty(value.schema, "schema")...)
+	result = append(result, validation.ValidateNotEmpty(value.path, "path")...)
+	result = append(result, validation.ValidateNotEmpty(value.host, "host")...)
+	result = append(result, validation.ValidateNotEmpty(value.unvalidatedInput, "unvalidatedInput")...)
 
-	var err = []string{}
-
-	if res := validation.ValidateNotEmpty(a.schema, "schema"); res != nil {
-		err = append(err, res.Error())
-	}
-
-	if res := validate_is_not_empty(a.host); res != nil {
-		err = append(err, strings.Join([]string{res.Error(), "for host field"}, " "))
-	}
-
-	switch a.source {
+	result = append(result, validation.ValidateOneOf(value.source, []string{"forgejo", "gitea"})...)
+	switch value.source {
 	case "forgejo", "gitea":
-		if !strings.Contains(a.path, "api/v1/activitypub/user-id") &&
-			!strings.Contains(a.path, "api/v1/activitypub/repository-id") {
-			err = append(err, fmt.Errorf("the Path to the API was invalid: ---%v---", a.path).Error())
+		if !strings.Contains(value.path, "api/v1/activitypub/user-id") {
+			result = append(result, fmt.Sprintf("path has to be a api path"))
 		}
-	default:
-		err = append(err, fmt.Errorf("currently only forgeo and gitea sources are allowed from actor id").Error())
 	}
 
-	return err
-
+	return result
 }
 
 /*
@@ -173,5 +168,30 @@ func NewActorId(uri string, source string) (ActorId, error) {
 	if !validation.IsValidExternalURL(uri) {
 		return ActorId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	}
-	return ActorId{}, nil
+
+	validatedUri, _ := url.Parse(uri)
+	pathWithUserID := strings.Split(validatedUri.Path, "/")
+
+	if containsEmptyString(pathWithUserID) {
+		pathWithUserID = removeEmptyStrings(pathWithUserID)
+	}
+
+	length := len(pathWithUserID)
+	pathWithoutUserID := strings.Join(pathWithUserID[0:length-1], "/")
+	userId := pathWithUserID[length-1]
+
+	actorId := ActorId{
+		userId:           userId,
+		source:           source,
+		schema:           validatedUri.Scheme,
+		host:             validatedUri.Hostname(),
+		path:             pathWithoutUserID,
+		port:             validatedUri.Port(),
+		unvalidatedInput: uri,
+	}
+	if valid, err := actorId.IsValid(); !valid {
+		return ActorId{}, err
+	}
+
+	return actorId, nil
 }

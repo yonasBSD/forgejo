@@ -130,11 +130,23 @@ func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
 	}
 	_, err = NewActorId("./api/v1/something", "forgejo")
 	if err == nil {
-		t.Errorf("relative uris are not alowed.")
+		t.Errorf("relative uris are not alowed")
+	}
+	_, err = NewActorId("http://1.2.3.4/api/v1/something", "forgejo")
+	if err == nil {
+		t.Errorf("uri may not be ip-4 based")
+	}
+	_, err = NewActorId("http:///[fe80::1ff:fe23:4567:890a%25eth0]/api/v1/something", "forgejo")
+	if err == nil {
+		t.Errorf("uri may not be ip-6 based")
+	}
+	_, err = NewActorId("https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345", "forgejo")
+	if err == nil {
+		t.Errorf("uri may not contain relative path elements")
 	}
 
-	_, err = NewActorId("https://an.other.host/api/v1/activitypub/person-id/1", "forgejo")
+	_, err = NewActorId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if err != nil {
-		t.Errorf("this uri should be valid")
+		t.Errorf("this uri should be valid but was: %v", err)
 	}
 }
