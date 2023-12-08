@@ -232,10 +232,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	var user *user_model.User
 
-	log.Info("RepositoryInbox: repo %v, %v", ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+	repository := ctx.Repo.Repository
+	log.Info("RepositoryInbox: repo: %v, owned by:  %v", repository.Name, repository.OwnerName)
+
 	activity := web.GetForm(ctx).(*forgefed.Star)
-	log.Info("RepositoryInbox: Activity.Source %v", activity.Source)
-	log.Info("RepositoryInbox: Activity.Actor %v", activity.Actor)
+	log.Info("RepositoryInbox: Activity.Source: %v, Activity.Actor %v, Activity.Actor.Id %v", activity.Source, activity.Actor, activity.Actor.GetID().String())
 
 	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
 	//    "https://Codeberg.org/api/v1/activitypub/user-id/12345"
@@ -246,18 +247,18 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// parse senderActorId
 	// senderActorId holds the data to construct the sender of the star
-	log.Info("activity.Actor.GetID().String(): %v", activity.Actor.GetID().String())
-	validatedURL, err := activitypub.ValidateAndParseIRI(activity.Actor.GetID().String())
+	validatedActorId, err := activitypub.ValidateAndParseIRI(activity.Actor.GetID().String())
 	if err != nil {
-		panic(err)
+		ctx.ServerError("Set Name", err)
+		return
 	}
-	senderActorId := activitypub.ParseActorID(validatedURL, string(activity.Source))
+	actorId := activitypub.ParseActorID(validatedActorId, string(activity.Source))
 
 	// Is the ActorID Struct valid?
-	senderActorId.PanicIfInvalid()
-	log.Info("RepositoryInbox: Actor parsed. %v", senderActorId)
+	actorId.PanicIfInvalid()
+	log.Info("RepositoryInbox: Actor parsed. %v", actorId)
 
-	remoteStargazer := senderActorId.GetNormalizedUri() // used as LoginName in newly created user
+	remoteStargazer := actorId.GetNormalizedUri() // used as LoginName in newly created user
 	log.Info("remotStargazer: %v", remoteStargazer)
 
 	// Check if user already exists
@@ -310,11 +311,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	// check if already starred by this user
-	alreadyStared := repo_model.IsStaring(ctx, remoteUser.ID, ctx.Repo.Repository.ID)
+	alreadyStared := repo_model.IsStaring(ctx, remoteUser.ID, repository.ID)
 	switch alreadyStared {
 	case true: // execute unstar action
 		{
-			err = repo_model.StarRepo(ctx, remoteUser.ID, ctx.Repo.Repository.ID, false)
+			err = repo_model.StarRepo(ctx, remoteUser.ID, repository.ID, false)
 			if err != nil {
 				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 				return
@@ -322,7 +323,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	case false: // execute star action
 		{
-			err = repo_model.StarRepo(ctx, remoteUser.ID, ctx.Repo.Repository.ID, true)
+			err = repo_model.StarRepo(ctx, remoteUser.ID, repository.ID, true)
 			if err != nil {
 				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 				return
