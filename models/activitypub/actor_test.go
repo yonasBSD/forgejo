@@ -37,6 +37,59 @@ func TestNewPersonId(t *testing.T) {
 	}
 }
 
+func TestPersonIdValidation(t *testing.T) {
+	sut := PersonId{
+		source:           "forgejo",
+		schema:           "https",
+		path:             "api/v1/activitypub/user-id",
+		host:             "an.other.host",
+		port:             "",
+		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/",
+	}
+	if sut.Validate()[0] != "Field userId may not be empty" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut = PersonId{
+		userId:           "1",
+		source:           "forgejox",
+		schema:           "https",
+		path:             "api/v1/activitypub/user-id",
+		host:             "an.other.host",
+		port:             "",
+		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1",
+	}
+	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [[forgejo gitea]]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut = PersonId{
+		userId:           "1",
+		source:           "forgejo",
+		schema:           "https",
+		path:             "api/v1/activitypub/user-idx",
+		host:             "an.other.host",
+		port:             "",
+		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1",
+	}
+	if sut.Validate()[0] != "path has to be a api path" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut = PersonId{
+		userId:           "1",
+		source:           "forgejo",
+		schema:           "https",
+		path:             "api/v1/activitypub/user-id",
+		host:             "an.other.host",
+		port:             "",
+		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1?illegal=action",
+	}
+	if sut.Validate()[0] != "not all input: \"https://an.other.host/api/v1/activitypub/user-id/1?illegal=action\" was parsed: \"https://an.other.host/api/v1/activitypub/user-id/1\"" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+}
+
 func TestWebfingerId(t *testing.T) {
 	sut, _ := NewPersonId("https://codeberg.org/api/v1/activitypub/user-id/12345", "forgejo")
 	if sut.AsWebfinger() != "@12345@codeberg.org" {

@@ -138,7 +138,7 @@ func IsValidUsername(name string) bool {
 
 func ValidateNotEmpty(value string, fieldName string) []string {
 	if value == "" {
-		return []string{fmt.Sprintf("Field %v may not be empty.", fieldName)}
+		return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
 	}
 	return []string{}
 }

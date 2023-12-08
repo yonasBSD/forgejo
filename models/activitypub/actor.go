@@ -83,7 +83,7 @@ func (value PersonId) Validate() []string {
 	result = append(result, validation.ValidateOneOf(value.source, []string{"forgejo", "gitea"})...)
 	switch value.source {
 	case "forgejo", "gitea":
-		if !strings.Contains(value.path, "api/v1/activitypub/user-id") {
+		if strings.ToLower(value.path) != "api/v1/activitypub/user-id" {
 			result = append(result, fmt.Sprintf("path has to be a api path"))
 		}
 	}
