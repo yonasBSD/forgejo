@@ -247,12 +247,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	// parse senderActorId
 	// senderActorId holds the data to construct the sender of the star
-	validatedActorId, err := activitypub.ValidateAndParseIRI(activity.Actor.GetID().String())
+	actorId, err := activitypub.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
-		ctx.ServerError("Set Name", err)
+		ctx.ServerError("Validate actorId", err)
 		return
 	}
-	actorId := activitypub.ParseActorID(validatedActorId, string(activity.Source))
 
 	// Is the PersonId Struct valid?
 	actorId.PanicIfInvalid()
