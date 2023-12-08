@@ -254,7 +254,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 	actorId := activitypub.ParseActorID(validatedActorId, string(activity.Source))
 
-	// Is the ActorId Struct valid?
+	// Is the PersonId Struct valid?
 	actorId.PanicIfInvalid()
 	log.Info("RepositoryInbox: Actor parsed. %v", actorId)
 

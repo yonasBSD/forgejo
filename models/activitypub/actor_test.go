@@ -59,7 +59,7 @@ func TestValidateAndParseIRINoPath(t *testing.T) {
 
 func TestActorParserValid(t *testing.T) {
 	item, _ := ValidateAndParseIRI(mockStar.Actor.GetID().String())
-	want := ActorId{
+	want := PersonId{
 		userId: "1",
 		source: "forgejo",
 		schema: "https",
@@ -76,7 +76,7 @@ func TestActorParserValid(t *testing.T) {
 }
 
 func TestValidateValid(t *testing.T) {
-	item := ActorId{
+	item := PersonId{
 		userId: "1",
 		source: "forgejo",
 		schema: "https",
@@ -101,7 +101,7 @@ func TestValidateInvalid(t *testing.T) {
 }
 
 func TestGetHostAndPort(t *testing.T) {
-	item := ActorId{
+	item := PersonId{
 		schema: "https",
 		userId: "1",
 		path:   "/api/v1/activitypub/user-id/1",
@@ -119,33 +119,33 @@ func TestGetHostAndPort(t *testing.T) {
 }
 
 func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
-	_, err := NewActorId("", "forgejo")
+	_, err := NewPersonId("", "forgejo")
 	if err == nil {
 		t.Errorf("empty input should be invalid.")
 	}
 
-	_, err = NewActorId("http://localhost:3000/api/v1/something", "forgejo")
+	_, err = NewPersonId("http://localhost:3000/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("localhost uris are not external")
 	}
-	_, err = NewActorId("./api/v1/something", "forgejo")
+	_, err = NewPersonId("./api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("relative uris are not alowed")
 	}
-	_, err = NewActorId("http://1.2.3.4/api/v1/something", "forgejo")
+	_, err = NewPersonId("http://1.2.3.4/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not be ip-4 based")
 	}
-	_, err = NewActorId("http:///[fe80::1ff:fe23:4567:890a%25eth0]/api/v1/something", "forgejo")
+	_, err = NewPersonId("http:///[fe80::1ff:fe23:4567:890a%25eth0]/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not be ip-6 based")
 	}
-	_, err = NewActorId("https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345", "forgejo")
+	_, err = NewPersonId("https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not contain relative path elements")
 	}
 
-	_, err = NewActorId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
+	_, err = NewPersonId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if err != nil {
 		t.Errorf("this uri should be valid but was: %v", err)
 	}
