@@ -238,26 +238,15 @@ func RepositoryInbox(ctx *context.APIContext) {
 	activity := web.GetForm(ctx).(*forgefed.Star)
 	log.Info("RepositoryInbox: Activity.Source: %v, Activity.Actor %v, Activity.Actor.Id %v", activity.Source, activity.Actor, activity.Actor.GetID().String())
 
-	// assume actor is: "actor": "https://codeberg.org/api/v1/activitypub/user-id/12345" - NB: This might be actually the ID? Maybe check vocabulary.
-	//    "https://Codeberg.org/api/v1/activitypub/user-id/12345"
-	//    "https://codeberg.org:443/api/v1/activitypub/user-id/12345"
-	//    "https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345"
-	//    "https://user:password@codeberg.org/api/v1/activitypub/user-id/12345"
-	//    "https://codeberg.org/api/v1/activitypub//user-id/12345"
-
-	// parse senderActorId
-	// senderActorId holds the data to construct the sender of the star
+	// parse actorId
 	actorId, err := activitypub.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
-
-	// Is the PersonId Struct valid?
-	actorId.PanicIfInvalid()
 	log.Info("RepositoryInbox: Actor parsed. %v", actorId)
 
-	remoteStargazer := actorId.GetNormalizedUri() // used as LoginName in newly created user
+	remoteStargazer := actorId.AsWebfinger() // used as LoginName in newly created user
 	log.Info("remotStargazer: %v", remoteStargazer)
 
 	// Check if user already exists
