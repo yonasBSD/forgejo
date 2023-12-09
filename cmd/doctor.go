@@ -28,39 +28,50 @@ var CmdDoctor = cli.Command{
 	Usage:       "Diagnose and optionally fix problems",
 	Description: "A command to diagnose problems with the current Gitea instance according to the given configuration. Some problems can optionally be fixed by modifying the database or data storage.",
 	Action:      runDoctor,
-	Flags: []cli.Flag{
-		cli.BoolFlag{
-			Name:  "list",
-			Usage: "List the available checks",
-		},
-		cli.BoolFlag{
-			Name:  "default",
-			Usage: "Run the default checks (if neither --run or --all is set, this is the default behaviour)",
-		},
-		cli.StringSliceFlag{
-			Name:  "run",
-			Usage: "Run the provided checks - (if --default is set, the default checks will also run)",
-		},
-		cli.BoolFlag{
-			Name:  "all",
-			Usage: "Run all the available checks",
-		},
-		cli.BoolFlag{
-			Name:  "fix",
-			Usage: "Automatically fix what we can",
-		},
-		cli.StringFlag{
-			Name:  "log-file",
-			Usage: `Name of the log file (default: "doctor.log"). Set to "-" to output to stdout, set to "" to disable`,
-		},
-		cli.BoolFlag{
-			Name:  "color, H",
-			Usage: "Use color for outputted information",
-		},
-	},
+	Flags:       cmdCheckFlags,
 	Subcommands: []cli.Command{
 		cmdRecreateTable,
+		cmdCheck,
 	},
+}
+
+var cmdCheckFlags = []cli.Flag{
+	cli.BoolFlag{
+		Name:  "list",
+		Usage: "List the available checks",
+	},
+	cli.BoolFlag{
+		Name:  "default",
+		Usage: "Run the default checks (if neither --run or --all is set, this is the default behaviour)",
+	},
+	cli.StringSliceFlag{
+		Name:  "run",
+		Usage: "Run the provided checks - (if --default is set, the default checks will also run)",
+	},
+	cli.BoolFlag{
+		Name:  "all",
+		Usage: "Run all the available checks",
+	},
+	cli.BoolFlag{
+		Name:  "fix",
+		Usage: "Automatically fix what we can",
+	},
+	cli.StringFlag{
+		Name:  "log-file",
+		Usage: `Name of the log file (default: "doctor.log"). Set to "-" to output to stdout, set to "" to disable`,
+	},
+	cli.BoolFlag{
+		Name:  "color, H",
+		Usage: "Use color for outputted information",
+	},
+}
+
+var cmdCheck = cli.Command{
+	Name:        "check",
+	Usage:       "Diagnose and optionally fix problems",
+	Description: "A command to diagnose problems with the current Forgejo instance according to the given configuration. Some problems can optionally be fixed by modifying the database or data storage.",
+	Action:      runDoctor,
+	Flags:       cmdCheckFlags,
 }
 
 var cmdRecreateTable = cli.Command{
