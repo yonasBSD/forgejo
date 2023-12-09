@@ -70,10 +70,12 @@ flowchart TD
 ### Actors
 
 1. **Script Kiddies**: Boored teens, willing to do some illigal without deep knowlege of tech details but broad knowlege across internet discussions. Able to do some bash / python scripting.
+2. **Experienced Hacker**: Hacker with deep knowlege.
 
 ### Threat
 
-1. Script Kiddi sends a Star Activity containing an attack target url `http://attacked.target/very/special/path` in place of actor. Our repository server sends an `get Person Actor` request to this url. The attacked target gets DenialdOffServices. We loose CPU & reputation.
+1. Script Kiddi sends a Star Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends an `get Person Actor` request to this url. The attacked target gets DenialdOffServices. We loose CPU & reputation.
+2. Experienced hacker sends a Star Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and get a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this persion, the db might be droped.
 
 ### DREAD-Score
 
