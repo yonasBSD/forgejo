@@ -237,22 +237,29 @@ func RepositoryInbox(ctx *context.APIContext) {
 	activity := web.GetForm(ctx).(*forgefed.Star)
 	log.Info("RepositoryInbox: Activity.Source: %v, Activity.Actor %v, Activity.Actor.Id %v", activity.Source, activity.Actor, activity.Actor.GetID().String())
 
-	// parse actorId
+	// parse actorId (person)
 	actorId, err := forgefed.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
-	log.Info("RepositoryInbox: Actor parsed. %v", actorId)
+	log.Info("RepositoryInbox: actorId parsed: %v", actorId)
+	// parse objectId (repository)
+	objectId, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
+	if err != nil {
+		ctx.ServerError("Validate actorId", err)
+		return
+	}
+	log.Info("RepositoryInbox: objectId parsed: %v", objectId)
 
-	remoteStargazer := actorId.AsWebfinger() // used as LoginName in newly created user
-	log.Info("remotStargazer: %v", remoteStargazer)
+	stargazerLoginName := actorId.AsWebfinger() // used as LoginName in newly created user
+	log.Info("remotStargazer: %v", stargazerLoginName)
 
 	// Check if user already exists
 	// TODO: If the usesrs-id points to our current host, we've to use an alterantive search ...
 	// > We might need to discuss this further with the community, because when we execute this bit of code here, the federated api has been called.
 	// > Thus the searching for non-federated users could facilitate spoofing of already existing user-ids for some (malicious) purposes.
-	users, err := searchUsersByPerson(remoteStargazer)
+	users, err := searchUsersByPerson(stargazerLoginName)
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
@@ -260,7 +267,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			body, err := getBody(remoteStargazer, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
+			body, err := getBody(stargazerLoginName, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
 			if err != nil {
 				panic(fmt.Errorf("http get failed: %v", err))
 			}
@@ -268,7 +275,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			if err != nil {
 				panic(fmt.Errorf("getting user failed: %v", err))
 			}
-			user, err = createFederatedUserFromPerson(person, remoteStargazer)
+			user, err = createFederatedUserFromPerson(person, stargazerLoginName)
 			if err != nil {
 				panic(fmt.Errorf("create federated user: %w", err))
 			}
@@ -282,7 +289,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			user = users[0]
 			log.Info("Found user full name was: %v", user.FullName)
 			log.Info("Found user name was: %v", user.Name)
-			log.Info("Found user name was: %v", user.LoginName)
+			log.Info("Found user loginname was: %v", user.LoginName)
 			log.Info("%v", user)
 		}
 	default:
@@ -291,6 +298,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	}
 
+	// TODO: why should we search user for a second time from db?
 	remoteUser, err := user_model.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
