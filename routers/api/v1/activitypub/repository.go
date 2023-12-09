@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"code.gitea.io/gitea/models/activitypub"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -239,7 +238,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: Activity.Source: %v, Activity.Actor %v, Activity.Actor.Id %v", activity.Source, activity.Actor, activity.Actor.GetID().String())
 
 	// parse actorId
-	actorId, err := activitypub.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
+	actorId, err := forgefed.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return

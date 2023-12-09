@@ -1,7 +1,7 @@
 // Copyright 2023 The forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package activitypub
+package forgefed
 
 import (
 	"fmt"
@@ -94,6 +94,7 @@ func (value PersonId) Validate() []string {
 	return result
 }
 
+// TODO: Move valid-parts to valid package
 /*
 IsValid concatenates the error messages with newlines and returns them if there are any
 */
