@@ -4,7 +4,7 @@
 package swagger
 
 import (
-	ffed "code.gitea.io/gitea/modules/forgefed"
+	ffed "code.gitea.io/gitea/models/forgefed"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/forms"
 )
