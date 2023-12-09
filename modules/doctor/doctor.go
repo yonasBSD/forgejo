@@ -104,7 +104,11 @@ func RunChecks(ctx context.Context, colorize, autofix bool, checks []*Check) err
 			logger.Info("OK")
 		}
 	}
-	logger.Info("\nAll done.")
+	if len(checks) > 0 {
+		logger.Info("\nAll done.")
+	} else {
+		logger.Info("\nNo checks to run.")
+	}
 	return nil
 }
 
