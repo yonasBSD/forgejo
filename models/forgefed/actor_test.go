@@ -5,86 +5,98 @@ package forgefed
 
 import (
 	"testing"
+
+	"code.gitea.io/gitea/modules/setting"
 )
 
 func TestNewPersonId(t *testing.T) {
-	expected := PersonId{
-		userId:           "1",
-		source:           "forgejo",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-id",
-		host:             "an.other.host",
-		port:             "",
-		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1",
-	}
+	expected := PersonId{}
+	expected.Id = "1"
+	expected.Source = "forgejo"
+	expected.Schema = "https"
+	expected.Path = "api/v1/activitypub/user-id"
+	expected.Host = "an.other.host"
+	expected.Port = ""
+	expected.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
 	sut, _ := NewPersonId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if sut != expected {
 		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}
 
-	expected = PersonId{
-		userId:           "1",
-		source:           "forgejo",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-id",
-		host:             "an.other.host",
-		port:             "443",
-		unvalidatedInput: "https://an.other.host:443/api/v1/activitypub/user-id/1",
-	}
+	expected = PersonId{}
+	expected.Id = "1"
+	expected.Source = "forgejo"
+	expected.Schema = "https"
+	expected.Path = "api/v1/activitypub/user-id"
+	expected.Host = "an.other.host"
+	expected.Port = "443"
+	expected.UnvalidatedInput = "https://an.other.host:443/api/v1/activitypub/user-id/1"
 	sut, _ = NewPersonId("https://an.other.host:443/api/v1/activitypub/user-id/1", "forgejo")
 	if sut != expected {
 		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}
 }
 
-func TestPersonIdValidation(t *testing.T) {
-	sut := PersonId{
-		source:           "forgejo",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-id",
-		host:             "an.other.host",
-		port:             "",
-		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/",
+func TestNewRepositoryId(t *testing.T) {
+	setting.AppURL = "http://localhost:3000/"
+	expected := RepositoryId{}
+	expected.Id = "1"
+	expected.Source = "forgejo"
+	expected.Schema = "http"
+	expected.Path = "api/activitypub/repository-id"
+	expected.Host = "localhost"
+	expected.Port = "3000"
+	expected.UnvalidatedInput = "http://localhost:3000/api/activitypub/repository-id/1"
+	sut, _ := NewRepositoryId("http://localhost:3000/api/activitypub/repository-id/1", "forgejo")
+	if sut != expected {
+		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}
+}
+
+func TestPersonIdValidation(t *testing.T) {
+	sut := PersonId{}
+	sut.Source = "forgejo"
+	sut.Schema = "https"
+	sut.Path = "api/v1/activitypub/user-id"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/"
 	if sut.Validate()[0] != "Field userId may not be empty" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = PersonId{
-		userId:           "1",
-		source:           "forgejox",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-id",
-		host:             "an.other.host",
-		port:             "",
-		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1",
-	}
+	sut = PersonId{}
+	sut.Id = "1"
+	sut.Source = "forgejox"
+	sut.Schema = "https"
+	sut.Path = "api/v1/activitypub/user-id"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
 	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [[forgejo gitea]]" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = PersonId{
-		userId:           "1",
-		source:           "forgejo",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-idx",
-		host:             "an.other.host",
-		port:             "",
-		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1",
-	}
-	if sut.Validate()[0] != "path has to be a api path" {
+	sut = PersonId{}
+	sut.Id = "1"
+	sut.Source = "forgejo"
+	sut.Schema = "https"
+	sut.Path = "path"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/path/1"
+	if sut.Validate()[0] != "path: \"path\" has to be a api path" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = PersonId{
-		userId:           "1",
-		source:           "forgejo",
-		schema:           "https",
-		path:             "api/v1/activitypub/user-id",
-		host:             "an.other.host",
-		port:             "",
-		unvalidatedInput: "https://an.other.host/api/v1/activitypub/user-id/1?illegal=action",
-	}
+	sut = PersonId{}
+	sut.Id = "1"
+	sut.Source = "forgejo"
+	sut.Schema = "https"
+	sut.Path = "api/v1/activitypub/user-id"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1?illegal=action"
 	if sut.Validate()[0] != "not all input: \"https://an.other.host/api/v1/activitypub/user-id/1?illegal=action\" was parsed: \"https://an.other.host/api/v1/activitypub/user-id/1\"" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}

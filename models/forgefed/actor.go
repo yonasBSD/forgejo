@@ -8,17 +8,26 @@ import (
 	"net/url"
 	"strings"
 
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 )
 
+type ActorId struct {
+	Id               string
+	Source           string
+	Schema           string
+	Path             string
+	Host             string
+	Port             string
+	UnvalidatedInput string
+}
+
 type PersonId struct {
-	userId           string
-	source           string
-	schema           string
-	path             string
-	host             string
-	port             string
-	unvalidatedInput string
+	ActorId
+}
+
+type RepositoryId struct {
+	ActorId
 }
 
 func NewPersonId(uri string, source string) (PersonId, error) {
@@ -27,44 +36,71 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 	}
 
 	validatedUri, _ := url.Parse(uri)
-	pathWithUserID := strings.Split(validatedUri.Path, "/")
-
-	if containsEmptyString(pathWithUserID) {
-		pathWithUserID = removeEmptyStrings(pathWithUserID)
+	pathWithActorID := strings.Split(validatedUri.Path, "/")
+	if containsEmptyString(pathWithActorID) {
+		pathWithActorID = removeEmptyStrings(pathWithActorID)
 	}
+	length := len(pathWithActorID)
+	pathWithoutActorID := strings.Join(pathWithActorID[0:length-1], "/")
+	id := pathWithActorID[length-1]
 
-	length := len(pathWithUserID)
-	pathWithoutUserID := strings.Join(pathWithUserID[0:length-1], "/")
-	userId := pathWithUserID[length-1]
-
-	actorId := PersonId{
-		userId:           userId,
-		source:           source,
-		schema:           validatedUri.Scheme,
-		host:             validatedUri.Hostname(),
-		path:             pathWithoutUserID,
-		port:             validatedUri.Port(),
-		unvalidatedInput: uri,
-	}
-	if valid, err := actorId.IsValid(); !valid {
+	result := PersonId{}
+	result.Id = id
+	result.Source = source
+	result.Schema = validatedUri.Scheme
+	result.Host = validatedUri.Hostname()
+	result.Path = pathWithoutActorID
+	result.Port = validatedUri.Port()
+	result.UnvalidatedInput = uri
+	if valid, err := result.IsValid(); !valid {
 		return PersonId{}, err
 	}
 
-	return actorId, nil
+	return result, nil
 }
 
-func (id PersonId) AsUri() string {
+// TODO: tbd how an which parts can be generalized
+func NewRepositoryId(uri string, source string) (RepositoryId, error) {
+	if !validation.IsAPIURL(uri) {
+		return RepositoryId{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
+	}
+
+	validatedUri, _ := url.Parse(uri)
+	pathWithActorID := strings.Split(validatedUri.Path, "/")
+	if containsEmptyString(pathWithActorID) {
+		pathWithActorID = removeEmptyStrings(pathWithActorID)
+	}
+	length := len(pathWithActorID)
+	pathWithoutActorID := strings.Join(pathWithActorID[0:length-1], "/")
+	id := pathWithActorID[length-1]
+
+	result := RepositoryId{}
+	result.Id = id
+	result.Source = source
+	result.Schema = validatedUri.Scheme
+	result.Host = validatedUri.Hostname()
+	result.Path = pathWithoutActorID
+	result.Port = validatedUri.Port()
+	result.UnvalidatedInput = uri
+	if valid, err := result.IsValid(); !valid {
+		return RepositoryId{}, err
+	}
+
+	return result, nil
+}
+
+func (id ActorId) AsUri() string {
 	result := ""
-	if id.port == "" {
-		result = fmt.Sprintf("%s://%s/%s/%s", id.schema, id.host, id.path, id.userId)
+	if id.Port == "" {
+		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.Id)
 	} else {
-		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.schema, id.host, id.port, id.path, id.userId)
+		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.Id)
 	}
 	return result
 }
 
-func (id PersonId) AsWebfinger() string {
-	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.userId), strings.ToLower(id.host))
+func (id ActorId) AsWebfinger() string {
+	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.Id), strings.ToLower(id.Host))
 	return result
 }
 
@@ -73,22 +109,45 @@ Validate collects error strings in a slice and returns this
 */
 func (value PersonId) Validate() []string {
 	var result = []string{}
-	result = append(result, validation.ValidateNotEmpty(value.userId, "userId")...)
-	result = append(result, validation.ValidateNotEmpty(value.source, "source")...)
-	result = append(result, validation.ValidateNotEmpty(value.schema, "schema")...)
-	result = append(result, validation.ValidateNotEmpty(value.path, "path")...)
-	result = append(result, validation.ValidateNotEmpty(value.host, "host")...)
-	result = append(result, validation.ValidateNotEmpty(value.unvalidatedInput, "unvalidatedInput")...)
+	result = append(result, validation.ValidateNotEmpty(value.Id, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(value.Source, "source")...)
+	result = append(result, validation.ValidateNotEmpty(value.Schema, "schema")...)
+	result = append(result, validation.ValidateNotEmpty(value.Path, "path")...)
+	result = append(result, validation.ValidateNotEmpty(value.Host, "host")...)
+	result = append(result, validation.ValidateNotEmpty(value.UnvalidatedInput, "unvalidatedInput")...)
 
-	result = append(result, validation.ValidateOneOf(value.source, []string{"forgejo", "gitea"})...)
-	switch value.source {
+	result = append(result, validation.ValidateOneOf(value.Source, []string{"forgejo", "gitea"})...)
+	switch value.Source {
 	case "forgejo", "gitea":
-		if strings.ToLower(value.path) != "api/v1/activitypub/user-id" {
-			result = append(result, fmt.Sprintf("path has to be a api path"))
+		if strings.ToLower(value.Path) != "api/v1/activitypub/user-id" && strings.ToLower(value.Path) != "api/activitypub/user-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be a api path", value.Path))
 		}
 	}
-	if value.unvalidatedInput != value.AsUri() {
-		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", value.unvalidatedInput, value.AsUri()))
+	if value.UnvalidatedInput != value.AsUri() {
+		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", value.UnvalidatedInput, value.AsUri()))
+	}
+
+	return result
+}
+
+func (value RepositoryId) Validate() []string {
+	var result = []string{}
+	result = append(result, validation.ValidateNotEmpty(value.Id, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(value.Source, "source")...)
+	result = append(result, validation.ValidateNotEmpty(value.Schema, "schema")...)
+	result = append(result, validation.ValidateNotEmpty(value.Path, "path")...)
+	result = append(result, validation.ValidateNotEmpty(value.Host, "host")...)
+	result = append(result, validation.ValidateNotEmpty(value.UnvalidatedInput, "unvalidatedInput")...)
+
+	result = append(result, validation.ValidateOneOf(value.Source, []string{"forgejo", "gitea"})...)
+	switch value.Source {
+	case "forgejo", "gitea":
+		if strings.ToLower(value.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(value.Path) != "api/activitypub/repository-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be a api path", value.Path))
+		}
+	}
+	if value.UnvalidatedInput != value.AsUri() {
+		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", value.UnvalidatedInput, value.AsUri()))
 	}
 
 	return result
@@ -106,10 +165,12 @@ func (a PersonId) IsValid() (bool, error) {
 	return true, nil
 }
 
-func (a PersonId) PanicIfInvalid() {
-	if valid, err := a.IsValid(); !valid {
-		panic(err)
+func (a RepositoryId) IsValid() (bool, error) {
+	if err := a.Validate(); len(err) > 0 {
+		errString := strings.Join(err, "\n")
+		return false, fmt.Errorf(errString)
 	}
+	return true, nil
 }
 
 func containsEmptyString(ar []string) bool {
