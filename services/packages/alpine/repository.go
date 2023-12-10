@@ -155,7 +155,10 @@ func buildPackagesIndex(ctx context.Context, ownerID int64, repoVersion *package
 	// Delete the package indices if there are no packages
 	if len(pfs) == 0 {
 		pf, err := packages_model.GetFileForVersionByName(ctx, repoVersion.ID, IndexFilename, fmt.Sprintf("%s|%s|%s", branch, repository, architecture))
-		if err != nil && !errors.Is(err, util.ErrNotExist) {
+		if err != nil {
+			if errors.Is(err, util.ErrNotExist) {
+				return nil
+			}
 			return err
 		}
 

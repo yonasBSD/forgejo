@@ -179,7 +179,10 @@ func buildPackagesIndices(ctx context.Context, ownerID int64, repoVersion *packa
 		key := fmt.Sprintf("%s|%s|%s", distribution, component, architecture)
 		for _, filename := range []string{"Packages", "Packages.gz", "Packages.xz"} {
 			pf, err := packages_model.GetFileForVersionByName(ctx, repoVersion.ID, filename, key)
-			if err != nil && !errors.Is(err, util.ErrNotExist) {
+			if err != nil {
+				if errors.Is(err, util.ErrNotExist) {
+					continue
+				}
 				return err
 			}
 
@@ -284,7 +287,10 @@ func buildReleaseFiles(ctx context.Context, ownerID int64, repoVersion *packages
 	if len(pfs) == 0 {
 		for _, filename := range []string{"Release", "Release.gpg", "InRelease"} {
 			pf, err := packages_model.GetFileForVersionByName(ctx, repoVersion.ID, filename, distribution)
-			if err != nil && !errors.Is(err, util.ErrNotExist) {
+			if err != nil {
+				if errors.Is(err, util.ErrNotExist) {
+					continue
+				}
 				return err
 			}
 
