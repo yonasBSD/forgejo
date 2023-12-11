@@ -71,11 +71,16 @@ flowchart TD
 
 1. **Script Kiddies**: Boored teens, willing to do some illigal without deep knowlege of tech details but broad knowlege across internet discussions. Able to do some bash / python scripting.
 2. **Experienced Hacker**: Hacker with deep knowlege.
+3. **OpenSource Promoter**: 
 
 ### Threat
 
 1. Script Kiddi sends a Star Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends an `get Person Actor` request to this url. The attacked target gets DenialdOffServices. We loose CPU & reputation.
 2. Experienced hacker sends a Star Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and get a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this persion, the db might be droped.
+3. OpenSource Promoter sends Star Activities having not authorized Person Actors. The Actors listed as stargazer migth get angry about this, we loose reputation.
+4. Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If activity is Unstar Activity we might loose stars.
+4. Experienced Hacker records activities sends a massive amount of activities which leads to new user storage. Our instance might get off service.
+
 
 ### DREAD-Score
 
