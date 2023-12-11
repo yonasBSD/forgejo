@@ -17,15 +17,17 @@ package "code.gitea.io/gitea/models"
 	func GetYamlFixturesAccess
 
 package "code.gitea.io/gitea/models/actions"
+	func ListUploadedArtifactsByRunID
+	func CountRunJobs
 	func (ScheduleList).GetUserIDs
 	func (ScheduleList).GetRepoIDs
 	func (ScheduleList).LoadTriggerUser
 	func (ScheduleList).LoadRepos
+	func FindSchedules
+	func CountSpecs
 	func GetVariableByID
 
 package "code.gitea.io/gitea/models/asymkey"
-	func (ErrGPGKeyAccessDenied).Error
-	func (ErrGPGKeyAccessDenied).Unwrap
 	func HasDeployKey
 
 package "code.gitea.io/gitea/models/auth"
@@ -37,7 +39,8 @@ package "code.gitea.io/gitea/models/db"
 	func TruncateBeans
 	func InTransaction
 	func DumpTables
-	func IsErrConditionRequired
+	func Count
+	func FindAndCount
 
 package "code.gitea.io/gitea/models/dbfs"
 	func (*file).renameTo
@@ -48,6 +51,10 @@ package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
 	func SetVersionString
 	func SetVersion
+
+package "code.gitea.io/gitea/models/forgejo_migrations"
+	func GetCurrentDBVersion
+	func EnsureUpToDate
 
 package "code.gitea.io/gitea/models/git"
 	func RemoveDeletedBranchByID
@@ -60,6 +67,8 @@ package "code.gitea.io/gitea/models/issues"
 	func GetRepoIDsForIssuesOptions
 	func GetLabelIDsInOrgByNames
 	func ChangeMilestoneStatus
+	func GetMilestonesByRepoIDs
+	func CountMilestonesByRepoCond
 	func GetMilestonesStatsByRepoCond
 	func IsErrErrPullRequestHeadRepoMissing
 	func (ErrPullRequestHeadRepoMissing).Error
@@ -97,8 +106,6 @@ package "code.gitea.io/gitea/models/repo"
 	func (*releaseSorter).Less
 	func (*releaseSorter).Swap
 	func SortReleases
-	func FindReposMapByIDs
-	func RepositoryListOfMap
 	func (SearchOrderBy).String
 	func IsErrTopicNotExist
 	func (ErrTopicNotExist).Error
@@ -212,6 +219,7 @@ package "code.gitea.io/gitea/modules/gitgraph"
 
 package "code.gitea.io/gitea/modules/graceful"
 	func (*Manager).TerminateContext
+	func (*Manager).IsTerminate
 	func (*Manager).Err
 	func (*Manager).Value
 	func (*Manager).Deadline
