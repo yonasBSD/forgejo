@@ -4,6 +4,38 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.2-1
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.2-1` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.2-0..v1.21.2-1
+```
+
+This stable release contains a **security fix**, as explained in the [v1.21.2-1 companion blog post](https://forgejo.org/2023-12-release-v1-21-2-1/).
+
+* Recommended Action
+
+  We **strongly recommend** that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.2+0-gitea-1.21.2`
+
+* Security fix
+
+  The project page [of private users](https://forgejo.org/2023-12-release-v1-21-2-1/) is no longer publicly visible.
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * The default preferred licenses for the [[repository].PREFERRED_LICENSES](https://forgejo.org/docs/v1.21/admin/config-cheat-sheet/#repository-repository) setting were incorrect and have been [fixed to be `Apache-2.0` and `MIT`](https://codeberg.org/forgejo/forgejo/commit/5258e8f63d649b016d5c5d0e37422723bef26dac).
+  * A failed cron job can [no longer cause the Forgejo instance to shutdown](https://codeberg.org/forgejo/forgejo/commit/026a4bb02d8ac0b0dd90eb8a89c25ae18abca34f).
+  * A pull request merged by a workflow using the [automatic token](https://forgejo.org/docs/v1.21/user/actions/#automatic-token) with the `auto merge` flag [no longer cause an error 500 when displaying the pull request page](https://codeberg.org/forgejo/forgejo/commit/4148fb27dbc337a433b41d6d450d48fad73239cc).
+  * [Tentative fix for when the database branch cache is out of sync with the branches found in Git repositories](https://codeberg.org/forgejo/forgejo/commit/14750f3d11c8d065d3f9af31b8b4ee8d28acd0a5). When in doubt it is recommended to click on `Sync missed branches from git data to databases` in the `/admin` dashboard.
+
 ## 1.21.2-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.2-0` release can be reviewed from the command line with:
