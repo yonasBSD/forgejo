@@ -249,7 +249,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
-	log.Info("RepositoryInbox: actorId parsed: %v", actorId)
+	log.Info("RepositoryInbox: actorId validated: %v", actorId)
 	// parse objectId (repository)
 	objectId, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
 	if err != nil {
@@ -260,7 +260,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
-	log.Info("RepositoryInbox: objectId parsed: %v", objectId)
+	log.Info("RepositoryInbox: objectId validated: %v", objectId)
 
 	adctorAsWebfinger := actorId.AsWebfinger() // used as LoginName in newly created user
 	log.Info("remotStargazer: %v", adctorAsWebfinger)
@@ -268,7 +268,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// Check if user already exists
 	users, err := SearchUsersByLoginName(adctorAsWebfinger)
 	if err != nil {
-		panic(fmt.Errorf("searching for user failed: %v", err))
+		ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
+		return
 	}
 
 	switch len(users) {
