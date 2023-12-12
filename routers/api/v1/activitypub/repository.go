@@ -27,6 +27,7 @@ import (
 	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
+// TODO: remove this global var!
 var actionsUser = user_model.NewActionsUser()
 
 func generateUUIDMail(person ap.Actor) (string, error) {
@@ -68,12 +69,13 @@ func generateRandomPassword() (string, error) {
 	return res, err
 }
 
-func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
+// TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
+func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 
 	actionsUser.IsAdmin = true
 
 	options := &user_model.SearchUserOptions{
-		LoginName:       actorId,
+		LoginName:       loginName,
 		Actor:           actionsUser,
 		Type:            user_model.UserTypeRemoteUser,
 		OrderBy:         db.SearchOrderByAlphabetically,
@@ -92,6 +94,7 @@ func searchUsersByPerson(actorId string) ([]*user_model.User, error) {
 
 }
 
+// TODO: Move most of this fkt to http client
 func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]byte, error) { // ToDo: We could split this: move body reading to unmarshall
 
 	// TODO: The star receiver signs the http get request will maybe not work.
@@ -122,6 +125,7 @@ func getBody(remoteStargazer, starReceiver string, ctx *context.APIContext) ([]b
 	return body, nil
 }
 
+// TODO: move this to Person or actor
 func unmarshallPersonJSON(body []byte) (ap.Person, error) {
 
 	// parse response
@@ -139,6 +143,7 @@ func unmarshallPersonJSON(body []byte) (ap.Person, error) {
 
 }
 
+// TODO: move this to model.user somwhere ?
 func createFederatedUserFromPerson(person ap.Person, remoteStargazer string) (*user_model.User, error) {
 	email, err := generateUUIDMail(person)
 	if err != nil {
@@ -166,6 +171,7 @@ func createFederatedUserFromPerson(person ap.Person, remoteStargazer string) (*u
 	return user, nil
 }
 
+// TODO: move this to model.user somwhere ?
 func saveFederatedUserRecord(ctx *context.APIContext, user *user_model.User) error {
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{
 		IsActive:     util.OptionalBoolFalse,
@@ -247,19 +253,20 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// parse objectId (repository)
 	objectId, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
 	if err != nil {
-		ctx.ServerError("Validate actorId", err)
+		ctx.ServerError("Validate objectId", err)
+		return
+	}
+	if objectId.Id != fmt.Sprint(repository.ID) {
+		ctx.ServerError("Validate objectId", err)
 		return
 	}
 	log.Info("RepositoryInbox: objectId parsed: %v", objectId)
 
-	stargazerLoginName := actorId.AsWebfinger() // used as LoginName in newly created user
-	log.Info("remotStargazer: %v", stargazerLoginName)
+	adctorAsWebfinger := actorId.AsWebfinger() // used as LoginName in newly created user
+	log.Info("remotStargazer: %v", adctorAsWebfinger)
 
 	// Check if user already exists
-	// TODO: If the usesrs-id points to our current host, we've to use an alterantive search ...
-	// > We might need to discuss this further with the community, because when we execute this bit of code here, the federated api has been called.
-	// > Thus the searching for non-federated users could facilitate spoofing of already existing user-ids for some (malicious) purposes.
-	users, err := searchUsersByPerson(stargazerLoginName)
+	users, err := SearchUsersByLoginName(adctorAsWebfinger)
 	if err != nil {
 		panic(fmt.Errorf("searching for user failed: %v", err))
 	}
@@ -267,7 +274,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			body, err := getBody(stargazerLoginName, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
+			body, err := getBody(adctorAsWebfinger, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
 			if err != nil {
 				panic(fmt.Errorf("http get failed: %v", err))
 			}
@@ -275,7 +282,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			if err != nil {
 				panic(fmt.Errorf("getting user failed: %v", err))
 			}
-			user, err = createFederatedUserFromPerson(person, stargazerLoginName)
+			user, err = createFederatedUserFromPerson(person, adctorAsWebfinger)
 			if err != nil {
 				panic(fmt.Errorf("create federated user: %w", err))
 			}
