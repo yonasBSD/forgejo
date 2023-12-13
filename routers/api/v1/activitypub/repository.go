@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -29,45 +28,6 @@ import (
 
 // TODO: remove this global var!
 var actionsUser = user_model.NewActionsUser()
-
-func generateUUIDMail(person ap.Actor) (string, error) {
-	// UUID@remote.host
-	id := uuid.New().String()
-
-	//url, err := url.Parse(person.URL.GetID().String())
-
-	//host := url.Host
-
-	return strings.Join([]string{id, "example.com"}, "@"), nil
-}
-
-func generateRemoteUserName(person ap.Actor) (string, error) {
-	u, err := url.Parse(person.URL.GetID().String())
-	if err != nil {
-		return "", err
-	}
-
-	host := strings.Split(u.Host, ":")[0] // no port in username
-
-	if name := person.PreferredUsername.String(); name != "" {
-		return strings.Join([]string{name, host}, "_"), nil
-	}
-	if name := person.Name.String(); name != "" {
-		return strings.Join([]string{name, host}, "_"), nil
-	}
-
-	return "", fmt.Errorf("empty name, preferredUsername field")
-}
-
-func generateRandomPassword() (string, error) {
-	// Generate a password that is 64 characters long with 10 digits, 10 symbols,
-	// allowing upper and lower case letters, disallowing repeat characters.
-	res, err := pwd_gen.Generate(32, 10, 10, false, false)
-	if err != nil {
-		return "", err
-	}
-	return res, err
-}
 
 // TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
 func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
@@ -92,96 +52,6 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 
 	return users, nil
 
-}
-
-// TODO: Move most of this fkt to http client
-func getBody(remoteStargazer, signerId string, ctx *context.APIContext) ([]byte, error) { // ToDo: We could split this: move body reading to unmarshall
-
-	// TODO: The star receiver signs the http get request will maybe not work.
-	// The remote repo has probably diferent keys as the local one.
-	// > The local user signs the request with their private key, the public key is publicly available to anyone. I do not see an issue here.
-	// Why should we use a signed request here at all?
-	// > To provide an extra layer of security against in flight tampering: https://github.com/go-fed/httpsig/blob/55836744818e/httpsig.go#L116
-
-	client, err := api.NewClient(ctx, actionsUser, signerId) // ToDo: Do we get a publicKeyId of owner or repo?
-	if err != nil {
-		return []byte{0}, err
-	}
-	// get_person_by_rest
-	response, err := client.Get(remoteStargazer)
-	if err != nil {
-		return []byte{0}, err
-	}
-	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return []byte{0}, err
-	}
-
-	log.Info("remoteStargazer: %v", remoteStargazer)
-	log.Info("http client. %v", client)
-	log.Info("response: %v\n error: ", response, err)
-
-	return body, nil
-}
-
-// TODO: move this to Person or actor
-func unmarshallPersonJSON(body []byte) (ap.Person, error) {
-
-	// parse response
-	person := ap.Person{}
-	err := person.UnmarshalJSON(body)
-	if err != nil {
-		return ap.Person{}, err
-	}
-
-	log.Info("Person is: %v", person)
-	log.Info("Person Name is: %v", person.PreferredUsername)
-	log.Info("Person URL is: %v", person.URL)
-
-	return person, nil
-
-}
-
-// TODO: move this to model.user somwhere ?
-func createFederatedUserFromPerson(person ap.Person, remoteStargazer string) (*user_model.User, error) {
-	email, err := generateUUIDMail(person)
-	if err != nil {
-		return &user_model.User{}, err
-	}
-	username, err := generateRemoteUserName(person)
-	if err != nil {
-		return &user_model.User{}, err
-	}
-	password, err := generateRandomPassword()
-	if err != nil {
-		return &user_model.User{}, err
-	}
-	user := &user_model.User{
-		LowerName:                    strings.ToLower(username),
-		Name:                         username,
-		Email:                        email,
-		EmailNotificationsPreference: "disabled",
-		Passwd:                       password,
-		MustChangePassword:           false,
-		LoginName:                    remoteStargazer,
-		Type:                         user_model.UserTypeRemoteUser,
-		IsAdmin:                      false,
-	}
-	return user, nil
-}
-
-// TODO: move this to model.user somwhere ?
-func saveFederatedUserRecord(ctx *context.APIContext, user *user_model.User) error {
-	overwriteDefault := &user_model.CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolFalse,
-		IsRestricted: util.OptionalBoolFalse,
-	}
-	if err := user_model.CreateUser(ctx, user, overwriteDefault); err != nil {
-		return err
-	}
-	log.Info("User created!")
-	return nil
 }
 
 // Repository function returns the Repository actor for a repo
@@ -275,21 +145,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			body, err := getBody(adctorAsWebfinger, "does not exist yet", ctx) // ToDo: We would need to insert the repo or its owners key here
+			user, err := createUserFromAP(ctx, actorId)
 			if err != nil {
-				panic(fmt.Errorf("http get failed: %v", err))
-			}
-			person, err := unmarshallPersonJSON(body)
-			if err != nil {
-				panic(fmt.Errorf("getting user failed: %v", err))
-			}
-			user, err = createFederatedUserFromPerson(person, adctorAsWebfinger)
-			if err != nil {
-				panic(fmt.Errorf("create federated user: %w", err))
-			}
-			err = saveFederatedUserRecord(ctx, user)
-			if err != nil {
-				panic(fmt.Errorf("save user: %w", err))
+				ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
+				return
 			}
 		}
 	case 1:
@@ -338,4 +197,52 @@ func RepositoryInbox(ctx *context.APIContext) {
 	time.Sleep(5 * time.Second)
 
 	ctx.Status(http.StatusNoContent)
+}
+
+func createUserFromAP(ctx *context.APIContext, actorId forgefed.PersonId) (*user_model.User, error) {
+	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
+	client, err := api.NewClient(ctx, actionsUser, "no ide where to get key material.")
+	if err != nil {
+		return &user_model.User{}, err
+	}
+	response, err := client.Get(actorId.AsUri())
+	if err != nil {
+		return &user_model.User{}, err
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return &user_model.User{}, err
+	}
+	person := ap.Person{}
+	err = person.UnmarshalJSON(body)
+	if err != nil {
+		return &user_model.User{}, err
+	}
+	email := fmt.Sprintf("%v@%v", uuid.New().String(), actorId.Host)
+	loginName := actorId.AsWebfinger()
+	password, err := pwd_gen.Generate(32, 10, 10, false, true)
+	if err != nil {
+		return &user_model.User{}, err
+	}
+	user := &user_model.User{
+		LowerName:                    strings.ToLower(person.Name.String()),
+		Name:                         person.Name.String(),
+		Email:                        email,
+		EmailNotificationsPreference: "disabled",
+		Passwd:                       password,
+		MustChangePassword:           false,
+		LoginName:                    loginName,
+		Type:                         user_model.UserTypeRemoteUser,
+		IsAdmin:                      false,
+	}
+	overwrite := &user_model.CreateUserOverwriteOptions{
+		IsActive:     util.OptionalBoolFalse,
+		IsRestricted: util.OptionalBoolFalse,
+	}
+	if err := user_model.CreateUser(ctx, user, overwrite); err != nil {
+		return &user_model.User{}, err
+	}
+
+	return user, nil
 }
