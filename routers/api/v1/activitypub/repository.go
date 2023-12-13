@@ -26,12 +26,9 @@ import (
 	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
-// TODO: remove this global var!
-var actionsUser = user_model.NewActionsUser()
-
 // TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
 func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
-
+	var actionsUser = user_model.NewActionsUser()
 	actionsUser.IsAdmin = true
 
 	options := &user_model.SearchUserOptions{
@@ -150,18 +147,17 @@ func RepositoryInbox(ctx *context.APIContext) {
 				ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
 				return
 			}
+			log.Info("created user from ap: %v", user)
 		}
 	case 1:
 		{
 			user = users[0]
-			log.Info("Found user full name was: %v", user.FullName)
-			log.Info("Found user name was: %v", user.Name)
-			log.Info("Found user loginname was: %v", user.LoginName)
-			log.Info("%v", user)
+			log.Info("found user: %v", user)
 		}
 	default:
 		{
-			panic(fmt.Errorf("found more than one matches for federated users"))
+			ctx.Error(http.StatusInternalServerError, "StarRepo", fmt.Errorf("found more than one matches for federated users"))
+			return
 		}
 	}
 
@@ -201,6 +197,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 func createUserFromAP(ctx *context.APIContext, actorId forgefed.PersonId) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
+	var actionsUser = user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no ide where to get key material.")
 	if err != nil {
 		return &user_model.User{}, err
