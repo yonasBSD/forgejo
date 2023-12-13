@@ -210,6 +210,37 @@ This stable release contains a **security fix**, as explained in the [v1.20.6-0 
 
   Additional API and web [endpoints now fail](https://forgejo.org/2023-11-release-v1-20-6-0/) when given manually crafted identifiers.
 
+## 1.20.6-1
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.6-1` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.20.6-0..v1.20.6-1
+```
+
+This stable release contains a **security fix**.
+
+* Recommended Action
+
+  We **strongly recommend** that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.20/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.20/user/semver/)
+
+  The semantic version was updated to `5.0.8+0-gitea-1.20.6`
+
+* Security fix
+
+  The project page [of private users](https://forgejo.org/2023-12-release-v1-21-2-1/) is no longer publicly visible.
+
+* Bug fix
+
+  * [Consider executable files as a valid case when returning a downloadURL for them](https://codeberg.org/forgejo/forgejo/issues/1825). They are just regular files with the difference being the executable permission bit being set.
+
+* New doctor check and fix
+
+  * Adds a [new doctor check: fix-push-mirrors-without-git-remote](https://codeberg.org/forgejo/forgejo/pulls/1853). The new check looks for push mirrors that do not have their remotes configured in git. If automatic fixing is enabled, it will remove these push mirrors from the database.
+
 ## 1.20.5-1
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.20/forgejo) included in the `Forgejo v1.20.5-1` release can be reviewed from the command line with:
