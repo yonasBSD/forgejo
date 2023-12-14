@@ -79,6 +79,7 @@ func TestAdminNotificationMail_test(t *testing.T) {
 		manageUserURL, _ := url.Parse(setting.AppURL)
 		manageUserURL = manageUserURL.JoinPath(setting.AppSubURL).JoinPath("/admin/users/").JoinPath(strconv.FormatInt(users[1].ID, 10))
 		assert.Contains(t, msgs[0].Body, manageUserURL.String())
+		assert.Contains(t, msgs[0].Body, users[1].HTMLURL())
 		assert.Contains(t, msgs[0].Body, translatedKey, "the .Locale translates to nothing")
 		assert.Contains(t, msgs[0].Body, users[1].Name, "user name of the newly created user")
 		for _, untranslated := range []string{"mail.admin", "admin.users"} {
