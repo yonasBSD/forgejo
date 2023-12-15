@@ -31,7 +31,7 @@ func Test_StarMarshalJSON(t *testing.T) {
 					Object: ap.IRI("https://codeberg.org/api/v1/activitypub/repository-id/1"),
 				},
 			},
-			want: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
+			want: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/v1/activitypub/user-id/1","object":"https://codeberg.org/api/v1/activitypub/repository-id/1"}`),
 		},
 	}
 

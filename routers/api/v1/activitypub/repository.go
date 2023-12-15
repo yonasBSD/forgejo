@@ -110,7 +110,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// Check if user already exists
 	users, err := SearchUsersByLoginName(actorAsLoginId)
 	if err != nil {
-		ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
+		ctx.ServerError("Searching for user failed", err)
 		return
 	}
 	log.Info("RepositoryInbox: local found users: %v", len(users))
@@ -120,7 +120,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		{
 			user, err = createUserFromAP(ctx, actorId)
 			if err != nil {
-				ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
+				ctx.ServerError("Searching for user failed", err)
 				return
 			}
 			log.Info("RepositoryInbox: created user from ap: %v", user)
