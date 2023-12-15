@@ -12,15 +12,16 @@ sequenceDiagram
     activate os
     os ->> os: validate request inputs
     activate repository
-    os ->> repository: validate
-    repository ->> repository: search for reop with object-id
+    os ->> repository: search for reop with object-id
     deactivate repository
-    activate person
-    os ->> person: validate
-    person ->> person: search for ser with actor-id
-    person ->> fs: get /api/activitypub/user-id/{id from actor}
-    person ->> person: create user from response
-    deactivate person
+    activate user
+    os ->> user: search for user with actor-id
+    user ->> user: create if not found
+    activate user
+    user ->> fs: get /api/activitypub/user-id/{id from actor}
+    user ->> user: create user from response
+    deactivate user
+    deactivate user
     os ->> repository: execute star action
     os -->> fs: 200 ok
     deactivate os
@@ -45,7 +46,7 @@ sequenceDiagram
   "type": "Star",
   "source": "forgejo",
   "actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
-  "object": "https://codeberg.org/api/v1/activitypub/repository-id/1"
+  "object": "https://codeberg.org/api/v1/activitypub/repository-id/12"
 }
 ```
 
@@ -55,9 +56,8 @@ sequenceDiagram
 flowchart TD
     A(User) --> |stars a federated repository| B(foreign repository server)
     B --> |Star Activity| C(our repository server)
-    C --> |get repository localy| D(our repos database)
-	C --> |get Person Actor| B
-    C --> |create federated user localy| D
+    C --> |get Person Actor| B
+    C --> |create federated user localy| D(our database)
     C --> |add star to repo localy| D    
 ```
 
@@ -78,8 +78,15 @@ flowchart TD
 1. Script Kiddi sends a Star Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends an `get Person Actor` request to this url. The attacked target gets DenialdOffServices. We loose CPU & reputation.
 2. Experienced hacker sends a Star Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and get a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this persion, the db might be droped.
 3. OpenSource Promoter sends Star Activities having not authorized Person Actors. The Actors listed as stargazer migth get angry about this, we loose reputation.
-4. Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If activity is Unstar Activity we might loose stars.
-4. Experienced Hacker records activities sends a massive amount of activities which leads to new user storage. Our instance might get off service.
+4. Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If the replayed activities are Unstar Activity we might loose stars.
+5. Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage. Our instance might get off service.
+
+### Mitigations
+1. Validate object uri in order to send only requests to well defined endpoints.
+2. giteas global SQL injection protection. TODO: verify if there is one.
+3. We accept only signed Activities
+4. We accept only activities having an timestamp & remember the last executed activity timestamp.
+5. ...
 
 
 ### DREAD-Score
