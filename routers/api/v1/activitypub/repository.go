@@ -26,31 +26,6 @@ import (
 	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
-// TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
-func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
-	var actionsUser = user_model.NewActionsUser()
-	actionsUser.IsAdmin = true
-
-	options := &user_model.SearchUserOptions{
-		LoginName:       loginName,
-		Actor:           actionsUser,
-		Type:            user_model.UserTypeRemoteUser,
-		OrderBy:         db.SearchOrderByAlphabetically,
-		ListOptions:     db.ListOptions{PageSize: 1},
-		IsActive:        util.OptionalBoolFalse,
-		IncludeReserved: true,
-	}
-	users, _, err := user_model.SearchUsers(db.DefaultContext, options)
-	if err != nil {
-		return []*user_model.User{}, fmt.Errorf("search failed: %v", err)
-	}
-
-	log.Info("local found users: %v", len(users))
-
-	return users, nil
-
-}
-
 // Repository function returns the Repository actor for a repo
 func Repository(ctx *context.APIContext) {
 	// swagger:operation GET /activitypub/repository-id/{repository-id} activitypub activitypubRepository
@@ -105,10 +80,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 	var user *user_model.User
 
 	repository := ctx.Repo.Repository
-	log.Info("RepositoryInbox: repo: %v, owned by:  %v", repository.Name, repository.OwnerName)
+	log.Info("RepositoryInbox: repo: %v", repository)
 
 	activity := web.GetForm(ctx).(*forgefed.Star)
-	log.Info("RepositoryInbox: Activity.Source: %v, Activity.Actor %v, Activity.Actor.Id %v", activity.Source, activity.Actor, activity.Actor.GetID().String())
+	log.Info("RepositoryInbox: activity:%v", activity)
 
 	// parse actorId (person)
 	actorId, err := forgefed.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
@@ -129,63 +104,47 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 	log.Info("RepositoryInbox: objectId validated: %v", objectId)
 
-	adctorAsWebfinger := actorId.AsWebfinger() // used as LoginName in newly created user
-	log.Info("remotStargazer: %v", adctorAsWebfinger)
+	actorAsLoginId := actorId.AsLoginName() // used as LoginName in newly created user
+	log.Info("RepositoryInbox: remotStargazer: %v", actorAsLoginId)
 
 	// Check if user already exists
-	users, err := SearchUsersByLoginName(adctorAsWebfinger)
+	users, err := SearchUsersByLoginName(actorAsLoginId)
 	if err != nil {
 		ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
 		return
 	}
+	log.Info("RepositoryInbox: local found users: %v", len(users))
 
 	switch len(users) {
 	case 0:
 		{
-			user, err := createUserFromAP(ctx, actorId)
+			user, err = createUserFromAP(ctx, actorId)
 			if err != nil {
 				ctx.ServerError(fmt.Sprintf("Searching for user failed: %v"), err)
 				return
 			}
-			log.Info("created user from ap: %v", user)
+			log.Info("RepositoryInbox: created user from ap: %v", user)
 		}
 	case 1:
 		{
 			user = users[0]
-			log.Info("found user: %v", user)
+			log.Info("RepositoryInbox: found user: %v", user)
 		}
 	default:
 		{
-			ctx.Error(http.StatusInternalServerError, "StarRepo", fmt.Errorf("found more than one matches for federated users"))
+			ctx.Error(http.StatusInternalServerError, "StarRepo",
+				fmt.Errorf("found more than one matches for federated users"))
 			return
 		}
 	}
 
-	// TODO: why should we search user for a second time from db?
-	remoteUser, err := user_model.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-		return
-	}
-
-	// check if already starred by this user
-	alreadyStared := repo_model.IsStaring(ctx, remoteUser.ID, repository.ID)
-	switch alreadyStared {
-	case true: // execute unstar action
-		{
-			err = repo_model.StarRepo(ctx, remoteUser.ID, repository.ID, false)
-			if err != nil {
-				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-				return
-			}
-		}
-	case false: // execute star action
-		{
-			err = repo_model.StarRepo(ctx, remoteUser.ID, repository.ID, true)
-			if err != nil {
-				ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-				return
-			}
+	// execute the activity if the repo was not stared already
+	alreadyStared := repo_model.IsStaring(ctx, user.ID, repository.ID)
+	if !alreadyStared {
+		err = repo_model.StarRepo(ctx, user.ID, repository.ID, true)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+			return
 		}
 	}
 
@@ -195,14 +154,37 @@ func RepositoryInbox(ctx *context.APIContext) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func createUserFromAP(ctx *context.APIContext, actorId forgefed.PersonId) (*user_model.User, error) {
+// TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
+func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
+	var actionsUser = user_model.NewActionsUser()
+	actionsUser.IsAdmin = true
+
+	options := &user_model.SearchUserOptions{
+		LoginName:       loginName,
+		Actor:           actionsUser,
+		Type:            user_model.UserTypeRemoteUser,
+		OrderBy:         db.SearchOrderByAlphabetically,
+		ListOptions:     db.ListOptions{PageSize: 1},
+		IsActive:        util.OptionalBoolFalse,
+		IncludeReserved: true,
+	}
+	users, _, err := user_model.SearchUsers(db.DefaultContext, options)
+	if err != nil {
+		return []*user_model.User{}, fmt.Errorf("search failed: %v", err)
+	}
+
+	return users, nil
+
+}
+
+func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	var actionsUser = user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no ide where to get key material.")
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	response, err := client.Get(actorId.AsUri())
+	response, err := client.Get(personId.AsUri())
 	if err != nil {
 		return &user_model.User{}, err
 	}
@@ -211,20 +193,29 @@ func createUserFromAP(ctx *context.APIContext, actorId forgefed.PersonId) (*user
 	if err != nil {
 		return &user_model.User{}, err
 	}
+	log.Info("RepositoryInbox: got body: %v", string(body))
 	person := ap.Person{}
 	err = person.UnmarshalJSON(body)
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	email := fmt.Sprintf("%v@%v", uuid.New().String(), actorId.Host)
-	loginName := actorId.AsWebfinger()
+	log.Info("RepositoryInbox: got person by ap: %v", person)
+	email := fmt.Sprintf("%v@%v", uuid.New().String(), personId.Host)
+	loginName := personId.AsLoginName()
+	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personId.HostSuffix())
+	log.Info("RepositoryInbox: person.Name: %v", person.Name)
+	fullName := person.Name.String()
+	if len(person.Name) == 0 {
+		fullName = name
+	}
 	password, err := pwd_gen.Generate(32, 10, 10, false, true)
 	if err != nil {
 		return &user_model.User{}, err
 	}
 	user := &user_model.User{
-		LowerName:                    strings.ToLower(person.Name.String()),
-		Name:                         person.Name.String(),
+		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
+		Name:                         name,
+		FullName:                     fullName,
 		Email:                        email,
 		EmailNotificationsPreference: "disabled",
 		Passwd:                       password,

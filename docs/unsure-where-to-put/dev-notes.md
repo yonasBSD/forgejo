@@ -37,8 +37,17 @@ TAGS="sqlite" make build generate-swagger
 # launch local
 
 ```bash
+# cleanup
+./gitea admin user delete --purge -id 8
+./gitea admin user delete --purge -id 9
+./gitea admin user delete --purge -id 10
+
 # create a user
-./gitea admin user create --username me --password me --email "buero@meissa.de"
+./gitea admin user create --username me --password me --email "buero@meissa.de" --admin --must-change-password false
+./gitea admin user create --username stargoose1 --random-password --email "stargoose1@meissa.de"
+./gitea admin user create --username stargoose2 --random-password --email "stargoose2@meissa.de"
+./gitea admin user create --username stargoose3 --random-password --email "stargoose3@meissa.de"
+./gitea admin user list
 
 # create a token
 ./gitea admin user generate-access-token -u me -t token --scopes write:activitypub,write:repository,write:user
@@ -72,8 +81,8 @@ curl -X 'POST' \
   "id": "http://localhost:3000/api/v1/activitypub/user-id/1/outbox/12345",
   "type": "Star",
   "source": "forgejo",
-  "actor": "http://localhost:3000/api/v1/activitypub/user-id/1",
-  "object": "http://localhost:3000/api/v1/activitypub/repository-id/1"
+  "actor": "http://localhost:3000/api/v1/activitypub/user-id/5",
+  "object": "http://localhost:3000/api/v1/activitypub/repository-id/2"
 }
 ```
 

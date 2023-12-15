@@ -31,9 +31,10 @@ type RepositoryId struct {
 }
 
 func NewPersonId(uri string, source string) (PersonId, error) {
-	if !validation.IsValidExternalURL(uri) {
-		return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
-	}
+	// TODO: remove after test
+	//if !validation.IsValidExternalURL(uri) {
+	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
+	//}
 
 	validatedUri, _ := url.Parse(uri)
 	pathWithActorID := strings.Split(validatedUri.Path, "/")
@@ -99,8 +100,18 @@ func (id ActorId) AsUri() string {
 	return result
 }
 
-func (id ActorId) AsWebfinger() string {
+func (id PersonId) AsWebfinger() string {
 	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.Id), strings.ToLower(id.Host))
+	return result
+}
+
+func (id PersonId) AsLoginName() string {
+	result := fmt.Sprintf("%s%s", strings.ToLower(id.Id), id.HostSuffix())
+	return result
+}
+
+func (id PersonId) HostSuffix() string {
+	result := fmt.Sprintf("-%s", strings.ToLower(id.Host))
 	return result
 }
 
