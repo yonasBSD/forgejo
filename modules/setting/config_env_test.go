@@ -1,4 +1,4 @@
-// Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Gitea & Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package setting
@@ -33,7 +33,7 @@ func TestDecodeEnvSectionKey(t *testing.T) {
 }
 
 func TestDecodeEnvironmentKey(t *testing.T) {
-	prefix := "GITEA__"
+	prefix := "FORGEJO__"
 	suffix := "__FILE"
 
 	ok, section, key, file := decodeEnvironmentKey(prefix, suffix, "SEC__KEY")
@@ -42,19 +42,19 @@ func TestDecodeEnvironmentKey(t *testing.T) {
 	assert.Equal(t, "", key)
 	assert.False(t, file)
 
-	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC")
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC")
 	assert.False(t, ok)
 	assert.Equal(t, "", section)
 	assert.Equal(t, "", key)
 	assert.False(t, file)
 
-	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA____KEY")
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO____KEY")
 	assert.True(t, ok)
 	assert.Equal(t, "", section)
 	assert.Equal(t, "KEY", key)
 	assert.False(t, file)
 
-	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC__KEY")
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC__KEY")
 	assert.True(t, ok)
 	assert.Equal(t, "sec", section)
 	assert.Equal(t, "KEY", key)
@@ -62,13 +62,13 @@ func TestDecodeEnvironmentKey(t *testing.T) {
 
 	// with "__FILE" suffix, it doesn't support to write "[sec].FILE" to config (no such key FILE is used in Gitea)
 	// but it could be fixed in the future by adding a new suffix like "__VALUE" (no such key VALUE is used in Gitea either)
-	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC__FILE")
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC__FILE")
 	assert.False(t, ok)
 	assert.Equal(t, "", section)
 	assert.Equal(t, "", key)
 	assert.True(t, file)
 
-	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC__KEY__FILE")
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC__KEY__FILE")
 	assert.True(t, ok)
 	assert.Equal(t, "sec", section)
 	assert.Equal(t, "KEY", key)
@@ -87,32 +87,32 @@ key = old
 `)
 	assert.NoError(t, err)
 
-	changed = EnvironmentToConfig(cfg, []string{"GITEA__sec__key=new"})
+	changed = EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key=new"})
 	assert.True(t, changed)
 	assert.Equal(t, "new", cfg.Section("sec").Key("key").String())
 
-	changed = EnvironmentToConfig(cfg, []string{"GITEA__sec__key=new"})
+	changed = EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key=new"})
 	assert.False(t, changed)
 
 	tmpFile := t.TempDir() + "/the-file"
 	_ = os.WriteFile(tmpFile, []byte("value-from-file"), 0o644)
-	changed = EnvironmentToConfig(cfg, []string{"GITEA__sec__key__FILE=" + tmpFile})
+	changed = EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key__FILE=" + tmpFile})
 	assert.True(t, changed)
 	assert.Equal(t, "value-from-file", cfg.Section("sec").Key("key").String())
 
 	cfg, _ = NewConfigProviderFromData("")
 	_ = os.WriteFile(tmpFile, []byte("value-from-file\n"), 0o644)
-	EnvironmentToConfig(cfg, []string{"GITEA__sec__key__FILE=" + tmpFile})
+	EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key__FILE=" + tmpFile})
 	assert.Equal(t, "value-from-file", cfg.Section("sec").Key("key").String())
 
 	cfg, _ = NewConfigProviderFromData("")
 	_ = os.WriteFile(tmpFile, []byte("value-from-file\r\n"), 0o644)
-	EnvironmentToConfig(cfg, []string{"GITEA__sec__key__FILE=" + tmpFile})
+	EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key__FILE=" + tmpFile})
 	assert.Equal(t, "value-from-file", cfg.Section("sec").Key("key").String())
 
 	cfg, _ = NewConfigProviderFromData("")
 	_ = os.WriteFile(tmpFile, []byte("value-from-file\n\n"), 0o644)
-	EnvironmentToConfig(cfg, []string{"GITEA__sec__key__FILE=" + tmpFile})
+	EnvironmentToConfig(cfg, []string{"FORGEJO__sec__key__FILE=" + tmpFile})
 	assert.Equal(t, "value-from-file\n", cfg.Section("sec").Key("key").String())
 }
 
@@ -125,7 +125,7 @@ key = some
 `)
 	assert.NoError(t, err)
 
-	changed := EnvironmentToConfig(cfg, []string{"GITEA__sec_0X2E_sub__key=some"})
+	changed := EnvironmentToConfig(cfg, []string{"FORGEJO__sec_0X2E_sub__key=some"})
 	assert.True(t, changed)
 
 	tmpFile := t.TempDir() + "/test-sub-sec-key.ini"
