@@ -5,3 +5,23 @@ We are on the way to implement the feature "federated star / unstar" activity en
 At the moment we are implementing the good path. We've reached "create user from response" (see sequence diagram at https://codeberg.org/meissa/forgejo/src/branch/forgejo-federated-star/docs/unsure-where-to-put/threat_analysis_star_activity.md) - so you can expect the first curl-experiment-announcement in near future.
 
 In parallel we start the discussion which new threats might be introduced with this feature. If you are interested in hacking or security, feel welcome to contribute to the threat discussion at: https://codeberg.org/forgejo/forgejo/issues/1854.
+
+# 2023-12 Federated staring open for test
+
+Hey, we ar on our way to implement federated stars. We created a test instance to show the new feature - an now you can test federation live :-)
+
+1. **The repo** ready to receive your star is located at: https://federated-repo.prod.meissa.de/buero/star-me
+2. **Post a star activity** at: https://federated-repo.prod.meissa.de/api/swagger#/activitypub/activitypubRepository & press the tryout button.
+3. Put "1" in to the repo & add the following payload   
+    ```
+    {
+      "id": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12",
+      "type": "Star",
+      "source": "forgejo",
+      "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/14",
+      "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1"
+    }
+    ```
+4. As every yuser can only put one star, we created 12 users for your experiment on our instance `"actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2-13",`. But if you are on a forgejo instance with active `activitypub/user-id` api you can insert also your user here.
+5. The input can look like: ![star-via-api.png](star-via-api.png)
+6. Press execute & visit again the repo and enjoy your star :-)

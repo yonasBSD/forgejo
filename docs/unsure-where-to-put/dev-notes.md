@@ -43,10 +43,19 @@ TAGS="sqlite" make build generate-swagger
 ./gitea admin user delete --purge -id 10
 
 # create a user
-./gitea admin user create --username me --password me --email "buero@meissa.de" --admin --must-change-password false
+./gitea admin user create --username me --password me --email "buero@meissa.de" --admin
 ./gitea admin user create --username stargoose1 --random-password --email "stargoose1@meissa.de"
 ./gitea admin user create --username stargoose2 --random-password --email "stargoose2@meissa.de"
 ./gitea admin user create --username stargoose3 --random-password --email "stargoose3@meissa.de"
+./gitea admin user create --username stargoose4 --random-password --email "stargoose4@meissa.de"
+./gitea admin user create --username stargoose5 --random-password --email "stargoose5@meissa.de"
+./gitea admin user create --username stargoose6 --random-password --email "stargoose6@meissa.de"
+./gitea admin user create --username stargoose7 --random-password --email "stargoose7@meissa.de"
+./gitea admin user create --username stargoose8 --random-password --email "stargoose8@meissa.de"
+./gitea admin user create --username stargoose9 --random-password --email "stargoose9@meissa.de"
+./gitea admin user create --username stargoose10 --random-password --email "stargoose10@meissa.de"
+./gitea admin user create --username stargoose11 --random-password --email "stargoose11@meissa.de"
+./gitea admin user create --username stargoose12 --random-password --email "stargoose12@meissa.de"
 ./gitea admin user list
 
 # create a token
