@@ -22,6 +22,8 @@ Hey, we ar on our way to implement federated stars. We created a test instance t
       "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1"
     }
     ```
-4. As every yuser can only put one star, we created 12 users for your experiment on our instance `"actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2-13",`. But if you are on a forgejo instance with active `activitypub/user-id` api you can insert also your user here.
+4. As every yuser can only put one star, we created 12 users for your experiment on our instance `"actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2-13",`. But if you are on a forgejo instance with active `activitypub/user-id` api you can insert also your user-uri here.
 5. The input can look like: ![star-via-api.png](star-via-api.png)
 6. Press execute & visit again the repo and enjoy your star :-)
+
+At the moment we discuss threats arising by this feature. If you are interested we will be happy to get your 2 cents here: https://codeberg.org/forgejo/forgejo/issues/1854
