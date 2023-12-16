@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 on:
+   pull_request:
    pull_request_target:
      types:
        - closed
@@ -13,6 +14,7 @@ jobs:
     steps:
       - name: event
         run: |
+          env
           echo github.event.pull_request.head.repo.fork = ${{ github.event.pull_request.head.repo.fork }}
           echo github.event.action = ${{ github.event.action }}
           echo github.event.pull_request.merged = ${{ github.event.pull_request.merged }}
@@ -20,6 +22,33 @@ jobs:
           cat <<'EOF'
           ${{ toJSON(github.event.pull_request.labels.*.name) }}
           EOF
+          cat <<'EOF'
+          ${{ toJSON(github.event) }}
+          EOF
+
+  build:
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.21"
+      - run: |
+          git config --add safe.directory '*'
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - run: |
+          su forgejo -c 'make deps-backend'
+      - run: |
+          su forgejo -c 'make generate-backend gitea && ln gitea forgejo' forgejo
+        env:
+          TAGS: bindata sqlite sqlite_unlock_notify
+      - uses: actions/upload-artifact@v3
+        with:
+          name: forgejo
+          path: forgejo
 
   cascade:
     runs-on: docker
