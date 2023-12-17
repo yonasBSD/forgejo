@@ -14,7 +14,7 @@ body:
   id: needs-benefits
   attributes:
     label: Needs and benefits
-    description: As concisely as possible, describe the benefits your feture request will provide or the problems it will try to solve.
+    description: As concisely as possible, describe the benefits your feature request will provide or the problems it will try to solve.
   validations:
     required: true
 - type: textarea
