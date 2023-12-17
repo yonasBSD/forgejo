@@ -64,17 +64,17 @@ func userProfile(ctx *context.Context) {
 		ctx.Data["HeatmapTotalContributions"] = activities_model.GetTotalContributionsInHeatmap(data)
 	}
 
-	profileGitRepo, profileReadmeBlob, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
+	profileURL, profileGitRepo, profileReadmeBlob, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
 	defer profileClose()
 
 	showPrivate := ctx.IsSigned && (ctx.Doer.IsAdmin || ctx.Doer.ID == ctx.ContextUser.ID)
-	prepareUserProfileTabData(ctx, showPrivate, profileGitRepo, profileReadmeBlob)
+	prepareUserProfileTabData(ctx, showPrivate, profileGitRepo, profileReadmeBlob, profileURL)
 	// call PrepareContextForProfileBigAvatar later to avoid re-querying the NumFollowers & NumFollowing
 	shared_user.PrepareContextForProfileBigAvatar(ctx)
 	ctx.HTML(http.StatusOK, tplProfile)
 }
 
-func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGitRepo *git.Repository, profileReadme *git.Blob) {
+func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGitRepo *git.Repository, profileReadme *git.Blob, profileURL string) {
 	// if there is a profile readme, default to "overview" page, otherwise, default to "repositories" page
 	// if there is not a profile readme, the overview tab should be treated as the repositories tab
 	tab := ctx.FormString("tab")
@@ -234,9 +234,10 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileGi
 			log.Error("failed to GetBlobContent: %v", err)
 		} else {
 			if profileContent, err := markdown.RenderString(&markup.RenderContext{
-				Ctx:     ctx,
-				GitRepo: profileGitRepo,
-				Metas:   map[string]string{"mode": "document"},
+				Ctx:       ctx,
+				URLPrefix: profileURL,
+				GitRepo:   profileGitRepo,
+				Metas:     map[string]string{"mode": "document"},
 			}, bytes); err != nil {
 				log.Error("failed to RenderString: %v", err)
 			} else {

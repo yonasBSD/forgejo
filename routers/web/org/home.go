@@ -157,14 +157,14 @@ func Home(ctx *context.Context) {
 
 	ctx.Data["ShowMemberAndTeamTab"] = ctx.Org.IsMember || len(members) > 0
 
-	profileGitRepo, profileReadmeBlob, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
+	profileURL, profileGitRepo, profileReadmeBlob, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
 	defer profileClose()
-	prepareOrgProfileReadme(ctx, profileGitRepo, profileReadmeBlob)
+	prepareOrgProfileReadme(ctx, profileGitRepo, profileReadmeBlob, profileURL)
 
 	ctx.HTML(http.StatusOK, tplOrgHome)
 }
 
-func prepareOrgProfileReadme(ctx *context.Context, profileGitRepo *git.Repository, profileReadme *git.Blob) {
+func prepareOrgProfileReadme(ctx *context.Context, profileGitRepo *git.Repository, profileReadme *git.Blob, profileURL string) {
 	if profileGitRepo == nil || profileReadme == nil {
 		return
 	}
@@ -173,9 +173,10 @@ func prepareOrgProfileReadme(ctx *context.Context, profileGitRepo *git.Repositor
 		log.Error("failed to GetBlobContent: %v", err)
 	} else {
 		if profileContent, err := markdown.RenderString(&markup.RenderContext{
-			Ctx:     ctx,
-			GitRepo: profileGitRepo,
-			Metas:   map[string]string{"mode": "document"},
+			Ctx:       ctx,
+			GitRepo:   profileGitRepo,
+			URLPrefix: profileURL,
+			Metas:     map[string]string{"mode": "document"},
 		}, bytes); err != nil {
 			log.Error("failed to RenderString: %v", err)
 		} else {

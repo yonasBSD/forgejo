@@ -4,6 +4,8 @@
 package user
 
 import (
+	"net/url"
+
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/organization"
 	access_model "code.gitea.io/gitea/models/perm/access"
@@ -87,11 +89,12 @@ func PrepareContextForProfileBigAvatar(ctx *context.Context) {
 	}
 }
 
-func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profileGitRepo *git.Repository, profileReadmeBlob *git.Blob, profileClose func()) {
+func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profileURL string, profileGitRepo *git.Repository, profileReadmeBlob *git.Blob, profileClose func()) {
 	profileDbRepo, err := repo_model.GetRepositoryByName(ctx, ctx.ContextUser.ID, ".profile")
 	if err == nil {
 		perm, err := access_model.GetUserRepoPermission(ctx, profileDbRepo, doer)
 		if err == nil && !profileDbRepo.IsEmpty && perm.CanRead(unit.TypeCode) {
+			profileURL = profileDbRepo.HTMLURL() + "/src/branch/" + url.PathEscape(profileDbRepo.DefaultBranch)
 			if profileGitRepo, err = git.OpenRepository(ctx, profileDbRepo.RepoPath()); err != nil {
 				log.Error("FindUserProfileReadme failed to OpenRepository: %v", err)
 			} else {
@@ -105,7 +108,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 	} else if !repo_model.IsErrRepoNotExist(err) {
 		log.Error("FindUserProfileReadme failed to GetRepositoryByName: %v", err)
 	}
-	return profileGitRepo, profileReadmeBlob, func() {
+	return profileURL, profileGitRepo, profileReadmeBlob, func() {
 		if profileGitRepo != nil {
 			_ = profileGitRepo.Close()
 		}
@@ -115,7 +118,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 func RenderUserHeader(ctx *context.Context) {
 	prepareContextForCommonProfile(ctx)
 
-	_, profileReadmeBlob, profileClose := FindUserProfileReadme(ctx, ctx.Doer)
+	_, _, profileReadmeBlob, profileClose := FindUserProfileReadme(ctx, ctx.Doer)
 	defer profileClose()
 	ctx.Data["HasProfileReadme"] = profileReadmeBlob != nil
 }
