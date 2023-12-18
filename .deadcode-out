@@ -179,6 +179,7 @@ package "code.gitea.io/gitea/modules/cache"
 package "code.gitea.io/gitea/modules/charset"
 	func (*BreakWriter).Write
 	func ToUTF8
+	func EscapeControlString
 
 package "code.gitea.io/gitea/modules/context"
 	func GetPrivateContext
@@ -199,7 +200,6 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
-	func EmptyObjectID
 	func openRepositoryWithDefaultContext
 	func GetBranchCommitID
 	func IsTagExist
@@ -308,9 +308,6 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Tr
 	func (MockLocale).TrN
 	func (MockLocale).PrettyNumber
-
-package "code.gitea.io/gitea/modules/util"
-	func UnsafeStringToBytes
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
