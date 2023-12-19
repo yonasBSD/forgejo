@@ -120,7 +120,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		{
 			user, err = createUserFromAP(ctx, actorId)
 			if err != nil {
-				ctx.ServerError("Searching for user failed", err)
+				ctx.ServerError("Creating user failed", err)
 				return
 			}
 			log.Info("RepositoryInbox: created user from ap: %v", user)
@@ -195,7 +195,11 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	}
 	log.Info("RepositoryInbox: got body: %v", string(body))
 	person := ap.Person{}
-	err = person.UnmarshalJSON(body)
+	if strings.Contains(string(body), "user does not exist") {
+		err = fmt.Errorf("the requested user id did not exist on the remote server: %v", personId.Id)
+	} else {
+		err = person.UnmarshalJSON(body)
+	}
 	if err != nil {
 		return &user_model.User{}, err
 	}
