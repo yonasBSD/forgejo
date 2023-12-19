@@ -105,7 +105,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: objectId validated: %v", objectId)
 
 	actorAsLoginId := actorId.AsLoginName() // used as LoginName in newly created user
-	log.Info("RepositoryInbox: remotStargazer: %v", actorAsLoginId)
+	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginId)
 
 	// Check if user already exists
 	users, err := SearchUsersByLoginName(actorAsLoginId)
@@ -180,7 +180,7 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	var actionsUser = user_model.NewActionsUser()
-	client, err := api.NewClient(ctx, actionsUser, "no ide where to get key material.")
+	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
 		return &user_model.User{}, err
 	}
