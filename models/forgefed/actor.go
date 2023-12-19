@@ -36,7 +36,7 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	//}
 
-	validatedUri, _ := url.Parse(uri)
+	validatedUri, _ := url.Parse(uri) // ToDo: Why no err treatment at this place?
 	pathWithActorID := strings.Split(validatedUri.Path, "/")
 	if containsEmptyString(pathWithActorID) {
 		pathWithActorID = removeEmptyStrings(pathWithActorID)
@@ -66,7 +66,7 @@ func NewRepositoryId(uri string, source string) (RepositoryId, error) {
 		return RepositoryId{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
 
-	validatedUri, _ := url.Parse(uri)
+	validatedUri, _ := url.Parse(uri) // ToDo: Why no err treatment at this place?
 	pathWithActorID := strings.Split(validatedUri.Path, "/")
 	if containsEmptyString(pathWithActorID) {
 		pathWithActorID = removeEmptyStrings(pathWithActorID)
