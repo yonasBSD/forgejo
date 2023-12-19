@@ -62,6 +62,7 @@ TAGS="sqlite" make build generate-swagger
 ./gitea admin user generate-access-token -u me -t token --scopes write:activitypub,write:repository,write:user
 
 # create a repo
+```bash
 curl -X 'POST' \
   'http://localhost:3000/api/v1/user/repos?token=ReplaceThisWithYourGeneratedToken' \
   -H 'accept: application/json' \
