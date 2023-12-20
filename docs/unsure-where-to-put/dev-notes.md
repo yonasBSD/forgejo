@@ -92,7 +92,7 @@ curl -X 'POST' \
   "type": "Star",
   "source": "forgejo",
   "actor": "http://localhost:3000/api/v1/activitypub/user-id/5",
-  "object": "http://localhost:3000/api/v1/activitypub/repository-id/2"
+  "object": "http://localhost:3000/api/v1/activitypub/repository-id/1"
 }
 ```
 
