@@ -23,6 +23,6 @@ Hey, we ar on our way to implement federated stars. We created a test instance t
     }
     ```
 4. As every user can only put one star, we created 12 users for your experiment on our instance `"actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2-13",`. But if you are on a forgejo instance having active `activitypub/user-id` api you can insert also your foreign-instance-user-uri here.
-5. Press execute & visit again the repo (https://federated-repo.prod.meissa.de/buero/star-me) and enjoy your star :-)
+5. Press execute & visit again the repo (https://federated-repo.prod.meissa.de/buero/star-me) and enjoy your star :-) ![find-your-new-star](find-your-new-star.png)
 
 At the moment we discuss threats arising by this feature. If you are interested we will be happy to get your 2 cents here: https://codeberg.org/forgejo/forgejo/issues/1854
