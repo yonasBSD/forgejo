@@ -4,7 +4,9 @@
 package utils
 
 import (
+	"fmt"
 	"html"
+	"io"
 	"net/url"
 	"strings"
 
@@ -27,4 +29,21 @@ func IsExternalURL(rawURL string) bool {
 		return true
 	}
 	return false
+}
+
+// Limit number of characters in a string (useful to prevent log injection attacks and overly long log outputs)
+// Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
+func CharLimiter(s string, limit int) string {
+
+	reader := strings.NewReader(s)
+
+	buff := make([]byte, limit)
+
+	n, _ := io.ReadAtLeast(reader, buff, limit)
+
+	if n != 0 {
+		return fmt.Sprint(string(buff), "...")
+	} else {
+		return s
+	}
 }

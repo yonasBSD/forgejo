@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/routers/utils"
 	"github.com/google/uuid"
 
 	ap "github.com/go-ap/activitypub"
@@ -206,7 +207,7 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	log.Info("RepositoryInbox: got body: %v", char_limiter(string(body), 120))
+	log.Info("RepositoryInbox: got body: %v", utils.CharLimiter(string(body), 120))
 
 	person := ap.Person{}
 	err = person.UnmarshalJSON(body)
@@ -248,20 +249,4 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	}
 
 	return user, nil
-}
-
-// Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
-func char_limiter(s string, limit int) string {
-
-	reader := strings.NewReader(s)
-
-	buff := make([]byte, limit)
-
-	n, _ := io.ReadAtLeast(reader, buff, limit)
-
-	if n != 0 {
-		return fmt.Sprint(string(buff), "...")
-	} else {
-		return s
-	}
 }
