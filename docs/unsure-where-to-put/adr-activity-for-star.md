@@ -2,7 +2,7 @@
 
 ## Status
 
-Still in dsicussion
+Still in discussion
 
 ## Context
 
