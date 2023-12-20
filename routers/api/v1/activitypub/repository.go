@@ -188,10 +188,19 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	if err != nil {
 		return &user_model.User{}, err
 	}
+
 	response, err := client.Get(personId.AsUri())
 	if err != nil {
 		return &user_model.User{}, err
 	}
+
+	// validate response; ToDo: Should we widen the restrictions here?
+	if response.StatusCode != 200 {
+		err = fmt.Errorf("got non 200 status code for id: %v", personId.Id)
+		return &user_model.User{}, err
+	}
+	log.Info("RepositoryInbox: got status: %v", response.Status)
+
 	defer response.Body.Close()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
