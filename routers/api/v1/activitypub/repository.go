@@ -193,29 +193,27 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	if err != nil {
 		return &user_model.User{}, err
 	}
+	log.Info("RepositoryInbox: got status: %v", response.Status)
 
 	// validate response; ToDo: Should we widen the restrictions here?
 	if response.StatusCode != 200 {
 		err = fmt.Errorf("got non 200 status code for id: %v", personId.Id)
 		return &user_model.User{}, err
 	}
-	log.Info("RepositoryInbox: got status: %v", response.Status)
 
 	defer response.Body.Close()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	log.Info("RepositoryInbox: got body: %v", string(body))
+	log.Info("RepositoryInbox: got body: %v", char_limiter(string(body), 120))
+
 	person := ap.Person{}
-	if strings.Contains(string(body), "user does not exist") {
-		err = fmt.Errorf("the requested user id did not exist on the remote server: %v", personId.Id)
-	} else {
-		err = person.UnmarshalJSON(body)
-	}
+	err = person.UnmarshalJSON(body)
 	if err != nil {
 		return &user_model.User{}, err
 	}
+
 	log.Info("RepositoryInbox: got person by ap: %v", person)
 	email := fmt.Sprintf("%v@%v", uuid.New().String(), personId.Host)
 	loginName := personId.AsLoginName()
@@ -250,4 +248,20 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	}
 
 	return user, nil
+}
+
+// Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
+func char_limiter(s string, limit int) string {
+
+	reader := strings.NewReader(s)
+
+	buff := make([]byte, limit)
+
+	n, _ := io.ReadAtLeast(reader, buff, limit)
+
+	if n != 0 {
+		return fmt.Sprint(string(buff), "...")
+	} else {
+		return s
+	}
 }
