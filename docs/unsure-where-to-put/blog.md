@@ -11,7 +11,7 @@ In parallel we start the discussion which new threats might be introduced with t
 Hey, we ar on our way to implement federated stars. We created a test instance to show the new feature - an now you can test federation live :-)
 
 1. **The repo** ready to receive your star is located at: https://federated-repo.prod.meissa.de/buero/star-me
-2. **Post a star activity** at: https://federated-repo.prod.meissa.de/api/swagger#/activitypub/activitypubRepository & press the tryout button.
+2. **Post a star activity** at: https://federated-repo.prod.meissa.de/api/swagger#/activitypub/activitypubRepository & press the `Try It Out`` button. The input can look like: ![star-via-api.png](star-via-api.png)
 3. Put "1" in to the repo & add the following payload   
     ```
     {
@@ -23,7 +23,6 @@ Hey, we ar on our way to implement federated stars. We created a test instance t
     }
     ```
 4. As every user can only put one star, we created 12 users for your experiment on our instance `"actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2-13",`. But if you are on a forgejo instance having active `activitypub/user-id` api you can insert also your foreign-instance-user-uri here.
-5. The input can look like: ![star-via-api.png](star-via-api.png)
-6. Press execute & visit again the repo and enjoy your star :-)
+5. Press execute & visit again the repo (https://federated-repo.prod.meissa.de/buero/star-me) and enjoy your star :-)
 
 At the moment we discuss threats arising by this feature. If you are interested we will be happy to get your 2 cents here: https://codeberg.org/forgejo/forgejo/issues/1854
