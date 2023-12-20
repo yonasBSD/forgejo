@@ -89,7 +89,7 @@ flowchart TD
 1. Validate object uri in order to send only requests to well defined endpoints.
 2. giteas global SQL injection protection. TODO: verify if there is one.
 3. We accept only signed Activities
-4. We accept only activities having a timestamp & remember the last executed activity timestamp.
+4. We accept only activities having an startTime & remember the last executed activity startTime.
 5. We introduce (or have) rate limiting per IP.
 6. We ensure, that outgoing HTTP requests have a reasonable timeout (if you didn't get that 500b JSON response after 10 seconds, you probably won't get it).
 
