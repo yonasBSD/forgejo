@@ -3,6 +3,9 @@
 
 package activitypub
 
+// ToDo: Fix linting
+// ToDo: Maybe do a request for the node info
+//			Then maybe save the node info in a DB table	- this could be useful for validation
 import (
 	"fmt"
 	"io"
@@ -177,6 +180,7 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 
 }
 
+// ToDo: Maybe use externalLoginUser
 func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	var actionsUser = user_model.NewActionsUser()
