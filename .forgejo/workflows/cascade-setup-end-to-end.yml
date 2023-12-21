@@ -12,7 +12,6 @@ jobs:
     steps:
       - name: event
         run: |
-          env
           echo github.event.pull_request.head.repo.fork = ${{ github.event.pull_request.head.repo.fork }}
           echo github.event.action = ${{ github.event.action }}
           echo github.event.pull_request.merged = ${{ github.event.pull_request.merged }}
