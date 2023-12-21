@@ -4,6 +4,9 @@ on:
     types:
       - labeled
 
+env:
+  FEATURE_BRANCHES: "privacy i18n moderation branding dependency"
+
 jobs:
   info:
     runs-on: docker
@@ -27,17 +30,28 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
+        with:
+          fetch-depth: '0'
+          show-progress: 'false'
+      - name: adduser forgejo
+        run: |
+          git config --add safe.directory '*'
+          git config user.email "you@example.com"
+          git config user.name "Your Name"
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - name: merge feature branches
+        run: |
+          su forgejo -c 'set -ex ; for b in ${{ env.FEATURE_BRANCHES }} ; do git merge -m $b origin/forgejo-$b ; done'
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
           go-version: ">=1.21"
-      - run: |
-          git config --add safe.directory '*'
-          adduser --quiet --comment forgejo --disabled-password forgejo
-          chown -R forgejo:forgejo .
-      - run: |
+      - name: make deps-backend
+        run: |
           su forgejo -c 'make deps-backend'
-      - run: |
-          su forgejo -c 'make generate-backend static-executable && ln gitea forgejo' forgejo
+      - name: make forgejo
+        run: |
+          su forgejo -c 'make generate-backend static-executable && ln gitea forgejo'
         env:
           TAGS: bindata sqlite sqlite_unlock_notify
       - uses: actions/upload-artifact@v3
