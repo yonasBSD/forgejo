@@ -53,8 +53,8 @@ func TestNewRepositoryId(t *testing.T) {
 	}
 }
 
-func TestPersonIdValidation(t *testing.T) {
-	sut := PersonId{}
+func TestActorIdValidation(t *testing.T) {
+	sut := ActorId{}
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -65,7 +65,7 @@ func TestPersonIdValidation(t *testing.T) {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = PersonId{}
+	sut = ActorId{}
 	sut.Id = "1"
 	sut.Source = "forgejox"
 	sut.Schema = "https"
@@ -77,19 +77,7 @@ func TestPersonIdValidation(t *testing.T) {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = PersonId{}
-	sut.Id = "1"
-	sut.Source = "forgejo"
-	sut.Schema = "https"
-	sut.Path = "path"
-	sut.Host = "an.other.host"
-	sut.Port = ""
-	sut.UnvalidatedInput = "https://an.other.host/path/1"
-	if sut.Validate()[0] != "path: \"path\" has to be a api path" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
-	}
-
-	sut = PersonId{}
+	sut = ActorId{}
 	sut.Id = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
@@ -99,6 +87,20 @@ func TestPersonIdValidation(t *testing.T) {
 	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1?illegal=action"
 	if sut.Validate()[0] != "not all input: \"https://an.other.host/api/v1/activitypub/user-id/1?illegal=action\" was parsed: \"https://an.other.host/api/v1/activitypub/user-id/1\"" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+}
+
+func TestPersonIdValidation(t *testing.T) {
+	sut := PersonId{}
+	sut.Id = "1"
+	sut.Source = "forgejo"
+	sut.Schema = "https"
+	sut.Path = "path"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/path/1"
+	if _, err := sut.IsValid(); err.Error() != "path: \"path\" has to be an api path" {
+		t.Errorf("validation error expected but was: %v\n", err)
 	}
 }
 
