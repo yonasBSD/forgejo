@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 on:
-   pull_request_target:
-     types:
-       - labeled
+  pull_request_target:
+    types:
+      - labeled
 
 jobs:
   info:
@@ -48,6 +48,7 @@ jobs:
 
   cascade:
     if: github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
+    needs: [build]
     runs-on: docker
     container:
       image: node:20-bookworm
