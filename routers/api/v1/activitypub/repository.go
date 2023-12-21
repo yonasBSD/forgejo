@@ -214,8 +214,8 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	if err != nil {
 		return &user_model.User{}, err
 	}
-
 	log.Info("RepositoryInbox: got person by ap: %v", person)
+
 	email := fmt.Sprintf("%v@%v", uuid.New().String(), personId.Host)
 	loginName := personId.AsLoginName()
 	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personId.HostSuffix())
@@ -224,10 +224,12 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	if len(person.Name) == 0 {
 		fullName = name
 	}
+
 	password, err := pwd_gen.Generate(32, 10, 10, false, true)
 	if err != nil {
 		return &user_model.User{}, err
 	}
+
 	user := &user_model.User{
 		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
 		Name:                         name,
@@ -240,10 +242,12 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 		Type:                         user_model.UserTypeRemoteUser,
 		IsAdmin:                      false,
 	}
+
 	overwrite := &user_model.CreateUserOverwriteOptions{
 		IsActive:     util.OptionalBoolFalse,
 		IsRestricted: util.OptionalBoolFalse,
 	}
+
 	if err := user_model.CreateUser(ctx, user, overwrite); err != nil {
 		return &user_model.User{}, err
 	}
