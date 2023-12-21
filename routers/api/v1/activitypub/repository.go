@@ -23,7 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/routers/utils"
+	"code.gitea.io/gitea/routers/utils"
 	"github.com/google/uuid"
 
 	ap "github.com/go-ap/activitypub"
