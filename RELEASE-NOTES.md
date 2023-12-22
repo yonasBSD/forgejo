@@ -13,7 +13,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.21.2-1..v1.21.3-0
 ```
 
-This stable release includes bug fixes. It was built with an updated version of the [Go Cryptography](https://pkg.go.dev/golang.org/x/crypto) package that fixes [CVE-2023-48795](https://go.dev/issue/64784). The Forgejo security team analyzed the vulnerability and concluded it cannot be exploited when using an independent SSH server, which is the default in Forgejo. It could theoretically be exploited if Forgejo is configured to use the Go implementation with the `START_SSH_SERVER=true` setting.
+This stable release includes bug fixes. It was built with an updated version of the [Go Cryptography](https://pkg.go.dev/golang.org/x/crypto) package that fixes [CVE-2023-48795](https://go.dev/issue/64784). As explained in the [corresponding Go issue](https://github.com/golang/vulndb/issues/2402): "The impact of this attack is relatively limited, as it does not compromise confidentiality of the channel."
 
 * Recommended Action
 
