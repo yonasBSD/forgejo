@@ -31,8 +31,9 @@ type RepositoryId struct {
 	ActorId
 }
 
-func newActorId(uri, source string) (ActorId, error) {
-	validatedUri, _ := url.Parse(uri) // ToDo: Why no err treatment at this place?
+// newActorId receives already validated inputs
+func newActorId(validatedUri *url.URL, source string) (ActorId, error) {
+
 	pathWithActorID := strings.Split(validatedUri.Path, "/")
 	if containsEmptyString(pathWithActorID) {
 		pathWithActorID = removeEmptyStrings(pathWithActorID)
@@ -48,7 +49,7 @@ func newActorId(uri, source string) (ActorId, error) {
 	result.Host = validatedUri.Hostname()
 	result.Path = pathWithoutActorID
 	result.Port = validatedUri.Port()
-	result.UnvalidatedInput = uri
+	result.UnvalidatedInput = validatedUri.String()
 
 	if valid, err := result.IsValid(); !valid {
 		return ActorId{}, err
@@ -62,8 +63,12 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 	//if !validation.IsValidExternalURL(uri) {
 	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	//}
+	validatedUri, err := url.ParseRequestURI(uri) // ToDo: Why no err treatment at this place?
+	if err != nil {
+		return PersonId{}, err
+	}
 
-	actorId, err := newActorId(uri, source)
+	actorId, err := newActorId(validatedUri, source)
 	if err != nil {
 		return PersonId{}, err
 	}
@@ -83,7 +88,12 @@ func NewRepositoryId(uri string, source string) (RepositoryId, error) {
 		return RepositoryId{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
 
-	actorId, err := newActorId(uri, source)
+	validatedUri, err := url.ParseRequestURI(uri) // ToDo: Why no err treatment at this place?
+	if err != nil {
+		return RepositoryId{}, err
+	}
+
+	actorId, err := newActorId(validatedUri, source)
 	if err != nil {
 		return RepositoryId{}, err
 	}
