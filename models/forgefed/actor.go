@@ -18,7 +18,7 @@ type Validateables interface {
 }
 
 type ActorID struct {
-	Id               string
+	ID               string
 	Source           string
 	Schema           string
 	Path             string
@@ -46,7 +46,7 @@ func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
 	id := pathWithActorID[length-1]
 
 	result := ActorID{}
-	result.Id = id
+	result.ID = id
 	result.Source = source
 	result.Schema = validatedURI.Scheme
 	result.Host = validatedURI.Hostname()
@@ -86,7 +86,6 @@ func NewPersonID(uri string, source string) (PersonID, error) {
 }
 
 func NewRepositoryID(uri string, source string) (RepositoryID, error) {
-
 	if !validation.IsAPIURL(uri) {
 		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
@@ -113,20 +112,20 @@ func NewRepositoryID(uri string, source string) (RepositoryID, error) {
 func (id ActorID) AsURI() string {
 	var result string
 	if id.Port == "" {
-		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.Id)
+		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.ID)
 	} else {
-		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.Id)
+		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.ID)
 	}
 	return result
 }
 
 func (id PersonID) AsWebfinger() string {
-	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.Id), strings.ToLower(id.Host))
+	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.ID), strings.ToLower(id.Host))
 	return result
 }
 
 func (id PersonID) AsLoginName() string {
-	result := fmt.Sprintf("%s%s", strings.ToLower(id.Id), id.HostSuffix())
+	result := fmt.Sprintf("%s%s", strings.ToLower(id.ID), id.HostSuffix())
 	return result
 }
 
@@ -138,7 +137,7 @@ func (id PersonID) HostSuffix() string {
 // Validate collects error strings in a slice and returns this
 func (id ActorID) Validate() []string {
 	var result []string
-	result = append(result, validation.ValidateNotEmpty(id.Id, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
 	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
 	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)

@@ -102,7 +102,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
-	if objectID.Id != fmt.Sprint(repository.ID) {
+	if objectID.ID != fmt.Sprint(repository.ID) {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
@@ -197,7 +197,7 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 
 	// validate response; ToDo: Should we widen the restrictions here?
 	if response.StatusCode != 200 {
-		err = fmt.Errorf("got non 200 status code for id: %v", personID.Id)
+		err = fmt.Errorf("got non 200 status code for id: %v", personID.ID)
 		return &user_model.User{}, err
 	}
 

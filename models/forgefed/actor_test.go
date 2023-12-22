@@ -11,7 +11,7 @@ import (
 
 func TestNewPersonId(t *testing.T) {
 	expected := PersonID{}
-	expected.Id = "1"
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "https"
 	expected.Path = "api/v1/activitypub/user-id"
@@ -24,7 +24,7 @@ func TestNewPersonId(t *testing.T) {
 	}
 
 	expected = PersonID{}
-	expected.Id = "1"
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "https"
 	expected.Path = "api/v1/activitypub/user-id"
@@ -40,7 +40,7 @@ func TestNewPersonId(t *testing.T) {
 func TestNewRepositoryId(t *testing.T) {
 	setting.AppURL = "http://localhost:3000/"
 	expected := RepositoryID{}
-	expected.Id = "1"
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "http"
 	expected.Path = "api/activitypub/repository-id"
@@ -66,7 +66,7 @@ func TestActorIdValidation(t *testing.T) {
 	}
 
 	sut = ActorID{}
-	sut.Id = "1"
+	sut.ID = "1"
 	sut.Source = "forgejox"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -78,7 +78,7 @@ func TestActorIdValidation(t *testing.T) {
 	}
 
 	sut = ActorID{}
-	sut.Id = "1"
+	sut.ID = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -92,7 +92,7 @@ func TestActorIdValidation(t *testing.T) {
 
 func TestPersonIdValidation(t *testing.T) {
 	sut := PersonID{}
-	sut.Id = "1"
+	sut.ID = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "path"
