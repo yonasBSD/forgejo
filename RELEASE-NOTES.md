@@ -4,6 +4,43 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.3-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.3-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.2-1..v1.21.3-0
+```
+
+This stable release includes bug fixes. It was built with an updated version of the [Go Cryptography](https://pkg.go.dev/golang.org/x/crypto) package that fixes [CVE-2023-48795](https://go.dev/issue/64784). The Forgejo security team analyzed the vulnerability and concluded it cannot be exploited when using an independent SSH server, which is the default in Forgejo. It could theoretically be exploited if Forgejo is configured to use the Go implementation with the `START_SSH_SERVER=true` setting.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.3+0-gitea-1.21.3`
+
+* Security fix
+
+  * The [Go Cryptography](https://pkg.go.dev/golang.org/x/crypto) package [is upgraded](https://codeberg.org/forgejo/forgejo/commit/9515a0ea38c179a2811e489079a68bbcc79f3cd3) to fix [CVE-2023-48795](https://go.dev/issue/64784).
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix a regression](https://codeberg.org/forgejo/forgejo/commit/dbd896ce42b2c5a1f4b4a69289fa3a38a875d04d) in how the markdown anchors are generated. For instance the anchor for `A.B.C` is `A-B-C` but was incorrectly set to `ABC`.
+  * [Fix the branch name of scheduled actions](https://codeberg.org/forgejo/forgejo/commit/580f29d9a2f8986c02b6ac30f2f3c177866cc81a) which [was sometime incorrectly set](https://codeberg.org/forgejo/forgejo/issues/1926).
+  * [Fix a visual glitch](https://codeberg.org/forgejo/forgejo/commit/b0874a0912ee97b11047bb2bd7d370b93c298d2a) when [setting an emoji in the web UI](https://codeberg.org/forgejo/forgejo/issues/1990).
+  * [Recently Docker started to use the optional `POST /v2/token` endpoint](https://codeberg.org/forgejo/forgejo/commit/a77398cd344be76e1cd2474063d917b286f8e9b1) which should respond with a `404 Not Found` status code instead of the current `405 Method Not Allowed`.
+  * [Fix a missing leading ssh:// when using a port other than 22](https://codeberg.org/forgejo/forgejo/commit/1475c1fcc4f1d5d526260a3f2068ae62c2ccaae3) when Git URLs are displayed in the web UI.
+  * [Allow disabling the detection of ambiguous unicode characters](https://codeberg.org/forgejo/forgejo/commit/cd5a0ec1c88edc238469657731e209a0080e9bfc) with the new setting `AMBIGUOUS_UNICODE_DETECTION=false`.
+  * [Fix a regression with the issue references rendering in wiki pages](https://codeberg.org/forgejo/forgejo/commit/40fa6a526a1cb42889eddd5135f2749cc092fff5).
+  * [Fix merging artifact chunks error when minio storage basepath is set](https://codeberg.org/forgejo/forgejo/commit/bea2c52572d62781228099812e56b2e7051e7ab0)
+  * [Fix missing information in the blame page web UI](https://codeberg.org/forgejo/forgejo/commit/1f8d01c74d75c0b426b7b7a95cc1ca3bfe1b853c).
+
 ## 1.21.2-1
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.2-1` release can be reviewed from the command line with:
