@@ -97,12 +97,12 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 	log.Info("RepositoryInbox: actorId validated: %v", actorID)
 	// parse objectID (repository)
-	objectID, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
+	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
-	if objectID.ID != fmt.Sprint(repository.ID) {
+	if objectID.Id != fmt.Sprint(repository.ID) {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
@@ -160,7 +160,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 // TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
 func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
-	var actionsUser = user_model.NewActionsUser()
+	actionsUser := user_model.NewActionsUser()
 	actionsUser.IsAdmin = true
 
 	options := &user_model.SearchUserOptions{
@@ -178,13 +178,12 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 	}
 
 	return users, nil
-
 }
 
 // ToDo: Maybe use externalLoginUser
 func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
-	var actionsUser = user_model.NewActionsUser()
+	actionsUser := user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
 		return &user_model.User{}, err
@@ -198,7 +197,7 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 
 	// validate response; ToDo: Should we widen the restrictions here?
 	if response.StatusCode != 200 {
-		err = fmt.Errorf("got non 200 status code for id: %v", personID.ID)
+		err = fmt.Errorf("got non 200 status code for id: %v", personID.Id)
 		return &user_model.User{}, err
 	}
 

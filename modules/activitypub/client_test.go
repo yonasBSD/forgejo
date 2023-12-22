@@ -62,7 +62,6 @@ func TestNewClientReturnsClient(t *testing.T) {
 
 	log.Debug("Client: %v\nError: %v", c, err)
 	assert.NoError(t, err)
-
 }
 
 /* TODO: bring this test to work or delete

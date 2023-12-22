@@ -18,7 +18,7 @@ type Validateables interface {
 }
 
 type ActorID struct {
-	ID               string
+	Id               string
 	Source           string
 	Schema           string
 	Path             string
@@ -46,7 +46,7 @@ func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
 	id := pathWithActorID[length-1]
 
 	result := ActorID{}
-	result.ID = id
+	result.Id = id
 	result.Source = source
 	result.Schema = validatedURI.Scheme
 	result.Host = validatedURI.Hostname()
@@ -85,7 +85,7 @@ func NewPersonID(uri string, source string) (PersonID, error) {
 	return personID, nil
 }
 
-func NewRepositoryId(uri string, source string) (RepositoryID, error) {
+func NewRepositoryID(uri string, source string) (RepositoryID, error) {
 
 	if !validation.IsAPIURL(uri) {
 		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
@@ -113,20 +113,20 @@ func NewRepositoryId(uri string, source string) (RepositoryID, error) {
 func (id ActorID) AsURI() string {
 	var result string
 	if id.Port == "" {
-		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.ID)
+		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.Id)
 	} else {
-		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.ID)
+		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.Id)
 	}
 	return result
 }
 
 func (id PersonID) AsWebfinger() string {
-	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.ID), strings.ToLower(id.Host))
+	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.Id), strings.ToLower(id.Host))
 	return result
 }
 
 func (id PersonID) AsLoginName() string {
-	result := fmt.Sprintf("%s%s", strings.ToLower(id.ID), id.HostSuffix())
+	result := fmt.Sprintf("%s%s", strings.ToLower(id.Id), id.HostSuffix())
 	return result
 }
 
@@ -137,8 +137,8 @@ func (id PersonID) HostSuffix() string {
 
 // Validate collects error strings in a slice and returns this
 func (id ActorID) Validate() []string {
-	var result = []string{}
-	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
+	var result []string
+	result = append(result, validation.ValidateNotEmpty(id.Id, "userId")...)
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
 	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
 	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)
@@ -154,7 +154,7 @@ func (id ActorID) Validate() []string {
 }
 
 func (id PersonID) Validate() []string {
-	var result = id.ActorID.Validate()
+	result := id.ActorID.Validate()
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/user-id" && strings.ToLower(id.Path) != "api/activitypub/user-id" {
@@ -165,7 +165,7 @@ func (id PersonID) Validate() []string {
 }
 
 func (id RepositoryID) Validate() []string {
-	var result = id.ActorID.Validate()
+	result := id.ActorID.Validate()
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(id.Path) != "api/activitypub/repository-id" {
