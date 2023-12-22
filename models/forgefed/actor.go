@@ -12,11 +12,8 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-type Validateable interface { // ToDo: Add this to validate helpers
-	Validate() []string
-}
-
 type ActorId struct {
+	validation.Validateable
 	Id               string
 	Source           string
 	Schema           string
@@ -125,9 +122,7 @@ func (id PersonId) HostSuffix() string {
 	return result
 }
 
-/*
-Validate collects error strings in a slice and returns this
-*/
+// Validate collects error strings in a slice and returns this
 func (value ActorId) Validate() []string {
 	var result = []string{}
 	result = append(result, validation.ValidateNotEmpty(value.Id, "userId")...)
@@ -145,39 +140,26 @@ func (value ActorId) Validate() []string {
 	return result
 }
 
-// TODO: Move valid-parts to valid package
-/*
-IsValid concatenates the error messages with newlines and returns them if there are any
-*/
-func (a ActorId) IsValid() (bool, error) {
-	if err := a.Validate(); len(err) > 0 {
-		errString := strings.Join(err, "\n")
-		return false, fmt.Errorf(errString)
-	}
-
-	return true, nil
-}
-
-func (a PersonId) IsValid() (bool, error) {
-	switch a.Source {
+func (value PersonId) Validate() []string {
+	var result = value.ActorId.Validate()
+	switch value.Source {
 	case "forgejo", "gitea":
-		if strings.ToLower(a.Path) != "api/v1/activitypub/user-id" && strings.ToLower(a.Path) != "api/activitypub/user-id" {
-			err := fmt.Errorf("path: %q has to be an api path", a.Path)
-			return false, err
+		if strings.ToLower(value.Path) != "api/v1/activitypub/user-id" && strings.ToLower(value.Path) != "api/activitypub/user-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be an api path", value.Path))
 		}
 	}
-	return true, nil
+	return result
 }
 
-func (a RepositoryId) IsValid() (bool, error) {
-	switch a.Source {
+func (value RepositoryId) Validate() []string {
+	var result = value.ActorId.Validate()
+	switch value.Source {
 	case "forgejo", "gitea":
-		if strings.ToLower(a.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(a.Path) != "api/activitypub/repository-id" {
-			err := fmt.Errorf("path: %q has to be an api path", a.Path)
-			return false, err
+		if strings.ToLower(value.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(value.Path) != "api/activitypub/repository-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be an api path", value.Path))
 		}
 	}
-	return true, nil
+	return result
 }
 
 func containsEmptyString(ar []string) bool {
@@ -197,4 +179,22 @@ func removeEmptyStrings(ls []string) []string {
 		}
 	}
 	return rs
+}
+
+func (a RepositoryId) IsValid() (bool, error) {
+	if err := a.Validate(); len(err) > 0 {
+		errString := strings.Join(err, "\n")
+		return false, fmt.Errorf(errString)
+	}
+
+	return true, nil
+}
+
+func (a PersonId) IsValid() (bool, error) {
+	if err := a.Validate(); len(err) > 0 {
+		errString := strings.Join(err, "\n")
+		return false, fmt.Errorf(errString)
+	}
+
+	return true, nil
 }
