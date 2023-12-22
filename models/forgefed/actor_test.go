@@ -10,28 +10,28 @@ import (
 )
 
 func TestNewPersonId(t *testing.T) {
-	expected := PersonId{}
-	expected.Id = "1"
+	expected := PersonID{}
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "https"
 	expected.Path = "api/v1/activitypub/user-id"
 	expected.Host = "an.other.host"
 	expected.Port = ""
 	expected.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
-	sut, _ := NewPersonId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
+	sut, _ := NewPersonID("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if sut != expected {
 		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}
 
-	expected = PersonId{}
-	expected.Id = "1"
+	expected = PersonID{}
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "https"
 	expected.Path = "api/v1/activitypub/user-id"
 	expected.Host = "an.other.host"
 	expected.Port = "443"
 	expected.UnvalidatedInput = "https://an.other.host:443/api/v1/activitypub/user-id/1"
-	sut, _ = NewPersonId("https://an.other.host:443/api/v1/activitypub/user-id/1", "forgejo")
+	sut, _ = NewPersonID("https://an.other.host:443/api/v1/activitypub/user-id/1", "forgejo")
 	if sut != expected {
 		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}
@@ -39,8 +39,8 @@ func TestNewPersonId(t *testing.T) {
 
 func TestNewRepositoryId(t *testing.T) {
 	setting.AppURL = "http://localhost:3000/"
-	expected := RepositoryId{}
-	expected.Id = "1"
+	expected := RepositoryID{}
+	expected.ID = "1"
 	expected.Source = "forgejo"
 	expected.Schema = "http"
 	expected.Path = "api/activitypub/repository-id"
@@ -54,7 +54,7 @@ func TestNewRepositoryId(t *testing.T) {
 }
 
 func TestActorIdValidation(t *testing.T) {
-	sut := ActorId{}
+	sut := ActorID{}
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -65,8 +65,8 @@ func TestActorIdValidation(t *testing.T) {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = ActorId{}
-	sut.Id = "1"
+	sut = ActorID{}
+	sut.ID = "1"
 	sut.Source = "forgejox"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -77,8 +77,8 @@ func TestActorIdValidation(t *testing.T) {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
-	sut = ActorId{}
-	sut.Id = "1"
+	sut = ActorID{}
+	sut.ID = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -91,8 +91,8 @@ func TestActorIdValidation(t *testing.T) {
 }
 
 func TestPersonIdValidation(t *testing.T) {
-	sut := PersonId{}
-	sut.Id = "1"
+	sut := PersonID{}
+	sut.ID = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "path"
@@ -105,12 +105,12 @@ func TestPersonIdValidation(t *testing.T) {
 }
 
 func TestWebfingerId(t *testing.T) {
-	sut, _ := NewPersonId("https://codeberg.org/api/v1/activitypub/user-id/12345", "forgejo")
+	sut, _ := NewPersonID("https://codeberg.org/api/v1/activitypub/user-id/12345", "forgejo")
 	if sut.AsWebfinger() != "@12345@codeberg.org" {
 		t.Errorf("wrong webfinger: %v", sut.AsWebfinger())
 	}
 
-	sut, _ = NewPersonId("https://Codeberg.org/api/v1/activitypub/user-id/12345", "forgejo")
+	sut, _ = NewPersonID("https://Codeberg.org/api/v1/activitypub/user-id/12345", "forgejo")
 	if sut.AsWebfinger() != "@12345@codeberg.org" {
 		t.Errorf("wrong webfinger: %v", sut.AsWebfinger())
 	}
@@ -122,32 +122,32 @@ func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
 		t.Errorf("empty input should be invalid.")
 	}
 
-	_, err = NewPersonId("http://localhost:3000/api/v1/something", "forgejo")
+	_, err = NewPersonID("http://localhost:3000/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("localhost uris are not external")
 	}
-	_, err = NewPersonId("./api/v1/something", "forgejo")
+	_, err = NewPersonID("./api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("relative uris are not alowed")
 	}
-	_, err = NewPersonId("http://1.2.3.4/api/v1/something", "forgejo")
+	_, err = NewPersonID("http://1.2.3.4/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not be ip-4 based")
 	}
-	_, err = NewPersonId("http:///[fe80::1ff:fe23:4567:890a%25eth0]/api/v1/something", "forgejo")
+	_, err = NewPersonID("http:///[fe80::1ff:fe23:4567:890a%25eth0]/api/v1/something", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not be ip-6 based")
 	}
-	_, err = NewPersonId("https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345", "forgejo")
+	_, err = NewPersonID("https://codeberg.org/api/v1/activitypub/../activitypub/user-id/12345", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not contain relative path elements")
 	}
-	_, err = NewPersonId("https://myuser@an.other.host/api/v1/activitypub/user-id/1", "forgejo")
+	_, err = NewPersonID("https://myuser@an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if err == nil {
 		t.Errorf("uri may not contain unparsed elements")
 	}
 
-	_, err = NewPersonId("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
+	_, err = NewPersonID("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if err != nil {
 		t.Errorf("this uri should be valid but was: %v", err)
 	}

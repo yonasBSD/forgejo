@@ -89,30 +89,30 @@ func RepositoryInbox(ctx *context.APIContext) {
 	activity := web.GetForm(ctx).(*forgefed.Star)
 	log.Info("RepositoryInbox: activity:%v", activity)
 
-	// parse actorId (person)
-	actorId, err := forgefed.NewPersonId(activity.Actor.GetID().String(), string(activity.Source))
+	// parse actorID (person)
+	actorID, err := forgefed.NewPersonID(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
-	log.Info("RepositoryInbox: actorId validated: %v", actorId)
-	// parse objectId (repository)
-	objectId, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
+	log.Info("RepositoryInbox: actorId validated: %v", actorID)
+	// parse objectID (repository)
+	objectID, err := forgefed.NewRepositoryId(activity.Object.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
-	if objectId.Id != fmt.Sprint(repository.ID) {
+	if objectID.ID != fmt.Sprint(repository.ID) {
 		ctx.ServerError("Validate objectId", err)
 		return
 	}
-	log.Info("RepositoryInbox: objectId validated: %v", objectId)
+	log.Info("RepositoryInbox: objectId validated: %v", objectID)
 
-	actorAsLoginId := actorId.AsLoginName() // used as LoginName in newly created user
-	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginId)
+	actorAsLoginID := actorID.AsLoginName() // used as LoginName in newly created user
+	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginID)
 
 	// Check if user already exists
-	users, err := SearchUsersByLoginName(actorAsLoginId)
+	users, err := SearchUsersByLoginName(actorAsLoginID)
 	if err != nil {
 		ctx.ServerError("Searching for user failed", err)
 		return
@@ -122,7 +122,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			user, err = createUserFromAP(ctx, actorId)
+			user, err = createUserFromAP(ctx, actorID)
 			if err != nil {
 				ctx.ServerError("Creating user failed", err)
 				return
@@ -182,7 +182,7 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 }
 
 // ToDo: Maybe use externalLoginUser
-func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*user_model.User, error) {
+func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	var actionsUser = user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -190,7 +190,7 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 		return &user_model.User{}, err
 	}
 
-	response, err := client.Get(personId.AsUri())
+	response, err := client.Get(personID.AsURI())
 	if err != nil {
 		return &user_model.User{}, err
 	}
@@ -198,7 +198,7 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 
 	// validate response; ToDo: Should we widen the restrictions here?
 	if response.StatusCode != 200 {
-		err = fmt.Errorf("got non 200 status code for id: %v", personId.Id)
+		err = fmt.Errorf("got non 200 status code for id: %v", personID.ID)
 		return &user_model.User{}, err
 	}
 
@@ -216,9 +216,9 @@ func createUserFromAP(ctx *context.APIContext, personId forgefed.PersonId) (*use
 	}
 	log.Info("RepositoryInbox: got person by ap: %v", person)
 
-	email := fmt.Sprintf("%v@%v", uuid.New().String(), personId.Host)
-	loginName := personId.AsLoginName()
-	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personId.HostSuffix())
+	email := fmt.Sprintf("%v@%v", uuid.New().String(), personID.Host)
+	loginName := personID.AsLoginName()
+	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
 	log.Info("RepositoryInbox: person.Name: %v", person.Name)
 	fullName := person.Name.String()
 	if len(person.Name) == 0 {

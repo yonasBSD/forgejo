@@ -14,12 +14,11 @@ import (
 
 type Validateables interface {
 	validation.Validateable
-	ActorId | PersonId | RepositoryId
+	ActorID | PersonID | RepositoryID
 }
 
-type ActorId struct {
-	validation.Validateable
-	Id               string
+type ActorID struct {
+	ID               string
 	Source           string
 	Schema           string
 	Path             string
@@ -28,18 +27,17 @@ type ActorId struct {
 	UnvalidatedInput string
 }
 
-type PersonId struct {
-	ActorId
+type PersonID struct {
+	ActorID
 }
 
-type RepositoryId struct {
-	ActorId
+type RepositoryID struct {
+	ActorID
 }
 
-// newActorId receives already validated inputs
-func newActorId(validatedUri *url.URL, source string) (ActorId, error) {
-
-	pathWithActorID := strings.Split(validatedUri.Path, "/")
+// newActorID receives already validated inputs
+func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
+	pathWithActorID := strings.Split(validatedURI.Path, "/")
 	if containsEmptyString(pathWithActorID) {
 		pathWithActorID = removeEmptyStrings(pathWithActorID)
 	}
@@ -47,14 +45,14 @@ func newActorId(validatedUri *url.URL, source string) (ActorId, error) {
 	pathWithoutActorID := strings.Join(pathWithActorID[0:length-1], "/")
 	id := pathWithActorID[length-1]
 
-	result := ActorId{}
-	result.Id = id
+	result := ActorID{}
+	result.ID = id
 	result.Source = source
-	result.Schema = validatedUri.Scheme
-	result.Host = validatedUri.Hostname()
+	result.Schema = validatedURI.Scheme
+	result.Host = validatedURI.Hostname()
 	result.Path = pathWithoutActorID
-	result.Port = validatedUri.Port()
-	result.UnvalidatedInput = validatedUri.String()
+	result.Port = validatedURI.Port()
+	result.UnvalidatedInput = validatedURI.String()
 
 	if valid, err := IsValid(result); !valid {
 		return ActorId{}, err
@@ -63,114 +61,115 @@ func newActorId(validatedUri *url.URL, source string) (ActorId, error) {
 	return result, nil
 }
 
-func NewPersonId(uri string, source string) (PersonId, error) {
+func NewPersonID(uri string, source string) (PersonID, error) {
 	// TODO: remove after test
 	//if !validation.IsValidExternalURL(uri) {
 	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	//}
-	validatedUri, err := url.ParseRequestURI(uri)
+	validatedURI, err := url.ParseRequestURI(uri)
 	if err != nil {
-		return PersonId{}, err
+		return PersonID{}, err
 	}
 
-	actorId, err := newActorId(validatedUri, source)
+	actorID, err := newActorID(validatedURI, source)
 	if err != nil {
-		return PersonId{}, err
+		return PersonID{}, err
 	}
 
 	// validate Person specific path
-	personId := PersonId{actorId}
-	if valid, outcome := IsValid(personId); !valid {
-		return PersonId{}, outcome
+	personID := PersonID{actorID}
+	if valid, outcome := validation.IsValid(personID); !valid {
+		return PersonID{}, outcome
 	}
 
-	return personId, nil
+	return personID, nil
 }
 
-func NewRepositoryId(uri string, source string) (RepositoryId, error) {
+func NewRepositoryId(uri string, source string) (RepositoryID, error) {
+
 	if !validation.IsAPIURL(uri) {
-		return RepositoryId{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
+		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
 
-	validatedUri, err := url.ParseRequestURI(uri)
+	validatedURI, err := url.ParseRequestURI(uri)
 	if err != nil {
-		return RepositoryId{}, err
+		return RepositoryID{}, err
 	}
 
-	actorId, err := newActorId(validatedUri, source)
+	actorID, err := newActorID(validatedURI, source)
 	if err != nil {
-		return RepositoryId{}, err
+		return RepositoryID{}, err
 	}
 
 	// validate Person specific path
-	repoId := RepositoryId{actorId}
-	if valid, outcome := IsValid(repoId); !valid {
-		return RepositoryId{}, outcome
+	repoID := RepositoryID{actorID}
+	if valid, outcome := validation.IsValid(repoID); !valid {
+		return RepositoryID{}, outcome
 	}
 
-	return repoId, nil
+	return repoID, nil
 }
 
-func (id ActorId) AsUri() string {
-	result := ""
+func (id ActorID) AsURI() string {
+	var result string
 	if id.Port == "" {
-		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.Id)
+		result = fmt.Sprintf("%s://%s/%s/%s", id.Schema, id.Host, id.Path, id.ID)
 	} else {
-		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.Id)
+		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.ID)
 	}
 	return result
 }
 
-func (id PersonId) AsWebfinger() string {
-	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.Id), strings.ToLower(id.Host))
+func (id PersonID) AsWebfinger() string {
+	result := fmt.Sprintf("@%s@%s", strings.ToLower(id.ID), strings.ToLower(id.Host))
 	return result
 }
 
-func (id PersonId) AsLoginName() string {
-	result := fmt.Sprintf("%s%s", strings.ToLower(id.Id), id.HostSuffix())
+func (id PersonID) AsLoginName() string {
+	result := fmt.Sprintf("%s%s", strings.ToLower(id.ID), id.HostSuffix())
 	return result
 }
 
-func (id PersonId) HostSuffix() string {
+func (id PersonID) HostSuffix() string {
 	result := fmt.Sprintf("-%s", strings.ToLower(id.Host))
 	return result
 }
 
 // Validate collects error strings in a slice and returns this
-func (value ActorId) Validate() []string {
+func (id ActorID) Validate() []string {
 	var result = []string{}
-	result = append(result, validation.ValidateNotEmpty(value.Id, "userId")...)
-	result = append(result, validation.ValidateNotEmpty(value.Source, "source")...)
-	result = append(result, validation.ValidateNotEmpty(value.Schema, "schema")...)
-	result = append(result, validation.ValidateNotEmpty(value.Path, "path")...)
-	result = append(result, validation.ValidateNotEmpty(value.Host, "host")...)
-	result = append(result, validation.ValidateNotEmpty(value.UnvalidatedInput, "unvalidatedInput")...)
-	result = append(result, validation.ValidateOneOf(value.Source, []string{"forgejo", "gitea"})...)
+	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
+	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
+	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)
+	result = append(result, validation.ValidateNotEmpty(id.Host, "host")...)
+	result = append(result, validation.ValidateNotEmpty(id.UnvalidatedInput, "unvalidatedInput")...)
+	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
 
-	if value.UnvalidatedInput != value.AsUri() {
-		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", value.UnvalidatedInput, value.AsUri()))
+	if id.UnvalidatedInput != id.AsURI() {
+		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", id.UnvalidatedInput, id.AsURI()))
 	}
 
 	return result
 }
 
-func (value PersonId) Validate() []string {
-	var result = value.ActorId.Validate()
-	switch value.Source {
+func (id PersonID) Validate() []string {
+	var result = id.ActorID.Validate()
+	switch id.Source {
 	case "forgejo", "gitea":
-		if strings.ToLower(value.Path) != "api/v1/activitypub/user-id" && strings.ToLower(value.Path) != "api/activitypub/user-id" {
-			result = append(result, fmt.Sprintf("path: %q has to be a person specific api path", value.Path))
+		if strings.ToLower(id.Path) != "api/v1/activitypub/user-id" && strings.ToLower(id.Path) != "api/activitypub/user-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be a person specific api path", id.Path))
 		}
 	}
 	return result
 }
 
-func (value RepositoryId) Validate() []string {
-	var result = value.ActorId.Validate()
-	switch value.Source {
+func (id RepositoryID) Validate() []string {
+	var result = id.ActorID.Validate()
+	switch id.Source {
 	case "forgejo", "gitea":
-		if strings.ToLower(value.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(value.Path) != "api/activitypub/repository-id" {
-			result = append(result, fmt.Sprintf("path: %q has to be a repo specific api path", value.Path))
+		if strings.ToLower(id.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(id.Path) != "api/activitypub/repository-id" {
+			result = append(result, fmt.Sprintf("path: %q has to be a repo specific api path", id.Path))
 		}
 	}
 	return result

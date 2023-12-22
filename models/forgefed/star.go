@@ -42,12 +42,12 @@ func StarNew(id ap.ID, ob ap.ID) *Star { // ToDo: May be used later in creating 
 	return &o
 }
 
-func (a Star) MarshalJSON() ([]byte, error) {
+func (s Star) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0)
 	ap.JSONWrite(&b, '{')
 
-	ap.JSONWriteStringProp(&b, "source", string(a.Source))
-	if !ap.JSONWriteActivityValue(&b, a.Activity) {
+	ap.JSONWriteStringProp(&b, "source", string(s.Source))
+	if !ap.JSONWriteActivityValue(&b, s.Activity) {
 		return nil, nil
 	}
 	ap.JSONWrite(&b, '}')
