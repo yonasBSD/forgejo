@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+/*
 type ValidationFunctions interface {
 	Validate() []string
 	IsValid() (bool, error)
@@ -15,6 +16,11 @@ type ValidationFunctions interface {
 
 type Validateable struct {
 	ValidationFunctions
+}
+*/
+
+type Validateable interface {
+	Validate() []string
 }
 
 func IsValid(v any) (bool, error) {

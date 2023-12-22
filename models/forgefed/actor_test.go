@@ -99,7 +99,7 @@ func TestPersonIdValidation(t *testing.T) {
 	sut.Host = "an.other.host"
 	sut.Port = ""
 	sut.UnvalidatedInput = "https://an.other.host/path/1"
-	if _, err := sut.IsValid(); err.Error() != "path: \"path\" has to be an api path" {
+	if _, err := IsValid(sut); err.Error() != "path: \"path\" has to be a person specific api path" {
 		t.Errorf("validation error expected but was: %v\n", err)
 	}
 }

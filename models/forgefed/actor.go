@@ -12,6 +12,11 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
+type Validateables interface {
+	validation.Validateable
+	ActorId | PersonId | RepositoryId
+}
+
 type ActorId struct {
 	validation.Validateable
 	Id               string
@@ -51,7 +56,7 @@ func newActorId(validatedUri *url.URL, source string) (ActorId, error) {
 	result.Port = validatedUri.Port()
 	result.UnvalidatedInput = validatedUri.String()
 
-	if valid, err := result.IsValid(); !valid {
+	if valid, err := IsValid(result); !valid {
 		return ActorId{}, err
 	}
 
@@ -75,7 +80,7 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 
 	// validate Person specific path
 	personId := PersonId{actorId}
-	if valid, outcome := personId.IsValid(); !valid {
+	if valid, outcome := IsValid(personId); !valid {
 		return PersonId{}, outcome
 	}
 
@@ -100,7 +105,7 @@ func NewRepositoryId(uri string, source string) (RepositoryId, error) {
 
 	// validate Person specific path
 	repoId := RepositoryId{actorId}
-	if valid, outcome := repoId.IsValid(); !valid {
+	if valid, outcome := IsValid(repoId); !valid {
 		return RepositoryId{}, outcome
 	}
 
@@ -155,7 +160,7 @@ func (value PersonId) Validate() []string {
 	switch value.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(value.Path) != "api/v1/activitypub/user-id" && strings.ToLower(value.Path) != "api/activitypub/user-id" {
-			result = append(result, fmt.Sprintf("path: %q has to be an api path", value.Path))
+			result = append(result, fmt.Sprintf("path: %q has to be a person specific api path", value.Path))
 		}
 	}
 	return result
@@ -166,7 +171,7 @@ func (value RepositoryId) Validate() []string {
 	switch value.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(value.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(value.Path) != "api/activitypub/repository-id" {
-			result = append(result, fmt.Sprintf("path: %q has to be an api path", value.Path))
+			result = append(result, fmt.Sprintf("path: %q has to be a repo specific api path", value.Path))
 		}
 	}
 	return result
@@ -191,6 +196,15 @@ func removeEmptyStrings(ls []string) []string {
 	return rs
 }
 
+func IsValid[T Validateables](value T) (bool, error) {
+	if err := value.Validate(); len(err) > 0 {
+		errString := strings.Join(err, "\n")
+		return false, fmt.Errorf(errString)
+	}
+	return true, nil
+}
+
+/*
 func (a RepositoryId) IsValid() (bool, error) {
 	if err := a.Validate(); len(err) > 0 {
 		errString := strings.Join(err, "\n")
@@ -208,3 +222,4 @@ func (a PersonId) IsValid() (bool, error) {
 
 	return true, nil
 }
+*/
