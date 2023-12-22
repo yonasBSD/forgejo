@@ -1,4 +1,4 @@
-// Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2017, 2023 The Gitea & forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package utils
@@ -34,16 +34,11 @@ func IsExternalURL(rawURL string) bool {
 // Limit number of characters in a string (useful to prevent log injection attacks and overly long log outputs)
 // Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
 func CharLimiter(s string, limit int) string {
-
 	reader := strings.NewReader(s)
-
 	buff := make([]byte, limit)
-
 	n, _ := io.ReadAtLeast(reader, buff, limit)
-
 	if n != 0 {
 		return fmt.Sprint(string(buff), "...")
-	} else {
-		return s
 	}
+	return s
 }

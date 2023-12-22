@@ -1,5 +1,6 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
 // Copyright 2016 The Gitea Authors. All rights reserved.
+// Copyright 2023 The forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 // Package v1 Gitea API
@@ -900,7 +901,7 @@ func Routes() *web.Route {
 					m.Post("/inbox", // ToDo: Post or Put?
 						// TODO: bind ativities here
 						bind(forgefed.Star{}),
-						//activitypub.ReqHTTPSignature(),
+						// TODO: activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
