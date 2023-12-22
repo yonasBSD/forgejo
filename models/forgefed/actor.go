@@ -12,12 +12,11 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-type Validateable interface {
+type Validateable interface { // ToDo: Add this to validate helpers
 	Validate() []string
 }
 
 type ActorId struct {
-	Validateable
 	Id               string
 	Source           string
 	Schema           string
