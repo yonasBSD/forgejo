@@ -68,7 +68,7 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 	//if !validation.IsValidExternalURL(uri) {
 	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
 	//}
-	validatedUri, err := url.ParseRequestURI(uri) // ToDo: Why no err treatment at this place?
+	validatedUri, err := url.ParseRequestURI(uri)
 	if err != nil {
 		return PersonId{}, err
 	}
@@ -87,13 +87,12 @@ func NewPersonId(uri string, source string) (PersonId, error) {
 	return personId, nil
 }
 
-// TODO: tbd how an which parts can be generalized
 func NewRepositoryId(uri string, source string) (RepositoryId, error) {
 	if !validation.IsAPIURL(uri) {
 		return RepositoryId{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
 
-	validatedUri, err := url.ParseRequestURI(uri) // ToDo: Why no err treatment at this place?
+	validatedUri, err := url.ParseRequestURI(uri)
 	if err != nil {
 		return RepositoryId{}, err
 	}
