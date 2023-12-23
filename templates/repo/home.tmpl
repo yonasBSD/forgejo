@@ -17,7 +17,6 @@
 							{{end}}
 						</div>
 					{{end}}
-					{{template "repo/sub_menu" .}}
 					<div class="repo-button-row">
 						<div class="gt-df gt-ac gt-fw gt-gap-y-3">
 							{{template "repo/branch_dropdown" dict "root" . "ContainerClasses" "gt-mr-2"}}
@@ -79,6 +78,24 @@
 								</span>
 							{{end}}
 						</div>
+
+						{{if and (not .HideRepoInfo) (not .IsBlame)}}
+							<div class="repository-summary gt-df gt-ac gt-fw gt-gap-y-3">
+								<div class="segment sub-menu repository-menu">
+									{{if and (.Permission.CanRead $.UnitTypeCode) (not .IsEmptyRepo)}}
+										<a class="item muted {{if .PageIsBranches}}active{{end}}" href="{{.RepoLink}}/branches">
+											{{svg "octicon-git-branch"}} <b>{{ctx.Locale.PrettyNumber .BranchesCount}}</b> {{ctx.Locale.TrN .BranchesCount "repo.branch" "repo.branches"}}
+										</a>
+										{{if $.Permission.CanRead $.UnitTypeCode}}
+											<a class="item muted {{if .PageIsTagList}}active{{end}}" href="{{.RepoLink}}/tags">
+												{{svg "octicon-tag"}} <b>{{ctx.Locale.PrettyNumber .NumTags}}</b> {{ctx.Locale.TrN .NumTags "repo.tag" "repo.tags"}}
+											</a>
+										{{end}}
+									{{end}}
+								</div>
+							</div>
+						{{end}}
+
 						<div class="gt-df gt-ac">
 							<!-- Only show clone panel in repository home page -->
 							{{if eq $n 0}}
