@@ -1,0 +1,105 @@
+<div class="repo-content-right ui segment gt-mt-2 gt-mb-0">
+	<div class="ui floating jump" tabindex="0">
+		<span class="text muted flex-text-box">
+			<strong>{{ctx.Locale.Tr "repo.repo_about"}}</strong>
+		</span>
+	</div>
+	<div class="ui list">
+		<div id="repo-desc" class="gt-font-16">
+			{{$description := .Repository.DescriptionHTML $.Context}}
+			{{if $description}}<span class="description">{{$description | RenderCodeBlock}}</span>{{else if .IsRepositoryAdmin}}<span class="no-description text-italic">{{ctx.Locale.Tr "repo.no_desc"}}</span>{{end}}
+		</div>
+		{{if .Repository.Website}}
+			<div id="repo-website" class="gt-font-16 gt-mt-4">
+				{{svg "octicon-link"}}
+				<a class="link gt-ml-2" href="{{.Repository.Website}}">{{.Repository.Website}}</a>
+			</div>
+		{{end}}
+	</div>
+	<div class="divider"></div>
+	<div class="ui floating jump" tabindex="1">
+		<span class="text muted flex-text-box">
+			<strong>{{ctx.Locale.Tr "repo.template.topics"}}</strong>
+		</span>
+	</div>
+	<div class="ui list">
+		<div class="gt-df gt-ac gt-fw gt-gap-2" id="repo-topics">
+			{{range .Topics}}<a class="ui repo-topic large label topic gt-m-0" href="{{AppSubUrl}}/explore/repos?q={{.Name}}&topic=1">{{.Name}}</a>{{end}}
+			{{if and .Permission.IsAdmin (not .Repository.IsArchived)}}
+				<div>
+					<button id="manage_topic" class="btn interact-fg gt-font-12">{{ctx.Locale.Tr "repo.topic.manage_topics"}}</button>
+				</div>
+			{{end}}
+		</div>
+	</div>
+	{{if and .Permission.IsAdmin (not .Repository.IsArchived)}}
+		<div class="ui form gt-hidden gt-df gt-fc gt-mt-4" id="topic_edit">
+			<div class="field gt-f1 gt-mb-2">
+				<div class="ui fluid multiple search selection dropdown gt-fw" data-text-count-prompt="{{ctx.Locale.Tr "repo.topic.count_prompt"}}" data-text-format-prompt="{{ctx.Locale.Tr "repo.topic.format_prompt"}}">
+					<input type="hidden" name="topics" value="{{range $i, $v := .Topics}}{{.Name}}{{if Eval $i "+" 1 "<" (len $.Topics)}},{{end}}{{end}}">
+					{{range .Topics}}
+						{{/* keey the same layout as Fomantic UI generated labels */}}
+						<a class="ui label transition visible gt-cursor-default gt-dib" data-value="{{.Name}}">{{.Name}}{{svg "octicon-x" 16 "delete icon"}}</a>
+					{{end}}
+					<div class="text"></div>
+				</div>
+			</div>
+			<div>
+				<button class="ui basic button" id="cancel_topic_edit">{{ctx.Locale.Tr "cancel"}}</button>
+				<button class="ui primary button" id="save_topic" data-link="{{.RepoLink}}/topics">{{ctx.Locale.Tr "save"}}</button>
+			</div>
+		</div>
+	{{end}}
+
+	{{if and (.Permission.CanRead $.UnitTypeCode) (not .IsEmptyRepo) .LanguageStats}}
+		<div class="divider"></div>
+
+		<div class="ui floating jump" tabindex="1">
+			<span class="text muted flex-text-box">
+				<strong>{{ctx.Locale.Tr "repo.repo_languages"}}</strong>
+			</span>
+		</div>
+		<div class="ui list">
+			<div class="ui language-stats gt-mb-4">
+				{{range .LanguageStats}}
+					<div class="bar" style="width: {{.Percentage}}%; background-color: {{.Color}}" data-tooltip-placement="top" data-tooltip-content={{.Language}} data-tooltip-follow-cursor="horizontal"></div>
+				{{end}}
+			</div>
+
+			<div class="ui language-stats-details">
+				{{range .LanguageStats}}
+					<div class="item">
+						<i class="color-icon" style="background-color: {{.Color}}"></i>
+						<span class="gt-font-semibold">
+							{{if eq .Language "other"}}
+								{{ctx.Locale.Tr "repo.language_other"}}
+							{{else}}
+								{{.Language}}
+							{{end}}
+						</span>
+						{{.Percentage}}%
+					</div>
+				{{end}}
+			</div>
+		</div>
+	{{end}}
+
+	{{if .RepoSearchEnabled}}
+		<div class="divider"></div>
+		<div class="ui repo-search">
+			<form class="ui form ignore-dirty" action="{{.RepoLink}}/search" method="get">
+				<div class="field">
+					<div class="ui small action input{{if .CodeIndexerUnavailable}} disabled left icon{{end}}"{{if .CodeIndexerUnavailable}} data-tooltip-content="{{ctx.Locale.Tr "repo.search.code_search_unavailable"}}"{{end}}>
+						<input name="q" value="{{.Keyword}}"{{if .CodeIndexerUnavailable}} disabled{{end}} placeholder="{{ctx.Locale.Tr "repo.search.search_repo"}}">
+						{{if .CodeIndexerUnavailable}}
+							<i class="icon">{{svg "octicon-alert"}}</i>
+						{{end}}
+						<button class="ui small icon button"{{if .CodeIndexerUnavailable}} disabled{{end}} type="submit">
+							{{svg "octicon-search"}}
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	{{end}}
+</div>
