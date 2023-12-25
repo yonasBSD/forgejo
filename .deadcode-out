@@ -56,7 +56,16 @@ package "code.gitea.io/gitea/models/issues"
 	func IsErrUnknownDependencyType
 	func (ErrNewIssueInsert).Error
 	func IsErrIssueWasClosed
+	func GetIssueWithAttrsByID
+	func GetRepoIDsForIssuesOptions
+	func GetLabelIDsInOrgByNames
 	func ChangeMilestoneStatus
+	func GetMilestonesStatsByRepoCond
+	func IsErrErrPullRequestHeadRepoMissing
+	func (ErrPullRequestHeadRepoMissing).Error
+	func GetPullRequestsByHeadBranch
+	func (ErrIssueStopwatchAlreadyExist).Error
+	func (ErrIssueStopwatchAlreadyExist).Unwrap
 
 package "code.gitea.io/gitea/models/migrations/base"
 	func removeAllWithRetry
@@ -190,6 +199,7 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
+	func EmptyObjectID
 	func openRepositoryWithDefaultContext
 	func GetBranchCommitID
 	func IsTagExist
