@@ -214,6 +214,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
 - **Bug fixes:**
   - [Allow empty Conan files](https://codeberg.org/forgejo/forgejo/commit/d513628db90415a27e887c3cf349309b3ad44d55).
   - [Fix the incorrect route path in the user edit page. ](https://codeberg.org/forgejo/forgejo/commit/323135b97b219d7fb10557fb9d9156c6bef3ae62).
+  - [Add auth-required to config.json for Cargo sparse registry](https://codeberg.org/forgejo/forgejo/commit/a587d2526163153a4d992527fe6040d578beaa83).
   - [Rewrite the DiffFileTreeItem and fix misalignment ](https://codeberg.org/forgejo/forgejo/commit/48c4a7e75cf2717f00c9691ca26688aa4db0a17a).
   - [Do not "guess" the file encoding/BOM when using API to upload files](https://codeberg.org/forgejo/forgejo/commit/22eeede885327fca0328b7d5b153e7a6c4211ffa).
 - **Security:**
