@@ -222,13 +222,13 @@ func TestAPIForkDifferentName(t *testing.T) {
 
 	// Step 2: fork this repo with another name
 	forkName := "myfork"
-	req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/forks?token="+token, owner.Name, repo.Name),
-		&api.CreateForkOption{Name: &forkName})
+	req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/forks", owner.Name, repo.Name),
+		&api.CreateForkOption{Name: &forkName}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusAccepted)
 
 	// Step 3: make a PR onto the original repo, it should succeed
-	req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/pulls?state=all&token="+token, owner.Name, repo.Name),
-		&api.CreatePullRequestOption{Head: user.Name + ":master", Base: "master", Title: "hi"})
+	req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/pulls?state=all", owner.Name, repo.Name),
+		&api.CreatePullRequestOption{Head: user.Name + ":master", Base: "master", Title: "hi"}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusCreated)
 }
 
