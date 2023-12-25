@@ -99,7 +99,6 @@ func TestSignupEmailChangeForInactiveUser(t *testing.T) {
 	// Disable the captcha & enable email confirmation for registrations
 	defer test.MockVariableValue(&setting.Service.EnableCaptcha, false)()
 	defer test.MockVariableValue(&setting.Service.RegisterEmailConfirm, true)()
-	defer test.MockVariableValue(&setting.CacheService.Enabled, false)()
 
 	// Create user
 	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{
@@ -133,7 +132,6 @@ func TestSignupEmailChangeForActiveUser(t *testing.T) {
 	// Disable the captcha & enable email confirmation for registrations
 	defer test.MockVariableValue(&setting.Service.EnableCaptcha, false)()
 	defer test.MockVariableValue(&setting.Service.RegisterEmailConfirm, false)()
-	defer test.MockVariableValue(&setting.CacheService.Enabled, false)()
 
 	// Create user
 	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{

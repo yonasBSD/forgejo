@@ -696,7 +696,7 @@ func ActivatePost(ctx *context.Context) {
 			}
 			// Change the primary email
 			if setting.Service.RegisterEmailConfirm {
-				if setting.CacheService.Enabled && ctx.Cache.IsExist("MailResendLimit_"+ctx.Doer.LowerName) {
+				if false && ctx.Cache.IsExist("MailResendLimit_"+ctx.Doer.LowerName) {
 					ctx.Data["ResendLimited"] = true
 				} else {
 					ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
