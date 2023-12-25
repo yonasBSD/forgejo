@@ -125,15 +125,15 @@ func TestAPIAddIssueLabelsAutoDate(t *testing.T) {
 
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels?token=%s",
-		owner.Name, repo.Name, issueBefore.Index, token)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels",
+		owner.Name, repo.Name, issueBefore.Index)
 
 	t.Run("WithAutoDate", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
 			Labels: []int64{1},
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusOK)
 
 		issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issueBefore.ID})
@@ -149,7 +149,7 @@ func TestAPIAddIssueLabelsAutoDate(t *testing.T) {
 		req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
 			Labels:  []int64{2},
 			Updated: &updatedAt,
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusOK)
 
 		// dates will be converted into the same tz, in order to compare them

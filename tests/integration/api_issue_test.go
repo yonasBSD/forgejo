@@ -227,12 +227,12 @@ func TestAPIEditIssueAutoDate(t *testing.T) {
 		// User2 is not owner, but can update the 'public' issue with auto date
 		session := loginUser(t, "user2")
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
 
 		body := "new content!"
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Body: &body,
-		})
+		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusCreated)
 		var apiIssue api.Issue
 		DecodeJSON(t, resp, &apiIssue)
@@ -252,14 +252,14 @@ func TestAPIEditIssueAutoDate(t *testing.T) {
 		// User1 is admin, and so can update the issue without auto date
 		session := loginUser(t, "user1")
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
 
 		body := "new content, with updated time"
 		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Body:    &body,
 			Updated: &updatedAt,
-		})
+		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusCreated)
 		var apiIssue api.Issue
 		DecodeJSON(t, resp, &apiIssue)
@@ -278,14 +278,14 @@ func TestAPIEditIssueAutoDate(t *testing.T) {
 		// User2 is not owner nor admin, and so can't update the issue without auto date
 		session := loginUser(t, "user2")
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
 
 		body := "new content, with updated time"
 		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Body:    &body,
 			Updated: &updatedAt,
-		})
+		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusForbidden)
 		var apiError api.APIError
 		DecodeJSON(t, resp, &apiError)
@@ -305,7 +305,7 @@ func TestAPIEditIssueMilestoneAutoDate(t *testing.T) {
 
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d?token=%s", owner.Name, repoBefore.Name, issueBefore.Index, token)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
 
 	t.Run("WithAutoDate", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
@@ -313,7 +313,7 @@ func TestAPIEditIssueMilestoneAutoDate(t *testing.T) {
 		milestone := int64(1)
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Milestone: &milestone,
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusCreated)
 
 		// the execution of the API call supposedly lasted less than one minute
@@ -332,7 +332,7 @@ func TestAPIEditIssueMilestoneAutoDate(t *testing.T) {
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Milestone: &milestone,
 			Updated:   &updatedAt,
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusCreated)
 
 		// the milestone date should be set to 'updatedAt'
@@ -353,7 +353,7 @@ func TestAPIEditIssueMilestoneAutoDate(t *testing.T) {
 		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
 			Milestone: &milestone,
 			Updated:   &updatedAt,
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusCreated)
 
 		// the milestone date should not change

@@ -132,8 +132,8 @@ func TestAPICreateCommentAttachmentAutoDate(t *testing.T) {
 
 	session := loginUser(t, repoOwner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
-	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d/assets?token=%s",
-		repoOwner.Name, repo.Name, comment.ID, token)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d/assets",
+		repoOwner.Name, repo.Name, comment.ID)
 
 	filename := "image.png"
 	buff := generateImg()
@@ -151,7 +151,7 @@ func TestAPICreateCommentAttachmentAutoDate(t *testing.T) {
 		err = writer.Close()
 		assert.NoError(t, err)
 
-		req := NewRequestWithBody(t, "POST", urlStr, body)
+		req := NewRequestWithBody(t, "POST", urlStr, body).AddTokenAuth(token)
 		req.Header.Add("Content-Type", writer.FormDataContentType())
 		resp := session.MakeRequest(t, req, http.StatusCreated)
 		apiAttachment := new(api.Attachment)
@@ -171,7 +171,7 @@ func TestAPICreateCommentAttachmentAutoDate(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
-		urlStr += fmt.Sprintf("&updated_at=%s", updatedAt.UTC().Format(time.RFC3339))
+		urlStr += fmt.Sprintf("?updated_at=%s", updatedAt.UTC().Format(time.RFC3339))
 
 		// Setup multi-part
 		writer := multipart.NewWriter(body)
@@ -182,7 +182,7 @@ func TestAPICreateCommentAttachmentAutoDate(t *testing.T) {
 		err = writer.Close()
 		assert.NoError(t, err)
 
-		req := NewRequestWithBody(t, "POST", urlStr, body)
+		req := NewRequestWithBody(t, "POST", urlStr, body).AddTokenAuth(token)
 		req.Header.Add("Content-Type", writer.FormDataContentType())
 		resp := session.MakeRequest(t, req, http.StatusCreated)
 		apiAttachment := new(api.Attachment)
