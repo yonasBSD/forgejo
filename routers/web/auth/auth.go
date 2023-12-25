@@ -32,6 +32,7 @@ import (
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/mailer"
+	notify_service "code.gitea.io/gitea/services/notify"
 
 	"github.com/markbates/goth"
 )
@@ -600,6 +601,7 @@ func handleUserCreated(ctx *context.Context, u *user_model.User, gothUser *goth.
 		}
 	}
 
+	notify_service.NewUserSignUp(ctx, u)
 	// update external user information
 	if gothUser != nil {
 		if err := externalaccount.UpdateExternalUser(ctx, u, *gothUser); err != nil {
@@ -685,6 +687,36 @@ func Activate(ctx *context.Context) {
 func ActivatePost(ctx *context.Context) {
 	code := ctx.FormString("code")
 	if len(code) == 0 {
+		email := ctx.FormString("email")
+		if len(email) > 0 {
+			ctx.Data["IsActivatePage"] = true
+			if ctx.Doer == nil || ctx.Doer.IsActive {
+				ctx.NotFound("invalid user", nil)
+				return
+			}
+			// Change the primary email
+			if setting.Service.RegisterEmailConfirm {
+				if false && ctx.Cache.IsExist("MailResendLimit_"+ctx.Doer.LowerName) {
+					ctx.Data["ResendLimited"] = true
+				} else {
+					ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
+					err := user_model.ReplaceInactivePrimaryEmail(ctx, ctx.Doer.Email, &user_model.EmailAddress{
+						UID:   ctx.Doer.ID,
+						Email: email,
+					})
+					if err != nil {
+						ctx.Data["IsActivatePage"] = false
+						log.Error("Couldn't replace inactive primary email of user %d: %v", ctx.Doer.ID, err)
+						ctx.RenderWithErr(ctx.Tr("auth.change_unconfirmed_email_error", err), TplActivate, nil)
+						return
+					}
+					// Confirmation mail will be re-sent after the redirect to `/user/activate` below.
+				}
+			} else {
+				ctx.Data["ServiceNotEnabled"] = true
+			}
+		}
+
 		ctx.Redirect(setting.AppSubURL + "/user/activate")
 		return
 	}
