@@ -45,8 +45,11 @@ func ReadSession(ctx context.Context, key string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	} else if !exist {
-		session.Expiry = timeutil.TimeStampNow()
-		if err := db.Insert(ctx, &session); err != nil {
+		session = &Session{
+			Key:    key,
+			Expiry: timeutil.TimeStampNow(),
+		}
+		if err := db.Insert(ctx, session); err != nil {
 			return nil, err
 		}
 	}
