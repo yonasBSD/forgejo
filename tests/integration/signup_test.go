@@ -124,6 +124,15 @@ func TestSignupEmailChangeForInactiveUser(t *testing.T) {
 	// Verify that the email was updated
 	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserX"})
 	assert.Equal(t, "fine-email@example.com", user.Email)
+
+	// Try to change the email again
+	req = NewRequestWithValues(t, "POST", "/user/activate", map[string]string{
+		"email": "wrong-again@example.com",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	// Verify that the email was NOT updated
+	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserX"})
+	assert.Equal(t, "fine-email@example.com", user.Email)
 }
 
 func TestSignupEmailChangeForActiveUser(t *testing.T) {

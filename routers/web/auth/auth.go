@@ -647,13 +647,22 @@ func Activate(ctx *context.Context) {
 		}
 		// Resend confirmation email.
 		if setting.Service.RegisterEmailConfirm {
-			if ctx.Cache.IsExist("MailResendLimit_" + ctx.Doer.LowerName) {
+			var cacheKey string
+			if ctx.Cache.IsExist("MailChangedJustNow_" + ctx.Doer.LowerName) {
+				cacheKey = "MailChangedLimit_"
+				if err := ctx.Cache.Delete("MailChangedJustNow_" + ctx.Doer.LowerName); err != nil {
+					log.Error("Delete cache(MailChangedJustNow) fail: %v", err)
+				}
+			} else {
+				cacheKey = "MailResendLimit_"
+			}
+			if ctx.Cache.IsExist(cacheKey + ctx.Doer.LowerName) {
 				ctx.Data["ResendLimited"] = true
 			} else {
 				ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
 				mailer.SendActivateAccountMail(ctx.Locale, ctx.Doer)
 
-				if err := ctx.Cache.Put("MailResendLimit_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+				if err := ctx.Cache.Put(cacheKey+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
 					log.Error("Set cache(MailResendLimit) fail: %v", err)
 				}
 			}
@@ -696,7 +705,7 @@ func ActivatePost(ctx *context.Context) {
 			}
 			// Change the primary email
 			if setting.Service.RegisterEmailConfirm {
-				if false && ctx.Cache.IsExist("MailResendLimit_"+ctx.Doer.LowerName) {
+				if ctx.Cache.IsExist("MailChangeLimit_" + ctx.Doer.LowerName) {
 					ctx.Data["ResendLimited"] = true
 				} else {
 					ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
@@ -710,6 +719,13 @@ func ActivatePost(ctx *context.Context) {
 						ctx.RenderWithErr(ctx.Tr("auth.change_unconfirmed_email_error", err), TplActivate, nil)
 						return
 					}
+					if err := ctx.Cache.Put("MailChangeLimit_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+						log.Error("Set cache(MailChangeLimit) fail: %v", err)
+					}
+					if err := ctx.Cache.Put("MailChangedJustNow_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+						log.Error("Set cache(MailChangedJustNow) fail: %v", err)
+					}
+
 					// Confirmation mail will be re-sent after the redirect to `/user/activate` below.
 				}
 			} else {
