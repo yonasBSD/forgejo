@@ -23,7 +23,7 @@ jobs:
         with:
           user: root
           password: admin1234
-          image-version: 1.19
+          image-version: 1.21
           lxc-ip-prefix: 10.0.9
 
       - name: publish the forgejo release
