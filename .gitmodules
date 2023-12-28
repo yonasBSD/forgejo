@@ -1,3 +1,3 @@
 [submodule "options/locales"]
 	path = options/locales
-	url = git@codeberg.org:Werenter/forgejo-translation.git
+	url = https://codeberg.org/Werenter/forgejo-translation.git
