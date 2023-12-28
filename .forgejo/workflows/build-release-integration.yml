@@ -14,7 +14,7 @@ on:
 jobs:
   release-simulation:
     runs-on: self-hosted
-    if: secrets.ROLE != 'forgejo-integration' && secrets.ROLE != 'forgejo-experimental' && secrets.ROLE != 'forgejo-release'
+    if: vars.ROLE != 'forgejo-integration' && vars.ROLE != 'forgejo-experimental' && vars.ROLE != 'forgejo-release'
     steps:
       - uses: actions/checkout@v3
 
