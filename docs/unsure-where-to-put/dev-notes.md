@@ -90,7 +90,6 @@ curl -X 'POST' \
 {
   "id": "http://localhost:3000/api/v1/activitypub/user-id/1/outbox/12345",
   "type": "Star",
-  "source": "invalid",
   "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/13",
   "object": "http://localhost:3000/api/v1/activitypub/repository-id/1"
 }
