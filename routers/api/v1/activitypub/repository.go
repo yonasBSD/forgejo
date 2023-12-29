@@ -93,14 +93,14 @@ func RepositoryInbox(ctx *context.APIContext) {
 	nodeInfo, err := createNodeInfo(ctx, rawActorID)
 	log.Info("RepositoryInbox: nodeInfo validated: %v", nodeInfo)
 
-	actorID, err := forgefed.NewPersonID(actorUri, string(activity.Source))
+	actorID, err := forgefed.NewPersonID(actorUri, string(nodeInfo.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
 	log.Info("RepositoryInbox: actorId validated: %v", actorID)
 	// parse objectID (repository)
-	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(activity.Source))
+	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(nodeInfo.Source))
 	if err != nil {
 		ctx.ServerError("Validate objectId", err)
 		return
