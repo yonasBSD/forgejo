@@ -41,14 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: copy & sign binaries and container images from one owner to another
-        uses: ./.forgejo/actions/publish-release
+      - name: copy & sign
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/publish@v1
         with:
           forgejo: ${{ vars.FORGEJO }}
           from-owner: ${{ vars.FROM_OWNER }}
           to-owner: ${{ vars.TO_OWNER }}
           repo: ${{ vars.REPO }}
           ref-name: ${{ github.ref_name }}
+          release-notes: "See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#{ANCHOR}"
           doer: ${{ vars.DOER }}
           token: ${{ secrets.TOKEN }}
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
