@@ -8,7 +8,6 @@ package activitypub
 //			Then maybe save the node info in a DB table	- this could be useful for validation
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -23,7 +22,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
-	"code.gitea.io/gitea/routers/utils"
 	"github.com/google/uuid"
 
 	ap "github.com/go-ap/activitypub"
@@ -90,11 +88,12 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: activity:%v", activity)
 
 	// parse actorID (person)
-	// rawActorID, err := forgefed.NewActorID(activity.Actor.GetID().String())
+	actorUri := activity.Actor.GetID().String()
+	rawActorID, err := forgefed.NewActorID(actorUri)
+	nodeInfo, err := createNodeInfo(ctx, rawActorID)
+	log.Info("RepositoryInbox: nodeInfo validated: %v", nodeInfo)
 
-	// nodeInfo, err := createNodeInfo(rawActorID)
-
-	actorID, err := forgefed.NewPersonID(activity.Actor.GetID().String(), string(activity.Source))
+	actorID, err := forgefed.NewPersonID(actorUri, string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
@@ -184,6 +183,27 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 	return users, nil
 }
 
+func createNodeInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.NodeInfo, error) {
+	actionsUser := user_model.NewActionsUser()
+	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
+	if err != nil {
+		return forgefed.NodeInfo{}, err
+	}
+	body, err := client.GetBody(actorID.AsWellKnownNodeInfoUri())
+	if err != nil {
+		return forgefed.NodeInfo{}, err
+	}
+	nodeInfoWellKnown, err := forgefed.NewNodeInfoWellKnown(body)
+	if err != nil {
+		return forgefed.NodeInfo{}, err
+	}
+	body, err = client.GetBody(nodeInfoWellKnown.Href)
+	if err != nil {
+		return forgefed.NodeInfo{}, err
+	}
+	return forgefed.NewNodeInfo(body)
+}
+
 // ToDo: Maybe use externalLoginUser
 func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
@@ -193,24 +213,10 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 		return &user_model.User{}, err
 	}
 
-	response, err := client.Get(personID.AsURI())
+	body, err := client.GetBody(personID.AsURI())
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	log.Info("RepositoryInbox: got status: %v", response.Status)
-
-	// validate response; ToDo: Should we widen the restrictions here?
-	if response.StatusCode != 200 {
-		err = fmt.Errorf("got non 200 status code for id: %v", personID.ID)
-		return &user_model.User{}, err
-	}
-
-	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return &user_model.User{}, err
-	}
-	log.Info("RepositoryInbox: got body: %v", utils.CharLimiter(string(body), 120))
 
 	person := ap.Person{}
 	err = person.UnmarshalJSON(body)

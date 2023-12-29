@@ -67,18 +67,6 @@ func TestActorIdValidation(t *testing.T) {
 
 	sut = ActorID{}
 	sut.ID = "1"
-	sut.Source = "forgejox"
-	sut.Schema = "https"
-	sut.Path = "api/v1/activitypub/user-id"
-	sut.Host = "an.other.host"
-	sut.Port = ""
-	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
-	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [[forgejo gitea]]" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
-	}
-
-	sut = ActorID{}
-	sut.ID = "1"
 	sut.Source = "forgejo"
 	sut.Schema = "https"
 	sut.Path = "api/v1/activitypub/user-id"
@@ -101,6 +89,18 @@ func TestPersonIdValidation(t *testing.T) {
 	sut.UnvalidatedInput = "https://an.other.host/path/1"
 	if _, err := IsValid(sut); err.Error() != "path: \"path\" has to be a person specific api path" {
 		t.Errorf("validation error expected but was: %v\n", err)
+	}
+
+	sut = PersonID{}
+	sut.ID = "1"
+	sut.Source = "forgejox"
+	sut.Schema = "https"
+	sut.Path = "api/v1/activitypub/user-id"
+	sut.Host = "an.other.host"
+	sut.Port = ""
+	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
+	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [[forgejo gitea]]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 }
 

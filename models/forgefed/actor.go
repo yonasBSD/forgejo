@@ -12,11 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-type Validateables interface {
-	validation.Validateable
-	ActorID | PersonID | RepositoryID
-}
-
+// ----------------------------- ActorID --------------------------------------------
 type ActorID struct {
 	ID               string
 	Source           string
@@ -27,96 +23,18 @@ type ActorID struct {
 	UnvalidatedInput string
 }
 
-type PersonID struct {
-	ActorID
-}
-
-type RepositoryID struct {
-	ActorID
-}
-
-// newActorID receives already validated inputs
-func NewActorID(validatedURI *url.URL) (ActorID, error) {
-	pathWithActorID := strings.Split(validatedURI.Path, "/")
-	if containsEmptyString(pathWithActorID) {
-		pathWithActorID = removeEmptyStrings(pathWithActorID)
+// Factory function for ActorID. Created struct is asserted to be valid
+func NewActorID(uri string) (ActorID, error) {
+	result, err := newActorID(uri)
+	if err != nil {
+		return ActorID{}, err
 	}
-	length := len(pathWithActorID)
-	pathWithoutActorID := strings.Join(pathWithActorID[0:length-1], "/")
-	id := pathWithActorID[length-1]
-
-	result := ActorID{}
-	result.ID = id
-	result.Schema = validatedURI.Scheme
-	result.Host = validatedURI.Hostname()
-	result.Path = pathWithoutActorID
-	result.Port = validatedURI.Port()
-	result.UnvalidatedInput = validatedURI.String()
 
 	if valid, outcome := validation.IsValid(result); !valid {
 		return ActorID{}, outcome
 	}
 
 	return result, nil
-}
-
-func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
-	result, err := NewActorID(validatedURI)
-	if err != nil {
-		return ActorID{}, err
-	}
-
-	result.Source = source
-
-	return result, nil
-}
-
-func NewPersonID(uri, source string) (PersonID, error) {
-	// TODO: remove after test
-	//if !validation.IsValidExternalURL(uri) {
-	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
-	//}
-	validatedURI, err := url.ParseRequestURI(uri)
-	if err != nil {
-		return PersonID{}, err
-	}
-
-	actorID, err := newActorID(validatedURI, source)
-	if err != nil {
-		return PersonID{}, err
-	}
-
-	// validate Person specific path
-	personID := PersonID{actorID}
-	if valid, outcome := validation.IsValid(personID); !valid {
-		return PersonID{}, outcome
-	}
-
-	return personID, nil
-}
-
-func NewRepositoryID(uri, source string) (RepositoryID, error) {
-	if !validation.IsAPIURL(uri) {
-		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
-	}
-
-	validatedURI, err := url.ParseRequestURI(uri)
-	if err != nil {
-		return RepositoryID{}, err
-	}
-
-	actorID, err := newActorID(validatedURI, source)
-	if err != nil {
-		return RepositoryID{}, err
-	}
-
-	// validate Person specific path
-	repoID := RepositoryID{actorID}
-	if valid, outcome := validation.IsValid(repoID); !valid {
-		return RepositoryID{}, outcome
-	}
-
-	return repoID, nil
 }
 
 func (id ActorID) AsURI() string {
@@ -127,6 +45,47 @@ func (id ActorID) AsURI() string {
 		result = fmt.Sprintf("%s://%s:%s/%s/%s", id.Schema, id.Host, id.Port, id.Path, id.ID)
 	}
 	return result
+}
+
+func (id ActorID) Validate() []string {
+	var result []string
+	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
+	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
+	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)
+	result = append(result, validation.ValidateNotEmpty(id.Host, "host")...)
+	result = append(result, validation.ValidateNotEmpty(id.UnvalidatedInput, "unvalidatedInput")...)
+
+	if id.UnvalidatedInput != id.AsURI() {
+		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", id.UnvalidatedInput, id.AsURI()))
+	}
+
+	return result
+}
+
+// ----------------------------- PersonID --------------------------------------------
+type PersonID struct {
+	ActorID
+}
+
+// Factory function for PersonID. Created struct is asserted to be valid
+func NewPersonID(uri, source string) (PersonID, error) {
+	// TODO: remove after test
+	//if !validation.IsValidExternalURL(uri) {
+	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
+	//}
+	result, err := newActorID(uri)
+	if err != nil {
+		return PersonID{}, err
+	}
+	result.Source = source
+
+	// validate Person specific path
+	personID := PersonID{result}
+	if valid, outcome := validation.IsValid(personID); !valid {
+		return PersonID{}, outcome
+	}
+
+	return personID, nil
 }
 
 func (id PersonID) AsWebfinger() string {
@@ -144,26 +103,10 @@ func (id PersonID) HostSuffix() string {
 	return result
 }
 
-// Validate collects error strings in a slice and returns this
-func (id ActorID) Validate() []string {
-	var result []string
-	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
-	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
-	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)
-	result = append(result, validation.ValidateNotEmpty(id.Host, "host")...)
-	result = append(result, validation.ValidateNotEmpty(id.UnvalidatedInput, "unvalidatedInput")...)
-
-	if id.UnvalidatedInput != id.AsURI() {
-		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", id.UnvalidatedInput, id.AsURI()))
-	}
-
-	return result
-}
-
 func (id PersonID) Validate() []string {
 	result := id.ActorID.Validate()
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
-	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
+	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"})...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/user-id" && strings.ToLower(id.Path) != "api/activitypub/user-id" {
@@ -173,10 +116,36 @@ func (id PersonID) Validate() []string {
 	return result
 }
 
+// ----------------------------- RepositoryID --------------------------------------------
+
+type RepositoryID struct {
+	ActorID
+}
+
+// Factory function for RepositoryID. Created struct is asserted to be valid.
+func NewRepositoryID(uri, source string) (RepositoryID, error) {
+	if !validation.IsAPIURL(uri) {
+		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
+	}
+	result, err := newActorID(uri)
+	if err != nil {
+		return RepositoryID{}, err
+	}
+	result.Source = source
+
+	// validate Person specific path
+	repoID := RepositoryID{result}
+	if valid, outcome := validation.IsValid(repoID); !valid {
+		return RepositoryID{}, outcome
+	}
+
+	return repoID, nil
+}
+
 func (id RepositoryID) Validate() []string {
 	result := id.ActorID.Validate()
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
-	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
+	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"})...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(id.Path) != "api/activitypub/repository-id" {
@@ -203,4 +172,27 @@ func removeEmptyStrings(ls []string) []string {
 		}
 	}
 	return rs
+}
+
+func newActorID(uri string) (ActorID, error) {
+	validatedURI, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return ActorID{}, err
+	}
+	pathWithActorID := strings.Split(validatedURI.Path, "/")
+	if containsEmptyString(pathWithActorID) {
+		pathWithActorID = removeEmptyStrings(pathWithActorID)
+	}
+	length := len(pathWithActorID)
+	pathWithoutActorID := strings.Join(pathWithActorID[0:length-1], "/")
+	id := pathWithActorID[length-1]
+
+	result := ActorID{}
+	result.ID = id
+	result.Schema = validatedURI.Scheme
+	result.Host = validatedURI.Hostname()
+	result.Path = pathWithoutActorID
+	result.Port = validatedURI.Port()
+	result.UnvalidatedInput = validatedURI.String()
+	return result, nil
 }

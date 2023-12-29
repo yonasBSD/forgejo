@@ -28,7 +28,7 @@ func ValidateNotEmpty(value, fieldName string) []string {
 	return []string{}
 }
 
-func ValidateOneOf(value string, allowed []string) []string {
+func ValidateOneOf(value any, allowed []any) []string {
 	for _, allowedElem := range allowed {
 		if value == allowedElem {
 			return []string{}
