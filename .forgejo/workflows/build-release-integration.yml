@@ -13,8 +13,8 @@ on:
 
 jobs:
   release-simulation:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: self-hosted
-    if: vars.ROLE != 'forgejo-integration' && vars.ROLE != 'forgejo-experimental' && vars.ROLE != 'forgejo-release'
     steps:
       - uses: actions/checkout@v3
 
