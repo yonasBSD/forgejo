@@ -21,7 +21,7 @@ func IsValid(v Validateable) (bool, error) {
 	return true, nil
 }
 
-func ValidateNotEmpty(value string, fieldName string) []string {
+func ValidateNotEmpty(value, fieldName string) []string {
 	if value == "" {
 		return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
 	}

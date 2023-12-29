@@ -61,7 +61,7 @@ func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
 	return result, nil
 }
 
-func NewPersonID(uri string, source string) (PersonID, error) {
+func NewPersonID(uri, source string) (PersonID, error) {
 	// TODO: remove after test
 	//if !validation.IsValidExternalURL(uri) {
 	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
@@ -85,7 +85,7 @@ func NewPersonID(uri string, source string) (PersonID, error) {
 	return personID, nil
 }
 
-func NewRepositoryID(uri string, source string) (RepositoryID, error) {
+func NewRepositoryID(uri, source string) (RepositoryID, error) {
 	if !validation.IsAPIURL(uri) {
 		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
