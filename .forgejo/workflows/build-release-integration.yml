@@ -7,7 +7,6 @@ on:
       - Dockerfile
       - Dockerfile.rootless
       - docker/**
-      - .forgejo/actions/build-release/action.yml
       - .forgejo/workflows/build-release.yml
       - .forgejo/workflows/build-release-integration.yml
 
@@ -52,7 +51,6 @@ jobs:
           cp -a .forgejo/testdata/build-release/* $dir
           mkdir -p $dir/.forgejo/workflows
           cp .forgejo/workflows/build-release.yml $dir/.forgejo/workflows
-          cp -a .forgejo/actions $dir/.forgejo/actions
           cp $dir/Dockerfile $dir/Dockerfile.rootless
 
           forgejo-test-helper.sh push $dir $url root forgejo
