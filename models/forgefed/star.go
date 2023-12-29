@@ -8,23 +8,9 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-type (
-	SourceType string
-)
-
-type SourceTypes []SourceType
-
 const (
 	StarType ap.ActivityVocabularyType = "Star"
 )
-
-const (
-	ForgejoSourceType SourceType = "frogejo"
-)
-
-var KnownSourceTypes = SourceTypes{
-	ForgejoSourceType,
-}
 
 // Star activity data type
 // swagger:model

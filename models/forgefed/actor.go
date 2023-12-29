@@ -36,7 +36,7 @@ type RepositoryID struct {
 }
 
 // newActorID receives already validated inputs
-func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
+func NewActorID(validatedURI *url.URL) (ActorID, error) {
 	pathWithActorID := strings.Split(validatedURI.Path, "/")
 	if containsEmptyString(pathWithActorID) {
 		pathWithActorID = removeEmptyStrings(pathWithActorID)
@@ -47,16 +47,26 @@ func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
 
 	result := ActorID{}
 	result.ID = id
-	result.Source = source
 	result.Schema = validatedURI.Scheme
 	result.Host = validatedURI.Hostname()
 	result.Path = pathWithoutActorID
 	result.Port = validatedURI.Port()
 	result.UnvalidatedInput = validatedURI.String()
 
-	if valid, err := IsValid(result); !valid {
-		return ActorId{}, err
+	if valid, outcome := validation.IsValid(result); !valid {
+		return ActorID{}, outcome
 	}
+
+	return result, nil
+}
+
+func newActorID(validatedURI *url.URL, source string) (ActorID, error) {
+	result, err := NewActorID(validatedURI)
+	if err != nil {
+		return ActorID{}, err
+	}
+
+	result.Source = source
 
 	return result, nil
 }
@@ -138,12 +148,10 @@ func (id PersonID) HostSuffix() string {
 func (id ActorID) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(id.ID, "userId")...)
-	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
 	result = append(result, validation.ValidateNotEmpty(id.Schema, "schema")...)
 	result = append(result, validation.ValidateNotEmpty(id.Path, "path")...)
 	result = append(result, validation.ValidateNotEmpty(id.Host, "host")...)
 	result = append(result, validation.ValidateNotEmpty(id.UnvalidatedInput, "unvalidatedInput")...)
-	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
 
 	if id.UnvalidatedInput != id.AsURI() {
 		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", id.UnvalidatedInput, id.AsURI()))
@@ -154,6 +162,8 @@ func (id ActorID) Validate() []string {
 
 func (id PersonID) Validate() []string {
 	result := id.ActorID.Validate()
+	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
+	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/user-id" && strings.ToLower(id.Path) != "api/activitypub/user-id" {
@@ -165,6 +175,8 @@ func (id PersonID) Validate() []string {
 
 func (id RepositoryID) Validate() []string {
 	result := id.ActorID.Validate()
+	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
+	result = append(result, validation.ValidateOneOf(id.Source, []string{"forgejo", "gitea"})...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(id.Path) != "api/activitypub/repository-id" {
@@ -192,31 +204,3 @@ func removeEmptyStrings(ls []string) []string {
 	}
 	return rs
 }
-
-func IsValid[T Validateables](value T) (bool, error) {
-	if err := value.Validate(); len(err) > 0 {
-		errString := strings.Join(err, "\n")
-		return false, fmt.Errorf(errString)
-	}
-	return true, nil
-}
-
-/*
-func (a RepositoryId) IsValid() (bool, error) {
-	if err := a.Validate(); len(err) > 0 {
-		errString := strings.Join(err, "\n")
-		return false, fmt.Errorf(errString)
-	}
-
-	return true, nil
-}
-
-func (a PersonId) IsValid() (bool, error) {
-	if err := a.Validate(); len(err) > 0 {
-		errString := strings.Join(err, "\n")
-		return false, fmt.Errorf(errString)
-	}
-
-	return true, nil
-}
-*/

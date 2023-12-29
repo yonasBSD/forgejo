@@ -90,6 +90,10 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: activity:%v", activity)
 
 	// parse actorID (person)
+	// rawActorID, err := forgefed.NewActorID(activity.Actor.GetID().String())
+
+	// nodeInfo, err := createNodeInfo(rawActorID)
+
 	actorID, err := forgefed.NewPersonID(activity.Actor.GetID().String(), string(activity.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
