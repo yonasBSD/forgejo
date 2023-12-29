@@ -1,7 +1,7 @@
 // Copyright 2022, 2023 The Forgejo & Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-// TODO: Think about whether this should be moved to services/actifitypub (compare to exosy/services/activitypub/client.go)
+// TODO: Think about whether this should be moved to services/activitypub (compare to exosy/services/activitypub/client.go)
 package activitypub
 
 import (
@@ -11,11 +11,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/proxy"
 	"code.gitea.io/gitea/modules/setting"
 
@@ -133,4 +135,36 @@ func (c *Client) Get(to string) (resp *http.Response, err error) { // ToDo: we m
 	}
 	resp, err = c.client.Do(req)
 	return resp, err
+}
+
+// Create an http GET request with forgejo/gitea specific headers
+func (c *Client) GetBody(uri string) ([]byte, error) {
+	response, err := c.Get(uri)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("Client: got status: %v", response.Status)
+	if response.StatusCode != 200 {
+		err = fmt.Errorf("got non 200 status code for id: %v", uri)
+		return nil, err
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("Client: got body: %v", charLimiter(string(body), 120))
+	return body, nil
+}
+
+// Limit number of characters in a string (useful to prevent log injection attacks and overly long log outputs)
+// Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
+func charLimiter(s string, limit int) string {
+	reader := strings.NewReader(s)
+	buff := make([]byte, limit)
+	n, _ := io.ReadAtLeast(reader, buff, limit)
+	if n != 0 {
+		return fmt.Sprint(string(buff), "...")
+	}
+	return s
 }
