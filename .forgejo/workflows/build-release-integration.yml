@@ -62,6 +62,8 @@ jobs:
           # Push a tag to trigger the release workflow and wait for it to complete
           #
           forgejo-curl.sh api_json --data-raw '{"tag_name": "v'$version'", "target": "'$sha'"}' $url/api/v1/repos/root/forgejo/tags
+          forgejo-curl.sh api_json -X PUT --data-raw '{"data":"${{ steps.forgejo.outputs.token }}"}' $url/api/v1/repos/root/forgejo/actions/secrets/TOKEN
+          forgejo-curl.sh api_json -X PUT --data-raw '{"data":"root"}' $url/api/v1/repos/root/forgejo/actions/secrets/DOER
           LOOPS=180 forgejo-test-helper.sh wait_success "$url" root/forgejo $sha
 
           #
