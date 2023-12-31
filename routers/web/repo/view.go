@@ -681,7 +681,7 @@ func checkHomeCodeViewable(ctx *context.Context) {
 			}
 
 			unit, ok := unit_model.Units[repoUnit.Type]
-			if ok && (firstUnit == nil || !firstUnit.IsLessThan(unit)) {
+			if ok && (firstUnit == nil || !firstUnit.IsLessThan(unit)) && repoUnit.Type.CanBeDefault() {
 				firstUnit = &unit
 			}
 		}
