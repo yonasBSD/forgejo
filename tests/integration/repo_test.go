@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -40,6 +41,84 @@ func TestViewRepo(t *testing.T) {
 
 	session = loginUser(t, "user1")
 	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
+func TestViewRepoCloneMethods(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	getCloneMethods := func() []string {
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		cloneMoreMethodsHTML := htmlDoc.doc.Find("#more-btn div a")
+
+		var methods []string
+		cloneMoreMethodsHTML.Each(func(i int, s *goquery.Selection) {
+			a, _ := s.Attr("href")
+			methods = append(methods, a)
+		})
+
+		return methods
+	}
+
+	testCloneMethods := func(expected []string) {
+		methods := getCloneMethods()
+
+		assert.Len(t, methods, len(expected))
+		for i, expectedMethod := range expected {
+			assert.Contains(t, methods[i], expectedMethod)
+		}
+	}
+
+	t.Run("Defaults", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		testCloneMethods([]string{"/master.zip", "/master.tar.gz", "/master.bundle", "vscode://"})
+	})
+
+	t.Run("Customized methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{"vscodium-clone", "download-targz"})()
+
+		testCloneMethods([]string{"vscodium://", "/master.tar.gz"})
+	})
+
+	t.Run("Individual methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		singleMethodTest := func(method, expectedURLPart string) {
+			t.Run(method, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{method})()
+
+				testCloneMethods([]string{expectedURLPart})
+			})
+		}
+
+		cases := map[string]string{
+			"download-zip":    "/master.zip",
+			"download-targz":  "/master.tar.gz",
+			"download-bundle": "/master.bundle",
+			"vscode-clone":    "vscode://",
+			"vscodium-clone":  "vscodium://",
+		}
+		for method, expectedURLPart := range cases {
+			singleMethodTest(method, expectedURLPart)
+		}
+	})
+
+	t.Run("All methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, setting.RecognisedRepositoryDownloadOrCloneMethods)()
+
+		methods := getCloneMethods()
+		// We compare against
+		// len(setting.RecognisedRepositoryDownloadOrCloneMethods) - 1, because
+		// the test environment does not currently set things up for the cite
+		// method to display.
+		assert.GreaterOrEqual(t, len(methods), len(setting.RecognisedRepositoryDownloadOrCloneMethods)-1)
+	})
 }
 
 func testViewRepo(t *testing.T) {
@@ -198,6 +277,110 @@ func TestViewAsRepoAdmin(t *testing.T) {
 		assert.True(t, repoTopics.HasClass("repo-topic"))
 		assert.True(t, repoSummary.HasClass("repository-menu"))
 	}
+}
+
+func TestRepoHTMLTitle(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Repository homepage", func(t *testing.T) {
+		t.Run("Without description", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1")
+			assert.EqualValues(t, "user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("With description", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user27/repo49")
+			assert.EqualValues(t, "user27/repo49: A wonderful repository with more than just a README.md - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
+
+	t.Run("Code view", func(t *testing.T) {
+		t.Run("Directory", func(t *testing.T) {
+			t.Run("Default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting")
+				assert.EqualValues(t, "repo59/deep/nesting at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Non-default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting")
+				assert.EqualValues(t, "repo59/deep/nesting at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Commit", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/")
+				assert.EqualValues(t, "repo59/deep/nesting at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Tag", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/")
+				assert.EqualValues(t, "repo59/deep/nesting at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+		})
+		t.Run("File", func(t *testing.T) {
+			t.Run("Default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Non-default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Commit", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Tag", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+		})
+	})
+
+	t.Run("Issues view", func(t *testing.T) {
+		t.Run("Overview page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues")
+			assert.EqualValues(t, "Issues - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("View issue page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues/1")
+			assert.EqualValues(t, "#1 - issue1 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
+
+	t.Run("Pull requests view", func(t *testing.T) {
+		t.Run("Overview page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls")
+			assert.EqualValues(t, "Pull Requests - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("View pull request", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls/2")
+			assert.EqualValues(t, "#2 - issue2 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
 }
 
 // TestViewFileInRepo repo description, topics and summary should not be displayed when viewing a file
@@ -446,5 +629,75 @@ func TestGeneratedSourceLink(t *testing.T) {
 		dataURL, exists = doc.doc.Find(".ref-in-new-issue").Attr("data-url-param-body-link")
 		assert.True(t, exists)
 		assert.Equal(t, "/user27/repo49/src/commit/aacbdfe9e1c4b47f60abe81849045fa4e96f1d75/test/test.txt", dataURL)
+	})
+}
+
+func TestRenamedFileHistory(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Renamed file", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/license")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		renameNotice := htmlDoc.doc.Find(".ui.bottom.attached.header")
+		assert.Equal(t, 1, renameNotice.Length())
+		assert.Contains(t, renameNotice.Text(), "Renamed from licnse (Browse further)")
+
+		oldFileHistoryLink, ok := renameNotice.Find("a").Attr("href")
+		assert.True(t, ok)
+		assert.Equal(t, "/user2/repo59/commits/commit/80b83c5c8220c3aa3906e081f202a2a7563ec879/licnse", oldFileHistoryLink)
+	})
+
+	t.Run("Non renamed file", func(t *testing.T) {
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/README.md")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, ".ui.bottom.attached.header", false)
+	})
+}
+
+func TestCommitView(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Non-existent commit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("Too short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("Short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
+	})
+
+	t.Run("Full commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1bf27bc3bf70f64657658635e66094edbcb4d")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
 	})
 }

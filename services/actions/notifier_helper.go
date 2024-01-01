@@ -424,7 +424,11 @@ func handleSchedules(
 		return nil
 	}
 
-	p, err := json.Marshal(input.Payload)
+	payload := &api.SchedulePayload{
+		Action: api.HookScheduleCreated,
+	}
+
+	p, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -449,26 +453,14 @@ func handleSchedules(
 			OwnerID:       input.Repo.OwnerID,
 			WorkflowID:    dwf.EntryName,
 			TriggerUserID: input.Doer.ID,
-			Ref:           ref,
+			Ref:           input.Repo.DefaultBranch,
 			CommitSHA:     commit.ID.String(),
-			Event:         input.Event,
+			Event:         webhook_module.HookEventType(api.HookScheduleCreated),
 			EventPayload:  string(p),
 			Specs:         schedules,
 			Content:       dwf.Content,
 		}
 
-		// cancel running jobs if the event is push
-		if run.Event == webhook_module.HookEventPush {
-			// cancel running jobs of the same workflow
-			if err := actions_model.CancelRunningJobs(
-				ctx,
-				run.RepoID,
-				run.Ref,
-				run.WorkflowID,
-			); err != nil {
-				log.Error("CancelRunningJobs: %v", err)
-			}
-		}
 		crons = append(crons, run)
 	}
 

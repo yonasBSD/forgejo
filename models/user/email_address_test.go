@@ -4,6 +4,7 @@
 package user_test
 
 import (
+	"fmt"
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
@@ -166,6 +167,28 @@ func TestMakeEmailPrimary(t *testing.T) {
 	assert.Equal(t, "user101@example.com", user.Email)
 }
 
+func TestReplaceInactivePrimaryEmail(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	email := &user_model.EmailAddress{
+		Email: "user9999999@example.com",
+		UID:   9999999,
+	}
+	err := user_model.ReplaceInactivePrimaryEmail(db.DefaultContext, "user10@example.com", email)
+	assert.Error(t, err)
+	assert.True(t, user_model.IsErrUserNotExist(err))
+
+	email = &user_model.EmailAddress{
+		Email: "user201@example.com",
+		UID:   10,
+	}
+	err = user_model.ReplaceInactivePrimaryEmail(db.DefaultContext, "user10@example.com", email)
+	assert.NoError(t, err)
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
+	assert.Equal(t, "user201@example.com", user.Email)
+}
+
 func TestActivate(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
@@ -306,6 +329,40 @@ func TestEmailAddressValidate(t *testing.T) {
 	for kase, err := range kases {
 		t.Run(kase, func(t *testing.T) {
 			assert.EqualValues(t, err, user_model.ValidateEmail(kase))
+		})
+	}
+}
+
+func TestGetActivatedEmailAddresses(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	testCases := []struct {
+		UID      int64
+		expected []*user_model.ActivatedEmailAddress
+	}{
+		{
+			UID:      1,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 9, Email: "user1@example.com"}, {ID: 33, Email: "user1-2@example.com"}, {ID: 34, Email: "user1-3@example.com"}},
+		},
+		{
+			UID:      2,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 3, Email: "user2@example.com"}},
+		},
+		{
+			UID:      4,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 11, Email: "user4@example.com"}},
+		},
+		{
+			UID:      11,
+			expected: []*user_model.ActivatedEmailAddress{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("User %d", testCase.UID), func(t *testing.T) {
+			emails, err := user_model.GetActivatedEmailAddresses(db.DefaultContext, testCase.UID)
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.expected, emails)
 		})
 	}
 }
