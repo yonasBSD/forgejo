@@ -40,7 +40,7 @@ func getTestUsers(t *testing.T) []*user_model.User {
 
 func cleanUpUsers(ctx context.Context, users []*user_model.User) {
 	for _, u := range users {
-		db.DeleteByID(ctx, u.ID, new(user_model.User))
+		db.DeleteByID[user_model.User](ctx, u.ID)
 	}
 }
 
