@@ -37,6 +37,7 @@ package "code.gitea.io/gitea/models/db"
 	func TruncateBeans
 	func InTransaction
 	func DumpTables
+	func IsErrConditionRequired
 
 package "code.gitea.io/gitea/models/dbfs"
 	func (*file).renameTo
@@ -69,6 +70,11 @@ package "code.gitea.io/gitea/models/organization"
 	func (SearchMembersOptions).ToConds
 	func UsersInTeamsCount
 
+package "code.gitea.io/gitea/models/packages/alpine"
+	func GetBranches
+	func GetRepositories
+	func GetArchitectures
+
 package "code.gitea.io/gitea/models/perm/access"
 	func GetRepoWriters
 
@@ -90,6 +96,9 @@ package "code.gitea.io/gitea/models/repo"
 	func (ErrTopicNotExist).Unwrap
 	func GetTopicByName
 	func WatchRepoMode
+
+package "code.gitea.io/gitea/models/system"
+	func DeleteNotice
 
 package "code.gitea.io/gitea/models/unittest"
 	func CheckConsistencyFor
@@ -149,6 +158,8 @@ package "code.gitea.io/gitea/modules/auth/password/pwn"
 	func WithHTTP
 
 package "code.gitea.io/gitea/modules/base"
+	func BasicAuthEncode
+	func IsLetter
 	func SetupGiteaRoot
 
 package "code.gitea.io/gitea/modules/cache"
@@ -279,8 +290,8 @@ package "code.gitea.io/gitea/modules/testlogger"
 
 package "code.gitea.io/gitea/modules/timeutil"
 	func GetExecutableModTime
-	func MockSet
-	func MockUnset
+	func Set
+	func Unset
 
 package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Language
@@ -314,6 +325,9 @@ package "code.gitea.io/gitea/services/convert"
 
 package "code.gitea.io/gitea/services/forms"
 	func (*DeadlineForm).Validate
+
+package "code.gitea.io/gitea/services/packages/alpine"
+	func BuildAllRepositoryFiles
 
 package "code.gitea.io/gitea/services/pull"
 	func IsCommitStatusContextSuccess
