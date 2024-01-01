@@ -17,7 +17,7 @@ import (
 
 func TestAuthSession(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
-	defer timeutil.Unset()
+	defer timeutil.MockUnset()
 
 	key := "I-Like-Free-Software"
 
@@ -31,7 +31,7 @@ func TestAuthSession(t *testing.T) {
 		assert.NoError(t, err)
 
 		now := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-		timeutil.Set(now)
+		timeutil.MockSet(now)
 
 		// New session is created.
 		sess, err := auth.ReadSession(db.DefaultContext, key)
@@ -54,13 +54,13 @@ func TestAuthSession(t *testing.T) {
 	t.Run("Update session", func(t *testing.T) {
 		data := []byte{0xba, 0xdd, 0xc0, 0xde}
 		now := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
-		timeutil.Set(now)
+		timeutil.MockSet(now)
 
 		// Update session.
 		err := auth.UpdateSession(db.DefaultContext, key, data)
 		assert.NoError(t, err)
 
-		timeutil.Set(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC))
+		timeutil.MockSet(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC))
 
 		// Read updated session.
 		// Ensure data is updated and expiry is set from the update session call.
@@ -70,7 +70,7 @@ func TestAuthSession(t *testing.T) {
 		assert.EqualValues(t, data, sess.Data)
 		assert.EqualValues(t, now.Unix(), sess.Expiry)
 
-		timeutil.Set(now)
+		timeutil.MockSet(now)
 	})
 
 	t.Run("Delete session", func(t *testing.T) {
@@ -97,13 +97,13 @@ func TestAuthSession(t *testing.T) {
 	})
 
 	t.Run("Cleanup sessions", func(t *testing.T) {
-		timeutil.Set(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
+		timeutil.MockSet(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
 
 		_, err := auth.ReadSession(db.DefaultContext, "sess-1")
 		assert.NoError(t, err)
 
 		// One minute later.
-		timeutil.Set(time.Date(2023, 1, 1, 0, 1, 0, 0, time.UTC))
+		timeutil.MockSet(time.Date(2023, 1, 1, 0, 1, 0, 0, time.UTC))
 		_, err = auth.ReadSession(db.DefaultContext, "sess-2")
 		assert.NoError(t, err)
 
