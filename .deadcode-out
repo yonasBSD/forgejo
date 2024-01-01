@@ -17,15 +17,17 @@ package "code.gitea.io/gitea/models"
 	func GetYamlFixturesAccess
 
 package "code.gitea.io/gitea/models/actions"
+	func ListUploadedArtifactsByRunID
+	func CountRunJobs
 	func (ScheduleList).GetUserIDs
 	func (ScheduleList).GetRepoIDs
 	func (ScheduleList).LoadTriggerUser
 	func (ScheduleList).LoadRepos
+	func FindSchedules
+	func CountSpecs
 	func GetVariableByID
 
 package "code.gitea.io/gitea/models/asymkey"
-	func (ErrGPGKeyAccessDenied).Error
-	func (ErrGPGKeyAccessDenied).Unwrap
 	func HasDeployKey
 
 package "code.gitea.io/gitea/models/auth"
@@ -37,7 +39,8 @@ package "code.gitea.io/gitea/models/db"
 	func TruncateBeans
 	func InTransaction
 	func DumpTables
-	func IsErrConditionRequired
+	func Count
+	func FindAndCount
 
 package "code.gitea.io/gitea/models/dbfs"
 	func (*file).renameTo
@@ -49,6 +52,10 @@ package "code.gitea.io/gitea/models/forgejo/semver"
 	func SetVersionString
 	func SetVersion
 
+package "code.gitea.io/gitea/models/forgejo_migrations"
+	func GetCurrentDBVersion
+	func EnsureUpToDate
+
 package "code.gitea.io/gitea/models/git"
 	func RemoveDeletedBranchByID
 
@@ -56,7 +63,18 @@ package "code.gitea.io/gitea/models/issues"
 	func IsErrUnknownDependencyType
 	func (ErrNewIssueInsert).Error
 	func IsErrIssueWasClosed
+	func GetIssueWithAttrsByID
+	func GetRepoIDsForIssuesOptions
+	func GetLabelIDsInOrgByNames
 	func ChangeMilestoneStatus
+	func GetMilestonesByRepoIDs
+	func CountMilestonesByRepoCond
+	func GetMilestonesStatsByRepoCond
+	func IsErrErrPullRequestHeadRepoMissing
+	func (ErrPullRequestHeadRepoMissing).Error
+	func GetPullRequestsByHeadBranch
+	func (ErrIssueStopwatchAlreadyExist).Error
+	func (ErrIssueStopwatchAlreadyExist).Unwrap
 
 package "code.gitea.io/gitea/models/migrations/base"
 	func removeAllWithRetry
@@ -88,8 +106,6 @@ package "code.gitea.io/gitea/models/repo"
 	func (*releaseSorter).Less
 	func (*releaseSorter).Swap
 	func SortReleases
-	func FindReposMapByIDs
-	func RepositoryListOfMap
 	func (SearchOrderBy).String
 	func IsErrTopicNotExist
 	func (ErrTopicNotExist).Error
@@ -170,6 +186,7 @@ package "code.gitea.io/gitea/modules/cache"
 package "code.gitea.io/gitea/modules/charset"
 	func (*BreakWriter).Write
 	func ToUTF8
+	func EscapeControlString
 
 package "code.gitea.io/gitea/modules/context"
 	func GetPrivateContext
@@ -202,6 +219,7 @@ package "code.gitea.io/gitea/modules/gitgraph"
 
 package "code.gitea.io/gitea/modules/graceful"
 	func (*Manager).TerminateContext
+	func (*Manager).IsTerminate
 	func (*Manager).Err
 	func (*Manager).Value
 	func (*Manager).Deadline
@@ -298,9 +316,6 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Tr
 	func (MockLocale).TrN
 	func (MockLocale).PrettyNumber
-
-package "code.gitea.io/gitea/modules/util"
-	func UnsafeStringToBytes
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
