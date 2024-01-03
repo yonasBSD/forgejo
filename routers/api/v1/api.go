@@ -900,7 +900,7 @@ func Routes() *web.Route {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox", // ToDo: Post or Put?
 						// TODO: bind ativities here
-						bind(forgefed.Star{}),
+						bind(forgefed.ForgeLike{}),
 						// TODO: activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
 				}, context_service.RepositoryIDAssignmentAPI())

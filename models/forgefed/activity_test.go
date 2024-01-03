@@ -12,18 +12,18 @@ import (
 
 func Test_StarMarshalJSON(t *testing.T) {
 	type testPair struct {
-		item    Star
+		item    ForgeLike
 		want    []byte
 		wantErr error
 	}
 
 	tests := map[string]testPair{
 		"empty": {
-			item: Star{},
+			item: ForgeLike{},
 			want: nil,
 		},
 		"with ID": {
-			item: Star{
+			item: ForgeLike{
 				Activity: ap.Activity{
 					Actor:  ap.IRI("https://repo.prod.meissa.de/api/v1/activitypub/user-id/1"),
 					Type:   "Like",
@@ -51,17 +51,17 @@ func Test_StarMarshalJSON(t *testing.T) {
 func Test_StarUnmarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    []byte
-		want    *Star
+		want    *ForgeLike
 		wantErr error
 	}
 
 	tests := map[string]testPair{
 		"with ID": {
-			item: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
-			want: &Star{
+			item: []byte(`{"type":"Like","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
+			want: &ForgeLike{
 				Activity: ap.Activity{
 					Actor:  ap.IRI("https://repo.prod.meissa.de/api/activitypub/user-id/1"),
-					Type:   "Star",
+					Type:   "Like",
 					Object: ap.IRI("https://codeberg.org/api/activitypub/repository-id/1"),
 				},
 			},
@@ -70,7 +70,7 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := new(Star)
+			got := new(ForgeLike)
 			err := got.UnmarshalJSON(tt.item)
 			if (err != nil || tt.wantErr != nil) && tt.wantErr.Error() != err.Error() {
 				t.Errorf("UnmarshalJSON() error = \"%v\", wantErr \"%v\"", err, tt.wantErr)

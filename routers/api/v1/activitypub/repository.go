@@ -74,7 +74,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// - name: body
 	//   in: body
 	//   schema:
-	//     "$ref": "#/definitions/Star"
+	//     "$ref": "#/definitions/ForgeLike"
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
@@ -84,7 +84,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	repository := ctx.Repo.Repository
 	log.Info("RepositoryInbox: repo: %v", repository)
 
-	activity := web.GetForm(ctx).(*forgefed.Star)
+	activity := web.GetForm(ctx).(*forgefed.ForgeLike)
 	log.Info("RepositoryInbox: activity:%v", activity)
 
 	// parse actorID (person)

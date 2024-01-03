@@ -16,7 +16,7 @@ import (
 // swagger:response parameterBodies
 type swaggerParameterBodies struct {
 	// in:body
-	Star ffed.Star
+	Star ffed.ForgeLike
 
 	// in:body
 	AddCollaboratorOption api.AddCollaboratorOption
