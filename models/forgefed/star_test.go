@@ -24,14 +24,13 @@ func Test_StarMarshalJSON(t *testing.T) {
 		},
 		"with ID": {
 			item: Star{
-				Source: "forgejo",
 				Activity: ap.Activity{
 					Actor:  ap.IRI("https://repo.prod.meissa.de/api/v1/activitypub/user-id/1"),
-					Type:   "Star",
+					Type:   "Like",
 					Object: ap.IRI("https://codeberg.org/api/v1/activitypub/repository-id/1"),
 				},
 			},
-			want: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/v1/activitypub/user-id/1","object":"https://codeberg.org/api/v1/activitypub/repository-id/1"}`),
+			want: []byte(`{"type":"Like","actor":"https://repo.prod.meissa.de/api/v1/activitypub/user-id/1","object":"https://codeberg.org/api/v1/activitypub/repository-id/1"}`),
 		},
 	}
 
@@ -60,7 +59,6 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 		"with ID": {
 			item: []byte(`{"source":"forgejo","type":"Star","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
 			want: &Star{
-				Source: "forgejo",
 				Activity: ap.Activity{
 					Actor:  ap.IRI("https://repo.prod.meissa.de/api/activitypub/user-id/1"),
 					Type:   "Star",

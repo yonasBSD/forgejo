@@ -4,12 +4,8 @@
 package forgefed
 
 import (
+	"code.gitea.io/gitea/modules/validation"
 	ap "github.com/go-ap/activitypub"
-	"github.com/valyala/fastjson"
-)
-
-const (
-	StarType ap.ActivityVocabularyType = "Star"
 )
 
 // Star activity data type
@@ -17,46 +13,19 @@ const (
 type Star struct {
 	// swagger:ignore
 	ap.Activity
-	// Source identifies the system which generated this activity. Exactly one value has to be specified.
-	Source SourceType `jsonld:"source,omitempty"`
 }
 
-// StarNew initializes a Star type activity
-// ToDo: May be used later in creating signed activities
-func StarNew(id, ob ap.ID) *Star {
-	a := ap.ActivityNew(id, StarType, ob)
-	o := Star{Activity: *a, Source: ForgejoSourceType}
-	return &o
-}
-
-func (s Star) MarshalJSON() ([]byte, error) {
-	b := make([]byte, 0)
-	ap.JSONWrite(&b, '{')
-
-	ap.JSONWriteStringProp(&b, "source", string(s.Source))
-	if !ap.JSONWriteActivityValue(&b, s.Activity) {
-		return nil, nil
-	}
-	ap.JSONWrite(&b, '}')
-	return b, nil
-}
-
-func JSONLoadStar(val *fastjson.Value, s *Star) error {
-	if err := ap.OnActivity(&s.Activity, func(a *ap.Activity) error {
-		return ap.JSONLoadActivity(val, a)
-	}); err != nil {
-		return err
-	}
-
-	s.Source = SourceType(ap.JSONGetString(val, "source"))
-	return nil
+func (a Star) MarshalJSON() ([]byte, error) {
+	return a.Activity.MarshalJSON()
 }
 
 func (s *Star) UnmarshalJSON(data []byte) error {
-	p := fastjson.Parser{}
-	val, err := p.ParseBytes(data)
-	if err != nil {
-		return err
-	}
-	return JSONLoadStar(val, s)
+	return s.UnmarshalJSON(data)
+}
+
+func (s Star) Validate() []string {
+	var result []string
+	result = append(result, validation.ValidateNotEmpty(string(s.Type), "type")...)
+
+	return result
 }
