@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"code.gitea.io/gitea/modules/validation"
 	ap "github.com/go-ap/activitypub"
 )
 
@@ -80,5 +81,39 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 				t.Errorf("UnmarshalJSON() got = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestAcivityValidation(t *testing.T) {
+	sut := new(ForgeLike)
+	sut.UnmarshalJSON([]byte(`{"type":"Like",
+	"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "2014-12-31T23:00:00-08:00"}`))
+	if res, _ := validation.IsValid(sut); !res {
+		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
+	}
+
+	sut.UnmarshalJSON([]byte(`{"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "2014-12-31T23:00:00-08:00"}`))
+	if sut.Validate()[0] != "Field type may not be empty" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut.UnmarshalJSON([]byte(`{"type":"bad-type",
+		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "2014-12-31T23:00:00-08:00"}`))
+	if sut.Validate()[0] != "Value bad-type is not contained in allowed values [[Like]]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut.UnmarshalJSON([]byte(`{"type":"Like",
+		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "not a date"}`))
+	if sut.Validate()[0] != "StartTime was invalid." {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 }

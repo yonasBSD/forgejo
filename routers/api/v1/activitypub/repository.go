@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
 	"github.com/google/uuid"
 
@@ -85,7 +86,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: repo: %v", repository)
 
 	activity := web.GetForm(ctx).(*forgefed.ForgeLike)
-	log.Info("RepositoryInbox: activity:%v", activity)
+	if res, err := validation.IsValid(activity); !res {
+		ctx.ServerError("Validate activity", err)
+		return
+	}
+	log.Info("RepositoryInbox: activity validated:%v", activity)
 
 	// parse actorID (person)
 	actorUri := activity.Actor.GetID().String()

@@ -26,9 +26,13 @@ func (s *ForgeLike) UnmarshalJSON(data []byte) error {
 func (s ForgeLike) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(string(s.Type), "type")...)
+	result = append(result, validation.ValidateOneOf(string(s.Type), []any{"Like"})...)
 	result = append(result, validation.ValidateNotEmpty(s.Actor.GetID().String(), "actor")...)
 	result = append(result, validation.ValidateNotEmpty(s.Object.GetID().String(), "object")...)
 	result = append(result, validation.ValidateNotEmpty(s.StartTime.String(), "startTime")...)
+	if s.StartTime.IsZero() {
+		result = append(result, "StartTime was invalid.")
+	}
 
 	return result
 }
