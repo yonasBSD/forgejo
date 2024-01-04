@@ -89,9 +89,10 @@ curl -X 'POST' \
 ```json
 {
   "id": "http://localhost:3000/api/v1/activitypub/user-id/1/outbox/12345",
-  "type": "Star",
+  "type": "Like",
   "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/13",
-  "object": "http://localhost:3000/api/v1/activitypub/repository-id/1"
+  "object": "http://localhost:3000/api/v1/activitypub/repository-id/2",
+  "startTime": "2014-12-31T23:00:00-08:00"
 }
 ```
 

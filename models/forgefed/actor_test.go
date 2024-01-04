@@ -4,7 +4,11 @@
 package forgefed
 
 import (
+	"reflect"
+	"strings"
 	"testing"
+
+	ap "github.com/go-ap/activitypub"
 
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
@@ -153,5 +157,66 @@ func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
 	_, err = NewPersonID("https://an.other.host/api/v1/activitypub/user-id/1", "forgejo")
 	if err != nil {
 		t.Errorf("this uri should be valid but was: %v", err)
+	}
+}
+
+func Test_PersonMarshalJSON(t *testing.T) {
+	sut := ForgePerson{}
+	sut.Type = "Person"
+	sut.PreferredUsername = ap.NaturalLanguageValuesNew()
+	sut.PreferredUsername.Set("en", ap.Content("MaxMuster"))
+	result, _ := sut.MarshalJSON()
+	if "{\"type\":\"Person\",\"preferredUsername\":\"MaxMuster\"}" != string(result) {
+		t.Errorf("MarshalJSON() was = %q", result)
+	}
+}
+
+func Test_PersonUnmarshalJSON(t *testing.T) {
+	expected := &ForgePerson{
+		Actor: ap.Actor{
+			Type: "Person",
+			PreferredUsername: ap.NaturalLanguageValues{
+				ap.LangRefValue{Ref: "en", Value: []byte("MaxMuster")},
+			},
+		}}
+	sut := new(ForgePerson)
+	err := sut.UnmarshalJSON([]byte(`{"type":"Person","preferredUsername":"MaxMuster"}`))
+	if err != nil {
+		t.Errorf("UnmarshalJSON() unexpected error: %v", err)
+	}
+	x, _ := expected.MarshalJSON()
+	y, _ := sut.MarshalJSON()
+	if !reflect.DeepEqual(x, y) {
+		t.Errorf("UnmarshalJSON() expected: %q got: %q", x, y)
+	}
+
+	expectedStr := strings.ReplaceAll(strings.ReplaceAll(`{
+		"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10",
+		"type":"Person",
+		"icon":{"type":"Image","mediaType":"image/png","url":"https://federated-repo.prod.meissa.de/avatar/fa7f9c4af2a64f41b1bef292bf872614"},
+		"url":"https://federated-repo.prod.meissa.de/stargoose9",
+		"inbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10/inbox",
+		"outbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10/outbox",
+		"preferredUsername":"stargoose9",
+		"publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10#main-key",
+			"owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10",
+			"publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBoj...XAgMBAAE=\n-----END PUBLIC KEY-----\n"}}`,
+		"\n", ""),
+		"\t", "")
+	err = sut.UnmarshalJSON([]byte(expectedStr))
+	if err != nil {
+		t.Errorf("UnmarshalJSON() unexpected error: %v", err)
+	}
+	result, _ := sut.MarshalJSON()
+	if expectedStr != string(result) {
+		t.Errorf("UnmarshalJSON() expected: %q got: %q", expectedStr, result)
+	}
+}
+
+func TestForgePersonValidation(t *testing.T) {
+	sut := new(ForgePerson)
+	sut.UnmarshalJSON([]byte(`{"type":"Person","preferredUsername":"MaxMuster"}`))
+	if res, _ := validation.IsValid(sut); !res {
+		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
 	}
 }

@@ -223,14 +223,15 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 		return &user_model.User{}, err
 	}
 
-	person := ap.Person{}
+	person := forgefed.ForgePerson{}
 	err = person.UnmarshalJSON(body)
 	if err != nil {
 		return &user_model.User{}, err
 	}
-	log.Info("RepositoryInbox: got person by ap: %v", person)
-
-	// TODO: we should validate the person object here!
+	if res, err := validation.IsValid(person); !res {
+		return &user_model.User{}, err
+	}
+	log.Info("RepositoryInbox: validated person: %q", person)
 
 	email := fmt.Sprintf("%v@%v", uuid.New().String(), personID.Host)
 	loginName := personID.AsLoginName()

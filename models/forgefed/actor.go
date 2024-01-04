@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strings"
 
+	ap "github.com/go-ap/activitypub"
+
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 )
@@ -195,4 +197,30 @@ func newActorID(uri string) (ActorID, error) {
 	result.Port = validatedURI.Port()
 	result.UnvalidatedInput = validatedURI.String()
 	return result, nil
+}
+
+// ----------------------------- ForgePerson -------------------------------------
+
+// ForgePerson activity data type
+// swagger:model
+type ForgePerson struct {
+	// swagger:ignore
+	ap.Actor
+}
+
+func (s ForgePerson) MarshalJSON() ([]byte, error) {
+	return s.Actor.MarshalJSON()
+}
+
+func (s *ForgePerson) UnmarshalJSON(data []byte) error {
+	return s.Actor.UnmarshalJSON(data)
+}
+
+func (s ForgePerson) Validate() []string {
+	var result []string
+	result = append(result, validation.ValidateNotEmpty(string(s.Type), "type")...)
+	result = append(result, validation.ValidateOneOf(string(s.Type), []any{string(ap.PersonType)})...)
+	result = append(result, validation.ValidateNotEmpty(s.PreferredUsername.String(), "preferredUsername")...)
+
+	return result
 }
