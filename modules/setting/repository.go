@@ -112,6 +112,9 @@ var (
 			Wiki              []string
 			DefaultTrustModel string
 		} `ini:"repository.signing"`
+
+		SettableFlags []string
+		EnableFlags   bool
 	}{
 		DetectedCharsetsOrder: []string{
 			"UTF-8",
@@ -267,6 +270,8 @@ var (
 			Wiki:              []string{"never"},
 			DefaultTrustModel: "collaborator",
 		},
+
+		EnableFlags: false,
 	}
 	RepoRootPath string
 	ScriptType   = "bash"
@@ -369,4 +374,6 @@ func loadRepositoryFrom(rootCfg ConfigProvider) {
 			log.Error("Unrecognised repository download or clone method: %s", method)
 		}
 	}
+
+	Repository.EnableFlags = sec.Key("ENABLE_FLAGS").MustBool()
 }
