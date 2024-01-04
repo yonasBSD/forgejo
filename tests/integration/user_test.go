@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
@@ -285,6 +287,48 @@ func TestListStopWatches(t *testing.T) {
 		assert.EqualValues(t, repo.OwnerName, apiWatches[0].RepoOwnerName)
 		assert.Greater(t, apiWatches[0].Seconds, int64(0))
 	}
+}
+
+func TestUserDisableTwoFactor(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	twofactor := unittest.AssertExistsAndLoadBean(t, &auth_model.TwoFactor{ID: 1})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: twofactor.UID})
+
+	// Temporarily move twofactor out of the way in order to login
+	_, err := db.GetEngine(db.DefaultContext).ID(twofactor.ID).Update(&auth_model.TwoFactor{UID: twofactor.UID + 1})
+	assert.NoError(t, err)
+
+	session := loginUser(t, user.LowerName)
+
+	// Restore twofactor
+	_, err = db.GetEngine(db.DefaultContext).ID(twofactor.ID).Update(&auth_model.TwoFactor{UID: twofactor.UID})
+	assert.NoError(t, err)
+
+	testCase := func(t *testing.T, password, flashValue string) {
+		t.Helper()
+		req := NewRequestWithValues(t, "POST", "/user/settings/security/two_factor/disable", map[string]string{
+			"_csrf":    GetCSRF(t, session, "/user/settings/security"),
+			"password": password,
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.Contains(t, flashCookie.Value, flashValue)
+	}
+
+	t.Run("No password", func(t *testing.T) {
+		testCase(t, "", "error%3DYour%2Bpassword%2Bdoes%2Bnot%2Bmatch%2Bthe%2Bpassword%2Bthat%2Bwas%2Bused%2Bto%2Bcreate%2Bthe%2Baccount.")
+	})
+
+	t.Run("Incorrect password", func(t *testing.T) {
+		testCase(t, userPassword+".", "error%3DYour%2Bpassword%2Bdoes%2Bnot%2Bmatch%2Bthe%2Bpassword%2Bthat%2Bwas%2Bused%2Bto%2Bcreate%2Bthe%2Baccount.")
+	})
+
+	t.Run("Correct password", func(t *testing.T) {
+		testCase(t, userPassword, "success%3DTwo-factor%2Bauthentication%2Bhas%2Bbeen%2Bdisabled.")
+	})
 }
 
 func TestUserLocationMapLink(t *testing.T) {

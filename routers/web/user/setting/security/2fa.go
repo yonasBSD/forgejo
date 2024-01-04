@@ -58,6 +58,12 @@ func DisableTwoFactor(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("settings")
 	ctx.Data["PageIsSettingsSecurity"] = true
 
+	if !ctx.Doer.ValidatePassword(ctx.FormString("password")) {
+		ctx.Flash.Error(ctx.Tr("auth.invalid_password"))
+		ctx.Redirect(setting.AppSubURL + "/user/settings/security")
+		return
+	}
+
 	t, err := auth.GetTwoFactorByUID(ctx, ctx.Doer.ID)
 	if err != nil {
 		if auth.IsErrTwoFactorNotEnrolled(err) {
