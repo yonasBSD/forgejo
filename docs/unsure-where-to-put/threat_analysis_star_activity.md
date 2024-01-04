@@ -13,6 +13,12 @@ sequenceDiagram
     fs ->> os: post /api/activitypub/repository-id/1/inbox {Start-Activity}
     activate os
     os ->> os: validate request inputs
+    activate os
+    os ->> fs: get .well-known/nodeinfo
+    os ->> NodeInfoWellKnown: create & validate
+    os ->> fs: get api/v1/nodeinfo
+    os ->> NodeInfo: create & validate
+    deactivate os
     activate repository
     os ->> repository: search for reop with object-id
     deactivate repository
@@ -21,6 +27,7 @@ sequenceDiagram
     user ->> user: create if not found
     activate user
     user ->> fs: get /api/activitypub/user-id/{id from actor}
+    user ->> user: validate response
     user ->> user: create user from response
     deactivate user
     deactivate user
@@ -32,24 +39,31 @@ sequenceDiagram
 ### Data transfered
 
 ```
-# edn notation
-{@context [
-    "as":    "https://www.w3.org/ns/activitystreams#",
-    "forge": "https://forgefed.org/ns#",],
-  ::as/id "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12345",
-  ::as/type "Star",
-  ::forge/source "forgejo",
-  ::as/actor "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
-  ::as/object "https://codeberg.org/api/v1/activitypub/repository-id/12"
-}
+# NodeInfoWellKnown
+{"links":[
+  {"href":"https://federated-repo.prod.meissa.de/api/v1/nodeinfo",
+  "rel":"http://nodeinfo.diaspora.software/ns/schema/2.1"}]}
 
-# json notation
+# NodeInfo
+{"version":"2.1",
+ "software":{"name":"gitea",
+ ...}}
+
+# LikeActivity
 {"id": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12345",
-  "type": "Star",
-  "source": "forgejo",
+  "type": "Like",
   "actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",
   "object": "https://codeberg.org/api/v1/activitypub/repository-id/12"
+  "startTime": "2014-12-31T23:00:00-08:00"
 }
+
+# Person
+{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10",
+ "type":"Person",
+ "preferredUsername":"stargoose9",
+ "publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10#main-key",
+		"owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/10",
+		"publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBoj...XAgMBAAE=\n-----END PUBLIC KEY-----\n"}}
 ```
 
 ### Data Flow
@@ -57,9 +71,12 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     A(User) --> |stars a federated repository| B(foreign repository server)
-    B --> |Star Activity| C(our repository server)
+    B --> |Like Activity| C(our repository server)
+    C --> |get NodeInfoWellKnown| B
+    C --> |get NodeInfo| B
     C --> |get Person Actor| B
-    C --> |create federated user localy| D(our database)
+    C --> |cache/create federated user localy| D(our database)
+    C --> |cache/create NodeInfo localy| D(our database)
     C --> |add star to repo localy| D    
 ```
 
@@ -100,7 +117,7 @@ flowchart TD
 | 1.     | ... tbd |                 |                |                |                 |             |
 | 2.     | ... tbd |                 |                |                |                 |             |
 
-Bewertet wird mit Schulnoten von 1 - 6
+Threat Score with values between 1 - 6
 
 * Damage – wie groß wäre der Schaden, wenn der Angriff erfolgreich ist? 6 ist ein sehr schlimmer Schaden.
 * Reproducibility – wie einfach wäre der Angriff reproduzierbar? 6 ist sehr einfach zu reproduzieren.
