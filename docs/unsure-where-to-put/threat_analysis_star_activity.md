@@ -12,7 +12,7 @@ sequenceDiagram
 
     fs ->> os: post /api/activitypub/repository-id/1/inbox {Like-Activity}
     activate os
-    os ->> repository: load 1
+    os ->> repository: load "1"
     activate os
     os ->> os: validate actor id inputs
     os ->> fs: get .well-known/nodeinfo
@@ -27,9 +27,9 @@ sequenceDiagram
     activate os
     os ->> fs: get /api/activitypub/user-id/{id from actor}
     os ->> ForgePerson: validate
-    os ->> user: create user from response
+    os ->> user: create user from ForgePerson
     deactivate os
-    os ->> repository: execute star action
+    os ->> repository: execute star
     os -->> fs: 200 ok
     deactivate os
 ```
@@ -83,7 +83,8 @@ flowchart TD
 ### Assets
 
 1. **Service Availability**: The availability of our or foreign servers.
-2. **Reputation**: Our standing against freinds and others.
+2. **Instance Reputation**: We hope our project does not live on a spam instance.
+3. **Project Reputation**: The reputation of an individual project.
 
 ### Actors
 
@@ -93,9 +94,9 @@ flowchart TD
 
 ### Threat
 
-1. Script Kiddi sends a Like Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends a `get Person Actor` request to this url. The target receives a DenialdOfService attack. We loose CPU & reputation.
+1. Script Kiddi sends a Like Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends a `get Person Actor` request to this url. The target receives a DenialdOfService attack. We loose CPU & instance reputation.
 2. Experienced hacker sends a Like Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and gets a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this persion, the db might be dropped.
-3. OpenSource Promoter sends Star Activities containing non authorized Person Actors. The Actors listed as stargazer might get angry about this, we loose reputation.
+3. OpenSource Promoter sends Star Activities containing non authorized Person Actors. The Actors listed as stargazer might get angry about this. The project may loose project reputation.
 4. Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If the replayed activities are UnLike Activity we might loose stars.
 5. Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage loss. Our instance might fall out of service.
 6. Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
