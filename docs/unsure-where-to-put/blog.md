@@ -26,3 +26,15 @@ Hey, we ar on our way to implement federated stars. We created a test instance t
 5. Press execute & visit again the repo (https://federated-repo.prod.meissa.de/buero/star-me) and enjoy your star :-) ![find-your-new-star](find-your-new-star.png)
 
 At the moment we discuss threats arising by this feature. If you are interested we will be happy to get your 2 cents here: https://codeberg.org/forgejo/forgejo/issues/1854
+
+# 2024-01 Federated staring with Like Activity
+
+
+    ```
+    {
+      "id": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12",
+      "type": "Like",
+      "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/12",
+      "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1"
+    }
+    ```
