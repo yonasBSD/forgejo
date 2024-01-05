@@ -40,7 +40,7 @@ At https://federated-repo.prod.meissa.de/buero/star-me you can try out the curre
   "type": "Like",
   "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/12",
   "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1",
-  "startTime": "2024-01-0531T23:00:00-08:00"
+  "startTime": "2024-01-05T23:00:00-08:00"
 }
 ```
 

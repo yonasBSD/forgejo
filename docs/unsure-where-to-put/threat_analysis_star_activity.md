@@ -110,7 +110,7 @@ flowchart TD
 5. We introduce (or have) rate limiting per IP.
 6. We ensure, that outgoing HTTP requests have a reasonable timeout (if you didn't get that 500b JSON response after 10 seconds, you probably won't get it).
 
-### DREAD-Score
+### THREAD-Score
 
 | Threat | Damage  | Reproducibility | Exploitability | Affected Users | Discoverability | Mitigations |
 | :----- | :------ | :-------------- | :------------- | :------------- | :-------------- | :---------- |
