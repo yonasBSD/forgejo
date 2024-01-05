@@ -119,11 +119,11 @@ flowchart TD
 
 Threat Score with values between 1 - 6
 
-* Damage – wie groß wäre der Schaden, wenn der Angriff erfolgreich ist? 6 ist ein sehr schlimmer Schaden.
-* Reproducibility – wie einfach wäre der Angriff reproduzierbar? 6 ist sehr einfach zu reproduzieren.
-* Exploitability – wieviel Zeit, Aufwand und Erfahrung sind notwendig, um die Bedrohung auszunutzen? 6 ist sehr einfach zu machen.
-* Affected Users – wenn eine Bedrohung ausgenutzt werden würde, wieviel Prozent der Benutzer wären betroffen?
-* Discoverability – Wie einfach lässt sich ein Angriff entdecken? Muss der Angreifer Strafverfolgung erwarten? 6 ist sehr schwer zu entdecken / ist gar nicht illegal
+* Damage – how severe would the damage be if the attack is successful? 6 is a very bad damage.
+* Reproducibility – how easy would the attack be reproducible? 6 is very easy to reproduce.
+* Exploitability – How much time, effort and experience are necessary to exploit the threat? 6 is very easy to make.
+* Affected Users – if a threat were exploited, how many percentage of users would be affected?
+* Discoverability – How easy can an attack be discovered? Does the attacker have to expect prosecution? 6 is very hard to discover / is not illegal
 
 ## Contributors
 
