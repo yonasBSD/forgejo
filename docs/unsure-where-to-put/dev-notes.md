@@ -98,7 +98,7 @@ curl -X 'POST' \
 
 # sync base branch
 
-```
+``` bash
 # setup a second repo for excosy implementation
 git clone https://git.exozy.me/a/gitea.git exosy
 
@@ -118,6 +118,15 @@ git push --force
 # continue local development after rebase & force-push has happened
 git reset --hard origin/forgejo-federated-star
 ```
+
+# provide testinstance
+
+``` bash
+git checkout test-release
+git rebase --onto forgejo-federated-star
+git merge forgejo/forgejo-branding
+git push --force
+``` 
 
 # generate swagger api client
 
