@@ -233,7 +233,7 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 	}
 	log.Info("RepositoryInbox: validated person: %q", person)
 
-	email := fmt.Sprintf("%v@%v", uuid.New().String(), personID.Host)
+	email := fmt.Sprintf("f%v@%v", uuid.New().String(), personID.Host)
 	loginName := personID.AsLoginName()
 	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
 	log.Info("RepositoryInbox: person.Name: %v", person.Name)
