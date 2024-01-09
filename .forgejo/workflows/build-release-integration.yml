@@ -10,6 +10,15 @@ on:
       - .forgejo/actions/build-release/action.yml
       - .forgejo/workflows/build-release.yml
       - .forgejo/workflows/build-release-integration.yml
+  pull_request:
+    paths:
+      - Makefile
+      - Dockerfile
+      - Dockerfile.rootless
+      - docker/**
+      - .forgejo/actions/build-release/action.yml
+      - .forgejo/workflows/build-release.yml
+      - .forgejo/workflows/build-release-integration.yml
 
 jobs:
   release-simulation:
@@ -55,13 +64,13 @@ jobs:
           cp -a .forgejo/actions $dir/.forgejo/actions
           cp $dir/Dockerfile $dir/Dockerfile.rootless
 
-          forgejo-test-helper.sh push $dir $url root forgejo |& tee $dir/pushed
-          eval $(grep '^sha=' < $dir/pushed)
+          forgejo-test-helper.sh push $dir $url root forgejo
+          sha=$(forgejo-test-helper.sh branch_tip $url root/forgejo main)
 
           #
           # Push a tag to trigger the release workflow and wait for it to complete
           #
-          forgejo-test-helper.sh api POST $url repos/root/forgejo/tags ${{ steps.forgejo.outputs.token }} --data-raw '{"tag_name": "v'$version'", "target": "'$sha'"}'
+          forgejo-curl.sh api_json --data-raw '{"tag_name": "v'$version'", "target": "'$sha'"}' $url/api/v1/repos/root/forgejo/tags
           LOOPS=180 forgejo-test-helper.sh wait_success "$url" root/forgejo $sha
 
           #
