@@ -71,6 +71,7 @@ import (
 	actions_model "code.gitea.io/gitea/models/actions"
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/perm"
 	access_model "code.gitea.io/gitea/models/perm/access"
@@ -225,6 +226,39 @@ func repoAssignment() func(ctx *context.APIContext) {
 			ctx.NotFound()
 			return
 		}
+	}
+}
+
+// must be used within a group with a call to repoAssignment() to set ctx.Repo
+func commentAssignment(idParam string) func(ctx *context.APIContext) {
+	return func(ctx *context.APIContext) {
+		comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(idParam))
+		if err != nil {
+			if issues_model.IsErrCommentNotExist(err) {
+				ctx.NotFound(err)
+			} else {
+				ctx.InternalServerError(err)
+			}
+			return
+		}
+
+		if err = comment.LoadIssue(ctx); err != nil {
+			ctx.InternalServerError(err)
+			return
+		}
+		if comment.Issue == nil || comment.Issue.RepoID != ctx.Repo.Repository.ID {
+			ctx.NotFound()
+			return
+		}
+
+		if !ctx.Repo.CanReadIssuesOrPulls(comment.Issue.IsPull) {
+			ctx.NotFound()
+			return
+		}
+
+		comment.Issue.Repo = ctx.Repo.Repository
+
+		ctx.Comment = comment
 	}
 }
 
@@ -1322,7 +1356,7 @@ func Routes() *web.Route {
 									Patch(reqToken(), mustNotBeArchived, bind(api.EditAttachmentOptions{}), repo.EditIssueCommentAttachment).
 									Delete(reqToken(), mustNotBeArchived, repo.DeleteIssueCommentAttachment)
 							}, mustEnableAttachments)
-						})
+						}, commentAssignment(":id"))
 					})
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetIssue).
