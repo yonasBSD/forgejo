@@ -218,6 +218,8 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	if err != nil {
 		return forgefed.FederationInfo{}, err
 	}
+	// TODO: introduce a NewFederationInfo factory method here.
+	// it should convert host to lower-case.
 	result := forgefed.FederationInfo{
 		HostFqdn: actorID.Host,
 		NodeInfo: nodeInfo,
