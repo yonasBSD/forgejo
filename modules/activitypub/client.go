@@ -85,8 +85,10 @@ func NewClient(ctx context.Context, user *user_model.User, pubID string) (c *Cli
 	c = &Client{
 		client: &http.Client{
 			Transport: &http.Transport{
-				Proxy: proxy.Proxy(),
+				Proxy:           proxy.Proxy(),
+				MaxConnsPerHost: 20,
 			},
+			Timeout: time.Duration(5 * time.Second),
 		},
 		algs:        setting.HttpsigAlgs,
 		digestAlg:   httpsig.DigestAlgorithm(setting.Federation.DigestAlgorithm),

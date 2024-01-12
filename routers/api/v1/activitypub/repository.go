@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
@@ -159,9 +158,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 			return
 		}
 	}
-
-	// wait 5 sec.
-	time.Sleep(5 * time.Second)
 
 	ctx.Status(http.StatusNoContent)
 }
