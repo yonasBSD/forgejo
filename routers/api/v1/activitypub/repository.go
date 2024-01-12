@@ -94,17 +94,29 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// parse actorID (person)
 	actorUri := activity.Actor.GetID().String()
 	rawActorID, err := forgefed.NewActorID(actorUri)
-	nodeInfo, err := createNodeInfo(ctx, rawActorID)
-	log.Info("RepositoryInbox: nodeInfo validated: %v", nodeInfo)
+	federationInfo, err := forgefed.FindFederationInfoByHostFqdn(ctx, rawActorID.Host)
+	if err != nil {
+		ctx.ServerError("Error while loading FederationInfo: %v", err)
+		return
+	}
+	if federationInfo == nil {
+		result, err := createFederationInfo(ctx, rawActorID)
+		if err != nil {
+			ctx.ServerError("Validate actorId", err)
+			return
+		}
+		federationInfo = &result
+		log.Info("RepositoryInbox: nodeInfo validated: %v", federationInfo)
+	}
 
-	actorID, err := forgefed.NewPersonID(actorUri, string(nodeInfo.Source))
+	actorID, err := forgefed.NewPersonID(actorUri, string(federationInfo.NodeInfo.Source))
 	if err != nil {
 		ctx.ServerError("Validate actorId", err)
 		return
 	}
 	log.Info("RepositoryInbox: actorId validated: %v", actorID)
 	// parse objectID (repository)
-	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(nodeInfo.Source))
+	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
 	if err != nil {
 		ctx.ServerError("Validate objectId", err)
 		return
@@ -184,25 +196,33 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 	return users, nil
 }
 
-func createNodeInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.NodeInfo, error) {
+func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationInfo, error) {
 	actionsUser := user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
-		return forgefed.NodeInfo{}, err
+		return forgefed.FederationInfo{}, err
 	}
 	body, err := client.GetBody(actorID.AsWellKnownNodeInfoUri())
 	if err != nil {
-		return forgefed.NodeInfo{}, err
+		return forgefed.FederationInfo{}, err
 	}
 	nodeInfoWellKnown, err := forgefed.NewNodeInfoWellKnown(body)
 	if err != nil {
-		return forgefed.NodeInfo{}, err
+		return forgefed.FederationInfo{}, err
 	}
 	body, err = client.GetBody(nodeInfoWellKnown.Href)
 	if err != nil {
-		return forgefed.NodeInfo{}, err
+		return forgefed.FederationInfo{}, err
 	}
-	return forgefed.NewNodeInfo(body)
+	nodeInfo, err := forgefed.NewNodeInfo(body)
+	if err != nil {
+		return forgefed.FederationInfo{}, err
+	}
+	result := forgefed.FederationInfo{
+		HostFqdn: actorID.Host,
+		NodeInfo: nodeInfo,
+	}
+	return result, nil
 }
 
 // ToDo: Maybe use externalLoginUser

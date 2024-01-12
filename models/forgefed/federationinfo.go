@@ -24,7 +24,6 @@ func (info FederationInfo) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(string(info.HostFqdn), "HostFqdn")...)
 	result = append(result, validation.ValidateMaxLen(string(info.HostFqdn), 255, "HostFqdn")...)
-	result = append(result, validation.ValidateNotEmpty(info.LatestActivity, "LatestActivity")...)
 	result = append(result, info.NodeInfo.Validate()...)
 
 	return result

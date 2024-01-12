@@ -29,13 +29,13 @@ func GetFederationInfo(ctx context.Context, ID int64) (*FederationInfo, error) {
 	return info, nil
 }
 
-func GetFederationInfoByHostFqdn(ctx context.Context, fqdn string) (*FederationInfo, error) {
+func FindFederationInfoByHostFqdn(ctx context.Context, fqdn string) (*FederationInfo, error) {
 	info := new(FederationInfo)
 	has, err := db.GetEngine(ctx).Where("host_fqdn=?", fqdn).Get(info)
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, fmt.Errorf("FederationInfo record %v does not exist", fqdn)
+		return nil, nil
 	}
 	if res, err := validation.IsValid(info); !res {
 		return nil, fmt.Errorf("FederationInfo is not valid: %v", err)
