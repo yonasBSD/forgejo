@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"code.gitea.io/gitea/modules/timeutil"
 )
 
 type Validateable interface {
@@ -22,11 +24,25 @@ func IsValid(v Validateable) (bool, error) {
 	return true, nil
 }
 
-func ValidateNotEmpty(value string, fieldName string) []string {
-	if value == "" {
-		return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
+func ValidateNotEmpty(value any, fieldName string) []string {
+	isValid := true
+	switch v := value.(type) {
+	case string:
+		if v == "" {
+			isValid = false
+		}
+	case timeutil.TimeStamp:
+		if v.IsZero() {
+			isValid = false
+		}
+	default:
+		isValid = false
 	}
-	return []string{}
+
+	if isValid {
+		return []string{}
+	}
+	return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
 }
 
 func ValidateMaxLen(value string, maxLen int, fieldName string) []string {
