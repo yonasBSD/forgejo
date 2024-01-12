@@ -6,6 +6,7 @@ package validation
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 type Validateable interface {
@@ -21,9 +22,16 @@ func IsValid(v Validateable) (bool, error) {
 	return true, nil
 }
 
-func ValidateNotEmpty(value, fieldName string) []string {
+func ValidateNotEmpty(value string, fieldName string) []string {
 	if value == "" {
 		return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
+	}
+	return []string{}
+}
+
+func ValidateMaxLen(value string, maxLen int, fieldName string) []string {
+	if utf8.RuneCountInString(value) > maxLen {
+		return []string{fmt.Sprintf("Value in field %v was longer than %v", fieldName, maxLen)}
 	}
 	return []string{}
 }

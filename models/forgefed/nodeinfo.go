@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"code.gitea.io/gitea/modules/validation"
+
 	"github.com/valyala/fastjson"
 )
 
@@ -96,6 +97,7 @@ func (id ActorID) AsWellKnownNodeInfoUri() string {
 // NodeInfo data type
 // swagger:model
 type NodeInfo struct {
+	ID     int64 `xorm:"pk autoincr"`
 	Source SourceType
 }
 
