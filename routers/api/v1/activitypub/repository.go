@@ -106,7 +106,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			return
 		}
 		federationInfo = &result
-		log.Info("RepositoryInbox: nodeInfo validated: %v", federationInfo)
+		log.Info("RepositoryInbox: federationInfo validated: %v", federationInfo)
 	}
 
 	actorID, err := forgefed.NewPersonID(actorUri, string(federationInfo.NodeInfo.Source))
@@ -221,6 +221,10 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	result := forgefed.FederationInfo{
 		HostFqdn: actorID.Host,
 		NodeInfo: nodeInfo,
+	}
+	err = forgefed.CreateFederationInfo(ctx, result)
+	if err != nil {
+		return forgefed.FederationInfo{}, err
 	}
 	return result, nil
 }

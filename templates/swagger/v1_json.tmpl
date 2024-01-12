@@ -71,7 +71,7 @@
             "name": "body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/Star"
+              "$ref": "#/definitions/ForgeLike"
             }
           }
         ],
@@ -20480,6 +20480,11 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "ForgeLike": {
+      "description": "ForgeLike activity data type",
+      "type": "object",
+      "x-go-package": "code.gitea.io/gitea/models/forgefed"
+    },
     "GPGKey": {
       "description": "GPGKey a user GPG key to sign commit and tag in repository",
       "type": "object",
@@ -23177,20 +23182,6 @@
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
-    },
-    "SourceType": {
-      "type": "string",
-      "x-go-package": "code.gitea.io/gitea/models/forgefed"
-    },
-    "Star": {
-      "description": "Star activity data type",
-      "type": "object",
-      "properties": {
-        "Source": {
-          "$ref": "#/definitions/SourceType"
-        }
-      },
-      "x-go-package": "code.gitea.io/gitea/models/forgefed"
     },
     "StateType": {
       "description": "StateType issue state type",

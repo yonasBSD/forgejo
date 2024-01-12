@@ -42,3 +42,11 @@ func FindFederationInfoByHostFqdn(ctx context.Context, fqdn string) (*Federation
 	}
 	return info, nil
 }
+
+func CreateFederationInfo(ctx context.Context, info FederationInfo) error {
+	if res, err := validation.IsValid(info); !res {
+		return fmt.Errorf("FederationInfo is not valid: %v", err)
+	}
+	_, err := db.GetEngine(ctx).Insert(info)
+	return err
+}
