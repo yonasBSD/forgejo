@@ -10,7 +10,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-func Test_ValidateMaxLen(t *testing.T) {
+func Test_FederationInfoValidation(t *testing.T) {
 	sut := FederationInfo{
 		HostFqdn: "host.do.main",
 		NodeInfo: NodeInfo{
@@ -20,5 +20,14 @@ func Test_ValidateMaxLen(t *testing.T) {
 	}
 	if res, err := validation.IsValid(sut); !res {
 		t.Errorf("sut should be valid but was %q", err)
+	}
+
+	sut = FederationInfo{
+		HostFqdn:       "host.do.main",
+		NodeInfo:       NodeInfo{},
+		LatestActivity: timeutil.TimeStampNow(),
+	}
+	if res, _ := validation.IsValid(sut); res {
+		t.Errorf("sut should be invalid")
 	}
 }

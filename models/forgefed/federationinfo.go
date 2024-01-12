@@ -12,7 +12,7 @@ import (
 // swagger:model
 type FederationInfo struct {
 	ID             int64              `xorm:"pk autoincr"`
-	HostFqdn       string             `xorm:"INDEX VARCHAR(255) NOT NULL"`
+	HostFqdn       string             `xorm:"host_fqdn UNIQUE INDEX VARCHAR(255) NOT NULL"`
 	NodeInfo       NodeInfo           `xorm:"NOT NULL"`
 	LatestActivity timeutil.TimeStamp `xorm:"NOT NULL"`
 	Create         timeutil.TimeStamp `xorm:"created"`
