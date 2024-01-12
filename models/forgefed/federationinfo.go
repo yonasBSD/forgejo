@@ -13,7 +13,7 @@ import (
 type FederationInfo struct {
 	ID             int64              `xorm:"pk autoincr"`
 	HostFqdn       string             `xorm:"host_fqdn UNIQUE INDEX VARCHAR(255) NOT NULL"`
-	NodeInfo       NodeInfo           `xorm:"NOT NULL"`
+	NodeInfo       NodeInfo           `xorm:"extends NOT NULL"`
 	LatestActivity timeutil.TimeStamp `xorm:"NOT NULL"`
 	Create         timeutil.TimeStamp `xorm:"created"`
 	Updated        timeutil.TimeStamp `xorm:"updated"`

@@ -97,7 +97,6 @@ func (id ActorID) AsWellKnownNodeInfoUri() string {
 // NodeInfo data type
 // swagger:model
 type NodeInfo struct {
-	ID     int64 `xorm:"pk autoincr"`
 	Source SourceType
 }
 
