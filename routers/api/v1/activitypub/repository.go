@@ -1,11 +1,8 @@
-// Copyright 2023 The forgejo Authors. All rights reserved.
+// Copyright 2023, 2024 The forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activitypub
 
-// ToDo: Fix linting
-// ToDo: Maybe do a request for the node info
-//			Then maybe save the node info in a DB table	- this could be useful for validation
 import (
 	"fmt"
 	"net/http"
@@ -231,11 +228,9 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	if err != nil {
 		return forgefed.FederationInfo{}, err
 	}
-	// TODO: introduce a NewFederationInfo factory method here.
-	// it should convert host to lower-case.
-	result := forgefed.FederationInfo{
-		HostFqdn: actorID.Host,
-		NodeInfo: nodeInfo,
+	result, err := forgefed.NewFederationInfo(nodeInfo, actorID.Host)
+	if err != nil {
+		return forgefed.FederationInfo{}, err
 	}
 	err = forgefed.CreateFederationInfo(ctx, result)
 	if err != nil {

@@ -21,6 +21,18 @@ type FederationInfo struct {
 	Updated        timeutil.TimeStamp `xorm:"updated"`
 }
 
+// Factory function for PersonID. Created struct is asserted to be valid
+func NewFederationInfo(nodeInfo NodeInfo, hostFqdn string) (FederationInfo, error) {
+	result := FederationInfo{
+		HostFqdn: hostFqdn,
+		NodeInfo: nodeInfo,
+	}
+	if valid, err := validation.IsValid(result); !valid {
+		return FederationInfo{}, err
+	}
+	return result, nil
+}
+
 // Validate collects error strings in a slice and returns this
 func (info FederationInfo) Validate() []string {
 	var result []string
