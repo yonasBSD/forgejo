@@ -7,6 +7,10 @@
   border: 1px solid var(--color-light-border);
   color: var(--color-text);
 }
+.ui.button:focus-visible {
+  outline: 1px solid var(--color-light-border);
+  outline-offset: 2px;
+}
 
 .ui.button:hover {
   background: var(--color-hover);
