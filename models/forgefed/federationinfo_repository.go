@@ -50,3 +50,11 @@ func CreateFederationInfo(ctx context.Context, info FederationInfo) error {
 	_, err := db.GetEngine(ctx).Insert(info)
 	return err
 }
+
+func UpdateFederationInfo(ctx context.Context, info FederationInfo) error {
+	if res, err := validation.IsValid(info); !res {
+		return fmt.Errorf("FederationInfo is not valid: %v", err)
+	}
+	_, err := db.GetEngine(ctx).ID(info.ID).Update(info)
+	return err
+}

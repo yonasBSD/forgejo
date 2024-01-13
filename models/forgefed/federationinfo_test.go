@@ -5,8 +5,8 @@ package forgefed
 
 import (
 	"testing"
+	"time"
 
-	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/validation"
 )
 
@@ -16,7 +16,7 @@ func Test_FederationInfoValidation(t *testing.T) {
 		NodeInfo: NodeInfo{
 			Source: "forgejo",
 		},
-		LatestActivity: timeutil.TimeStampNow(),
+		LatestActivity: time.Now(),
 	}
 	if res, err := validation.IsValid(sut); !res {
 		t.Errorf("sut should be valid but was %q", err)
@@ -25,7 +25,7 @@ func Test_FederationInfoValidation(t *testing.T) {
 	sut = FederationInfo{
 		HostFqdn:       "host.do.main",
 		NodeInfo:       NodeInfo{},
-		LatestActivity: timeutil.TimeStampNow(),
+		LatestActivity: time.Now(),
 	}
 	if res, _ := validation.IsValid(sut); res {
 		t.Errorf("sut should be invalid")

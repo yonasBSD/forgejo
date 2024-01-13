@@ -51,7 +51,7 @@ func Repository(ctx *context.APIContext) {
 	repo.Name = ap.NaturalLanguageValuesNew()
 	err := repo.Name.Set("en", ap.Content(ctx.Repo.Repository.Name))
 	if err != nil {
-		ctx.ServerError("Set Name", err)
+		ctx.Error(http.StatusInternalServerError, "Set Name", err)
 		return
 	}
 
@@ -86,7 +86,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 
 	activity := web.GetForm(ctx).(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
-		ctx.ServerError("Validate activity", err)
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate activity", err)
 		return
 	}
 	log.Info("RepositoryInbox: activity validated:%v", activity)
@@ -96,33 +96,39 @@ func RepositoryInbox(ctx *context.APIContext) {
 	rawActorID, err := forgefed.NewActorID(actorUri)
 	federationInfo, err := forgefed.FindFederationInfoByHostFqdn(ctx, rawActorID.Host)
 	if err != nil {
-		ctx.ServerError("Error while loading FederationInfo: %v", err)
+		ctx.Error(http.StatusInternalServerError,
+			"RepositoryInbox: Error while loading FederationInfo", err)
 		return
 	}
 	if federationInfo == nil {
 		result, err := createFederationInfo(ctx, rawActorID)
 		if err != nil {
-			ctx.ServerError("Validate actorId", err)
+			ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate actorId", err)
 			return
 		}
 		federationInfo = &result
 		log.Info("RepositoryInbox: federationInfo validated: %v", federationInfo)
 	}
+	if !activity.IsNewer(federationInfo.LatestActivity) {
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate Activity",
+			fmt.Errorf("Activity already processed"))
+		return
+	}
 
 	actorID, err := forgefed.NewPersonID(actorUri, string(federationInfo.NodeInfo.Source))
 	if err != nil {
-		ctx.ServerError("Validate actorId", err)
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate actorId", err)
 		return
 	}
 	log.Info("RepositoryInbox: actorId validated: %v", actorID)
 	// parse objectID (repository)
 	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
 	if err != nil {
-		ctx.ServerError("Validate objectId", err)
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate objectId", err)
 		return
 	}
 	if objectID.ID != fmt.Sprint(repository.ID) {
-		ctx.ServerError("Validate objectId", err)
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate objectId", err)
 		return
 	}
 	log.Info("RepositoryInbox: objectId validated: %v", objectID)
@@ -133,7 +139,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// Check if user already exists
 	users, err := SearchUsersByLoginName(actorAsLoginID)
 	if err != nil {
-		ctx.ServerError("Searching for user failed", err)
+		ctx.Error(http.StatusInternalServerError, "RepositoryInbox: Searching for user failed", err)
 		return
 	}
 	log.Info("RepositoryInbox: local found users: %v", len(users))
@@ -143,7 +149,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 		{
 			user, err = createUserFromAP(ctx, actorID)
 			if err != nil {
-				ctx.ServerError("Creating user failed", err)
+				ctx.Error(http.StatusInternalServerError,
+					"RepositoryInbox: Creating federated user failed", err)
 				return
 			}
 			log.Info("RepositoryInbox: created user from ap: %v", user)
@@ -155,8 +162,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	default:
 		{
-			ctx.Error(http.StatusInternalServerError, "StarRepo",
-				fmt.Errorf("found more than one matches for federated users"))
+			ctx.Error(http.StatusInternalServerError, "RepositoryInbox",
+				fmt.Errorf(" more than one matches for federated users"))
 			return
 		}
 	}
@@ -166,9 +173,15 @@ func RepositoryInbox(ctx *context.APIContext) {
 	if !alreadyStared {
 		err = repo_model.StarRepo(ctx, user.ID, repository.ID, true)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+			ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Star operation", err)
 			return
 		}
+	}
+	federationInfo.LatestActivity = activity.StartTime
+	err = forgefed.UpdateFederationInfo(ctx, *federationInfo)
+	if err != nil {
+		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: error updateing federateionInfo", err)
+		return
 	}
 
 	ctx.Status(http.StatusNoContent)
