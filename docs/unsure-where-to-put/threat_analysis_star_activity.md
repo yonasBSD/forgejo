@@ -13,12 +13,17 @@ sequenceDiagram
     fs ->> os: post /api/activitypub/repository-id/1/inbox {Like-Activity}
     activate os
     os ->> repository: load "1"
-    activate os
     os ->> os: validate actor id inputs
+    activate os
+    os ->> FederationInfo: get by Host
+    os ->> os: if FederatonInfo not found
+    activate os
     os ->> fs: get .well-known/nodeinfo
     os ->> NodeInfoWellKnown: create & validate
     os ->> fs: get api/v1/nodeinfo
     os ->> NodeInfo: create & validate
+    os ->> FederationInfo: create
+    deactivate os
     os ->> ForgeLike: validate
     deactivate os
     
@@ -30,6 +35,7 @@ sequenceDiagram
     os ->> user: create user from ForgePerson
     deactivate os
     os ->> repository: execute star
+    os ->> FederationInfo: update latest activity
     os -->> fs: 200 ok
     deactivate os
 ```
@@ -99,7 +105,8 @@ flowchart TD
 3. OpenSource Promoter sends Star Activities containing non authorized Person Actors. The Actors listed as stargazer might get angry about this. The project may loose project reputation.
 4. **DOS by Rate**: Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If the replayed activities are UnLike Activity we might loose stars.
 5. **Reply**: Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage loss. Our instance might fall out of service.
-6. **DOS by Slowlories**: Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
+6. **Reply out of Order**: Experienced Hacker records activities sends again Unlike Activities happend but was succeded by an Like. Our instance accept the Unlike and removes a star. Our repositore gets rated unintended bad.
+7. **DOS by Slowlories**: Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
 
 ### Mitigations
 
