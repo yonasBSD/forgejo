@@ -89,8 +89,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: activity validated:%v", activity)
 
 	// parse actorID (person)
-	actorUri := activity.Actor.GetID().String()
-	rawActorID, err := forgefed.NewActorID(actorUri)
+	actorURI := activity.Actor.GetID().String()
+	rawActorID, err := forgefed.NewActorID(actorURI)
 	federationInfo, err := forgefed.FindFederationInfoByHostFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError,
@@ -112,7 +112,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		return
 	}
 
-	actorID, err := forgefed.NewPersonID(actorUri, string(federationInfo.NodeInfo.Source))
+	actorID, err := forgefed.NewPersonID(actorURI, string(federationInfo.NodeInfo.Source))
 	if err != nil {
 		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate actorId", err)
 		return
@@ -212,7 +212,7 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	if err != nil {
 		return forgefed.FederationInfo{}, err
 	}
-	body, err := client.GetBody(actorID.AsWellKnownNodeInfoUri())
+	body, err := client.GetBody(actorID.AsWellKnownNodeInfoURI())
 	if err != nil {
 		return forgefed.FederationInfo{}, err
 	}

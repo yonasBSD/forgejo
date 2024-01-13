@@ -36,8 +36,8 @@ func NewFederationInfo(nodeInfo NodeInfo, hostFqdn string) (FederationInfo, erro
 // Validate collects error strings in a slice and returns this
 func (info FederationInfo) Validate() []string {
 	var result []string
-	result = append(result, validation.ValidateNotEmpty(string(info.HostFqdn), "HostFqdn")...)
-	result = append(result, validation.ValidateMaxLen(string(info.HostFqdn), 255, "HostFqdn")...)
+	result = append(result, validation.ValidateNotEmpty(info.HostFqdn, "HostFqdn")...)
+	result = append(result, validation.ValidateMaxLen(info.HostFqdn, 255, "HostFqdn")...)
 	result = append(result, info.NodeInfo.Validate()...)
 
 	return result

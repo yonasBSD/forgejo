@@ -81,7 +81,7 @@ func (node NodeInfoWellKnown) Validate() []string {
 	return result
 }
 
-func (id ActorID) AsWellKnownNodeInfoUri() string {
+func (id ActorID) AsWellKnownNodeInfoURI() string {
 	wellKnownPath := ".well-known/nodeinfo"
 	var result string
 	if id.Port == "" {
