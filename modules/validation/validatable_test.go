@@ -29,7 +29,6 @@ func Test_ValidateNotEmpty_ForTimestamp(t *testing.T) {
 	if res := ValidateNotEmpty(sut, "dummyField"); len(res) > 0 {
 		t.Errorf("sut should be valid but was %q", res)
 	}
-
 }
 
 func Test_ValidateMaxLen(t *testing.T) {

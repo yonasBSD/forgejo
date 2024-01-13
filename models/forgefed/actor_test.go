@@ -178,7 +178,8 @@ func Test_PersonUnmarshalJSON(t *testing.T) {
 			PreferredUsername: ap.NaturalLanguageValues{
 				ap.LangRefValue{Ref: "en", Value: []byte("MaxMuster")},
 			},
-		}}
+		},
+	}
 	sut := new(ForgePerson)
 	err := sut.UnmarshalJSON([]byte(`{"type":"Person","preferredUsername":"MaxMuster"}`))
 	if err != nil {

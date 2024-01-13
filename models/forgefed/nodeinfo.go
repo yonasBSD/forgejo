@@ -62,19 +62,19 @@ func (node NodeInfoWellKnown) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(node.Href, "Href")...)
 
-	parsedUrl, err := url.Parse(node.Href)
+	parsedURL, err := url.Parse(node.Href)
 	if err != nil {
 		result = append(result, err.Error())
 		return result
 	}
 
-	if parsedUrl.Host == "" {
+	if parsedURL.Host == "" {
 		result = append(result, "Href has to be absolute")
 	}
 
-	result = append(result, validation.ValidateOneOf(parsedUrl.Scheme, []any{"http", "https"})...)
+	result = append(result, validation.ValidateOneOf(parsedURL.Scheme, []any{"http", "https"})...)
 
-	if parsedUrl.RawQuery != "" {
+	if parsedURL.RawQuery != "" {
 		result = append(result, "Href may not contain query")
 	}
 
