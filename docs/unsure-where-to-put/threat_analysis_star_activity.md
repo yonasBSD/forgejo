@@ -96,7 +96,8 @@ flowchart TD
 
 1. **Script Kiddies**: Boored teens, willing to do some illegal stuff without deep knowlege of tech details but broad knowlege across internet discussions. Able to do some bash / python scripting.
 2. **Experienced Hacker**: Hacker with deep knowlege.
-3. **OpenSource Promoter**: Developers motivated to increase (or decrease) star count for some dedicated projects.
+3. **Hacker**: Hacker with some knowledge.
+4. **OpenSource Promoter**: Developers motivated to increase (or decrease) star count for some dedicated projects.
 
 ### Threat
 
@@ -107,6 +108,7 @@ flowchart TD
 5. **Reply**: Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage loss. Our instance might fall out of service.
 6. **Reply out of Order**: Experienced Hacker records activities sends again Unlike Activities happend but was succeded by an Like. Our instance accept the Unlike and removes a star. Our repositore gets rated unintended bad.
 7. **DOS by Slowlories**: Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
+8. **Block by future StartTime**: Hacker sends an Activity having `startTime` in far future. Our Instance does no longer accept Activities till they have far far future `startTime` from the actors instance.
 
 ### Mitigations
 

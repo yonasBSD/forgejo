@@ -30,7 +30,7 @@ At the moment we discuss threats arising by this feature. If you are interested 
 # 2024-01 Federated staring with Like Activity
 
 We did the next step. We now use a plain Like Activity for expressing the Star action.
-In addition we fixed some bugs & improved security by validating every input we get on federation.
+In addition we fixed some bugs, made error responses more meaningful, improved security by validating every input we get on federation & mitigate identified threats (SlowLories, Block by future StartTime & various Replay Attacks).
 
 At https://federated-repo.prod.meissa.de/buero/star-me you can try out the current code the same way as described above with the following activity (maybe find an unused user by alteranting the actors user-id).
 
@@ -43,5 +43,7 @@ At https://federated-repo.prod.meissa.de/buero/star-me you can try out the curre
   "startTime": "2024-01-05T23:00:00-08:00"
 }
 ```
+
+Please consider to increment the `startTime` for each api-request - maybe use the current time is a good idea.
 
 In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680

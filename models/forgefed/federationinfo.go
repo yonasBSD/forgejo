@@ -4,6 +4,7 @@
 package forgefed
 
 import (
+	"fmt"
 	"time"
 
 	"code.gitea.io/gitea/modules/timeutil"
@@ -39,6 +40,9 @@ func (info FederationInfo) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(info.HostFqdn, "HostFqdn")...)
 	result = append(result, validation.ValidateMaxLen(info.HostFqdn, 255, "HostFqdn")...)
 	result = append(result, info.NodeInfo.Validate()...)
+	if !info.LatestActivity.IsZero() && info.LatestActivity.After(time.Now().Add(10*time.Minute)) {
+		result = append(result, fmt.Sprintf("Latest Activity may not be far futurer: %v", info.LatestActivity))
+	}
 
 	return result
 }

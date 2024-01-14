@@ -30,4 +30,15 @@ func Test_FederationInfoValidation(t *testing.T) {
 	if res, _ := validation.IsValid(sut); res {
 		t.Errorf("sut should be invalid")
 	}
+
+	sut = FederationInfo{
+		HostFqdn: "host.do.main",
+		NodeInfo: NodeInfo{
+			Source: "forgejo",
+		},
+		LatestActivity: time.Now().Add(1 * time.Hour),
+	}
+	if res, _ := validation.IsValid(sut); res {
+		t.Errorf("sut should be invalid")
+	}
 }
