@@ -166,7 +166,7 @@ func Test_PersonMarshalJSON(t *testing.T) {
 	sut.PreferredUsername = ap.NaturalLanguageValuesNew()
 	sut.PreferredUsername.Set("en", ap.Content("MaxMuster"))
 	result, _ := sut.MarshalJSON()
-	if "{\"type\":\"Person\",\"preferredUsername\":\"MaxMuster\"}" != string(result) {
+	if string(result) != "{\"type\":\"Person\",\"preferredUsername\":\"MaxMuster\"}" {
 		t.Errorf("MarshalJSON() was = %q", result)
 	}
 }

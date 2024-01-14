@@ -91,6 +91,11 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	rawActorID, err := forgefed.NewActorID(actorURI)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError,
+			"RepositoryInbox: Validating ActorID", err)
+		return
+	}
 	federationInfo, err := forgefed.FindFederationInfoByHostFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError,

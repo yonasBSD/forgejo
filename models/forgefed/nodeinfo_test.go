@@ -63,26 +63,26 @@ func Test_NodeInfoWellKnownValidate(t *testing.T) {
 }
 
 func Test_NewNodeInfoWellKnown(t *testing.T) {
-	sut, err := NewNodeInfoWellKnown([]byte(`{"links":[{"href":"https://federated-repo.prod.meissa.de/api/v1/nodeinfo","rel":"http://nodeinfo.diaspora.software/ns/schema/2.1"}]}`))
+	sut, _ := NewNodeInfoWellKnown([]byte(`{"links":[{"href":"https://federated-repo.prod.meissa.de/api/v1/nodeinfo","rel":"http://nodeinfo.diaspora.software/ns/schema/2.1"}]}`))
 	expected := NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo"}
 	if sut != expected {
 		t.Errorf("expected was: %v but was: %v", expected, sut)
 	}
 
-	sut, err = NewNodeInfoWellKnown([]byte(`invalid`))
+	_, err := NewNodeInfoWellKnown([]byte(`invalid`))
 	if err == nil {
 		t.Errorf("error was expected here")
 	}
 }
 
 func Test_NewNodeInfo(t *testing.T) {
-	sut, err := NewNodeInfo([]byte(`{"version":"2.1","software":{"name":"gitea","version":"1.20.0+dev-2539-g5840cc6d3","repository":"https://github.com/go-gitea/gitea.git","homepage":"https://gitea.io/"},"protocols":["activitypub"],"services":{"inbound":[],"outbound":["rss2.0"]},"openRegistrations":true,"usage":{"users":{"total":13,"activeHalfyear":1,"activeMonth":1}},"metadata":{}}`))
+	sut, _ := NewNodeInfo([]byte(`{"version":"2.1","software":{"name":"gitea","version":"1.20.0+dev-2539-g5840cc6d3","repository":"https://github.com/go-gitea/gitea.git","homepage":"https://gitea.io/"},"protocols":["activitypub"],"services":{"inbound":[],"outbound":["rss2.0"]},"openRegistrations":true,"usage":{"users":{"total":13,"activeHalfyear":1,"activeMonth":1}},"metadata":{}}`))
 	expected := NodeInfo{Source: "gitea"}
 	if sut != expected {
 		t.Errorf("expected was: %v but was: %v", expected, sut)
 	}
 
-	sut, err = NewNodeInfo([]byte(`invalid`))
+	_, err := NewNodeInfo([]byte(`invalid`))
 	if err == nil {
 		t.Errorf("error was expected here")
 	}
