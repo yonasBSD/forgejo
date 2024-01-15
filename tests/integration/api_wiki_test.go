@@ -234,12 +234,12 @@ func TestAPIEditOtherWikiPage(t *testing.T) {
 
 	// Creating a new Wiki page on user2's repo as user1 fails
 	testCreateWiki := func(expectedStatusCode int) {
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/wiki/new?token=%s", otherUsername, "repo1", token)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/wiki/new", otherUsername, "repo1")
 		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateWikiPageOptions{
 			Title:         "Globally Edited Page",
 			ContentBase64: base64.StdEncoding.EncodeToString([]byte("Wiki page content for API unit tests")),
 			Message:       "",
-		})
+		}).AddTokenAuth(token)
 		session.MakeRequest(t, req, expectedStatusCode)
 	}
 	testCreateWiki(http.StatusForbidden)
