@@ -2,7 +2,7 @@
 
 ## Status
 
-Still in discussion
+Proposal
 
 ## Context
 
@@ -10,7 +10,7 @@ While implementing the star activity we have to take several decissions which wi
 
 ## Decision
 
-tbd
+We decided to use "2. Like Activity while source information comes from NodeInfo"
 
 ## Choices
 ### 1. Star Activity derived from AP Like with additional source information
