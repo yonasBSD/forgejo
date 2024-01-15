@@ -208,6 +208,160 @@ func GetPullReviewComments(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, apiComments)
 }
 
+// GetPullReviewComment get a pull review comment
+func GetPullReviewComment(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments/{comment} repository repoGetPullReviewComment
+	// ---
+	// summary: Get a pull review comment
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: index
+	//   in: path
+	//   description: index of the pull request
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: id
+	//   in: path
+	//   description: id of the review
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: comment
+	//   in: path
+	//   description: id of the comment
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/PullReviewComment"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	review, _, statusSet := prepareSingleReview(ctx)
+	if statusSet {
+		return
+	}
+
+	if err := ctx.Comment.LoadPoster(ctx); err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	apiComment, err := convert.ToPullReviewComment(ctx, review, ctx.Comment, ctx.Doer)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, apiComment)
+}
+
+// CreatePullReviewComments add a new comment to a pull request review
+func CreatePullReviewComment(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments repository repoCreatePullReviewComment
+	// ---
+	// summary: Add a new comment to a pull request review
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: index
+	//   in: path
+	//   description: index of the pull request
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: id
+	//   in: path
+	//   description: id of the review
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: body
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/CreatePullReviewCommentOptions"
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/PullReviewComment"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts := web.GetForm(ctx).(*api.CreatePullReviewCommentOptions)
+
+	review, pr, statusSet := prepareSingleReview(ctx)
+	if statusSet {
+		return
+	}
+
+	if err := pr.Issue.LoadRepo(ctx); err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	line := opts.NewLineNum
+	if opts.OldLineNum > 0 {
+		line = opts.OldLineNum * -1
+	}
+
+	comment, err := pull_service.CreateCodeComment(ctx,
+		ctx.Doer,
+		ctx.Repo.GitRepo,
+		pr.Issue,
+		line,
+		opts.Body,
+		opts.Path,
+		// as of e522e774cae2240279fc48c349fc513c9d3353ee
+		// isPending is not needed because review.ID is always available
+		// and does not need to be discovered implicitly
+		false,
+		review.ID,
+		// as of e522e774cae2240279fc48c349fc513c9d3353ee
+		// latestCommitID is not needed because it is only used to
+		// create a new review in case it does not already exist
+		"",
+	)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	apiComment, err := convert.ToPullReviewComment(ctx, review, comment, ctx.Doer)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, apiComment)
+}
+
 // DeletePullReview delete a specific review from a pull request
 func DeletePullReview(ctx *context.APIContext) {
 	// swagger:operation DELETE /repos/{owner}/{repo}/pulls/{index}/reviews/{id} repository repoDeletePullReview

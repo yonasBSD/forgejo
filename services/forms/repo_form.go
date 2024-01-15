@@ -140,6 +140,7 @@ type RepoSettingForm struct {
 	// Advanced settings
 	EnableCode                            bool
 	EnableWiki                            bool
+	GloballyWriteableWiki                 bool
 	EnableExternalWiki                    bool
 	ExternalWikiURL                       string
 	EnableIssues                          bool
@@ -768,6 +769,7 @@ type EditRepoFileForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	LastCommit    string
+	CommitMailID  int64 `binding:"Required"`
 	Signoff       bool
 }
 

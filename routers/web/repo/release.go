@@ -397,7 +397,14 @@ func NewReleasePost(ctx *context.Context) {
 		return
 	}
 
-	if !ctx.Repo.GitRepo.IsBranchExist(form.Target) {
+	objectFormat, err := ctx.Repo.GitRepo.GetObjectFormat()
+	if err != nil {
+		ctx.ServerError("GetCommit", err)
+		return
+	}
+	// form.Target can be a branch name or a full commitID.
+	if !ctx.Repo.GitRepo.IsBranchExist(form.Target) &&
+		len(form.Target) == objectFormat.FullLength() && !ctx.Repo.GitRepo.IsCommitExist(form.Target) {
 		ctx.RenderWithErr(ctx.Tr("form.target_branch_not_exist"), tplReleaseNew, &form)
 		return
 	}
