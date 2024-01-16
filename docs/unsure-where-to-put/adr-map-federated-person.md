@@ -1,5 +1,16 @@
 # Activity for federated star action
 
+- [Activity for federated star action](#activity-for-federated-star-action)
+  - [Status](#status)
+  - [Context](#context)
+  - [Decision](#decision)
+  - [Choices](#choices)
+    - [1. Map to User only](#1-map-to-user-only)
+    - [2. Map to User-2-ExternalLoginUser](#2-map-to-user-2-externalloginuser)
+    - [3. Map to User-2-FederatedUser](#3-map-to-user-2-federateduser)
+    - [3. Map to new FederatedPerson and introduce a common User interface](#3-map-to-new-federatedperson-and-introduce-a-common-user-interface)
+
+
 ## Status
 
 Still in discussion
@@ -14,9 +25,11 @@ tbd
 
 ## Choices
 
-### 1. Map to User.LoginName by AsLoginName()
+### 1. Map to User only
 
-1. We map PersonId AsLoginName() to User.LoginName.
+Triggering forgejo actions stays as is, no new model & persistence is introduced.
+
+1. We map PersonId AsLoginName() (e.g. 13-some.instan.ce) to User.LoginName.
 2. We accept only URIs as Actor Items
 3. We can lookup for federated users without fetching the Person every time.
 4. Created User is limited:
@@ -64,6 +77,7 @@ classDiagram
 
   namespace forgejo {
     class User {
+      <<Aggragate Root>>
       ID        int64 
       LowerName string
       Name      string
@@ -79,11 +93,22 @@ classDiagram
   PersonID -- User: mapped by AsLoginName() == LoginName
 ```
 
-### 2. Map to ExternalLoginUser
+### 2. Map to User-2-ExternalLoginUser
 
-Would improve the ability to map to the federation source.
-
+Would improve the ability to map to the federation source. 
 But login Propagation stuff is not going to be used and will maybe be harmful.
+
+1. We map PersonId.AsWebfinger() (e.g. 13@some.instan.ce) to ExternalLoginUser.ExternalID. LoginSourceID may be left Empty.
+2. We accept only URIs as Actor Items
+3. We can lookup for federated users without fetching the Person every time.
+4. Created User is limited:
+   1. non functional email is generated, email notification is false.
+   2. strong password is generated silently
+   3. User.Type is UserTypeRemoteUser
+   4. User is not Admin
+   5. User is not Active
+5. Created ExternalLoginUser is limited
+   1. Login via fediverse is not intended and will not work
 
 ```mermaid
 classDiagram
@@ -114,7 +139,7 @@ classDiagram
       UnvalidatedInput string
     }
     class PersonID {
-      AsLoginName() string // "ID-Host"
+      AsWebfinger() string // "ID@Host"
     }
   }
 
@@ -123,6 +148,7 @@ classDiagram
 
   namespace user {
     class User {
+      <<Aggregate Root>>
       ID        int64
       LoginSource int64
       LowerName string
@@ -145,6 +171,7 @@ classDiagram
 
   namespace auth {
     class Source {
+      <<Aggregate Root>>
       ID            int64
       Type          Type
       Name          string  
@@ -158,9 +185,21 @@ classDiagram
   ExternalLoginUser -- Source  
 ```
 
-### 3. Map to FederatedUser
+### 3. Map to User-2-FederatedUser
 
-Would improve the ability to map to the federation source.
+Would improve the ability to map to the federation source. But we will have a additional model & table for FederatedUser
+
+1. We map PersonId.asWbfinger() to FederatedPerson.ExternalID (e.g. 13@some.instan.ce).
+2. We accept only URIs as Actor Items
+3. We can lookup for federated users without fetching the Person every time.
+4. Created User is limited:
+   1. non functional email is generated, email notification is false.
+   2. strong password is generated silently
+   3. User.Type is UserTypeRemoteUser
+   4. User is not Admin
+   5. User is not Active
+5. Created ExternalLoginUser is limited
+   1. Login via fediverse is not intended and will not work
 
 ```mermaid
 classDiagram
@@ -201,6 +240,7 @@ classDiagram
 
   namespace user {
     class User {
+      <<Aggregate Root>>
       ID        int64
       LowerName string
       Name      string
@@ -211,24 +251,113 @@ classDiagram
       IsActive bool
       IsAdmin bool
     }
-  }
 
-  namespace forgefed {
     class FederatedUser {
       ID         int64
       UserID     int64
       RawData    map[string]any
-      RemoteID   string
-      RemoteInfo int64
+      ExternalID   string
+      FederationHost int64
     }
-    class FederationInfo {
+  }
+  User *-- FederatedUser: FederatedUser.UserID
+  PersonID -- FederatedUser : mapped by PersonID.asWebfinger() == FederatedUser.externalID
+
+  namespace forgefed {
+    
+    class FederationHost {
+      <<Aggregate Root>>
       ID int64
       HostFqdn string
-      NodeInfo NodeInfo
+    }
+
+    class NodeInfo {
+      Source string
+    }
+  }
+  FederationHost *-- NodeInfo
+  FederatedUser -- FederationHost
+
+ 
+```
+
+### 3. Map to new FederatedPerson and introduce a common User interface
+
+Cached FederatedPerson is mainly independent to existing User. At every place of interaction we have to enhance persistence & introduce a common User interface.
+
+1. We map PersonId.asWbfinger() to FederatedPerson.ExternalID (e.g. 13@some.instan.ce).
+2. We accept only URIs as Actor Items
+3. We can lookup for federated persons without fetching the Person every time.
+
+```mermaid
+classDiagram
+  namespace activitypub {
+    class ForgeLike {
+      ID ID
+      Type ActivityVocabularyType // Like
+      Actor Item
+      Object Item
+    }
+    class Actor {
+      ID
+      URL Item
+      Type ActivityVocabularyType // Person
+      Name NaturalLanguageValues
+      PreferredUsername NaturalLanguageValues
+      Inbox Item
+      Outbox Item
+      PublicKey PublicKey
+    }
+    class ActorID {
+      ID               string
+      Source           string
+      Schema           string
+      Path             string
+      Host             string
+      Port             string
+      UnvalidatedInput string
+    }
+    class PersonID {
+      AsLoginName() string // "ID-Host"
+      AsWebfinger() string // "@ID@Host"
     }
   }
 
-  User o-- FederatedUser: FederatedUser.UserID
-  FederatedUser -- FederationInfo
-  PersonID -- FederatedUser : maped by PersonID.ID == FederatedUser.RemoteID
+  ActorID <|-- PersonID
+  ForgeLike *-- PersonID: ActorID
+
+  namespace user {
+    class CommonUser {
+
+    }
+    class User {
+      
+    }    
+  }
+  User ..<| CommonUser 
+  
+  namespace forgefed {
+    class FederatedPerson {
+      <<Aggregate Root>>
+      ID         int64
+      UserID     int64
+      RawData    map[string]any
+      ExternalID   string
+      FederationHost int64
+    }
+    
+    class FederationHost {
+      <<Aggregate Root>>
+      ID int64
+      HostFqdn string
+    }
+
+    class NodeInfo {
+      Source string
+    }
+  }
+  PersonID -- FederatedPerson : mapped by PersonID.asWebfinger() == FederatedPerson.externalID
+  FederationHost *-- NodeInfo
+  FederatedPerson -- FederationHost
+  FederatedPerson ..<| CommonUser  
 ```
