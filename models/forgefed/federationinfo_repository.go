@@ -31,6 +31,7 @@ func GetFederationInfo(ctx context.Context, ID int64) (*FederationInfo, error) {
 
 func FindFederationInfoByHostFqdn(ctx context.Context, fqdn string) (*FederationInfo, error) {
 	info := new(FederationInfo)
+	// TODO: use parameter with toLower
 	has, err := db.GetEngine(ctx).Where("host_fqdn=?", fqdn).Get(info)
 	if err != nil {
 		return nil, err

@@ -14,7 +14,8 @@ import (
 // FederationInfo data type
 // swagger:model
 type FederationInfo struct {
-	ID             int64              `xorm:"pk autoincr"`
+	ID int64 `xorm:"pk autoincr"`
+	// TODO: implement a toLower here & add a toLowerValidation
 	HostFqdn       string             `xorm:"host_fqdn UNIQUE INDEX VARCHAR(255) NOT NULL"`
 	NodeInfo       NodeInfo           `xorm:"extends NOT NULL"`
 	LatestActivity time.Time          `xorm:"NOT NULL"`
