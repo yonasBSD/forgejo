@@ -1,10 +1,23 @@
-# 2023-11 Activities on "federated star"
+# 2024-01 Federated staring with Like Activity
 
-We are on the way to implement the feature "federated star / unstar" activity end to end. The goal is to convince the codeberg team to switch this feature on as soon as possible.
+We did the next step. We now use a plain Like Activity for expressing the Star action.
+In addition we fixed some bugs, made error responses more meaningful, improved security by validating every input we get on federation & mitigate identified threats (SlowLories, Block by future StartTime & various Replay Attacks).
 
-At the moment we are implementing the good path. We've reached "create user from response" (see sequence diagram at https://codeberg.org/meissa/forgejo/src/branch/forgejo-federated-star/docs/unsure-where-to-put/threat_analysis_star_activity.md) - so you can expect the first curl-experiment-announcement in near future.
+At https://federated-repo.prod.meissa.de/buero/star-me you can try out the current code the same way as described above with the following activity (maybe find an unused user by alternating the actors user-id).
 
-In parallel we start the discussion which new threats might be introduced with this feature. If you are interested in hacking or security, feel welcome to contribute to the threat discussion at: https://codeberg.org/forgejo/forgejo/issues/1854.
+``` json
+{
+  "id": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12",
+  "type": "Like",
+  "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/12",
+  "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1",
+  "startTime": "2024-01-05T23:00:00-08:00"
+}
+```
+
+Please consider to increment the `startTime` for each api-request - maybe use the current time is a good idea.
+
+In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680
 
 # 2023-12 Federated staring open for test
 
@@ -27,23 +40,10 @@ Hey, we ar on our way to implement federated stars. We created a test instance t
 
 At the moment we discuss threats arising by this feature. If you are interested we will be happy to get your 2 cents here: https://codeberg.org/forgejo/forgejo/issues/1854
 
-# 2024-01 Federated staring with Like Activity
+# 2023-11 Activities on "federated star"
 
-We did the next step. We now use a plain Like Activity for expressing the Star action.
-In addition we fixed some bugs, made error responses more meaningful, improved security by validating every input we get on federation & mitigate identified threats (SlowLories, Block by future StartTime & various Replay Attacks).
+We are on the way to implement the feature "federated star / unstar" activity end to end. The goal is to convince the codeberg team to switch this feature on as soon as possible.
 
-At https://federated-repo.prod.meissa.de/buero/star-me you can try out the current code the same way as described above with the following activity (maybe find an unused user by alteranting the actors user-id).
+At the moment we are implementing the good path. We've reached "create user from response" (see sequence diagram at https://codeberg.org/meissa/forgejo/src/branch/forgejo-federated-star/docs/unsure-where-to-put/threat_analysis_star_activity.md) - so you can expect the first curl-experiment-announcement in near future.
 
-``` json
-{
-  "id": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1/outbox/12",
-  "type": "Like",
-  "actor": "https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/12",
-  "object": "https://federated-repo.prod.meissa.de/api/v1/activitypub/repository-id/1",
-  "startTime": "2024-01-05T23:00:00-08:00"
-}
-```
-
-Please consider to increment the `startTime` for each api-request - maybe use the current time is a good idea.
-
-In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680
+In parallel we start the discussion which new threats might be introduced with this feature. If you are interested in hacking or security, feel welcome to contribute to the threat discussion at: https://codeberg.org/forgejo/forgejo/issues/1854.
