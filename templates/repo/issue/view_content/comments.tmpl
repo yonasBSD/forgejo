@@ -775,7 +775,7 @@
 						{{else}}
 							{{$reviewerName = .Review.OriginalAuthor}}
 						{{end}}
-						{{$.locale.Tr "repo.issues.review.dismissed" $reviewerName $createdStr | Safe}}
+						<span class="dismissed-message">{{$.locale.Tr "repo.issues.review.dismissed" ($reviewerName | Escape) $createdStr | Safe}}</span>
 					</span>
 				</div>
 				{{if .Content}}
