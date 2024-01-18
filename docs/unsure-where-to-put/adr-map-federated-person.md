@@ -5,10 +5,10 @@
   - [Context](#context)
   - [Decision](#decision)
   - [Choices](#choices)
-    - [1. Map to User only](#1-map-to-user-only)
-    - [2. Map to User-2-ExternalLoginUser](#2-map-to-user-2-externalloginuser)
-    - [3. Map to User-2-FederatedUser](#3-map-to-user-2-federateduser)
-    - [3. Map to new FederatedPerson and introduce a common User interface](#3-map-to-new-federatedperson-and-introduce-a-common-user-interface)
+    - [1. Map to plain forgejo User](#1-map-to-plain-forgejo-user)
+    - [2. Map to User-\&-ExternalLoginUser](#2-map-to-user--externalloginuser)
+    - [3. Map to User-\&-FederatedUser](#3-map-to-user--federateduser)
+    - [4. Map to new FederatedPerson and introduce a common User interface](#4-map-to-new-federatedperson-and-introduce-a-common-user-interface)
 
 
 ## Status
@@ -31,17 +31,21 @@ tbd
 
 ## Choices
 
-### 1. Map to User only
-
-Triggering forgejo actions stays as is, no new model & persistence is introduced.
+### 1. Map to plain forgejo User
 
 1. We map PersonId AsLoginName() (e.g. 13-some.instan.ce) to User.LoginName. Due to limitations of User.LoginName validation mapping may be affected by invalid characters.
 2. Created User is limited:
-   1. non functional email is generated, email notification is false.
+   1. non functional email is generated, email notification is false. At the moment we have problems with email whitelists at this point.
    2. strong password is generated silently
    3. User.Type is UserTypeRemoteUser
    4. User is not Admin
    5. User is not Active
+
+We can use forgejo code (like star / unstar fkt.) without changes.
+
+No new model & persistence is introduced.
+
+But we use fields against their semantic and see some problems / limitations for mapping arise.
 
 ```mermaid
 classDiagram
@@ -95,24 +99,28 @@ classDiagram
   }
 
   PersonID -- User: mapped by AsLoginName() == LoginName
+  PersonID -- Actor: links to
 ```
 
-### 2. Map to User-2-ExternalLoginUser
-
-Would improve the ability to map to the federation source. 
-But login Propagation stuff is not going to be used and will maybe be harmful.
+### 2. Map to User-&-ExternalLoginUser
 
 1. We map PersonId.AsWebfinger() (e.g. 13@some.instan.ce) to ExternalLoginUser.ExternalID. LoginSourceID may be left Empty.
-2. We accept only URIs as Actor Items
-3. We can lookup for federated users without fetching the Person every time.
-4. Created User is limited:
+2. Created User is limited:
    1. non functional email is generated, email notification is false.
    2. strong password is generated silently
    3. User.Type is UserTypeRemoteUser
    4. User is not Admin
    5. User is not Active
-5. Created ExternalLoginUser is limited
+3. Created ExternalLoginUser is limited
    1. Login via fediverse is not intended and will not work
+
+We can use forgejo code (like star / unstar fkt.) without changes.
+
+No new model & persistence is introduced, no need for refactorings.
+
+But we use fields against their semantic (User.EMail, User.Password, User.LoginSource, ExternalLoginUser.Login*) and see some problems / limitations for login functionality arise.
+
+Mapping may be more reliable compared to option 1.
 
 ```mermaid
 classDiagram
@@ -149,6 +157,7 @@ classDiagram
 
   ActorID <|-- PersonID
   ForgeLike *-- PersonID: ActorID
+  PersonID -- Actor: links to
 
   namespace user {
     class User {
@@ -186,24 +195,27 @@ classDiagram
 
   User *-- ExternalLoginUser: ExternalLoginUser.UserID
   User -- Source
-  ExternalLoginUser -- Source  
+  ExternalLoginUser -- Source
+  PersonID -- ExternalLoginUser: mapped by AsLoginName() == ExternalID
 ```
 
-### 3. Map to User-2-FederatedUser
-
-Would improve the ability to map to the federation source. But we will have a additional model & table for FederatedUser
+### 3. Map to User-&-FederatedUser
 
 1. We map PersonId.asWbfinger() to FederatedPerson.ExternalID (e.g. 13@some.instan.ce).
-2. We accept only URIs as Actor Items
-3. We can lookup for federated users without fetching the Person every time.
-4. Created User is limited:
+2. Created User is limited:
    1. non functional email is generated, email notification is false.
    2. strong password is generated silently
    3. User.Type is UserTypeRemoteUser
    4. User is not Admin
    5. User is not Active
-5. Created ExternalLoginUser is limited
-   1. Login via fediverse is not intended and will not work
+
+We can use forgejo code (like star / unstar fkt.) without changes.
+
+Introduce FederatedUser as new & persistence, no need for refactorings.
+
+But we use fields (User.EMail, User.Password) against their semantic, but we probably can handle the problems arising.
+
+We will be able to have a reliable mapping.
 
 ```mermaid
 classDiagram
@@ -285,13 +297,18 @@ classDiagram
  
 ```
 
-### 3. Map to new FederatedPerson and introduce a common User interface
+### 4. Map to new FederatedPerson and introduce a common User interface
 
 Cached FederatedPerson is mainly independent to existing User. At every place of interaction we have to enhance persistence & introduce a common User interface.
 
 1. We map PersonId.asWbfinger() to FederatedPerson.ExternalID (e.g. 13@some.instan.ce).
-2. We accept only URIs as Actor Items
-3. We can lookup for federated persons without fetching the Person every time.
+2. We will have no semantic mismatch.
+
+We can use forgejo code (like star / unstar fkt.) after refactorings only.
+
+We introduce new model & persistence.
+
+We will be able to have a reliable mapping.
 
 ```mermaid
 classDiagram
@@ -329,10 +346,11 @@ classDiagram
 
   ActorID <|-- PersonID
   ForgeLike *-- PersonID: ActorID
+  PersonID -- Actor: links to
 
   namespace user {
     class CommonUser {
-
+      <<Interface>>
     }
     class User {
       
