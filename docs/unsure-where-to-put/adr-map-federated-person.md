@@ -17,7 +17,13 @@ Still in discussion
 
 ## Context
 
-While implementing federation we have to represent persons federated to a local instance. A federated person should be able to execute local actions (as it was a local user) without to many code changes. But the federated person should be able to map to the origin person and keep the crypto stuff to ensure action integrity.
+While implementing federation we have to represent federated persons to a local instance. 
+
+A federated person should be able to execute local actions (as it was a local user) without too many code changes.
+
+For being able to map the federated person reliable, the local representation has to carry a clear mapping to the original federated person.
+
+We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",}`. Find out whether this user is available locally without dereference the federated person is important for performance & system resilience.
 
 ## Decision
 
@@ -29,10 +35,8 @@ tbd
 
 Triggering forgejo actions stays as is, no new model & persistence is introduced.
 
-1. We map PersonId AsLoginName() (e.g. 13-some.instan.ce) to User.LoginName.
-2. We accept only URIs as Actor Items
-3. We can lookup for federated users without fetching the Person every time.
-4. Created User is limited:
+1. We map PersonId AsLoginName() (e.g. 13-some.instan.ce) to User.LoginName. Due to limitations of User.LoginName validation mapping may be affected by invalid characters.
+2. Created User is limited:
    1. non functional email is generated, email notification is false.
    2. strong password is generated silently
    3. User.Type is UserTypeRemoteUser
