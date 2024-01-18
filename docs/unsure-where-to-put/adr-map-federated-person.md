@@ -17,13 +17,13 @@ Still in discussion
 
 ## Context
 
-While implementing federation we have to represent federated persons to a local instance. 
+While implementing federation we have to represent federated persons on a local instance.
 
-A federated person should be able to execute local actions (as it was a local user) without too many code changes.
+A federated person should be able to execute local actions (as if he was a local user), ideally without too many code changes.
 
 For being able to map the federated person reliable, the local representation has to carry a clear mapping to the original federated person.
 
-We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",}`. Find out whether this user is available locally without dereference the federated person is important for performance & system resilience.
+We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",}`. To find out whether this user is available locally without dereference the federated person every time is important for performance & system resilience.
 
 ## Decision
 
