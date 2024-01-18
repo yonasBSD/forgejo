@@ -211,7 +211,7 @@ classDiagram
 
 We can use forgejo code (like star / unstar fkt.) without changes.
 
-Introduce FederatedUser as new & persistence, no need for refactorings.
+Introduce FederatedUser as new model & persistence.
 
 But we use fields (User.EMail, User.Password) against their semantic, but we probably can handle the problems arising.
 
@@ -299,12 +299,10 @@ classDiagram
 
 ### 4. Map to new FederatedPerson and introduce a common User interface
 
-Cached FederatedPerson is mainly independent to existing User. At every place of interaction we have to enhance persistence & introduce a common User interface.
-
 1. We map PersonId.asWbfinger() to FederatedPerson.ExternalID (e.g. 13@some.instan.ce).
 2. We will have no semantic mismatch.
 
-We can use forgejo code (like star / unstar fkt.) after refactorings only.
+We can use forgejo code (like star / unstar fkt.) after refactorings only. At every place of interaction we have to enhance persistence (e.g. a find may have to query two tables now) & introduce a common User interface.
 
 We introduce new model & persistence.
 
