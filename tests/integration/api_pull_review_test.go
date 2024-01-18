@@ -45,7 +45,6 @@ func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 		t.Run("Event_"+string(event), func(t *testing.T) {
 			path := "README.md"
 			var review api.PullReview
-			existingCommentBody := "existing comment body"
 			var reviewLine int64 = 1
 
 			// cleanup
@@ -76,18 +75,11 @@ func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 				req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index), &api.CreatePullReviewOptions{
 					Body:  "body1",
 					Event: event,
-					Comments: []api.CreatePullReviewComment{
-						{
-							Path:       path,
-							Body:       existingCommentBody,
-							OldLineNum: reviewLine,
-						},
-					},
 				}).AddTokenAuth(token)
 				resp := MakeRequest(t, req, http.StatusOK)
 				DecodeJSON(t, resp, &review)
 				require.EqualValues(t, string(event), review.State)
-				require.EqualValues(t, 1, review.CodeCommentsCount)
+				require.EqualValues(t, 0, review.CodeCommentsCount)
 			}
 
 			{
@@ -99,17 +91,6 @@ func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 				require.EqualValues(t, getReview, review)
 			}
 			requireReviewCount(1)
-
-			{
-				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments", repo.FullName(), pullIssue.Index, review.ID).
-					AddTokenAuth(token)
-				resp := MakeRequest(t, req, http.StatusOK)
-				var reviewComments []*api.PullReviewComment
-				DecodeJSON(t, resp, &reviewComments)
-				require.Len(t, reviewComments, 1)
-				assert.EqualValues(t, username, reviewComments[0].Poster.UserName)
-				assert.EqualValues(t, existingCommentBody, reviewComments[0].Body)
-			}
 
 			newCommentBody := "first new line"
 			var reviewComment api.PullReviewComment

@@ -331,22 +331,14 @@ func CreatePullReviewComment(ctx *context.APIContext) {
 		line = opts.OldLineNum * -1
 	}
 
-	comment, err := pull_service.CreateCodeComment(ctx,
+	comment, err := pull_service.CreateCodeCommentKnownReviewID(ctx,
 		ctx.Doer,
-		ctx.Repo.GitRepo,
+		pr.Issue.Repo,
 		pr.Issue,
-		line,
 		opts.Body,
 		opts.Path,
-		// as of e522e774cae2240279fc48c349fc513c9d3353ee
-		// isPending is not needed because review.ID is always available
-		// and does not need to be discovered implicitly
-		false,
+		line,
 		review.ID,
-		// as of e522e774cae2240279fc48c349fc513c9d3353ee
-		// latestCommitID is not needed because it is only used to
-		// create a new review in case it does not already exist
-		"",
 	)
 	if err != nil {
 		ctx.InternalServerError(err)
