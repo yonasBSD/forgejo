@@ -96,7 +96,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 			"RepositoryInbox: Validating ActorID", err)
 		return
 	}
-	federationInfo, err := forgefed.FindFederationInfoByHostFqdn(ctx, rawActorID.Host)
+	federationInfo, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError,
 			"RepositoryInbox: Error while loading FederationInfo", err)
@@ -180,7 +180,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 		}
 	}
 	federationInfo.LatestActivity = activity.StartTime
-	err = forgefed.UpdateFederationInfo(ctx, *federationInfo)
+	err = forgefed.UpdateFederationHost(ctx, *federationInfo)
 	if err != nil {
 		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: error updateing federateionInfo", err)
 		return
@@ -211,35 +211,35 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 	return users, nil
 }
 
-func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationInfo, error) {
+func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationHost, error) {
 	actionsUser := user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
 	body, err := client.GetBody(actorID.AsWellKnownNodeInfoURI())
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
 	nodeInfoWellKnown, err := forgefed.NewNodeInfoWellKnown(body)
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
 	body, err = client.GetBody(nodeInfoWellKnown.Href)
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
 	nodeInfo, err := forgefed.NewNodeInfo(body)
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
-	result, err := forgefed.NewFederationInfo(nodeInfo, actorID.Host)
+	result, err := forgefed.NewFederationHost(nodeInfo, actorID.Host)
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
-	err = forgefed.CreateFederationInfo(ctx, result)
+	err = forgefed.CreateFederationHost(ctx, result)
 	if err != nil {
-		return forgefed.FederationInfo{}, err
+		return forgefed.FederationHost{}, err
 	}
 	return result, nil
 }

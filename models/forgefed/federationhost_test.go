@@ -10,8 +10,8 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-func Test_FederationInfoValidation(t *testing.T) {
-	sut := FederationInfo{
+func Test_FederationHostValidation(t *testing.T) {
+	sut := FederationHost{
 		HostFqdn: "host.do.main",
 		NodeInfo: NodeInfo{
 			Source: "forgejo",
@@ -22,7 +22,7 @@ func Test_FederationInfoValidation(t *testing.T) {
 		t.Errorf("sut should be valid but was %q", err)
 	}
 
-	sut = FederationInfo{
+	sut = FederationHost{
 		HostFqdn:       "host.do.main",
 		NodeInfo:       NodeInfo{},
 		LatestActivity: time.Now(),
@@ -31,7 +31,7 @@ func Test_FederationInfoValidation(t *testing.T) {
 		t.Errorf("sut should be invalid")
 	}
 
-	sut = FederationInfo{
+	sut = FederationHost{
 		HostFqdn: "host.do.main",
 		NodeInfo: NodeInfo{
 			Source: "forgejo",
