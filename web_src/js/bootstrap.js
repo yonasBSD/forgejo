@@ -8,6 +8,8 @@ __webpack_public_path__ = `${window.config?.assetUrlPrefix ?? '/assets'}/`;
 export function showGlobalErrorMessage(msg) {
   const pageContent = document.querySelector('.page-content');
   if (!pageContent) return;
+  // Prevent a wall of errors being presented to the user.
+  if (document.querySelectorAll('.js-global-error').length >= 3) return;
   const el = document.createElement('div');
   el.innerHTML = `<div class="ui container negative message center aligned js-global-error" style="white-space: pre-line;"></div>`;
   el.childNodes[0].textContent = msg;
