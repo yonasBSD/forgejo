@@ -4,6 +4,39 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.22 (DRAFT)
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.22/forgejo) included in the `Forgejo v1.22.0-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v1.22/forgejo
+```
+
+- **[Forgejo Semantic Version](https://forgejo.org/docs/v1.22/user/semver/):**
+  - The semantic version was updated to `7.0.0+0-gitea-1.22.0` because it contains breaking changes.
+
+ **Breaking:**
+  - Language statistics for repositories that use `linguist` attributes in `.gitattributes` *may* show different statistics than previously, because Forgejo recognizes more [linguist attributes](https://forgejo.org/docs/v1.22/user/language-detection/) now.
+
+- **Features:**
+  - Repository administrators can [allow anyone to edit the wiki](https://forgejo.org/docs/v1.22/user/wiki/#activation-and-permissions) in the repository Settings. ([#2001](https://codeberg.org/forgejo/forgejo/pulls/2001))
+  - Instance administrators can enable [repository badges](https://forgejo.org/docs/v1.22/user/readme-badges/) in the [configuration file](https://forgejo.org/docs/v1.22/admin/config-cheat-sheet/#badges-badges). This feature depends on a shield generator service such as shields.io, and is disabled by default. ([#2070](https://codeberg.org/forgejo/forgejo/pulls/2070))
+  - Instance administrators can [configure the additional clone methods](https://forgejo.org/docs/v1.22/admin/config-cheat-sheet/#repository-repository) displayed on the repository home view. ([#2056](https://codeberg.org/forgejo/forgejo/pulls/2056))
+  - Instance administrators can [assign custom flags to repositories](https://codeberg.org/forgejo/forgejo/pulls/2079). This is disabled by default, and currently requires custom templates to do anything useful with the flags. ([#2079](https://codeberg.org/forgejo/forgejo/pulls/2079) & [#2097](https://codeberg.org/forgejo/forgejo/pulls/2097))
+
+- **Enhancements:**
+  - Forgejo now recognizes more [linguist attributes](https://forgejo.org/docs/v1.22/user/language-detection/), making it possible to include documentation in the repository language statistics, for example. ([#2088](https://codeberg.org/forgejo/forgejo/pulls/2088))
+  - When displaying the message to open a pull request from a recently pushed branch, the recently pushed branch now links to the appropriate branch. ([#2141](https://codeberg.org/forgejo/forgejo/pulls/2141))
+  - Users who signed up, but have not activated their accounts yet, are now able to [change their email before activation](https://codeberg.org/forgejo/forgejo/pulls/1891). ([#1891](https://codeberg.org/forgejo/forgejo/pulls/1891))
+  - The "You pushed on branch ...." banner is now displayed for repositories you have a fork of with recently pushed branches too ([#2195](https://codeberg.org/forgejo/forgejo/pulls/2195)), and it will no longer consider branches that share no history with the default branch ([#2196](https://codeberg.org/forgejo/forgejo/pulls/2196))
+
+- **Bug fixes:**
+  - The repository home view will no longer redirect to external units. ([#2064](https://codeberg.org/forgejo/forgejo/pulls/2064))
+  - User and Organization `.profile` repositories now search for a `README.md` file case insensitively. ([#2090](https://codeberg.org/forgejo/forgejo/pulls/2090))
+  - When viewing a file, the RSS feed link is only displayed when there is an RSS feed provided for the context: when viewing a file on a branch. ([#2103](https://codeberg.org/forgejo/forgejo/pulls/2103))
+  - Repository topic searches are now correctly paged, which should make topic management on larger instances orders of magnitudes faster. ([#2060](https://codeberg.org/forgejo/forgejo/pulls/2060))
+
 ## 1.21.5-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.5-0` release can be reviewed from the command line with:
