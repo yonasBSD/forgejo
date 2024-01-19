@@ -545,5 +545,5 @@ func RenameUser(ctx *context.APIContext) {
 	}
 
 	log.Trace("User name changed: %s -> %s", oldName, newName)
-	ctx.Status(http.StatusOK)
+	ctx.Status(http.StatusNoContent)
 }
