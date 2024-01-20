@@ -1002,9 +1002,9 @@ func renderCode(ctx *context.Context) {
 			return
 		}
 
-		showRecentlyPushedNewBranches := true
-		if ctx.Repo.Repository.IsMirror ||
-			!ctx.Repo.Repository.UnitEnabled(ctx, unit_model.TypePullRequests) {
+		showRecentlyPushedNewBranches := ctx.Repo.Repository.IsFork && ctx.Repo.Repository.BaseRepo != nil
+		if showRecentlyPushedNewBranches &&
+			(ctx.Repo.Repository.IsMirror || !ctx.Repo.Repository.BaseRepo.AllowsPulls(ctx)) {
 			showRecentlyPushedNewBranches = false
 		}
 		if showRecentlyPushedNewBranches {
