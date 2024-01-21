@@ -13,5 +13,6 @@ fi
 if [ $# -gt 0 ]; then
     exec "$@"
 else
-    exec /usr/local/bin/gitea -c ${GITEA_APP_INI} web
+    # Run Forgejo and any script/commands defined in FORGEJO_INIT_SCRIPT
+    /usr/local/bin/gitea -c ${GITEA_APP_INI} web & sleep 10 ; ${FORGEJO_INIT_SCRIPT:-true} && sleep infinity
 fi

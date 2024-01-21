@@ -37,5 +37,6 @@ done
 if [ $# -gt 0 ]; then
     exec "$@"
 else
-    exec /bin/s6-svscan /etc/s6
+     # Execute s6 supervisor and run any script/command defined in FORGEJO_INIT_SCRIPT
+    /bin/s6-svscan /etc/s6 & sleep 10 ; su -c "${FORGEJO_INIT_SCRIPT:-true}" git && sleep infinity
 fi
