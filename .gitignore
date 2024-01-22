@@ -118,3 +118,6 @@ prime/
 
 # Manpage
 /man
+
+# Generated merged Forgejo+Gitea language files
+/options/locale/locale_*
