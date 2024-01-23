@@ -141,6 +141,7 @@ func (b *Base) JSON(status int, content any) {
 func (b *Base) XML(status int, content any) {
 	b.Resp.Header().Set("Content-Type", "application/xml;charset=utf-8")
 	b.Resp.WriteHeader(status)
+	b.Resp.Write([]byte(xml.Header))
 	if err := xml.NewEncoder(b.Resp).Encode(content); err != nil {
 		log.Error("Render XML failed: %v", err)
 	}
