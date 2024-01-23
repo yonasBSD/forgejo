@@ -5,6 +5,7 @@ package context
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -133,6 +134,15 @@ func (b *Base) JSON(status int, content any) {
 	b.Resp.WriteHeader(status)
 	if err := json.NewEncoder(b.Resp).Encode(content); err != nil {
 		log.Error("Render JSON failed: %v", err)
+	}
+}
+
+// XML render content as XML
+func (b *Base) XML(status int, content any) {
+	b.Resp.Header().Set("Content-Type", "application/xml;charset=utf-8")
+	b.Resp.WriteHeader(status)
+	if err := xml.NewEncoder(b.Resp).Encode(content); err != nil {
+		log.Error("Render XML failed: %v", err)
 	}
 }
 
