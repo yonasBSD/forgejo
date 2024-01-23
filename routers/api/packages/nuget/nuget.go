@@ -413,8 +413,7 @@ func DownloadPackageFile(ctx *context.Context) {
 		}
 
 		ctx.XML(http.StatusOK, nuget_module.GenerateNuspec(pkg))
-	} else if filename == fmt.Sprintf("%s.%s.nupkg", packageName, packageVersion) {
-
+	} else {
 		s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
 			ctx,
 			&packages_service.PackageInfo{
@@ -437,8 +436,6 @@ func DownloadPackageFile(ctx *context.Context) {
 		}
 
 		helper.ServePackageFile(ctx, s, u, pf)
-	} else {
-		apiError(ctx, http.StatusInternalServerError, "Invalid filename")
 	}
 }
 
