@@ -412,7 +412,7 @@ func DownloadPackageFile(ctx *context.Context) {
 			Metadata: pd.Metadata.(*nuget_module.Metadata),
 		}
 
-		ctx.XML(http.StatusOK, nuget_module.GenerateNuspec(pkg))
+		xmlResponse(ctx, http.StatusOK, nuget_module.GenerateNuspec(pkg))
 	} else {
 		s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
 			ctx,
