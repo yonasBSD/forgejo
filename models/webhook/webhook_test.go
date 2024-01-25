@@ -197,8 +197,9 @@ func TestHookTasks(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	hookTasks, err := HookTasks(db.DefaultContext, 1, 1)
 	assert.NoError(t, err)
-	if assert.Len(t, hookTasks, 1) {
-		assert.Equal(t, int64(1), hookTasks[0].ID)
+	if assert.Len(t, hookTasks, 2) {
+		assert.Equal(t, int64(2), hookTasks[0].ID)
+		assert.Equal(t, int64(1), hookTasks[1].ID)
 	}
 
 	hookTasks, err = HookTasks(db.DefaultContext, unittest.NonexistentID, 1)
