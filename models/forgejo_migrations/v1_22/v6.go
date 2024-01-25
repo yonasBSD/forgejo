@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/timeutil"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/cron"
 
 	"xorm.io/xorm"
 )
@@ -55,6 +56,12 @@ type HookTask struct {
 }
 
 func UpdateHookTaskTable(x *xorm.Engine) error {
+	cleanupHooks := cron.GetTask("cleanup_hook_task_table")
+	if cleanupHooks == nil {
+		log.Warn("cleanup_hook_task_table not found, migration might take longer than needed")
+	} else {
+		cleanupHooks.Run()
+	}
 	// create missing columns
 	if err := x.Sync(new(HookTask)); err != nil {
 		return err
