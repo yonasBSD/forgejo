@@ -3,6 +3,7 @@ package webhook
 import (
 	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -13,8 +14,6 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
-
-	"github.com/minio/sha256-simd"
 )
 
 type defaultConvertor struct {
