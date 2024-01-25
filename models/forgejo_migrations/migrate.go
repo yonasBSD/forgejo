@@ -48,6 +48,8 @@ var migrations = []*Migration{
 	NewMigration("Add default_permissions to repo_unit", forgejo_v1_22.AddDefaultPermissionsToRepoUnit),
 	// v4 -> v5
 	NewMigration("create the forgejo_repo_flag table", forgejo_v1_22.CreateRepoFlagTable),
+	// v5 -> v6
+	NewMigration("Add request properties to hook_task", forgejo_v1_22.UpdateHookTaskTable),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
