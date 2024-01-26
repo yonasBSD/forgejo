@@ -122,11 +122,11 @@ git reset --hard origin/forgejo-federated-star
 # provide testinstance
 
 ``` bash
-git checkout test-release
+git switch test-release
 git rebase --onto forgejo-federated-star
 git merge forgejo/forgejo-branding
 git push --force
-``` 
+```
 
 # generate swagger api client
 
