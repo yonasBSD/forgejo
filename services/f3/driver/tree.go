@@ -6,6 +6,7 @@ package driver
 
 import (
 	forgejo_options "code.gitea.io/gitea/services/f3/driver/options"
+
 	"lab.forgefriends.org/friendlyforgeformat/gof3/tree/generic"
 )
 
@@ -23,7 +24,6 @@ func newTreeDriver(tree generic.TreeInterface, anyOptions any) generic.TreeDrive
 	driver := &treeDriver{
 		options: anyOptions.(*forgejo_options.Options),
 	}
-	driver.SetTree(tree)
 	driver.Init()
 	return driver
 }
