@@ -106,12 +106,12 @@ git clone https://git.exozy.me/a/gitea.git exosy
 git remote add forgejo git@codeberg.org:forgejo/forgejo.git
 
 # rebase on top of forgejo/forge-development
-git checkout forgejo-development
+git switch forgejo-development
 git fetch forgejo
-git rebase --onto forgejo/forgejo-development
+git reset --hard origin/forgejo-development
 git push --force
 
-git checkout forgejo-federated-star
+git switch forgejo-federated-star
 git rebase forgejo-development
 git push --force
 
