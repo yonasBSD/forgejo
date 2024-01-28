@@ -3,7 +3,7 @@
 We did the next step. We now use a plain Like Activity for expressing the Star action.
 In addition we fixed some bugs, made error responses more meaningful, improved security by validating every input we get on federation & mitigate identified threats (SlowLories, Block by future StartTime).
 
-Reply attacks we now mitigate in our k8s ingress. Find the code in our [PR for c4k-forgejo](https://repo.prod.meissa.de/meissa/c4k-forgejo/pulls/3).
+Replay attacks we now mitigate in our k8s ingress. Find the code in our [PR for c4k-forgejo](https://repo.prod.meissa.de/meissa/c4k-forgejo/pulls/3).
 
 At https://federated-repo.prod.meissa.de/me/star-me you can try out the current code the same way as described above with the following activity (maybe find an unused user by alternating the actors user-id).
 

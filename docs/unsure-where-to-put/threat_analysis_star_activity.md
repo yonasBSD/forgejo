@@ -40,7 +40,7 @@ sequenceDiagram
     deactivate os
 ```
 
-### Data transfered
+### Data transferred
 
 ```
 # NodeInfoWellKnown
@@ -80,9 +80,9 @@ flowchart TD
     C --> |get NodeInfoWellKnown| B
     C --> |get NodeInfo| B
     C --> |get Person Actor| B
-    C --> |cache/create federated user localy| D(our database)
-    C --> |cache/create NodeInfo localy| D(our database)
-    C --> |add star to repo localy| D    
+    C --> |cache/create federated user locally| D(our database)
+    C --> |cache/create NodeInfo locally| D(our database)
+    C --> |add star to repo locally| D    
 ```
 
 ## Analysis
@@ -94,26 +94,26 @@ flowchart TD
 
 ### Actors
 
-1. **Script Kiddies**: Boored teens, willing to do some illegal stuff without deep knowlege of tech details but broad knowlege across internet discussions. Able to do some bash / python scripting.
-2. **Experienced Hacker**: Hacker with deep knowlege.
+1. **Script Kiddies**: Boored teens, willing to do some illegal stuff without deep knowledge of tech details but broad knowledge across internet discussions. Able to do some bash / python scripting.
+2. **Experienced Hacker**: Hacker with deep knowledge.
 3. **Hacker**: Hacker with some knowledge.
 4. **OpenSource Promoter**: Developers motivated to increase (or decrease) star count for some dedicated projects.
 
 ### Threat
 
 1. Script Kiddi sends a Like Activity containing an attack actor url `http://attacked.target/very/special/path` in place of actor. Our repository server sends a `get Person Actor` request to this url. The target receives a DenialdOfService attack. We loose CPU & instance reputation.
-2. Experienced hacker sends a Like Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and gets a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this persion, the db might be dropped.
+2. Experienced hacker sends a Like Activity containing an actor url pointing to an evil forgejo instance. Our repository server sends an `get Person Actor` request to this instance and gets a person having sth. like  `; drop database;` in its name. If our server tries to create a new user out of this person, the db might be dropped.
 3. OpenSource Promoter sends Star Activities containing non authorized Person Actors. The Actors listed as stargazer might get angry about this. The project may loose project reputation.
 4. **DOS by Rate**: Experienced Hacker records activities sent and replays some of them. Without order of activities (i.e. timestamp) we can not decide wether we should execute the activity again. If the replayed activities are UnLike Activity we might loose stars.
-5. **Reply**: Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage loss. Our instance might fall out of service.
-6. **Reply out of Order**: Experienced Hacker records activities sends again Unlike Activities happend but was succeded by an Like. Our instance accept the Unlike and removes a star. Our repositore gets rated unintended bad.
+5. **Replay**: Experienced Hacker records activities sends a massive amount of activities which leads to new user creation & storage loss. Our instance might fall out of service. See also [replay attack@wikipedia][3].
+6. **Replay out of Order**: Experienced Hacker records activities sends again Unlike Activities happened but was succeeded by an Like. Our instance accept the Unlike and removes a star. Our repository gets rated unintended bad.
 7. **DOS by Slowlories**: Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
 8. **Block by future StartTime**: Hacker sends an Activity having `startTime` in far future. Our Instance does no longer accept Activities till they have far far future `startTime` from the actors instance.
 
 ### Mitigations
 
 1. Validate object uri in order to send only requests to well defined endpoints.
-2. giteas global SQL injection protection. TODO: verify if there is one.
+2. xorm global SQL injection protection. TODO: verify if there is one.
 3. We accept only signed Activities
 4. We accept only activities having an startTime & remember the last executed activity startTime.
 5. We introduce (or have) rate limiting per IP.
@@ -136,7 +136,7 @@ Threat Score with values between 1 - 6
 
 ## Contributors
 
-In adition to direct commiter our special thanks goes to the experts joining our discussions:
+In addition to direct committer our special thanks goes to the experts joining our discussions:
 
 * [kik](https://codeberg.org/oelmekki)
 
@@ -144,3 +144,4 @@ In adition to direct commiter our special thanks goes to the experts joining our
 
 [1]: https://geballte-sicherheit.de/threat-modelling-bedrohungsanalyse-7-teil-einstufung-von-bedrohungen-ranking-of-threats/
 [2]: https://en.wikipedia.org/wiki/Slowloris_(computer_security)
+[3]: https://en.wikipedia.org/wiki/Replay_attack
