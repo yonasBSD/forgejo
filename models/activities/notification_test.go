@@ -138,3 +138,48 @@ func TestSetIssueReadBy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, activities_model.NotificationStatusRead, nt.Status)
 }
+
+func TestGetUIDsAndNotificationCounts(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	notification1 := unittest.AssertExistsAndLoadBean(t, &activities_model.Notification{ID: 1, Status: activities_model.NotificationStatusUnread})
+	notification2 := unittest.AssertExistsAndLoadBean(t, &activities_model.Notification{ID: 2, Status: activities_model.NotificationStatusRead})
+	notification3 := unittest.AssertExistsAndLoadBean(t, &activities_model.Notification{ID: 3, Status: activities_model.NotificationStatusPinned})
+	notification4 := unittest.AssertExistsAndLoadBean(t, &activities_model.Notification{ID: 4, Status: activities_model.NotificationStatusUnread})
+	notification5 := unittest.AssertExistsAndLoadBean(t, &activities_model.Notification{ID: 5, Status: activities_model.NotificationStatusUnread})
+
+	// Notification 1.
+	notifications, err := activities_model.GetUIDsAndNotificationCounts(db.DefaultContext, notification1.UpdatedUnix, notification1.UpdatedUnix+1)
+	assert.NoError(t, err)
+	assert.Len(t, notifications, 1)
+	assert.EqualValues(t, 1, notifications[0].Count)
+	assert.EqualValues(t, 1, notifications[0].UserID)
+
+	// Notification 2-3. Pined and read shouldn't be counted.
+	notifications, err = activities_model.GetUIDsAndNotificationCounts(db.DefaultContext, notification2.UpdatedUnix, notification3.UpdatedUnix+1)
+	assert.NoError(t, err)
+	assert.Len(t, notifications, 0)
+
+	// Notification 1-3.
+	notifications, err = activities_model.GetUIDsAndNotificationCounts(db.DefaultContext, notification1.UpdatedUnix, notification3.UpdatedUnix+1)
+	assert.NoError(t, err)
+	assert.Len(t, notifications, 1)
+	assert.EqualValues(t, 1, notifications[0].Count)
+	assert.EqualValues(t, 1, notifications[0].UserID)
+
+	// Notification 4-5.
+	notifications, err = activities_model.GetUIDsAndNotificationCounts(db.DefaultContext, notification4.UpdatedUnix, notification5.UpdatedUnix+1)
+	assert.NoError(t, err)
+	assert.Len(t, notifications, 1)
+	assert.EqualValues(t, 2, notifications[0].Count)
+	assert.EqualValues(t, 2, notifications[0].UserID)
+
+	// Notification 1-5.
+	notifications, err = activities_model.GetUIDsAndNotificationCounts(db.DefaultContext, notification1.UpdatedUnix, notification5.UpdatedUnix+1)
+	assert.NoError(t, err)
+	assert.Len(t, notifications, 2)
+	assert.EqualValues(t, 1, notifications[0].Count)
+	assert.EqualValues(t, 1, notifications[0].UserID)
+	assert.EqualValues(t, 2, notifications[1].Count)
+	assert.EqualValues(t, 2, notifications[1].UserID)
+}
