@@ -22,7 +22,7 @@
   }
   .issue-list-new {
     order: 1;
-    margin-left: auto !important;
+    margin-inline-start: auto !important;
   }
   .issue-list-search {
     order: 2 !important;
@@ -95,7 +95,7 @@
 }
 
 #issue-list .flex-item-body .checklist progress {
-  margin-left: 2px;
+  margin-inline-start: 2px;
   width: 80px;
   height: 6px;
   display: inline-block;
@@ -110,7 +110,7 @@
 }
 
 .archived-label-filter {
-  margin-left: 10px;
+  margin-inline-start: 10px;
   font-size: 12px;
   display: flex !important;
   margin-bottom: 8px;

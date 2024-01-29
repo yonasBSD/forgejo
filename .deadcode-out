@@ -291,6 +291,7 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Tr
 	func (MockLocale).TrN
 	func (MockLocale).PrettyNumber
+	func (MockLocale).DirLang
 
 package "code.gitea.io/gitea/modules/util"
 	func UnsafeStringToBytes

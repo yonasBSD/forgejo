@@ -3,6 +3,7 @@
   font-size: 16px;
   line-height: 1.5 !important;
   word-wrap: break-word;
+  text-align: left;
 }
 
 .markup > *:first-child {
@@ -23,9 +24,9 @@
 }
 
 .markup .anchor {
-  float: left;
-  padding-right: 4px;
-  margin-left: -20px;
+  float: inline-start;
+  padding-inline-end: 4px;
+  margin-inline-start: -20px;
   color: inherit;
 }
 
@@ -144,7 +145,7 @@
 
 .markup ul,
 .markup ol {
-  padding-left: 2em;
+  padding-inline-start: 2em;
 }
 
 .markup ul.no-list,
@@ -168,7 +169,7 @@
 }
 
 .markup .task-list-item input[type="checkbox"] + p {
-  margin-left: -0.2em;
+  margin-inline-start: -0.2em;
   display: inline;
 }
 
@@ -204,10 +205,10 @@
 
 .markup input[type="checkbox"]::after {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
   bottom: 0;
-  right: 0;
+  inset-inline-end: 0;
   pointer-events: none;
   background: var(--color-text);
   mask-size: cover;
@@ -267,10 +268,10 @@
 }
 
 .markup blockquote {
-  margin-left: 0;
+  margin-inline-start: 0;
   padding: 0 15px;
   color: var(--color-text-light-2);
-  border-left: 4px solid var(--color-secondary);
+  border-inline-start: 4px solid var(--color-secondary);
 }
 
 .markup blockquote > :first-child {
@@ -328,12 +329,12 @@
 
 .markup img[align="right"],
 .markup video[align="right"] {
-  padding-left: 20px;
+  padding-inline-start: 20px;
 }
 
 .markup img[align="left"],
 .markup video[align="left"] {
-  padding-right: 28px;
+  padding-inline-end: 28px;
 }
 
 .markup .emoji {
@@ -348,7 +349,7 @@
 
 .markup span.frame > span {
   display: block;
-  float: left;
+  float: inline-start;
   width: auto;
   padding: 7px;
   margin: 13px 0 0;
@@ -359,7 +360,7 @@
 .markup span.frame span img,
 .markup span.frame span video {
   display: block;
-  float: left;
+  float: inline-start;
 }
 
 .markup span.frame span span {
@@ -398,19 +399,19 @@
   display: block;
   margin: 13px 0 0;
   overflow: hidden;
-  text-align: right;
+  text-align: end;
 }
 
 .markup span.align-right span img,
 .markup span.align-right span video {
   margin: 0;
-  text-align: right;
+  text-align: end;
 }
 
 .markup span.float-left {
   display: block;
-  float: left;
-  margin-right: 13px;
+  float: inline-start;
+  margin-inline-end: 13px;
   overflow: hidden;
 }
 
@@ -420,8 +421,8 @@
 
 .markup span.float-right {
   display: block;
-  float: right;
-  margin-left: 13px;
+  float: inline-end;
+  margin-inline-start: 13px;
   overflow: hidden;
 }
 
@@ -429,7 +430,7 @@
   display: block;
   margin: 13px auto 0;
   overflow: hidden;
-  text-align: right;
+  text-align: end;
 }
 
 .markup code,
@@ -517,15 +518,15 @@
 .markup .ui.list .list,
 .markup ol.ui.list ol,
 .markup ul.ui.list ul {
-  padding-left: 2em;
+  padding-inline-start: 2em;
 }
 
 .file-revisions-btn {
   display: block;
-  float: left;
+  float: inline-start;
   margin-bottom: 2px !important;
   padding: 11px !important;
-  margin-right: 10px !important;
+  margin-inline-end: 10px !important;
 }
 
 .file-revisions-btn i {
@@ -547,20 +548,20 @@
   display: block !important; /* override fomantic .ui.form .error.message {display: none} */
   border: none !important;
   margin-bottom: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+  border-end-end-radius: 0 !important;
   box-shadow: none !important;
   font-size: 85% !important;
   white-space: pre-wrap !important;
   padding: 0.5rem 1rem !important;
-  text-align: left !important;
+  text-align: start !important;
 }
 
 .markup-block-error + pre {
   border-top: none !important;
   margin-top: 0 !important;
-  border-top-left-radius: 0 !important;
-  border-top-right-radius: 0 !important;
+  border-start-start-radius: 0 !important;
+  border-start-end-radius: 0 !important;
 }
 
 .file-view.markup.orgmode li.unchecked::before {

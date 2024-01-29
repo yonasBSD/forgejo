@@ -24,7 +24,7 @@
 }
 
 .admin dl.admin-dl-horizontal dd {
-  margin-left: auto;
+  margin-inline-start: auto;
   width: calc(100% - 300px - 1em);
   min-width: 100px;
 }

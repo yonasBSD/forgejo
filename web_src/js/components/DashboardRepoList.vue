@@ -490,7 +490,7 @@ export default sfc; // activate the IDE's Vue plugin
 ul {
   list-style: none;
   margin: 0;
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 ul li {
@@ -515,15 +515,15 @@ ul li:not(:last-child) {
 
 .repo-list-icon {
   min-width: 16px;
-  margin-right: 2px;
+  margin-inline-end: 2px;
 }
 
 /* octicon-mirror has no padding inside the SVG */
 .repo-list-icon.octicon-mirror {
   width: 14px;
   min-width: 14px;
-  margin-left: 1px;
-  margin-right: 3px;
+  margin-inline-start: 1px;
+  margin-inline-end: 3px;
 }
 
 .repo-owner-name-list li.active {

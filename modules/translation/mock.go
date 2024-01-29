@@ -25,3 +25,7 @@ func (l MockLocale) TrN(_cnt any, key1, _keyN string, _args ...any) string {
 func (l MockLocale) PrettyNumber(v any) string {
 	return fmt.Sprint(v)
 }
+
+func (l MockLocale) DirLang() string {
+	return "ltr"
+}

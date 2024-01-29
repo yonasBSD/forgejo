@@ -17,7 +17,7 @@
   content: "";
   position: absolute;
   display: block;
-  left: 50%;
+  inset-inline-start: 50%;
   top: 50%;
   height: min(4em, 66.6%);
   aspect-ratio: 1;

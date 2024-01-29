@@ -17,7 +17,7 @@
 }
 
 #git-graph-container .color-buttons {
-  margin-right: 0;
+  margin-inline-end: 0;
 }
 
 #git-graph-container .ui.header.dividing {
@@ -25,10 +25,10 @@
 }
 
 #git-graph-container #flow-select-refs-dropdown {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
   min-width: 250px;
-  border-right: none;
+  border-inline-end: none;
 }
 
 #git-graph-container #flow-select-refs-dropdown .ui.label {
@@ -92,7 +92,7 @@
 #git-graph-container #rel-container {
   max-width: 30%;
   overflow-x: auto;
-  float: left;
+  float: inline-start;
 }
 
 #git-graph-container #rev-container {
@@ -111,7 +111,7 @@
 
 #git-graph-container #rev-list .commit-refs .button {
   padding: 2px 4px;
-  margin-right: 0.25em;
+  margin-inline-end: 0.25em;
   display: inline-block;
   max-width: 200px;
   overflow: hidden;

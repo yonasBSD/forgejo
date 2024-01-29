@@ -65,12 +65,18 @@
 .ui.cards > .card > .content:first-child,
 .ui.card > .content:first-child {
   border-top: none;
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .ui.cards > .card > :last-child,
 .ui.card > :last-child {
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
 }
 
 .ui.cards > .card > :only-child,
@@ -123,12 +129,12 @@ a.ui.card:hover {
 }
 
 .ui.three.cards {
-  margin-left: -1em;
-  margin-right: -1em;
+  margin-inline-start: -1em;
+  margin-inline-end: -1em;
 }
 
 .ui.three.cards > .card {
   width: calc(33.33333333333333% - 2em);
-  margin-left: 1em;
-  margin-right: 1em;
+  margin-inline-start: 1em;
+  margin-inline-end: 1em;
 }

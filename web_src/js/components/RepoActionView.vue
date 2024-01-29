@@ -531,12 +531,12 @@ export function initRepositoryActionView() {
 }
 
 .job-artifacts-list {
-  padding-left: 12px;
+  padding-inline-start: 12px;
   list-style: none;
 }
 
 .job-artifacts-icon {
-  padding-right: 3px;
+  padding-inline-end: 3px;
 }
 
 .job-brief-list {
@@ -672,7 +672,10 @@ export function initRepositoryActionView() {
   background-color: var(--color-console-bg);
   position: sticky;
   top: 0;
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   height: 60px;
   z-index: 1;
 }
@@ -691,7 +694,10 @@ export function initRepositoryActionView() {
 .job-step-container {
   background-color: var(--color-console-bg);
   max-height: 100%;
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
   z-index: 0;
 }
 
@@ -708,7 +714,7 @@ export function initRepositoryActionView() {
 }
 
 .job-step-container .job-step-summary .step-summary-duration {
-  margin-left: 16px;
+  margin-inline-start: 16px;
 }
 
 .job-step-container .job-step-summary:hover {
@@ -778,7 +784,7 @@ export function initRepositoryActionView() {
 .job-log-line .line-num, .log-time-seconds {
   width: 48px;
   color: var(--color-grey-light);
-  text-align: right;
+  text-align: end;
   user-select: none;
 }
 
@@ -788,13 +794,13 @@ export function initRepositoryActionView() {
 }
 
 .log-time-seconds {
-  padding-right: 2px;
+  padding-inline-end: 2px;
 }
 
 .job-log-line .log-time,
 .log-time-stamp {
   color: var(--color-grey-light);
-  margin-left: 10px;
+  margin-inline-start: 10px;
   white-space: nowrap;
 }
 
@@ -802,7 +808,7 @@ export function initRepositoryActionView() {
   flex: 1;
   word-break: break-all;
   white-space: break-spaces;
-  margin-left: 10px;
+  margin-inline-start: 10px;
 }
 
 /* selectors here are intentionally exact to only match fullscreen */

@@ -17,5 +17,5 @@
 .issue-card-title {
   flex: 1;
   font-size: 14px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }

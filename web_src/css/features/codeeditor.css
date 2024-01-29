@@ -3,6 +3,7 @@
   width: 100%;
   min-height: 200px;
   height: 90vh;
+  direction: ltr;
 }
 
 .edit.githook .monaco-editor-container {

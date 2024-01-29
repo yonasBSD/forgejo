@@ -243,7 +243,7 @@ a.label,
 /* fix Fomantic's line-height cutting off "g" on Windows Chrome with Segoe UI */
 .ui.input > input {
   line-height: var(--line-height-default);
-  text-align: start; /* Override fomantic's `text-align: left` to make RTL work via HTML `dir="auto"` */
+  text-align: start; /* Override fomantic's `text-align: start` to make RTL work via HTML `dir="auto"` */
 }
 
 /* fix Fomantic's line-height causing vertical scrollbars to appear */
@@ -276,7 +276,7 @@ ol.ui.list li,
 
 .ui.action.input:not([class*="left action"]) > input,
 .ui.action.input:not([class*="left action"]) > input:hover {
-  border-right: 1px solid transparent;
+  border-inline-end: 1px solid transparent;
 }
 
 .ui.action.input:not([class*="left action"]) > input:focus {
@@ -296,7 +296,7 @@ ol.ui.list li,
 }
 
 .ui.menu .item > .svg {
-  margin-right: 0.35em;
+  margin-inline-end: 0.35em;
 }
 
 .ui.menu .dropdown.item:hover,
@@ -383,7 +383,7 @@ ol.ui.list li,
   margin-bottom: -0.25rem;
 }
 .ui.dropdown .menu > .item > svg {
-  margin-right: .78rem; /* use the same margin as for <img> */
+  margin-inline-end: .78rem; /* use the same margin as for <img> */
 }
 
 .ui.selection.dropdown .menu > .item {
@@ -432,13 +432,13 @@ ol.ui.list li,
 /* replace item margin on secondary menu items with gap and remove both the
    negative margins on the menu as well as margin on the items */
 .ui.secondary.menu {
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
   gap: .35714286em;
 }
 .ui.secondary.menu .item {
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
 }
 
 .ui.secondary.menu .dropdown.item:hover,
@@ -454,8 +454,8 @@ ol.ui.list li,
 }
 
 .ui.secondary.menu.tight .item {
-  padding-left: 0.85714286em;
-  padding-right: 0.85714286em;
+  padding-inline-start: 0.85714286em;
+  padding-inline-end: 0.85714286em;
 }
 
 /* remove the menu clearfix so that it won't add undesired gaps when using "gap" */
@@ -633,7 +633,7 @@ ol.ui.list li,
   color: var(--color-text);
   background: var(--color-box-body);
   border-color: var(--color-secondary);
-  text-align: start; /* Override fomantic's `text-align: left` to make RTL work via HTML `dir="auto"` */
+  text-align: start; /* Override fomantic's `text-align: start` to make RTL work via HTML `dir="auto"` */
 }
 
 .ui.table th,
@@ -697,12 +697,12 @@ ol.ui.list li,
 .ui.table > thead > tr > th:first-of-type,
 .ui.table > tbody > tr > td:first-of-type,
 .ui.table > tr > td:first-of-type {
-  padding-left: 10px;
+  padding-inline-start: 10px;
 }
 .ui.table > thead > tr > th:last-of-type,
 .ui.table > tbody > tr > td:last-of-type,
 .ui.table > tr > td:last-of-type {
-  padding-right: 10px;
+  padding-inline-end: 10px;
 }
 
 img.ui.avatar,
@@ -732,8 +732,8 @@ img.ui.avatar,
 .page-content .ui.ui.ui.container:not(.fluid) {
   width: 1280px;
   max-width: calc(100% - 64px);
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
 }
 
 .ui.container.fluid.padded {
@@ -1006,11 +1006,11 @@ img.ui.avatar,
 }
 
 .ui .text.left {
-  text-align: left !important;
+  text-align: start !important;
 }
 
 .ui .text.right {
-  text-align: right !important;
+  text-align: end !important;
 }
 
 .ui .text.normal {
@@ -1041,14 +1041,14 @@ img.ui.avatar,
 }
 
 .ui .message > ul {
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
   display: table;
-  text-align: left;
+  text-align: start;
 }
 
 .ui .header > i + .content {
-  padding-left: 0.75rem;
+  padding-inline-start: 0.75rem;
   vertical-align: middle;
 }
 
@@ -1078,7 +1078,7 @@ img.ui.avatar,
 }
 
 .ui .form .sub.field {
-  margin-left: 25px;
+  margin-inline-start: 25px;
 }
 
 .ui .sha.label {
@@ -1100,11 +1100,11 @@ img.ui.avatar,
   text-overflow: ellipsis;
   vertical-align: top;
   white-space: nowrap;
-  margin-right: 6px;
+  margin-inline-end: 6px;
 }
 
 .ui.status.buttons .svg {
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 .ui.inline.delete-button {
@@ -1216,14 +1216,14 @@ img.ui.avatar,
 }
 
 .ui.pagination.menu.narrow .item {
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-inline-start: 8px;
+  padding-inline-end: 8px;
   min-width: 1em;
   text-align: center;
 }
 
 .ui.pagination.menu.narrow .item .icon {
-  margin-right: 0;
+  margin-inline-end: 0;
 }
 
 .ui.icon.header svg {
@@ -1258,7 +1258,7 @@ img.ui.avatar,
 
 .color-preview {
   display: inline-block;
-  margin-left: 0.4em;
+  margin-inline-start: 0.4em;
   height: 0.67em;
   width: 0.67em;
   border-radius: var(--border-radius);
@@ -1298,8 +1298,8 @@ img.ui.avatar,
 
 .ui.menu.new-menu .new-menu-inner {
   display: flex;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
   overflow-x: auto;
   width: 100%;
   mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
@@ -1317,12 +1317,12 @@ img.ui.avatar,
 }
 
 .ui.menu.new-menu .item:first-child {
-  margin-left: auto; /* "justify-content: center" doesn't work with "overflow: auto", so use margin: auto */
+  margin-inline-start: auto; /* "justify-content: center" doesn't work with "overflow: auto", so use margin: auto */
 }
 
 .ui.menu.new-menu .item:last-child {
-  padding-right: 30px !important;
-  margin-right: auto;
+  padding-inline-end: 30px !important;
+  margin-inline-end: auto;
 }
 
 .ui.menu.new-menu::-webkit-scrollbar {
@@ -1354,8 +1354,8 @@ img.ui.avatar,
 }
 
 .ui.secondary.pointing.menu.repos-filter .item {
-  padding-left: 4.5px;
-  padding-right: 4.5px;
+  padding-inline-start: 4.5px;
+  padding-inline-end: 4.5px;
 }
 
 .activity-bar-graph {
@@ -1428,17 +1428,17 @@ a.ui.active.label:hover {
 }
 
 .lines-blame-btn {
-  padding-left: 10px;
-  padding-right: 10px;
-  text-align: right !important;
+  padding-inline-start: 10px;
+  padding-inline-end: 10px;
+  text-align: end !important;
   background-color: var(--color-code-sidebar-bg);
   width: 2%;
 }
 
 .lines-num {
-  padding-left: 10px;
-  padding-right: 10px;
-  text-align: right !important;
+  padding-inline-start: 10px;
+  padding-inline-end: 10px;
+  text-align: end !important;
   color: var(--color-text-light-1);
   width: 1%;
   font-family: var(--fonts-monospace);
@@ -1485,7 +1485,7 @@ a.ui.active.label:hover {
 .lines-code ol li {
   display: block;
   width: calc(100% - 1ch);
-  padding-left: 1ch;
+  padding-inline-start: 1ch;
 }
 
 .lines-escape {
@@ -1494,7 +1494,7 @@ a.ui.active.label:hover {
 
 .lines-code {
   background-color: var(--color-code-bg);
-  padding-left: 5px;
+  padding-inline-start: 5px;
 }
 
 .lines-code.active,
@@ -1576,6 +1576,7 @@ a.ui.active.label:hover {
 
 .code-view table {
   width: 100%;
+  direction: ltr;
 }
 
 .ui.primary.label,
@@ -1730,7 +1731,7 @@ a.ui.basic.label:hover {
 }
 
 .ui.label > .color-icon {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 
 .ui.segment,
@@ -1759,7 +1760,7 @@ a.ui.basic.label:hover {
 /* fix misaligned right buttons on box headers */
 .ui.attached.header > .ui.right {
   position: absolute;
-  right: 0.78571429rem;
+  inset-inline-end: 0.78571429rem;
   top: 0;
   bottom: 0;
   display: flex;
@@ -1792,7 +1793,7 @@ table th[data-sortt-desc]:hover {
 
 table th[data-sortt-asc] .svg,
 table th[data-sortt-desc] .svg {
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
 }
 
 .ui.dropdown .menu .item {
@@ -1800,11 +1801,17 @@ table th[data-sortt-desc] .svg {
 }
 
 .ui.dropdown .menu .item:first-of-type {
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .ui.dropdown .menu .item:last-of-type {
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
 }
 
 .ui.multiple.dropdown > .label {
@@ -1885,7 +1892,7 @@ table th[data-sortt-desc] .svg {
 }
 
 .ui.header .ui.label {
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
 }
 
 .ui.header > .ui.label.compact {
@@ -1899,7 +1906,7 @@ table th[data-sortt-desc] .svg {
 .flash-error details code,
 .flash-warning details code {
   display: block;
-  text-align: left;
+  text-align: start;
 }
 
 .truncated-item-container {
@@ -1928,7 +1935,7 @@ table th[data-sortt-desc] .svg {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin-left: 1em;
+  margin-inline-start: 1em;
 }
 
 .precolors .color {
@@ -1949,13 +1956,13 @@ table th[data-sortt-desc] .svg {
 
 .ui.dropdown.mini.button,
 .ui.dropdown.tiny.button {
-  padding-right: 20px;
+  padding-inline-end: 20px;
 }
 .ui.dropdown.button {
-  padding-right: 22px;
+  padding-inline-end: 22px;
 }
 .ui.dropdown.large.button {
-  padding-right: 24px;
+  padding-inline-end: 24px;
 }
 
 /* Gitea uses SVG images instead of Fomantic builtin "<i>" font icons, so we need to reset the icon styles */
@@ -1978,11 +1985,11 @@ table th[data-sortt-desc] .svg {
 }
 
 .ui.ui.dropdown > .dropdown.icon {
-  right: 0.5em;
+  inset-inline-end: 0.5em;
 }
 
 .ui.ui.dropdown > .remove.icon {
-  right: 2em;
+  inset-inline-end: 2em;
 }
 
 .btn,

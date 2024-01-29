@@ -102,11 +102,17 @@ text-expander .suggestions li + li {
 }
 
 text-expander .suggestions li:first-child {
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 text-expander .suggestions li:last-child {
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
 }
 
 text-expander .suggestions li:only-child {
@@ -119,7 +125,7 @@ text-expander .suggestions li:hover {
 
 text-expander .suggestions .fullname {
   font-weight: var(--font-weight-normal);
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--color-text-light-1);
 }
 
@@ -132,5 +138,5 @@ text-expander .suggestions li[aria-selected="true"] span {
 text-expander .suggestions img {
   width: 24px;
   height: 24px;
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }

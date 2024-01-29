@@ -36,8 +36,8 @@ Gitea's private styles use `g-` prefix.
 
 .g-table-auto-ellipsis td.auto-ellipsis span {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   top: 0;
   bottom: 0;
   padding: inherit;
@@ -79,13 +79,13 @@ Gitea's private styles use `g-` prefix.
 .gt-w-screen { width: 100vw !important; }
 .gt-w-full { width: 100% !important; }
 
-.gt-float-left { float: left !important; }
-.gt-float-right { float: right !important; }
+.gt-float-left { float: inline-start !important; }
+.gt-float-right { float: inline-end !important; }
 .gt-clear-both { clear: both !important; }
 
 .gt-text-center { text-align: center !important; }
-.gt-text-left { text-align: left !important; }
-.gt-text-right { text-align: right !important; }
+.gt-text-left { text-align: start !important; }
+.gt-text-right { text-align: end !important; }
 
 .gt-font-light { font-weight: var(--font-weight-light) !important; }
 .gt-font-normal { font-weight: var(--font-weight-normal) !important; }
@@ -94,16 +94,16 @@ Gitea's private styles use `g-` prefix.
 .gt-font-bold { font-weight: var(--font-weight-bold) !important; }
 
 .gt-rounded { border-radius: var(--border-radius) !important; }
-.gt-rounded-top { border-radius: var(--border-radius) var(--border-radius) 0 0 !important; }
-.gt-rounded-bottom { border-radius: 0 0 var(--border-radius) var(--border-radius) !important; }
-.gt-rounded-left { border-radius: var(--border-radius) 0 0 var(--border-radius) !important; }
-.gt-rounded-right { border-radius: 0 var(--border-radius) var(--border-radius) 0 !important; }
+.gt-rounded-top { border-start-start-radius: var(--border-radius) !important; border-start-end-radius: var(--border-radius) !important; border-end-start-radius: 0 !important; border-end-end-radius: 0 !important; }
+.gt-rounded-bottom { border-start-start-radius: 0 !important; border-start-end-radius: 0 !important; border-end-start-radius: var(--border-radius) !important; border-end-end-radius: var(--border-radius) !important; }
+.gt-rounded-left { border-start-start-radius: var(--border-radius) !important; border-start-end-radius: 0 !important; border-end-start-radius: var(--border-radius) !important; border-end-end-radius: 0 !important; }
+.gt-rounded-right { border-start-start-radius: 0 !important; border-start-end-radius: var(--border-radius) !important; border-end-start-radius: 0 !important; border-end-end-radius: var(--border-radius) !important; }
 
 .gt-border-secondary { border: 1px solid var(--color-secondary) !important; }
 .gt-border-secondary-top { border-top: 1px solid var(--color-secondary) !important; }
 .gt-border-secondary-bottom { border-bottom: 1px solid var(--color-secondary) !important; }
-.gt-border-secondary-left { border-left: 1px solid var(--color-secondary) !important; }
-.gt-border-secondary-right { border-right: 1px solid var(--color-secondary) !important; }
+.gt-border-secondary-left { border-inline-start: 1px solid var(--color-secondary) !important; }
+.gt-border-secondary-right { border-inline-end: 1px solid var(--color-secondary) !important; }
 
 .gt-bg-red { background: var(--color-red) !important; }
 .gt-bg-orange { background: var(--color-orange) !important; }
@@ -137,19 +137,19 @@ Gitea's private styles use `g-` prefix.
 .gt-m-4 { margin: 1rem !important; }
 .gt-m-5 { margin: 2rem !important; }
 
-.gt-ml-0 { margin-left: 0 !important; }
-.gt-ml-1 { margin-left: .125rem !important; }
-.gt-ml-2 { margin-left: .25rem !important; }
-.gt-ml-3 { margin-left: .5rem !important; }
-.gt-ml-4 { margin-left: 1rem !important; }
-.gt-ml-5 { margin-left: 2rem !important; }
+.gt-ml-0 { margin-inline-start: 0 !important; }
+.gt-ml-1 { margin-inline-start: .125rem !important; }
+.gt-ml-2 { margin-inline-start: .25rem !important; }
+.gt-ml-3 { margin-inline-start: .5rem !important; }
+.gt-ml-4 { margin-inline-start: 1rem !important; }
+.gt-ml-5 { margin-inline-start: 2rem !important; }
 
-.gt-mr-0 { margin-right: 0 !important; }
-.gt-mr-1 { margin-right: .125rem !important; }
-.gt-mr-2 { margin-right: .25rem !important; }
-.gt-mr-3 { margin-right: .5rem !important; }
-.gt-mr-4 { margin-right: 1rem !important; }
-.gt-mr-5 { margin-right: 2rem !important; }
+.gt-mr-0 { margin-inline-end: 0 !important; }
+.gt-mr-1 { margin-inline-end: .125rem !important; }
+.gt-mr-2 { margin-inline-end: .25rem !important; }
+.gt-mr-3 { margin-inline-end: .5rem !important; }
+.gt-mr-4 { margin-inline-end: 1rem !important; }
+.gt-mr-5 { margin-inline-end: 2rem !important; }
 
 .gt-mt-0 { margin-top: 0 !important; }
 .gt-mt-1 { margin-top: .125rem !important; }
@@ -165,12 +165,12 @@ Gitea's private styles use `g-` prefix.
 .gt-mb-4 { margin-bottom: 1rem !important; }
 .gt-mb-5 { margin-bottom: 2rem !important; }
 
-.gt-mx-0 { margin-left: 0 !important; margin-right: 0 !important; }
-.gt-mx-1 { margin-left: .125rem !important; margin-right: .125rem !important; }
-.gt-mx-2 { margin-left: .25rem !important; margin-right: .25rem !important; }
-.gt-mx-3 { margin-left: .5rem !important; margin-right: .5rem !important; }
-.gt-mx-4 { margin-left: 1rem !important; margin-right: 1rem !important; }
-.gt-mx-5 { margin-left: 2rem !important; margin-right: 2rem !important; }
+.gt-mx-0 { margin-inline-start: 0 !important; margin-inline-end: 0 !important; }
+.gt-mx-1 { margin-inline-start: .125rem !important; margin-inline-end: .125rem !important; }
+.gt-mx-2 { margin-inline-start: .25rem !important; margin-inline-end: .25rem !important; }
+.gt-mx-3 { margin-inline-start: .5rem !important; margin-inline-end: .5rem !important; }
+.gt-mx-4 { margin-inline-start: 1rem !important; margin-inline-end: 1rem !important; }
+.gt-mx-5 { margin-inline-start: 2rem !important; margin-inline-end: 2rem !important; }
 
 .gt-my-0 { margin-top: 0 !important; margin-bottom: 0 !important; }
 .gt-my-1 { margin-top: .125rem !important; margin-bottom: .125rem !important; }
@@ -180,12 +180,12 @@ Gitea's private styles use `g-` prefix.
 .gt-my-5 { margin-top: 2rem !important; margin-bottom: 2rem !important; }
 
 .gt-m-auto  { margin: auto !important; }
-.gt-mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.gt-mx-auto { margin-inline-start: auto !important; margin-inline-end: auto !important; }
 .gt-my-auto { margin-top: auto !important; margin-bottom: auto !important; }
 .gt-mt-auto { margin-top: auto !important; }
-.gt-mr-auto { margin-right: auto !important; }
+.gt-mr-auto { margin-inline-end: auto !important; }
 .gt-mb-auto { margin-bottom: auto !important; }
-.gt-ml-auto { margin-left: auto !important; }
+.gt-ml-auto { margin-inline-start: auto !important; }
 
 .gt-p-0 { padding: 0 !important; }
 .gt-p-1 { padding: .125rem !important; }
@@ -194,19 +194,19 @@ Gitea's private styles use `g-` prefix.
 .gt-p-4 { padding: 1rem !important; }
 .gt-p-5 { padding: 2rem !important; }
 
-.gt-pl-0 { padding-left: 0 !important; }
-.gt-pl-1 { padding-left: .125rem !important; }
-.gt-pl-2 { padding-left: .25rem !important; }
-.gt-pl-3 { padding-left: .5rem !important; }
-.gt-pl-4 { padding-left: 1rem !important; }
-.gt-pl-5 { padding-left: 2rem !important; }
+.gt-pl-0 { padding-inline-start: 0 !important; }
+.gt-pl-1 { padding-inline-start: .125rem !important; }
+.gt-pl-2 { padding-inline-start: .25rem !important; }
+.gt-pl-3 { padding-inline-start: .5rem !important; }
+.gt-pl-4 { padding-inline-start: 1rem !important; }
+.gt-pl-5 { padding-inline-start: 2rem !important; }
 
-.gt-pr-0 { padding-right: 0 !important; }
-.gt-pr-1 { padding-right: .125rem !important; }
-.gt-pr-2 { padding-right: .25rem !important; }
-.gt-pr-3 { padding-right: .5rem !important; }
-.gt-pr-4 { padding-right: 1rem !important; }
-.gt-pr-5 { padding-right: 2rem !important; }
+.gt-pr-0 { padding-inline-end: 0 !important; }
+.gt-pr-1 { padding-inline-end: .125rem !important; }
+.gt-pr-2 { padding-inline-end: .25rem !important; }
+.gt-pr-3 { padding-inline-end: .5rem !important; }
+.gt-pr-4 { padding-inline-end: 1rem !important; }
+.gt-pr-5 { padding-inline-end: 2rem !important; }
 
 .gt-pt-0 { padding-top: 0 !important; }
 .gt-pt-1 { padding-top: .125rem !important; }
@@ -222,12 +222,12 @@ Gitea's private styles use `g-` prefix.
 .gt-pb-4 { padding-bottom: 1rem !important; }
 .gt-pb-5 { padding-bottom: 2rem !important; }
 
-.gt-px-0 { padding-left: 0 !important; padding-right: 0 !important; }
-.gt-px-1 { padding-left: .125rem !important; padding-right: .125rem !important; }
-.gt-px-2 { padding-left: .25rem !important; padding-right: .25rem !important; }
-.gt-px-3 { padding-left: .5rem !important; padding-right: .5rem !important; }
-.gt-px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
-.gt-px-5 { padding-left: 2rem !important; padding-right: 2rem !important; }
+.gt-px-0 { padding-inline-start: 0 !important; padding-inline-end: 0 !important; }
+.gt-px-1 { padding-inline-start: .125rem !important; padding-inline-end: .125rem !important; }
+.gt-px-2 { padding-inline-start: .25rem !important; padding-inline-end: .25rem !important; }
+.gt-px-3 { padding-inline-start: .5rem !important; padding-inline-end: .5rem !important; }
+.gt-px-4 { padding-inline-start: 1rem !important; padding-inline-end: 1rem !important; }
+.gt-px-5 { padding-inline-start: 2rem !important; padding-inline-end: 2rem !important; }
 
 .gt-py-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
 .gt-py-1 { padding-top: .125rem !important; padding-bottom: .125rem !important; }

@@ -7,7 +7,7 @@
 }
 
 .runner-container .runner-ops > a {
-  margin-left: 0.5em;
+  margin-inline-start: 0.5em;
 }
 
 .runner-container .runner-ops-delete {
@@ -15,7 +15,7 @@
 }
 
 .runner-container .runner-basic-info .gt-dib {
-  margin-right: 1em;
+  margin-inline-end: 1em;
 }
 
 .runner-container .runner-new-text {

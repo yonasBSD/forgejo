@@ -1,7 +1,7 @@
 .repository.releases #release-list {
   margin-top: 12px;
   padding-top: 12px;
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 .repository.releases #release-list .release-list-title {
@@ -16,7 +16,7 @@
 .repository.releases #release-list > li .meta {
   padding-top: 25px;
   position: relative;
-  text-align: right;
+  text-align: end;
   display: flex;
   flex-direction: column;
   gap: 1em;
@@ -24,7 +24,7 @@
 
 .repository.releases #release-list > li .detail {
   padding-bottom: 20px;
-  border-left: 1px solid var(--color-secondary);
+  border-inline-start: 1px solid var(--color-secondary);
 }
 
 .repository.releases #release-list > li .detail .author img {
@@ -32,7 +32,7 @@
 }
 
 .repository.releases #release-list > li .detail .download .list {
-  padding-left: 0;
+  padding-inline-start: 0;
   border: 1px solid var(--color-secondary);
   border-radius: var(--border-radius);
   background: var(--color-light);
@@ -54,7 +54,7 @@
   height: 10px;
   background-color: var(--color-secondary-dark-3);
   position: absolute;
-  left: -5.5px;
+  inset-inline-start: -5.5px;
   top: 30px;
   border-radius: var(--border-radius-circle);
   border: 2.5px solid var(--color-body);
@@ -78,8 +78,8 @@
 }
 
 .repository.new.release .target .at {
-  margin-left: -5px;
-  margin-right: 5px;
+  margin-inline-start: -5px;
+  margin-inline-end: 5px;
 }
 
 .repository.new.release .target .selection.dropdown {

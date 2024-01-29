@@ -177,18 +177,18 @@ textarea:focus,
     width: 800px !important;
   }
   #create-page-form form .header {
-    padding-left: 280px !important;
+    padding-inline-start: 280px !important;
   }
   #create-page-form form .inline.field > label {
-    text-align: right;
+    text-align: end;
     width: 250px !important;
     word-wrap: break-word;
   }
   #create-page-form form .help {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
   #create-page-form form .optional .title {
-    margin-left: 250px !important;
+    margin-inline-start: 250px !important;
   }
   #create-page-form form .inline.field > input,
   #create-page-form form .inline.field > textarea {
@@ -198,7 +198,7 @@ textarea:focus,
 
 @media (max-width: 767.98px) {
   #create-page-form form .optional .title {
-    margin-left: 15px;
+    margin-inline-start: 15px;
   }
   #create-page-form form .inline.field > label {
     display: block;
@@ -217,7 +217,7 @@ textarea:focus,
   .h-captcha-style {
     margin: 0 auto !important;
     width: 304px;
-    padding-left: 30px;
+    padding-inline-start: 30px;
   }
   .g-recaptcha-style iframe,
   .h-captcha-style iframe {
@@ -273,7 +273,7 @@ textarea:focus,
   .user.link-account form .header,
   .user.signin form .header,
   .user.signup form .header {
-    padding-left: 280px !important;
+    padding-inline-start: 280px !important;
   }
   .user.activate form .inline.field > label,
   .user.forgot.password form .inline.field > label,
@@ -281,7 +281,7 @@ textarea:focus,
   .user.link-account form .inline.field > label,
   .user.signin form .inline.field > label,
   .user.signup form .inline.field > label {
-    text-align: right;
+    text-align: end;
     width: 250px !important;
     word-wrap: break-word;
   }
@@ -291,7 +291,7 @@ textarea:focus,
   .user.link-account form .help,
   .user.signin form .help,
   .user.signup form .help {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
   .user.activate form .optional .title,
   .user.forgot.password form .optional .title,
@@ -299,7 +299,7 @@ textarea:focus,
   .user.link-account form .optional .title,
   .user.signin form .optional .title,
   .user.signup form .optional .title {
-    margin-left: 250px !important;
+    margin-inline-start: 250px !important;
   }
   .user.activate form .inline.field > input,
   .user.forgot.password form .inline.field > input,
@@ -325,7 +325,7 @@ textarea:focus,
   .user.link-account form .optional .title,
   .user.signin form .optional .title,
   .user.signup form .optional .title {
-    margin-left: 15px;
+    margin-inline-start: 15px;
   }
   .user.activate form .inline.field > label,
   .user.forgot.password form .inline.field > label,
@@ -343,7 +343,7 @@ textarea:focus,
 .user.link-account form .header,
 .user.signin form .header,
 .user.signup form .header {
-  padding-left: 0 !important;
+  padding-inline-start: 0 !important;
   text-align: center;
 }
 
@@ -420,24 +420,24 @@ textarea:focus,
   .repository.new.repo form .header,
   .repository.new.migrate form .header,
   .repository.new.fork form .header {
-    padding-left: 280px !important;
+    padding-inline-start: 280px !important;
   }
   .repository.new.repo form .inline.field > label,
   .repository.new.migrate form .inline.field > label,
   .repository.new.fork form .inline.field > label {
-    text-align: right;
+    text-align: end;
     width: 250px !important;
     word-wrap: break-word;
   }
   .repository.new.repo form .help,
   .repository.new.migrate form .help,
   .repository.new.fork form .help {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
   .repository.new.repo form .optional .title,
   .repository.new.migrate form .optional .title,
   .repository.new.fork form .optional .title {
-    margin-left: 250px !important;
+    margin-inline-start: 250px !important;
   }
   .repository.new.repo form .inline.field > input,
   .repository.new.migrate form .inline.field > input,
@@ -453,7 +453,7 @@ textarea:focus,
   .repository.new.repo form .optional .title,
   .repository.new.migrate form .optional .title,
   .repository.new.fork form .optional .title {
-    margin-left: 15px;
+    margin-inline-start: 15px;
   }
   .repository.new.repo form .inline.field > label,
   .repository.new.migrate form .inline.field > label,
@@ -465,13 +465,13 @@ textarea:focus,
 .repository.new.repo form .dropdown .text,
 .repository.new.migrate form .dropdown .text,
 .repository.new.fork form .dropdown .text {
-  margin-right: 0 !important;
+  margin-inline-end: 0 !important;
 }
 
 .repository.new.repo form .header,
 .repository.new.migrate form .header,
 .repository.new.fork form .header {
-  padding-left: 0 !important;
+  padding-inline-start: 0 !important;
   text-align: center;
 }
 
@@ -508,7 +508,7 @@ textarea:focus,
 
 @media (min-width: 768px) {
   .repository.new.repo .ui.form #auto-init {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
 }
 
@@ -523,11 +523,11 @@ textarea:focus,
 }
 
 .new.webhook form .help {
-  margin-left: 25px;
+  margin-inline-start: 25px;
 }
 
 .new.webhook .events.fields .column {
-  padding-left: 40px;
+  padding-inline-start: 40px;
 }
 
 .githook textarea {

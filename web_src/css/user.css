@@ -37,8 +37,8 @@
 }
 
 .user.profile .ui.card .extra.content > ul > li .svg {
-  margin-left: 1px;
-  margin-right: 5px;
+  margin-inline-start: 1px;
+  margin-inline-end: 5px;
 }
 
 .user.profile .ui.card .extra.content > ul > li.follow .ui.button,
@@ -91,7 +91,7 @@
 }
 
 .user.settings .iconFloat {
-  float: left;
+  float: inline-start;
 }
 
 .user-orgs {

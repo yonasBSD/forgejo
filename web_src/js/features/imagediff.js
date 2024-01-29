@@ -202,7 +202,7 @@ export function initImageDiff() {
           const value = Math.max(0, Math.min(e2.clientX - $swipeFrame.offset().left, width));
 
           $swipeBar.css({
-            left: value
+            'inset-inline-start': value
           });
           $container.find('.swipe-container').css({
             width: $swipeFrame.width() - value

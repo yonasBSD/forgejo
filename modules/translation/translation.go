@@ -5,6 +5,7 @@ package translation
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -30,6 +31,7 @@ type Locale interface {
 	Tr(string, ...any) string
 	TrN(cnt any, key1, keyN string, args ...any) string
 	PrettyNumber(v any) string
+	DirLang() string
 }
 
 // LangType represents a lang type
@@ -240,6 +242,17 @@ func (l *locale) TrN(cnt any, key1, keyN string, args ...any) string {
 		return l.Tr(key1, args...)
 	}
 	return l.Tr(keyN, args...)
+}
+
+// Right-to-left languages
+var rtlLangs = []string{"fa-IR", "ar"}
+
+// DirLang returns the writing direction
+func (l *locale) DirLang() string {
+	if slices.Contains(rtlLangs, l.Lang) {
+		return "rtl"
+	}
+	return "ltr"
 }
 
 func (l *locale) PrettyNumber(v any) string {

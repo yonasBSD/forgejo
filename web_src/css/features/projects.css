@@ -65,11 +65,11 @@
 }
 
 .project-column:first-child {
-  margin-left: auto !important;
+  margin-inline-start: auto !important;
 }
 
 .project-column:last-child {
-  margin-right: auto !important;
+  margin-inline-end: auto !important;
 }
 
 .card-attachment-images {
@@ -83,7 +83,7 @@
   display: inline-block;
   max-height: 50px;
   border-radius: var(--border-radius);
-  margin-right: 2px;
+  margin-inline-end: 2px;
 }
 
 .card-attachment-images img:only-child {
@@ -106,7 +106,7 @@
 
 .color-field .minicolors.minicolors-theme-default .minicolors-input {
   height: 38px;
-  padding-left: 2rem;
+  padding-inline-start: 2rem;
 }
 
 .color-field .minicolors.minicolors-theme-default .minicolors-swatch {

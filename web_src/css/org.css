@@ -11,18 +11,18 @@
     width: 800px !important;
   }
   #create-page-form form .header {
-    padding-left: 280px !important;
+    padding-inline-start: 280px !important;
   }
   #create-page-form form .inline.field > label {
-    text-align: right;
+    text-align: end;
     width: 250px !important;
     word-wrap: break-word;
   }
   #create-page-form form .help {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
   #create-page-form form .optional .title {
-    margin-left: 250px !important;
+    margin-inline-start: 250px !important;
   }
   #create-page-form form .inline.field > input,
   #create-page-form form .inline.field > textarea {
@@ -32,7 +32,7 @@
 
 @media (max-width: 767.98px) {
   #create-page-form form .optional .title {
-    margin-left: 15px;
+    margin-inline-start: 15px;
   }
   #create-page-form form .inline.field > label {
     display: block;
@@ -56,18 +56,18 @@
     width: 800px !important;
   }
   .organization.new.org form .header {
-    padding-left: 280px !important;
+    padding-inline-start: 280px !important;
   }
   .organization.new.org form .inline.field > label {
-    text-align: right;
+    text-align: end;
     width: 250px !important;
     word-wrap: break-word;
   }
   .organization.new.org form .help {
-    margin-left: 265px !important;
+    margin-inline-start: 265px !important;
   }
   .organization.new.org form .optional .title {
-    margin-left: 250px !important;
+    margin-inline-start: 250px !important;
   }
   .organization.new.org form .inline.field > input,
   .organization.new.org form .inline.field > textarea {
@@ -77,7 +77,7 @@
 
 @media (max-width: 767.98px) {
   .organization.new.org form .optional .title {
-    margin-left: 15px;
+    margin-inline-start: 15px;
   }
   .organization.new.org form .inline.field > label {
     display: block;
@@ -85,7 +85,7 @@
 }
 
 .organization.new.org form .header {
-  padding-left: 0 !important;
+  padding-inline-start: 0 !important;
   text-align: center;
 }
 
@@ -96,7 +96,7 @@
 .organization.profile .org-avatar {
   width: 100px;
   height: 100px;
-  margin-right: 15px;
+  margin-inline-end: 15px;
 }
 
 .organization.profile #org-info {
@@ -135,7 +135,7 @@
 .organization.profile .members .ui.avatar {
   width: 48px;
   height: 48px;
-  margin-right: 5px;
+  margin-inline-end: 5px;
   margin-bottom: 5px;
 }
 
@@ -145,12 +145,12 @@
 }
 
 .organization.invite #invite-box #search-user-box input {
-  margin-left: 0;
+  margin-inline-start: 0;
   width: 300px;
 }
 
 .organization.invite #invite-box .ui.button {
-  margin-left: 5px;
+  margin-inline-start: 5px;
   margin-top: -3px;
 }
 

@@ -6315,7 +6315,7 @@ $.fn.dropdown = function(parameters) {
           openRightward: function($subMenu) {
             var
               $currentMenu     = $subMenu || $menu,
-              canOpenRightward = true,
+              canOpenRightward = (document.dir != "rtl"),
               isOffscreenRight = false,
               calculations
             ;
