@@ -24,7 +24,7 @@ func BlockedUsers(ctx *context.Context) {
 	ctx.Data["BaseLink"] = setting.AppSubURL + "/user/settings/blocked_users"
 	ctx.Data["BaseLinkNew"] = setting.AppSubURL + "/user/settings/blocked_users"
 
-	blockedUsers, err := user_model.ListBlockedUsers(ctx, ctx.Doer.ID, db.ListOptions{})
+	blockedUsers, err := user_model.ListBlockedUsers(ctx, []int64{ctx.Doer.ID}, db.ListOptions{})
 	if err != nil {
 		ctx.ServerError("ListBlockedUsers", err)
 		return

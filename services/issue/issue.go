@@ -213,10 +213,7 @@ func AddAssigneeIfNotAssigned(ctx context.Context, issue *issues_model.Issue, do
 		return nil, nil
 	}
 
-	valid, err := access_model.CanBeAssigned(ctx, assignee, issue.Repo, issue.IsPull)
-	if err != nil {
-		return nil, err
-	}
+	valid := issues_model.UserCanBeAssigned(ctx, issue, nil, assignee)
 	if !valid {
 		return nil, repo_model.ErrUserDoesNotHaveAccessToRepo{UserID: assigneeID, RepoName: issue.Repo.Name}
 	}

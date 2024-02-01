@@ -106,12 +106,29 @@ export function initRepoCommentForm() {
     let hasUpdateAction = $listMenu.data('action') === 'update';
     const items = {};
 
-    $(`.${selector}`).dropdown({
-      'action': 'nothing', // do not hide the menu if user presses Enter
-      fullTextSearch: 'exact',
-      async onHide() {
-        hasUpdateAction = $listMenu.data('action') === 'update'; // Update the var
-        if (hasUpdateAction) {
+    if (selector === 'select-assignees-modify') {
+      // this dropdown has a behaviour different from the other dropdowns.
+      // The input box can accept a value that is not in the dropdown list.
+      // A value entered manually in the input box is checked against
+      // the list of values in the dropdown.
+      // A value not in the list is added, if the user exist.
+      $(`.${selector}`).dropdown({
+        action: (value, _) => {
+          const userIsOK = userInDropdown(value);
+          if (!userIsOK) {
+            updateNewAssignee(value);
+          }
+        },
+        hideAdditions: false,
+        allowAdditions: true,
+        className: {
+          addition: 'stuck addition',
+        },
+        fullTextSearch: 'exact',
+        onNoResults: (_) => {
+          return true;
+        },
+        async onHide() {
           // TODO: Add batch functionality and make this 1 network request.
           const itemEntries = Object.entries(items);
           for (const [elementId, item] of itemEntries) {
@@ -125,9 +142,32 @@ export function initRepoCommentForm() {
           if (itemEntries.length) {
             reloadConfirmDraftComment();
           }
-        }
-      },
-    });
+        },
+      });
+    } else {
+      $(`.${selector}`).dropdown({
+        'action': 'nothing', // do not hide the menu if user presses Enter
+        fullTextSearch: 'exact',
+        async onHide() {
+          hasUpdateAction = $listMenu.data('action') === 'update'; // Update the var
+          if (hasUpdateAction) {
+            // TODO: Add batch functionality and make this 1 network request.
+            const itemEntries = Object.entries(items);
+            for (const [elementId, item] of itemEntries) {
+              await updateIssuesMeta(
+                item['update-url'],
+                item.action,
+                item['issue-id'],
+                elementId,
+              );
+            }
+            if (itemEntries.length) {
+              reloadConfirmDraftComment();
+            }
+          }
+        },
+      });
+    }
 
     $listMenu.find('.item:not(.no-select)').on('click', function (e) {
       e.preventDefault();
@@ -314,6 +354,42 @@ export function initRepoCommentForm() {
   selectItem('.select-project', '#project_id');
   selectItem('.select-milestone', '#milestone_id');
   selectItem('.select-assignee', '#assignee_id');
+
+  // Build a list of dropdown values.
+  // Returns true if the value passed in is in the dropdown list.
+  // false otherwise.
+  function userInDropdown(user) {
+    const okUsers = [];
+    $('.select-assignees-modify .menu .item  span[class="text"] span[class="gt-ellipsis"]').each((_, it) => {
+      okUsers.push(it.textContent);
+    });
+    // is the user in the list.
+    for (const aUser of okUsers) {
+      if (user === aUser) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function updateNewAssignee(userName) {
+    hideElem($('#new-assignee-err-block-on-user'));
+    try {
+      const resp = await POST(`${$('#new-assignee-action').val()}`, {data: {'uname': userName}});
+      if (resp.ok) {
+        window.location.reload();
+        $('.select-assignees-modify .menu .search.input input[type="text"]').val('');
+      } else {
+        showElem($('#new-assignee-err-block-on-user'));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  $('#new-assignee-err-block-on-user .close.icon').on('click', (_) => {
+    hideElem($('#new-assignee-err-block-on-user'));
+  });
 }
 
 async function onEditContent(event) {

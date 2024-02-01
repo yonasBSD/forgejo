@@ -130,6 +130,12 @@ type IssueDeadline struct {
 	Deadline *time.Time `json:"due_date"`
 }
 
+// NewAssignee
+type NewAssignee struct {
+	// required:true
+	UserName string `json:"uname"`
+}
+
 // IssueFormFieldType defines issue form field type, can be "markdown", "textarea", "input", "dropdown" or "checkboxes"
 type IssueFormFieldType string
 

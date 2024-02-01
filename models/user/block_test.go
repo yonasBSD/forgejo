@@ -45,7 +45,7 @@ func TestUnblockUser(t *testing.T) {
 func TestListBlockedUsers(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	blockedUsers, err := user_model.ListBlockedUsers(db.DefaultContext, 4, db.ListOptions{})
+	blockedUsers, err := user_model.ListBlockedUsers(db.DefaultContext, []int64{4}, db.ListOptions{})
 	assert.NoError(t, err)
 	if assert.Len(t, blockedUsers, 1) {
 		assert.EqualValues(t, 1, blockedUsers[0].ID)

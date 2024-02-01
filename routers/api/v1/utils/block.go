@@ -20,7 +20,7 @@ func ListUserBlockedUsers(ctx *context.APIContext, doer *user_model.User) {
 		return
 	}
 
-	blockedUsers, err := user_model.ListBlockedUsers(ctx, doer.ID, GetListOptions(ctx))
+	blockedUsers, err := user_model.ListBlockedUsers(ctx, []int64{doer.ID}, GetListOptions(ctx))
 	if err != nil {
 		ctx.InternalServerError(err)
 		return

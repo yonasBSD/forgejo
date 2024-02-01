@@ -8,8 +8,10 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	user_service "code.gitea.io/gitea/services/user"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -65,6 +67,148 @@ func TestUpdateAssignee(t *testing.T) {
 	isAssigned, err = issues_model.IsUserAssignedToIssue(db.DefaultContext, issue, &user_model.User{ID: 4})
 	assert.NoError(t, err)
 	assert.False(t, isAssigned)
+}
+
+// TestPossibleAssignees verifies that any no-blocked user is assignable
+// to an issue.
+// This test also checks that not-blocked repo users with write access
+// or not-blocked non-repo users with a comment on the issue are in the list
+// of likely assignees.
+func TestPossibleAssignees(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	user2, err := user_model.GetUserByID(db.DefaultContext, 2)
+	assert.NoError(t, err)
+
+	reponame := "big_test_public_mirror_6"
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: reponame})
+
+	issue := &issues_model.Issue{
+		RepoID:   repo.ID,
+		Repo:     repo,
+		Title:    "Minimal issue",
+		Content:  "issuecontent1",
+		IsPull:   false,
+		PosterID: user2.ID,
+		Poster:   user2,
+		IsClosed: false,
+	}
+	err = issues_model.InsertIssues(db.DefaultContext, issue)
+	assert.NoError(t, err)
+
+	// each user will add a comment to show in the list of likely assignees,
+	// then will be blocked by a user
+	// of authority for the issue, making the user not assignable anymore
+	assignUserThenBlockUser(t, issue, user2, 4, issue.Repo.OwnerID)
+	assignUserThenBlockUser(t, issue, user2, 5, issue.PosterID)
+	// User 8 is not known to the issue, but still assignable, until
+	// user 8 blocks the Doer.
+	assignUserThenblockDoer(t, issue, user2, 8, issue.PosterID)
+}
+
+func assignUserThenBlockUser(t *testing.T, issue *issues_model.Issue, doer *user_model.User, assigneeID, blockerID int64) {
+	assignee, err := user_model.GetUserByID(db.DefaultContext, assigneeID)
+	assert.NoError(t, err)
+
+	// The UI uses issues_model.GetIssueLikelyAssignees() to populate
+	// the issue assignee drop down.
+	// User is not in the list of likely assignees.
+	assignees, err := issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found := inList(assignee.ID, assignees)
+	assert.False(t, found)
+
+	// Even though the user is not a likely assignee, the user is assignable.
+	valid := issues_model.UserCanBeAssigned(db.DefaultContext, issue, doer, assignee)
+	assert.True(t, valid)
+
+	// User  comments on the issue (Any type of comments would do).
+	_, err = issues_model.CreateComment(db.DefaultContext, &issues_model.CreateCommentOptions{
+		Type:    issues_model.CommentTypeComment,
+		Doer:    assignee,
+		Repo:    issue.Repo,
+		Issue:   issue,
+		Content: "Hello Again",
+	})
+	assert.NoError(t, err)
+
+	// User is now in the list.
+	assignees, err = issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found = inList(assignee.ID, assignees)
+	assert.True(t, found)
+
+	// Block user.
+	err = user_service.BlockUser(db.DefaultContext, blockerID, assignee.ID)
+	assert.NoError(t, err)
+
+	// User is not part of that list of likely assignees anymore.
+	assignees, err = issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found = inList(assignee.ID, assignees)
+	assert.False(t, found)
+
+	// User is not assignable.
+	valid = issues_model.UserCanBeAssigned(db.DefaultContext, issue, doer, assignee)
+	assert.False(t, valid)
+}
+
+func assignUserThenblockDoer(t *testing.T, issue *issues_model.Issue, doer *user_model.User, assigneeID, blockerID int64) {
+	// Get the possible assignee.
+	assignee, err := user_model.GetUserByID(db.DefaultContext, assigneeID)
+	assert.NoError(t, err)
+
+	// The UI uses issues_model.GetIssueLikelyAssignees() to populate
+	// the issue assignee drop down.
+	// User is not in the list of possible assignees.
+	assignees, err := issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found := inList(assignee.ID, assignees)
+	assert.False(t, found)
+
+	// But user is assignable nonetheless.
+	valid := issues_model.UserCanBeAssigned(db.DefaultContext, issue, doer, assignee)
+	assert.True(t, valid)
+
+	// User  comments on the issue (Any type of comments would do).
+	_, err = issues_model.CreateComment(db.DefaultContext, &issues_model.CreateCommentOptions{
+		Type:    issues_model.CommentTypeComment,
+		Doer:    assignee,
+		Repo:    issue.Repo,
+		Issue:   issue,
+		Content: "Hello Again",
+	})
+	assert.NoError(t, err)
+
+	// User is now in the list.
+	assignees, err = issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found = inList(assignee.ID, assignees)
+	assert.True(t, found)
+
+	// Block Doer.
+	// The assignee has blocked the Doer
+	err = user_service.BlockUser(db.DefaultContext, assignee.ID, doer.ID)
+	assert.NoError(t, err)
+
+	// User is not assignable anymore.
+	valid = issues_model.UserCanBeAssigned(db.DefaultContext, issue, doer, assignee)
+	assert.False(t, valid)
+
+	// User is also not proposed as an assignee anymore.
+	assignees, err = issues_model.GetIssueLikelyAssignees(db.DefaultContext, issue, doer)
+	assert.NoError(t, err)
+	found = inList(assignee.ID, assignees)
+	assert.False(t, found)
+}
+
+func inList(userID int64, list []*user_model.User) bool {
+	for _, u := range list {
+		if u.ID == userID {
+			return true
+		}
+	}
+	return false
 }
 
 func TestMakeIDsFromAPIAssigneesToAdd(t *testing.T) {

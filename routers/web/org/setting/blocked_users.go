@@ -21,7 +21,7 @@ func BlockedUsers(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("settings.blocked_users")
 	ctx.Data["PageIsSettingsBlockedUsers"] = true
 
-	blockedUsers, err := user_model.ListBlockedUsers(ctx, ctx.Org.Organization.ID, db.ListOptions{})
+	blockedUsers, err := user_model.ListBlockedUsers(ctx, []int64{ctx.Org.Organization.ID}, db.ListOptions{})
 	if err != nil {
 		ctx.ServerError("ListBlockedUsers", err)
 		return

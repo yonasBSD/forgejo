@@ -555,8 +555,7 @@ func renderMilestones(ctx *context.Context) {
 	ctx.Data["ClosedMilestones"] = closedMilestones
 }
 
-// RetrieveRepoMilestonesAndAssignees find all the milestones and assignees of a repository
-func RetrieveRepoMilestonesAndAssignees(ctx *context.Context, repo *repo_model.Repository) {
+func RetrieveRepoMilestones(ctx *context.Context, repo *repo_model.Repository) {
 	var err error
 	ctx.Data["OpenMilestones"], err = db.Find[issues_model.Milestone](ctx, issues_model.FindMilestoneOptions{
 		RepoID:   repo.ID,
@@ -574,7 +573,21 @@ func RetrieveRepoMilestonesAndAssignees(ctx *context.Context, repo *repo_model.R
 		ctx.ServerError("GetMilestones", err)
 		return
 	}
+}
 
+func RetrieveIssuePossibleAssignees(ctx *context.Context, issue *issues_model.Issue) {
+	assigneeUsers, err := issues_model.GetIssueLikelyAssignees(ctx, issue, ctx.Doer)
+	if err != nil {
+		ctx.ServerError("GetIssueLikelyAssignees", err)
+		return
+	}
+
+	ctx.Data["Assignees"] = MakeSelfOnTop(ctx.Doer, assigneeUsers)
+
+	handleTeamMentions(ctx)
+}
+
+func RetrieveRepoPossibleAssignees(ctx *context.Context, repo *repo_model.Repository) {
 	assigneeUsers, err := repo_model.GetRepoAssignees(ctx, repo)
 	if err != nil {
 		ctx.ServerError("GetRepoAssignees", err)
@@ -849,7 +862,8 @@ func RetrieveRepoMetas(ctx *context.Context, repo *repo_model.Repository, isPull
 		labels = append(labels, orgLabels...)
 	}
 
-	RetrieveRepoMilestonesAndAssignees(ctx, repo)
+	RetrieveRepoMilestones(ctx, repo)
+	RetrieveRepoPossibleAssignees(ctx, repo)
 	if ctx.Written() {
 		return nil
 	}
@@ -1524,7 +1538,8 @@ func ViewIssue(ctx *context.Context) {
 
 	// Check milestone and assignee.
 	if ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
-		RetrieveRepoMilestonesAndAssignees(ctx, repo)
+		RetrieveRepoMilestones(ctx, repo)
+		RetrieveIssuePossibleAssignees(ctx, issue)
 		retrieveProjects(ctx, repo)
 
 		if ctx.Written() {
@@ -2354,13 +2369,9 @@ func UpdateIssueAssignee(ctx *context.Context) {
 				return
 			}
 
-			valid, err := access_model.CanBeAssigned(ctx, assignee, issue.Repo, issue.IsPull)
-			if err != nil {
-				ctx.ServerError("canBeAssigned", err)
-				return
-			}
+			valid := issues_model.UserCanBeAssigned(ctx, issue, ctx.Doer, assignee)
 			if !valid {
-				ctx.ServerError("canBeAssigned", repo_model.ErrUserDoesNotHaveAccessToRepo{UserID: assigneeID, RepoName: issue.Repo.Name})
+				ctx.ServerError("UserCanBeAssigned", repo_model.ErrUserDoesNotHaveAccessToRepo{UserID: assigneeID, RepoName: issue.Repo.Name})
 				return
 			}
 
@@ -2370,6 +2381,60 @@ func UpdateIssueAssignee(ctx *context.Context) {
 				return
 			}
 		}
+	}
+	ctx.JSONOK()
+}
+
+// UpdateIssueNewAssignee change issue's or pull's assignee
+func UpdateIssueNewAssignee(ctx *context.Context) {
+	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
+	if err != nil {
+		if issues_model.IsErrIssueNotExist(err) {
+			ctx.NotFound("GetIssueByIndex", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err.Error())
+		}
+		return
+	}
+
+	if !ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
+		ctx.Error(http.StatusForbidden, "", "Not repo writer")
+		return
+	}
+	log.Debug("Issues: %v", issues)
+	if ctx.Written() {
+		return
+	}
+
+	form := web.GetForm(ctx).(*api.NewAssignee)
+	uname := form.UserName
+	log.Debug("uname: %s", uname)
+	assignee, err := user_model.GetUserByName(ctx, uname)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "GetUserByName", err.Error())
+		return
+	}
+
+	if assignee.IsOrganization() {
+		ctx.Error(http.StatusForbidden, "", fmt.Sprintf("%s is an organization not a user", assignee.Name))
+		return
+	}
+
+	if err := issue.LoadRepo(ctx); err != nil {
+		ctx.Error(http.StatusInternalServerError, "LoadRepo", fmt.Sprintf("cannot load repo with ID: %d ", issue.RepoID))
+		return
+	}
+
+	valid := issues_model.UserCanBeAssigned(ctx, issue, ctx.Doer, assignee)
+	if !valid {
+		ctx.Error(http.StatusForbidden, "", "User cannot be assigned. This could be due to a setting on their end")
+		return
+	}
+
+	_, _, err = issue_service.ToggleAssigneeWithNotify(ctx, issue, ctx.Doer, assignee.ID)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "ToggleAssignee", err.Error())
+		return
 	}
 	ctx.JSONOK()
 }

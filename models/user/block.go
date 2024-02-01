@@ -57,14 +57,14 @@ func CountBlockedUsers(ctx context.Context, userID int64) (int64, error) {
 	return db.GetEngine(ctx).Where("user_id=?", userID).Count(&BlockedUser{})
 }
 
-// ListBlockedUsers returns the users that the user has blocked.
+// ListBlockedUsers returns the users that the users have blocked.
 // The created_unix field of the user struct is overridden by the creation_unix
 // field of blockeduser.
-func ListBlockedUsers(ctx context.Context, userID int64, opts db.ListOptions) ([]*User, error) {
+func ListBlockedUsers(ctx context.Context, userIDs []int64, opts db.ListOptions) ([]*User, error) {
 	sess := db.GetEngine(ctx).
 		Select("`forgejo_blocked_user`.created_unix, `user`.*").
 		Join("INNER", "forgejo_blocked_user", "`user`.id=`forgejo_blocked_user`.block_id").
-		Where("`forgejo_blocked_user`.user_id=?", userID)
+		In("`forgejo_blocked_user`.user_id", userIDs)
 
 	if opts.Page > 0 {
 		sess = db.SetSessionPagination(sess, &opts)

@@ -1,3 +1,8 @@
+<div class="ui negative message tw-hidden" id="new-assignee-err-block-on-user">
+  {{svg "octicon-x" 16 "close icon"}}
+  {{ctx.Locale.Tr "repo.issues.new.assignee_search_error_message"}}
+</div>
+<input id="new-assignee-action" type="hidden" value="{{$.RepoLink}}/issues/{{.Issue.Index}}/new-assignee">
 <input id="assignee_id" name="assignee_id" type="hidden" value="{{.assignee_id}}">
 <div class="ui {{if or (not .HasIssuesOrPullsWritePermission) .Repository.IsArchived}}disabled{{end}} floating jump select-assignees-modify dropdown">
 	<a class="text muted flex-text-block">
