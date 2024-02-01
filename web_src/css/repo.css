@@ -2677,6 +2677,10 @@ tbody.commit-list {
   flex-direction: column;
 }
 
+.ui.message.unicode-escape-prompt > .close.icon {
+  z-index: 1; /* Prevent the prompt from overlaying the icon. */
+}
+
 /* fomantic's last-child selector does not work with hidden last child */
 .ui.buttons .unescape-button {
   border-top-right-radius: 0.28571429rem;
