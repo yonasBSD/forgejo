@@ -22,8 +22,23 @@ func (o *common) ListPage(ctx context.Context, page int) generic.ChildrenSlice {
 	return generic.NewChildrenSlice(0)
 }
 
+func (o *common) GetNativeID() string {
+	return ""
+}
+
+func (o *common) SetNative(native any) {
+}
+
+func (o *common) getPageSize() int {
+	return o.getTreeDriver().GetPageSize()
+}
+
 func (o *common) getKind() generic.Kind {
 	return o.GetNode().GetKind()
+}
+
+func (o *common) getTreeDriver() *treeDriver {
+	return o.GetTreeDriver().(*treeDriver)
 }
 
 func (o *common) IsNull() bool { return false }
