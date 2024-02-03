@@ -2,6 +2,6 @@
 // Copyright Loïc Dachary <loic@dachary.org>
 // SPDX-License-Identifier: MIT
 
-package driver
+package options
 
 const Name = "internal_forgejo"
