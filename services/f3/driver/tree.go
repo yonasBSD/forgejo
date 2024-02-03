@@ -26,14 +26,66 @@ func (o *treeDriver) Init() {
 
 func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.NodeDriverInterface {
 	switch kind {
-	case f3_tree.KindUsers:
-		return newUsers()
-	case f3_tree.KindOrganizations:
-		return newOrganizations()
-	case f3_tree.KindTopics:
-		return newTopics()
 	case f3_tree.KindForge:
 		return newForge()
+	case f3_tree.KindOrganizations:
+		return newOrganizations()
+	// case f3_tree.KindOrganization:
+	// 	return newOrganization()
+	case f3_tree.KindUsers:
+		return newUsers()
+	case f3_tree.KindUser:
+		return newUser()
+	case f3_tree.KindProjects:
+		return newProjects()
+	// case f3_tree.KindProject:
+	// 	return newProject()
+	// case f3_tree.KindIssues:
+	// 	return newIssues()
+	// case f3_tree.KindIssue:
+	// 	return newIssue()
+	// case f3_tree.KindComments:
+	// 	return newComments()
+	// case f3_tree.KindComment:
+	// 	return newComment()
+	// case f3_tree.KindAssets:
+	// 	return newAssets()
+	// case f3_tree.KindAsset:
+	// 	return newAsset()
+	// case f3_tree.KindLabels:
+	// 	return newLabels()
+	// case f3_tree.KindLabel:
+	// 	return newLabel()
+	// case f3_tree.KindReactions:
+	// 	return newReactions()
+	// case f3_tree.KindReaction:
+	// 	return newReaction()
+	// case f3_tree.KindReviews:
+	// 	return newReviews()
+	// case f3_tree.KindReview:
+	// 	return newReview()
+	// case f3_tree.KindReviewComments:
+	// 	return newReviewComments()
+	// case f3_tree.KindReviewComment:
+	// 	return newReviewComment()
+	// case f3_tree.KindMilestones:
+	// 	return newMilestones()
+	// case f3_tree.KindMilestone:
+	// 	return newMilestone()
+	// case f3_tree.KindPullRequests:
+	// 	return newPullRequests()
+	// case f3_tree.KindPullRequest:
+	// 	return newPullRequest()
+	// case f3_tree.KindReleases:
+	// 	return newReleases()
+	// case f3_tree.KindRelease:
+	// 	return newRelease()
+	case f3_tree.KindTopics:
+		return newTopics()
+	// case f3_tree.KindRepositories:
+	// 	return newRepositories()
+	// case f3_tree.KindRepository:
+	// 	return newRepository(ctx)
 	case generic.KindRoot:
 		return newRoot(o.GetTree().(f3_tree.TreeInterface).NewFormat(kind))
 	default:
