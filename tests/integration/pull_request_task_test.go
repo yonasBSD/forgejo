@@ -5,19 +5,16 @@ package integration
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
-	auth_model "code.gitea.io/gitea/models/auth"
+	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
-	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	pull_service "code.gitea.io/gitea/services/pull"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -29,34 +26,29 @@ import (
 
 func TestPullRequestSynchronized(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	repo10 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 10})
-	owner10 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo10.OwnerID})
 
-	session := loginUser(t, owner10.Name)
-	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
-	req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/pulls", owner10.Name, repo10.Name), &api.CreatePullRequestOption{
-		Head:  "develop",
-		Base:  "master",
-		Title: "create a success pr",
-	}).AddTokenAuth(token)
-	pull := new(api.PullRequest)
-	resp := MakeRequest(t, req, http.StatusCreated)
-	DecodeJSON(t, resp, pull)
-	assert.EqualValues(t, "master", pull.Base.Name)
+	// unmerged pull request of user2/repo1 from branch2 to master
+	pull := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{ID: 2})
+	// tip of tests/gitea-repositories-meta/user2/repo1 branch2
+	pull.HeadCommitID = "985f0301dba5e7b34be866819cd15ad3d8f508ee"
+
+	require.Equal(t, pull.HeadRepoID, pull.BaseRepoID)
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: pull.HeadRepoID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
 	t.Run("AddTestPullRequestTask", func(t *testing.T) {
 		logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
-		logChecker.Filter("Updating PR").StopMark("TestPullRequest")
+		logChecker.Filter("Updating PR").StopMark("TestPullRequest ")
 		defer cleanup()
 
 		opt := &repo_module.PushUpdateOptions{
-			PusherID:     owner10.ID,
-			PusherName:   owner10.Name,
-			RepoUserName: owner10.Name,
-			RepoName:     repo10.Name,
-			RefFullName:  git.RefName("refs/heads/develop"),
-			OldCommitID:  pull.Head.Sha,
-			NewCommitID:  pull.Head.Sha,
+			PusherID:     owner.ID,
+			PusherName:   owner.Name,
+			RepoUserName: owner.Name,
+			RepoName:     repo.Name,
+			RefFullName:  git.RefName("refs/heads/branch2"),
+			OldCommitID:  pull.HeadCommitID,
+			NewCommitID:  pull.HeadCommitID,
 		}
 		require.NoError(t, repo_service.PushUpdate(opt))
 		logFiltered, logStopped := logChecker.Check(5 * time.Second)
@@ -82,10 +74,10 @@ func TestPullRequestSynchronized(t *testing.T) {
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
-			logChecker.Filter("Updating PR").StopMark("TestPullRequest")
+			logChecker.Filter("Updating PR").StopMark("TestPullRequest ")
 			defer cleanup()
 
-			pull_service.TestPullRequest(context.Background(), owner10, repo10.ID, testCase.maxPR, "develop", true, pull.Head.Sha, pull.Head.Sha)
+			pull_service.TestPullRequest(context.Background(), owner, repo.ID, testCase.maxPR, "branch2", true, pull.HeadCommitID, pull.HeadCommitID)
 			logFiltered, logStopped := logChecker.Check(5 * time.Second)
 			assert.True(t, logStopped)
 			assert.Equal(t, testCase.expected, logFiltered[0])
