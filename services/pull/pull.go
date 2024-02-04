@@ -294,7 +294,7 @@ func AddTestPullRequestTask(ctx context.Context, doer *user_model.User, repoID i
 		return
 	}
 	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests with index <= %d", repoID, branch, maxPR)
-	graceful.GetManager().RunWithShutdownContext(func(ctx context.Context) {
+	go graceful.GetManager().RunWithShutdownContext(func(ctx context.Context) {
 		// There is no sensible way to shut this down ":-("
 		// If you don't let it run all the way then you will lose data
 		// TODO: graceful: TestPullRequest needs to become a queue!
