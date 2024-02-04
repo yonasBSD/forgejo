@@ -288,8 +288,12 @@ func checkForInvalidation(ctx context.Context, requests issues_model.PullRequest
 // AddTestPullRequestTask adds new test tasks by given head/base repository and head/base branch,
 // and generate new patch for testing as needed.
 func AddTestPullRequestTask(ctx context.Context, doer *user_model.User, repoID int64, branch string, isSync bool, oldCommitID, newCommitID string) {
-	maxPR, _ := issues_model.GetMaxIssueIndexForRepo(ctx, repoID)
-	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests <= %d", repoID, branch, maxPR)
+	maxPR, err := issues_model.GetMaxIssueIndexForRepo(ctx, repoID)
+	if err != nil {
+		log.Error("AddTestPullRequestTask GetMaxIssueIndexForRepo(%d): %v", repoID, err)
+		return
+	}
+	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests with index <= %d", repoID, branch, maxPR)
 	graceful.GetManager().RunWithShutdownContext(func(ctx context.Context) {
 		// There is no sensible way to shut this down ":-("
 		// If you don't let it run all the way then you will lose data
@@ -308,7 +312,7 @@ func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, maxPR i
 	}
 
 	for _, pr := range prs {
-		log.Trace("Updating PR[%d/%d]: composing new test task", pr.ID, pr.Index)
+		log.Trace("Updating PR[id=%d,index=%d]: composing new test task", pr.ID, pr.Index)
 		if pr.Flow == issues_model.PullRequestFlowGithub {
 			if err := PushToBaseRepo(ctx, pr); err != nil {
 				log.Error("PushToBaseRepo: %v", err)

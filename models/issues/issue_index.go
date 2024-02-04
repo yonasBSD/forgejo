@@ -11,7 +11,7 @@ import (
 
 func GetMaxIssueIndexForRepo(ctx context.Context, repoID int64) (int64, error) {
 	var max int64
-	if _, err := db.GetEngine(ctx).Select(" MAX(`index`)").Table("issue").Where("repo_id=?", repoID).Get(&max); err != nil {
+	if _, err := db.GetEngine(ctx).Select("MAX(`index`)").Table("issue").Where("repo_id=?", repoID).Get(&max); err != nil {
 		return 0, err
 	}
 	return max, nil
