@@ -38,10 +38,10 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newUser()
 	case f3_tree.KindProjects:
 		return newProjects()
-	// case f3_tree.KindProject:
-	// 	return newProject()
-	// case f3_tree.KindIssues:
-	// 	return newIssues()
+	case f3_tree.KindProject:
+		return newProject()
+	case f3_tree.KindIssues:
+		return newIssues()
 	// case f3_tree.KindIssue:
 	// 	return newIssue()
 	// case f3_tree.KindComments:
@@ -52,8 +52,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 	// 	return newAssets()
 	// case f3_tree.KindAsset:
 	// 	return newAsset()
-	// case f3_tree.KindLabels:
-	// 	return newLabels()
+	case f3_tree.KindLabels:
+		return newLabels()
 	// case f3_tree.KindLabel:
 	// 	return newLabel()
 	// case f3_tree.KindReactions:
@@ -68,22 +68,22 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 	// 	return newReviewComments()
 	// case f3_tree.KindReviewComment:
 	// 	return newReviewComment()
-	// case f3_tree.KindMilestones:
-	// 	return newMilestones()
+	case f3_tree.KindMilestones:
+		return newMilestones()
 	// case f3_tree.KindMilestone:
 	// 	return newMilestone()
-	// case f3_tree.KindPullRequests:
-	// 	return newPullRequests()
+	case f3_tree.KindPullRequests:
+		return newPullRequests()
 	// case f3_tree.KindPullRequest:
 	// 	return newPullRequest()
-	// case f3_tree.KindReleases:
-	// 	return newReleases()
+	case f3_tree.KindReleases:
+		return newReleases()
 	// case f3_tree.KindRelease:
 	// 	return newRelease()
 	case f3_tree.KindTopics:
 		return newTopics()
-	// case f3_tree.KindRepositories:
-	// 	return newRepositories()
+	case f3_tree.KindRepositories:
+		return newRepositories()
 	// case f3_tree.KindRepository:
 	// 	return newRepository(ctx)
 	case generic.KindRoot:
