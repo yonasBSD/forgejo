@@ -14,13 +14,44 @@ import (
 	"xorm.io/builder"
 )
 
+// CodeConversation contains the comment of a given review
+type CodeConversation []*Comment
+
+// FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this line
+func FetchCodeConversations(ctx context.Context, issue *Issue, currentUser *user_model.User, showOutdatedComments bool) (map[string]map[int64][]CodeConversation, error) {
+	pathToLineToConversation := make(map[string]map[int64][]CodeConversation)
+	opts := FindCommentsOptions{
+		Type:    CommentTypeCode,
+		IssueID: issue.ID,
+	}
+
+	comments, err := findCodeComments(ctx, opts, issue, currentUser, nil, showOutdatedComments)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, comment := range comments {
+		if pathToLineToConversation[comment.TreePath] == nil {
+			pathToLineToConversation[comment.TreePath] = make(map[int64][]CodeConversation)
+		}
+
+		found := false
+		for i, conversation := range pathToLineToConversation[comment.TreePath][comment.Line] {
+			if conversation[0].ReviewID == comment.ReviewID {
+				pathToLineToConversation[comment.TreePath][comment.Line][i] = append(conversation, comment)
+				found = true
+				break
+			}
+		}
+		if !found {
+			pathToLineToConversation[comment.TreePath][comment.Line] = append(pathToLineToConversation[comment.TreePath][comment.Line], CodeConversation{comment})
+		}
+	}
+	return pathToLineToConversation, nil
+}
+
 // CodeComments represents comments on code by using this structure: FILENAME -> LINE (+ == proposed; - == previous) -> COMMENTS
 type CodeComments map[string]map[int64][]*Comment
-
-// FetchCodeComments will return a 2d-map: ["Path"]["Line"] = Comments at line
-func FetchCodeComments(ctx context.Context, issue *Issue, currentUser *user_model.User, showOutdatedComments bool) (CodeComments, error) {
-	return fetchCodeCommentsByReview(ctx, issue, currentUser, nil, showOutdatedComments)
-}
 
 func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, currentUser *user_model.User, review *Review, showOutdatedComments bool) (CodeComments, error) {
 	pathToLineToComment := make(CodeComments)
