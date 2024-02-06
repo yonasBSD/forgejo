@@ -54,8 +54,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 	// 	return newAsset()
 	case f3_tree.KindLabels:
 		return newLabels()
-	// case f3_tree.KindLabel:
-	// 	return newLabel()
+	case f3_tree.KindLabel:
+		return newLabel()
 	// case f3_tree.KindReactions:
 	// 	return newReactions()
 	// case f3_tree.KindReaction:
