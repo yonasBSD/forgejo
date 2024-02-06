@@ -67,7 +67,7 @@ tbd
 ```mermaid
 classDiagram
   namespace activitypub {
-    class ForgeLike {
+    class Like {
       ID ID
       Type ActivityVocabularyType // Like
       Actor Item
@@ -83,6 +83,13 @@ classDiagram
       Outbox Item
       PublicKey PublicKey
     }
+  }
+  namespace forgfed {
+    class ForgePerson {
+    }
+    class ForgeLike {
+      Actor PersonID
+    }
     class ActorID {
       ID               string
       Source           string
@@ -96,9 +103,6 @@ classDiagram
       AsLoginName() string // "ID-Host"
     }
   }
-
-  ActorID <|-- PersonID
-  ForgeLike *-- PersonID: ActorID
 
   namespace forgejo {
     class User {
@@ -115,8 +119,14 @@ classDiagram
     }
   }
 
+  Actor <|-- ForgePerson
+  Like <|-- ForgeLike
+  ActorID <|-- PersonID
+
+  ForgeLike *-- PersonID: Actor
+
   PersonID -- User: mapped by AsLoginName() == LoginName
-  PersonID -- Actor: links to
+  PersonID -- ForgePerson: links to
 ```
 
 ### 2. Map to User-&-ExternalLoginUser
@@ -153,7 +163,7 @@ classDiagram
 ```mermaid
 classDiagram
   namespace activitypub {
-    class ForgeLike {
+    class Like {
       ID ID
       Type ActivityVocabularyType // Like
       Actor Item
@@ -169,6 +179,14 @@ classDiagram
       Outbox Item
       PublicKey PublicKey
     }
+  }
+
+  namespace forgfed {
+    class ForgePerson {
+    }
+    class ForgeLike {
+      Actor PersonID
+    }
     class ActorID {
       ID               string
       Source           string
@@ -182,10 +200,6 @@ classDiagram
       AsWebfinger() string // "ID@Host"
     }
   }
-
-  ActorID <|-- PersonID
-  ForgeLike *-- PersonID: ActorID
-  PersonID -- Actor: links to
 
   namespace user {
     class User {
@@ -221,10 +235,17 @@ classDiagram
     }
   }
 
+  Actor <|-- ForgePerson
+  Like <|-- ForgeLike
+  
+  ActorID <|-- PersonID
+  ForgeLike *-- PersonID: Actor
+  PersonID -- ForgePerson: links to
+  PersonID -- ExternalLoginUser: mapped by AsLoginName() == ExternalID
+
   User *-- ExternalLoginUser: ExternalLoginUser.UserID
   User -- Source
   ExternalLoginUser -- Source
-  PersonID -- ExternalLoginUser: mapped by AsLoginName() == ExternalID
 ```
 
 ### 3. Map to User-&-FederatedUser
@@ -258,7 +279,7 @@ classDiagram
 ```mermaid
 classDiagram
   namespace activitypub {
-    class ForgeLike {
+    class Like {
       ID ID
       Type ActivityVocabularyType // Like
       Actor Item
@@ -274,6 +295,14 @@ classDiagram
       Outbox Item
       PublicKey PublicKey
     }
+  }
+
+  namespace forgfed {
+    class ForgePerson {
+    }
+    class ForgeLike {
+      Actor PersonID
+    }
     class ActorID {
       ID               string
       Source           string
@@ -287,10 +316,16 @@ classDiagram
       AsLoginName() string // "ID-Host"
       AsWebfinger() string // "@ID@Host"
     }
-  }
+    class FederationHost {
+      <<Aggregate Root>>
+      ID int64
+      HostFqdn string
+    }
 
-  ActorID <|-- PersonID
-  ForgeLike *-- PersonID: ActorID
+    class NodeInfo {
+      Source string
+    }
+  }
 
   namespace user {
     class User {
@@ -314,22 +349,17 @@ classDiagram
       FederationHost int64
     }
   }
+
+  Actor <|-- ForgePerson
+  Like <|-- ForgeLike
+  
+  ActorID <|-- PersonID
+  ForgeLike *-- PersonID: Actor
+  ForgePerson -- PersonID: links to
+  FederationHost *-- NodeInfo
+
   User *-- FederatedUser: FederatedUser.UserID
   PersonID -- FederatedUser : mapped by PersonID.asWebfinger() == FederatedUser.externalID
-
-  namespace forgefed {
-    
-    class FederationHost {
-      <<Aggregate Root>>
-      ID int64
-      HostFqdn string
-    }
-
-    class NodeInfo {
-      Source string
-    }
-  }
-  FederationHost *-- NodeInfo
   FederatedUser -- FederationHost
 
  
@@ -358,7 +388,7 @@ classDiagram
 ```mermaid
 classDiagram
   namespace activitypub {
-    class ForgeLike {
+    class Like {
       ID ID
       Type ActivityVocabularyType // Like
       Actor Item
@@ -374,6 +404,14 @@ classDiagram
       Outbox Item
       PublicKey PublicKey
     }
+  }
+
+  namespace forgfed {
+    class ForgePerson {
+    }
+    class ForgeLike {
+      Actor PersonID
+    }
     class ActorID {
       ID               string
       Source           string
@@ -387,23 +425,6 @@ classDiagram
       AsLoginName() string // "ID-Host"
       AsWebfinger() string // "@ID@Host"
     }
-  }
-
-  ActorID <|-- PersonID
-  ForgeLike *-- PersonID: ActorID
-  PersonID -- Actor: links to
-
-  namespace user {
-    class CommonUser {
-      <<Interface>>
-    }
-    class User {
-      
-    }    
-  }
-  User ..<| CommonUser 
-  
-  namespace forgefed {
     class FederatedPerson {
       <<Aggregate Root>>
       ID         int64
@@ -423,6 +444,24 @@ classDiagram
       Source string
     }
   }
+
+  namespace user {
+    class CommonUser {
+      <<Interface>>
+    }
+    class User {
+      
+    }    
+  }
+  User ..<| CommonUser
+
+  Actor <|-- ForgePerson
+  Like <|-- ForgeLike
+
+  ActorID <|-- PersonID
+  ForgeLike *-- PersonID: Actor
+  
+  PersonID -- ForgePerson: links to
   PersonID -- FederatedPerson : mapped by PersonID.asWebfinger() == FederatedPerson.externalID
   FederationHost *-- NodeInfo
   FederatedPerson -- FederationHost
