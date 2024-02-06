@@ -480,9 +480,6 @@ func (diff *Diff) LoadComments(ctx context.Context, issue *issues_model.Issue, c
 					if comments, ok := lineCommits[int64(line.RightIdx)]; ok {
 						line.Conversations = append(line.Conversations, comments...)
 					}
-					// sort.SliceStable(line.Conversations, func(i, j int) bool {
-					// 	return line.Conversations[i].CreatedUnix < line.Conversations[j].CreatedUnix
-					// })
 				}
 			}
 		}
