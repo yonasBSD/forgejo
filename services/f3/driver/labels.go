@@ -5,11 +5,31 @@
 package driver
 
 import (
+	"context"
+	"fmt"
+
+	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
+
+	f3_tree "lab.forgefriends.org/friendlyforgeformat/gof3/tree/f3"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/tree/generic"
 )
 
 type labels struct {
 	container
+}
+
+func (o *labels) ListPage(ctx context.Context, page int) generic.ChildrenSlice {
+	pageSize := o.getPageSize()
+
+	project := f3_tree.GetProjectID(o.GetNode())
+
+	forgejoLabels, err := issues_model.GetLabelsByRepoID(ctx, project, "", db.ListOptions{Page: page, PageSize: pageSize})
+	if err != nil {
+		panic(fmt.Errorf("error while listing labels: %v", err))
+	}
+
+	return f3_tree.ConvertListed(ctx, o.GetNode(), f3_tree.ConvertToAny(forgejoLabels...)...)
 }
 
 func newLabels() generic.NodeDriverInterface {
