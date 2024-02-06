@@ -108,7 +108,7 @@ git remote add forgejo git@codeberg.org:forgejo/forgejo.git
 # rebase on top of forgejo/forge-development
 git switch forgejo-development
 git fetch forgejo
-git reset --hard origin/forgejo-development
+git reset --hard forgejo/forgejo-development
 git push --force
 
 git switch forgejo-federated-star
