@@ -245,7 +245,6 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	return result, nil
 }
 
-// ToDo: Maybe use externalLoginUser
 func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user_model.NewActionsUser()
