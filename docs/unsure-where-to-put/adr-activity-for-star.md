@@ -6,7 +6,7 @@ Active
 
 ## Context
 
-While implementing the star activity we have to take several decissions which will impcat all other activities. Due to this relevance we will discuss decission with as many federation contributors as posible.
+While implementing the star activity we have to take several decisions which will impact all other activities. Due to this relevance we will discuss decision with as many federation contributors as possible.
 
 ## Decision
 
@@ -42,11 +42,11 @@ This way of expressing stars will have the following features:
 
 1. Actor & object may be dereferenced by (ap-)api
 2. The activity can be referenced itself (e.g. in order to express a result of the triggered action)
-3. Star is a special case of a Like. Star only happens in ForgeFed context. Different things should be named differnt ...
+3. Star is a special case of a Like. Star only happens in ForgeFed context. Different things should be named different ...
 4. With the `source` given it would be more easy to distinguish the uri layout for object and actor id's and make implementation more straight forward
-   1. The `source` field reflects the software sending an activity. Values of may be forgejo, gitlab, ...
-   2. Knowing the sending system will it make easier to interact with:
-      1. We know exactly how the actor can be derefernced - names maybe filled & used different (see: https://codeberg.org/meissa/forgejo/src/commit/7cac9806f8247963b1cdce3f2c5f5d1bc3763fbe/routers/api/v1/activitypub/repository.go#L180)
+   1. The `source` field reflects the software sending an activity. Values of it may be forgejo, gitlab, ...
+   2. Knowing the sending system will make it easier to interact with:
+      1. We know exactly how the actor can be dereferenced - names may be filled & used different (see: https://codeberg.org/meissa/forgejo/src/commit/7cac9806f8247963b1cdce3f2c5f5d1bc3763fbe/routers/api/v1/activitypub/repository.go#L180)
       2. We know how we can validate the given references - valid uris will be different in details (see: https://codeberg.org/meissa/forgejo/src/commit/7cac9806f8247963b1cdce3f2c5f5d1bc3763fbe/models/forgefed/actor.go#L121)
 5. startTime protects against The Reply Attack discussed in [threat-analysis] [threat-analysis]
 

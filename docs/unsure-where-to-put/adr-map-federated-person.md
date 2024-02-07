@@ -30,7 +30,7 @@ A federated person should be able to execute local actions (as if he was a local
 
 For being able to map the federated person reliable, the local representation has to carry a clear mapping to the original federated person.
 
-We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",}`. To find out whether this user is available locally without dereference the federated person every time is important for performance & system resilience.
+We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1",}`. To find out whether this user is available locally without dereferencing the federated person every time is important for performance & system resilience.
 
 ## Decision
 
@@ -108,7 +108,7 @@ classDiagram
 
   namespace forgejo {
     class User {
-      <<Aggragate Root>>
+      <<Aggregate Root>>
       ID        int64 
       LowerName string
       Name      string
