@@ -587,6 +587,7 @@ func createUserInContext(ctx *context.Context, tpl base.TplName, form any, u *us
 		return false
 	}
 	log.Trace("Account created: %s", u.Name)
+	notify_service.NewUserSignUp(ctx, u)
 	return true
 }
 
@@ -607,7 +608,6 @@ func handleUserCreated(ctx *context.Context, u *user_model.User, gothUser *goth.
 		}
 	}
 
-	notify_service.NewUserSignUp(ctx, u)
 	// update external user information
 	if gothUser != nil {
 		if err := externalaccount.UpdateExternalUser(ctx, u, *gothUser); err != nil {
