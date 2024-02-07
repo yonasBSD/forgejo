@@ -5,6 +5,7 @@ package forgefed
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/modules/timeutil"
@@ -26,7 +27,7 @@ type FederationHost struct {
 // Factory function for PersonID. Created struct is asserted to be valid
 func NewFederationHost(nodeInfo NodeInfo, hostFqdn string) (FederationHost, error) {
 	result := FederationHost{
-		HostFqdn: hostFqdn,
+		HostFqdn: strings.ToLower(hostFqdn),
 		NodeInfo: nodeInfo,
 	}
 	if valid, err := validation.IsValid(result); !valid {
@@ -41,6 +42,9 @@ func (host FederationHost) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(host.HostFqdn, "HostFqdn")...)
 	result = append(result, validation.ValidateMaxLen(host.HostFqdn, 255, "HostFqdn")...)
 	result = append(result, host.NodeInfo.Validate()...)
+	if host.HostFqdn != strings.ToLower(host.HostFqdn) {
+		result = append(result, fmt.Sprintf("HostFqdn has to be lower case but was: %v", host.HostFqdn))
+	}
 	if !host.LatestActivity.IsZero() && host.LatestActivity.After(time.Now().Add(10*time.Minute)) {
 		result = append(result, fmt.Sprintf("Latest Activity may not be far futurer: %v", host.LatestActivity))
 	}
