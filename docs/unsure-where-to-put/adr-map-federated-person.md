@@ -20,7 +20,7 @@
 
 ## Status
 
-Still in discussion
+Active
 
 ## Context
 
@@ -34,7 +34,9 @@ We get actor information as `{"actor": "https://repo.prod.meissa.de/api/v1/activ
 
 ## Decision
 
-tbd
+We decided to use option 3 "Map to User & FederatedUser".
+
+Discussion can be found here: https://codeberg.org/forgejo/discussions/issues/101
 
 ## Choices
 
