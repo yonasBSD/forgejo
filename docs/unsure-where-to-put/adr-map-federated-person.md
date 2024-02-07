@@ -289,7 +289,6 @@ classDiagram
     }
     class Actor {
       ID
-      URL Item
       Type ActivityVocabularyType // Person
       Name NaturalLanguageValues
       PreferredUsername NaturalLanguageValues
@@ -346,7 +345,6 @@ classDiagram
     class FederatedUser {
       ID         int64
       UserID     int64
-      RawData    map[string]any
       ExternalID   string
       FederationHost int64
     }
