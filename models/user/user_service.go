@@ -4,30 +4,25 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/forgefed"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/modules/validation"
 	"github.com/google/uuid"
 	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
-func CreateFederatedUserFromAP(ctx *context.APIContext, person forgefed.ForgePerson, personID forgefed.PersonID,
-	federationHostID int64) (*User, error) {
-	if res, err := validation.IsValid(person); !res {
-		return nil, err
-	}
-	log.Info("RepositoryInbox: validated person: %q", person)
+func CreateFederatedUserFromAP(ctx context.Context, person forgefed.ForgePerson,
+	personID forgefed.PersonID, federationHostID int64) (*User, *FederatedUser, error) {
 
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
@@ -41,10 +36,10 @@ func CreateFederatedUserFromAP(ctx *context.APIContext, person forgefed.ForgePer
 
 	password, err := pwd_gen.Generate(32, 10, 10, false, true)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	user := &User{
+	user := User{
 		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
 		Name:                         name,
 		FullName:                     fullName,
@@ -62,19 +57,20 @@ func CreateFederatedUserFromAP(ctx *context.APIContext, person forgefed.ForgePer
 		IsRestricted: util.OptionalBoolFalse,
 	}
 
-	if err := CreateUser(ctx, user, overwrite); err != nil {
-		return nil, err
+	// TODO: Transaction around
+	if err := CreateUser(ctx, &user, overwrite); err != nil {
+		return nil, nil, err
 	}
 
 	federatedUser, err := NewFederatedUser(user.ID, personID.ID, federationHostID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	err = CreateFederationUser(ctx, federatedUser)
+	err = CreateFederationUser(ctx, &federatedUser)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return user, nil
+	return &user, &federatedUser, nil
 }

@@ -6,7 +6,6 @@ package activitypub
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
@@ -20,10 +19,8 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
-	"github.com/google/uuid"
 
 	ap "github.com/go-ap/activitypub"
-	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
 // Repository function returns the Repository actor for a repo
@@ -97,28 +94,28 @@ func RepositoryInbox(ctx *context.APIContext) {
 			"RepositoryInbox: Validating ActorID", err)
 		return
 	}
-	federationInfo, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
+	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError,
 			"RepositoryInbox: Error while loading FederationInfo", err)
 		return
 	}
-	if federationInfo == nil {
-		result, err := createFederationInfo(ctx, rawActorID)
+	if federationHost == nil {
+		result, err := createFederationHost(ctx, rawActorID)
 		if err != nil {
 			ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate actorId", err)
 			return
 		}
-		federationInfo = &result
-		log.Info("RepositoryInbox: federationInfo validated: %v", federationInfo)
+		federationHost = &result
+		log.Info("RepositoryInbox: federationInfo validated: %v", federationHost)
 	}
-	if !activity.IsNewer(federationInfo.LatestActivity) {
+	if !activity.IsNewer(federationHost.LatestActivity) {
 		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate Activity",
 			fmt.Errorf("Activity already processed"))
 		return
 	}
 
-	actorID, err := forgefed.NewPersonID(actorURI, string(federationInfo.NodeInfo.Source))
+	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
 	if err != nil {
 		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: Validate actorId", err)
 		return
@@ -140,6 +137,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginID)
 
 	// Check if user already exists
+	// TODO: search for federation user instead
+	// users, _, err := SearchFederatedUser(actorID.ID, federationHost.ID)
 	users, err := SearchUsersByLoginName(actorAsLoginID)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "RepositoryInbox: Searching for user failed", err)
@@ -150,7 +149,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	switch len(users) {
 	case 0:
 		{
-			user, err = createUserFromAP(ctx, actorID)
+			user, err = createUserFromAP(ctx, actorID, federationHost.ID)
 			if err != nil {
 				ctx.Error(http.StatusInternalServerError,
 					"RepositoryInbox: Creating federated user failed", err)
@@ -180,8 +179,8 @@ func RepositoryInbox(ctx *context.APIContext) {
 			return
 		}
 	}
-	federationInfo.LatestActivity = activity.StartTime
-	err = forgefed.UpdateFederationHost(ctx, *federationInfo)
+	federationHost.LatestActivity = activity.StartTime
+	err = forgefed.UpdateFederationHost(ctx, *federationHost)
 	if err != nil {
 		ctx.Error(http.StatusNotAcceptable, "RepositoryInbox: error updateing federateionInfo", err)
 		return
@@ -212,7 +211,7 @@ func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
 	return users, nil
 }
 
-func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationHost, error) {
+func createFederationHost(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationHost, error) {
 	actionsUser := user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -245,68 +244,32 @@ func createFederationInfo(ctx *context.APIContext, actorID forgefed.ActorID) (fo
 	return result, nil
 }
 
-func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*user_model.User, error) {
+func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, federationHostID int64) (*user_model.User, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user_model.NewActionsUser()
 	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
-		return &user_model.User{}, err
+		return nil, err
 	}
 
 	body, err := client.GetBody(personID.AsURI())
 	if err != nil {
-		return &user_model.User{}, err
+		return nil, err
 	}
 
 	person := forgefed.ForgePerson{}
 	err = person.UnmarshalJSON(body)
 	if err != nil {
-		return &user_model.User{}, err
+		return nil, err
 	}
 	if res, err := validation.IsValid(person); !res {
-		return &user_model.User{}, err
+		return nil, err
 	}
 	log.Info("RepositoryInbox: validated person: %q", person)
 
-	localFqdn, err := url.ParseRequestURI(setting.AppURL)
+	user, _, err := user_model.CreateFederatedUserFromAP(ctx, person, personID, federationHostID)
 	if err != nil {
-		return &user_model.User{}, err
-	}
-
-	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
-	loginName := personID.AsLoginName()
-	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
-	log.Info("RepositoryInbox: person.Name: %v", person.Name)
-	fullName := person.Name.String()
-	if len(person.Name) == 0 {
-		fullName = name
-	}
-
-	password, err := pwd_gen.Generate(32, 10, 10, false, true)
-	if err != nil {
-		return &user_model.User{}, err
-	}
-
-	user := &user_model.User{
-		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
-		Name:                         name,
-		FullName:                     fullName,
-		Email:                        email,
-		EmailNotificationsPreference: "disabled",
-		Passwd:                       password,
-		MustChangePassword:           false,
-		LoginName:                    loginName,
-		Type:                         user_model.UserTypeRemoteUser,
-		IsAdmin:                      false,
-	}
-
-	overwrite := &user_model.CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolFalse,
-		IsRestricted: util.OptionalBoolFalse,
-	}
-
-	if err := user_model.CreateUser(ctx, user, overwrite); err != nil {
-		return &user_model.User{}, err
+		return nil, err
 	}
 
 	return user, nil

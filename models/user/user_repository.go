@@ -15,7 +15,7 @@ func init() {
 	db.RegisterModel(new(FederatedUser))
 }
 
-func CreateFederationUser(ctx context.Context, user FederatedUser) error {
+func CreateFederationUser(ctx context.Context, user *FederatedUser) error {
 	if res, err := validation.IsValid(user); !res {
 		return fmt.Errorf("FederatedUser is not valid: %v", err)
 	}
