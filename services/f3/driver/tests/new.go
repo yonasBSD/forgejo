@@ -28,7 +28,6 @@ func (o *forgeTest) GetExceptions() []generic.Kind {
 		f3_tree.KindAssets,
 		f3_tree.KindComments,
 		f3_tree.KindIssues,
-		f3_tree.KindMilestones,
 		f3_tree.KindOrganizations,
 		f3_tree.KindPullRequests,
 		f3_tree.KindReactions,
