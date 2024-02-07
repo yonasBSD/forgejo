@@ -6,6 +6,7 @@ package activitypub
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
@@ -268,7 +269,12 @@ func createUserFromAP(ctx *context.APIContext, personID forgefed.PersonID) (*use
 	}
 	log.Info("RepositoryInbox: validated person: %q", person)
 
-	email := fmt.Sprintf("f%v@%v", uuid.New().String(), personID.Host)
+	localFqdn, err := url.ParseRequestURI(setting.AppURL)
+	if err != nil {
+		return &user_model.User{}, err
+	}
+
+	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
 	loginName := personID.AsLoginName()
 	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
 	log.Info("RepositoryInbox: person.Name: %v", person.Name)
