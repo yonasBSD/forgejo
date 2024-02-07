@@ -70,8 +70,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 	// 	return newReviewComment()
 	case f3_tree.KindMilestones:
 		return newMilestones()
-	// case f3_tree.KindMilestone:
-	// 	return newMilestone()
+	case f3_tree.KindMilestone:
+		return newMilestone()
 	case f3_tree.KindPullRequests:
 		return newPullRequests()
 	// case f3_tree.KindPullRequest:
