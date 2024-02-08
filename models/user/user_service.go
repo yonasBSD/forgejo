@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -57,7 +58,13 @@ func CreateFederatedUserFromAP(ctx context.Context, person forgefed.ForgePerson,
 		IsRestricted: util.OptionalBoolFalse,
 	}
 
-	// TODO: Transaction around
+	// Begin transaction
+	ctx, committer, err := db.TxContext((ctx))
+	if err != nil {
+		return nil, nil, err
+	}
+	defer committer.Close()
+
 	if err := CreateUser(ctx, &user, overwrite); err != nil {
 		return nil, nil, err
 	}
@@ -71,6 +78,9 @@ func CreateFederatedUserFromAP(ctx context.Context, person forgefed.ForgePerson,
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Commit transaction
+	committer.Commit()
 
 	return &user, &federatedUser, nil
 }
