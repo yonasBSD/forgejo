@@ -151,6 +151,10 @@ func (o *project) Put(ctx context.Context) generic.NodeID {
 		if err = o.forgejoProject.GetBaseRepo(ctx); err != nil {
 			panic(fmt.Errorf("GetBaseRepo %v %w", o.forgejoProject, err))
 		}
+		if err = o.forgejoProject.BaseRepo.LoadOwner(ctx); err != nil {
+			panic(fmt.Errorf("LoadOwner %v %w", o.forgejoProject.BaseRepo, err))
+		}
+
 		repo, err := repo_service.ForkRepository(ctx, doer, owner, repo_service.ForkRepoOptions{
 			BaseRepo:    o.forgejoProject.BaseRepo,
 			Name:        o.forgejoProject.Name,
