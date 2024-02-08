@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 )
 
@@ -15,12 +16,38 @@ func init() {
 	db.RegisterModel(new(FederatedUser))
 }
 
-func CreateFederationUser(ctx context.Context, user *FederatedUser) error {
+func CreateFederatedUser(ctx context.Context, user *User, federatedUser *FederatedUser) error {
 	if res, err := validation.IsValid(user); !res {
+		return fmt.Errorf("User is not valid: %v", err)
+	}
+	overwrite := CreateUserOverwriteOptions{
+		IsActive:     util.OptionalBoolFalse,
+		IsRestricted: util.OptionalBoolFalse,
+	}
+
+	// Begin transaction
+	ctx, committer, err := db.TxContext((ctx))
+	if err != nil {
+		return err
+	}
+	defer committer.Close()
+
+	if err := CreateUser(ctx, user, &overwrite); err != nil {
+		return err
+	}
+
+	federatedUser.UserID = user.ID
+	if res, err := validation.IsValid(federatedUser); !res {
 		return fmt.Errorf("FederatedUser is not valid: %v", err)
 	}
-	_, err := db.GetEngine(ctx).Insert(user)
-	return err
+
+	_, err = db.GetEngine(ctx).Insert(federatedUser)
+	if err != nil {
+		return err
+	}
+
+	// Commit transaction
+	return committer.Commit()
 }
 
 func FindFederatedUser(ctx context.Context, externalID string,
