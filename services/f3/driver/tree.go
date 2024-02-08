@@ -84,8 +84,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newTopics()
 	case f3_tree.KindRepositories:
 		return newRepositories()
-	// case f3_tree.KindRepository:
-	// 	return newRepository(ctx)
+	case f3_tree.KindRepository:
+		return newRepository(ctx)
 	case generic.KindRoot:
 		return newRoot(o.GetTree().(f3_tree.TreeInterface).NewFormat(kind))
 	default:
