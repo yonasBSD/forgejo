@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
@@ -16,7 +15,6 @@ import (
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
 
@@ -73,8 +71,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
-
-	var user *user_model.User
 
 	repository := ctx.Repo.Repository
 	log.Info("RepositoryInbox: repo: %v", repository)
@@ -137,37 +133,21 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginID)
 
 	// Check if user already exists
-	// TODO: search for federation user instead
-	// users, _, err := SearchFederatedUser(actorID.ID, federationHost.ID)
-	users, err := SearchUsersByLoginName(actorAsLoginID)
+	user, _, err := user_model.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "RepositoryInbox: Searching for user failed", err)
 		return
 	}
-	log.Info("RepositoryInbox: local found users: %v", len(users))
-
-	switch len(users) {
-	case 0:
-		{
-			user, err = createUserFromAP(ctx, actorID, federationHost.ID)
-			if err != nil {
-				ctx.Error(http.StatusInternalServerError,
-					"RepositoryInbox: Creating federated user failed", err)
-				return
-			}
-			log.Info("RepositoryInbox: created user from ap: %v", user)
-		}
-	case 1:
-		{
-			user = users[0]
-			log.Info("RepositoryInbox: found user: %v", user)
-		}
-	default:
-		{
-			ctx.Error(http.StatusInternalServerError, "RepositoryInbox",
-				fmt.Errorf(" more than one matches for federated users"))
+	if user != nil {
+		log.Info("RepositoryInbox: found user: %v", user)
+	} else {
+		user, err = createUserFromAP(ctx, actorID, federationHost.ID)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError,
+				"RepositoryInbox: Creating federated user failed", err)
 			return
 		}
+		log.Info("RepositoryInbox: created user from ap: %v", user)
 	}
 
 	// execute the activity if the repo was not stared already
@@ -187,28 +167,6 @@ func RepositoryInbox(ctx *context.APIContext) {
 	}
 
 	ctx.Status(http.StatusNoContent)
-}
-
-// TODO: Move this to model.user.search ? or to model.user.externalLoginUser ?
-func SearchUsersByLoginName(loginName string) ([]*user_model.User, error) {
-	actionsUser := user_model.NewActionsUser()
-	actionsUser.IsAdmin = true
-
-	options := &user_model.SearchUserOptions{
-		LoginName:       loginName,
-		Actor:           actionsUser,
-		Type:            user_model.UserTypeRemoteUser,
-		OrderBy:         db.SearchOrderByAlphabetically,
-		ListOptions:     db.ListOptions{PageSize: 1},
-		IsActive:        util.OptionalBoolFalse,
-		IncludeReserved: true,
-	}
-	users, _, err := user_model.SearchUsers(db.DefaultContext, options)
-	if err != nil {
-		return []*user_model.User{}, fmt.Errorf("search failed: %v", err)
-	}
-
-	return users, nil
 }
 
 func createFederationHost(ctx *context.APIContext, actorID forgefed.ActorID) (forgefed.FederationHost, error) {

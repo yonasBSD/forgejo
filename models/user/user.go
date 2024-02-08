@@ -811,6 +811,17 @@ func ValidateUser(u *User, cols ...string) error {
 	return nil
 }
 
+func (user User) Validate() []string {
+	var result []string
+	if err := ValidateUser(&user); err != nil {
+		result = append(result, err.Error())
+	}
+	if err := ValidateEmail(user.Email); err != nil {
+		result = append(result, err.Error())
+	}
+	return result
+}
+
 // UpdateUserCols update user according special columns
 func UpdateUserCols(ctx context.Context, u *User, cols ...string) error {
 	if err := ValidateUser(u, cols...); err != nil {
