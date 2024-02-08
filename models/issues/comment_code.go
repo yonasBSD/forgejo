@@ -17,9 +17,15 @@ import (
 // CodeConversation contains the comment of a given review
 type CodeConversation []*Comment
 
+// CodeConversationsAtLine contains the conversations for a given line
+type CodeConversationsAtLine map[int64][]CodeConversation
+
+// CodeConversationsAtLineAndTreePath contains the conversations for a given TreePath and line
+type CodeConversationsAtLineAndTreePath map[string]CodeConversationsAtLine
+
 // FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this line
-func FetchCodeConversations(ctx context.Context, issue *Issue, currentUser *user_model.User, showOutdatedComments bool) (map[string]map[int64][]CodeConversation, error) {
-	pathToLineToConversation := make(map[string]map[int64][]CodeConversation)
+func FetchCodeConversations(ctx context.Context, issue *Issue, currentUser *user_model.User, showOutdatedComments bool) (CodeConversationsAtLineAndTreePath, error) {
+	pathToLineToConversation := make(CodeConversationsAtLineAndTreePath)
 	opts := FindCommentsOptions{
 		Type:    CommentTypeCode,
 		IssueID: issue.ID,
