@@ -9,22 +9,21 @@ import (
 	"net/url"
 	"strings"
 
-	forgefed_model "code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/models/repo"
-	user_model "code.gitea.io/gitea/models/user"
-	"github.com/google/uuid"
-
-	api "code.gitea.io/gitea/modules/activitypub"
+	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 
+	"github.com/google/uuid"
 	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
 func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error, int, string) {
-	activity := form.(*forgefed_model.ForgeLike)
+	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return err, http.StatusNotAcceptable, "Invalid activity"
 	}
@@ -32,11 +31,11 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
-	rawActorID, err := forgefed_model.NewActorID(actorURI)
+	rawActorID, err := forgefed.NewActorID(actorURI)
 	if err != nil {
 		return err, http.StatusInternalServerError, "Invalid ActorID"
 	}
-	federationHost, err := forgefed_model.FindFederationHostByFqdn(ctx, rawActorID.Host)
+	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		return err, http.StatusInternalServerError, "Could not loading FederationHost"
 	}
@@ -50,14 +49,14 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 	if !activity.IsNewer(federationHost.LatestActivity) {
 		return fmt.Errorf("Activity already processed"), http.StatusNotAcceptable, "Activity out of order."
 	}
-	actorID, err := forgefed_model.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
+	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
 	if err != nil {
 		return err, http.StatusNotAcceptable, "Invalid PersonID"
 	}
 	log.Info("Actor accepted:%v", actorID)
 
 	// parse objectID (repository)
-	objectID, err := forgefed_model.NewRepositoryID(activity.Object.GetID().String(), string(forgefed_model.ForgejoSourceType))
+	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
 	if err != nil {
 		return err, http.StatusNotAcceptable, "Invalid objectId"
 	}
@@ -67,7 +66,7 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 	log.Info("Object accepted:%v", objectID)
 
 	// Check if user already exists
-	user, _, err := user_model.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
+	user, _, err := user.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
 		return err, http.StatusInternalServerError, "Searching for user failed"
 	}
@@ -91,7 +90,7 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 		}
 	}
 	federationHost.LatestActivity = activity.StartTime
-	err = forgefed_model.UpdateFederationHost(ctx, federationHost)
+	err = forgefed.UpdateFederationHost(ctx, federationHost)
 	if err != nil {
 		return err, http.StatusNotAcceptable, "Error updating federatedHost"
 	}
@@ -99,9 +98,9 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 	return nil, 0, ""
 }
 
-func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed_model.ActorID) (*forgefed_model.FederationHost, error) {
-	actionsUser := user_model.NewActionsUser()
-	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
+func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
+	actionsUser := user.NewActionsUser()
+	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +108,7 @@ func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed_model.
 	if err != nil {
 		return nil, err
 	}
-	nodeInfoWellKnown, err := forgefed_model.NewNodeInfoWellKnown(body)
+	nodeInfoWellKnown, err := forgefed.NewNodeInfoWellKnown(body)
 	if err != nil {
 		return nil, err
 	}
@@ -117,25 +116,25 @@ func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed_model.
 	if err != nil {
 		return nil, err
 	}
-	nodeInfo, err := forgefed_model.NewNodeInfo(body)
+	nodeInfo, err := forgefed.NewNodeInfo(body)
 	if err != nil {
 		return nil, err
 	}
-	result, err := forgefed_model.NewFederationHost(nodeInfo, actorID.Host)
+	result, err := forgefed.NewFederationHost(nodeInfo, actorID.Host)
 	if err != nil {
 		return nil, err
 	}
-	err = forgefed_model.CreateFederationHost(ctx, &result)
+	err = forgefed.CreateFederationHost(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID, federationHostID int64) (*user_model.User, *user_model.FederatedUser, error) {
+func CreateUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
-	actionsUser := user_model.NewActionsUser()
-	client, err := api.NewClient(ctx, actionsUser, "no idea where to get key material.")
+	actionsUser := user.NewActionsUser()
+	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -145,7 +144,7 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 		return nil, nil, err
 	}
 
-	person := forgefed_model.ForgePerson{}
+	person := forgefed.ForgePerson{}
 	err = person.UnmarshalJSON(body)
 	if err != nil {
 		return nil, nil, err
@@ -170,7 +169,7 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 	if err != nil {
 		return nil, nil, err
 	}
-	user := user_model.User{
+	newUser := user.User{
 		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
 		Name:                         name,
 		FullName:                     fullName,
@@ -179,18 +178,18 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 		Passwd:                       password,
 		MustChangePassword:           false,
 		LoginName:                    loginName,
-		Type:                         user_model.UserTypeRemoteUser,
+		Type:                         user.UserTypeRemoteUser,
 		IsAdmin:                      false,
 	}
-	federatedUser := user_model.FederatedUser{
+	federatedUser := user.FederatedUser{
 		ExternalID:       personID.ID,
 		FederationHostID: federationHostID,
 	}
-	err = user_model.CreateFederatedUser(ctx, &user, &federatedUser)
+	err = user.CreateFederatedUser(ctx, &newUser, &federatedUser)
 	if err != nil {
 		return nil, nil, err
 	}
 	log.Info("Created federatedUser:%q", federatedUser)
 
-	return &user, &federatedUser, nil
+	return &newUser, &federatedUser, nil
 }

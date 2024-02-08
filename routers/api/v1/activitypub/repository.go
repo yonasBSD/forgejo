@@ -45,7 +45,6 @@ func Repository(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "Set Name", err)
 		return
 	}
-
 	response(ctx, repo)
 }
 
@@ -78,6 +77,5 @@ func RepositoryInbox(ctx *context.APIContext) {
 	if err != nil {
 		ctx.Error(httpStatus, title, err)
 	}
-
 	ctx.Status(http.StatusNoContent)
 }
