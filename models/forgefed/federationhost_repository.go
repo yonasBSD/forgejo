@@ -44,7 +44,7 @@ func FindFederationHostByFqdn(ctx context.Context, fqdn string) (*FederationHost
 	return host, nil
 }
 
-func CreateFederationHost(ctx context.Context, host FederationHost) error {
+func CreateFederationHost(ctx context.Context, host *FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return fmt.Errorf("FederationInfo is not valid: %v", err)
 	}
@@ -52,7 +52,7 @@ func CreateFederationHost(ctx context.Context, host FederationHost) error {
 	return err
 }
 
-func UpdateFederationHost(ctx context.Context, host FederationHost) error {
+func UpdateFederationHost(ctx context.Context, host *FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return fmt.Errorf("FederationInfo is not valid: %v", err)
 	}

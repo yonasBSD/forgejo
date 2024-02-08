@@ -26,78 +26,74 @@ import (
 func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error, int, string) {
 	activity := form.(*forgefed_model.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
-		return err, http.StatusNotAcceptable, "RepositoryInbox: Validate activity"
+		return err, http.StatusNotAcceptable, "Invalid activity"
 	}
-	log.Info("RepositoryInbox: activity validated:%v", activity)
+	log.Info("Activity validated:%v", activity)
 
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	rawActorID, err := forgefed_model.NewActorID(actorURI)
 	if err != nil {
-		return err, http.StatusInternalServerError, "RepositoryInbox: Validating ActorID"
+		return err, http.StatusInternalServerError, "Invalid ActorID"
 	}
 	federationHost, err := forgefed_model.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
-		return err, http.StatusInternalServerError, "RepositoryInbox: Error while loading FederationInfo"
+		return err, http.StatusInternalServerError, "Could not loading FederationHost"
 	}
 	if federationHost == nil {
 		result, err := CreateFederationHostFromAP(ctx, rawActorID)
 		if err != nil {
-			return err, http.StatusNotAcceptable, "RepositoryInbox: Validate actorId"
+			return err, http.StatusNotAcceptable, "Invalid FederationHost"
 		}
 		federationHost = result
-		log.Info("RepositoryInbox: federationInfo validated: %v", federationHost)
 	}
 	if !activity.IsNewer(federationHost.LatestActivity) {
-		return fmt.Errorf("Activity already processed"), http.StatusNotAcceptable, "RepositoryInbox: Validate Activity"
+		return fmt.Errorf("Activity already processed"), http.StatusNotAcceptable, "Activity out of order."
 	}
-
 	actorID, err := forgefed_model.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
 	if err != nil {
-		return err, http.StatusNotAcceptable, "RepositoryInbox: Validate actorId"
+		return err, http.StatusNotAcceptable, "Invalid PersonID"
 	}
-	log.Info("RepositoryInbox: actorId validated: %v", actorID)
+	log.Info("Actor accepted:%v", actorID)
+
 	// parse objectID (repository)
 	objectID, err := forgefed_model.NewRepositoryID(activity.Object.GetID().String(), string(forgefed_model.ForgejoSourceType))
 	if err != nil {
-		return err, http.StatusNotAcceptable, "RepositoryInbox: Validate objectId"
+		return err, http.StatusNotAcceptable, "Invalid objectId"
 	}
 	if objectID.ID != fmt.Sprint(repositoryId) {
-		return err, http.StatusNotAcceptable, "RepositoryInbox: Validate objectId"
+		return err, http.StatusNotAcceptable, "Invalid objectId"
 	}
-	log.Info("RepositoryInbox: objectId validated: %v", objectID)
-
-	actorAsLoginID := actorID.AsLoginName() // used as LoginName in newly created user
-	log.Info("RepositoryInbox: remoteStargazer: %v", actorAsLoginID)
+	log.Info("Object accepted:%v", objectID)
 
 	// Check if user already exists
 	user, _, err := user_model.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
-		return err, http.StatusInternalServerError, "RepositoryInbox: Searching for user failed"
+		return err, http.StatusInternalServerError, "Searching for user failed"
 	}
 	if user != nil {
-		log.Info("RepositoryInbox: found user: %v", user)
+		log.Info("Found local federatedUser: %v", user)
 	} else {
 		user, _, err = CreateUserFromAP(ctx, actorID, federationHost.ID)
 		if err != nil {
-			return err, http.StatusInternalServerError,
-				"RepositoryInbox: Creating federated user failed"
+			return err, http.StatusInternalServerError, "Error creating federatedUser"
 		}
-		log.Info("RepositoryInbox: created user from ap: %v", user)
+		log.Info("Created federatedUser from ap: %v", user)
 	}
+	log.Info("Got user:%v", user.Name)
 
 	// execute the activity if the repo was not stared already
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryId)
 	if !alreadyStared {
 		err = repo.StarRepo(ctx, user.ID, repositoryId, true)
 		if err != nil {
-			return err, http.StatusNotAcceptable, "RepositoryInbox: Star operation"
+			return err, http.StatusNotAcceptable, "Error staring"
 		}
 	}
 	federationHost.LatestActivity = activity.StartTime
-	err = forgefed_model.UpdateFederationHost(ctx, *federationHost)
+	err = forgefed_model.UpdateFederationHost(ctx, federationHost)
 	if err != nil {
-		return err, http.StatusNotAcceptable, "RepositoryInbox: error updateing federateionInfo"
+		return err, http.StatusNotAcceptable, "Error updating federatedHost"
 	}
 
 	return nil, 0, ""
@@ -129,7 +125,7 @@ func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed_model.
 	if err != nil {
 		return nil, err
 	}
-	err = forgefed_model.CreateFederationHost(ctx, result)
+	err = forgefed_model.CreateFederationHost(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +153,7 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 	if res, err := validation.IsValid(person); !res {
 		return nil, nil, err
 	}
-	log.Info("RepositoryInbox: validated person: %q", person)
+	log.Info("Fetched valid person:%q", person)
 
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
@@ -166,7 +162,6 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
 	loginName := personID.AsLoginName()
 	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
-	log.Info("RepositoryInbox: person.Name: %v", person.Name)
 	fullName := person.Name.String()
 	if len(person.Name) == 0 {
 		fullName = name
@@ -187,16 +182,15 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed_model.PersonID,
 		Type:                         user_model.UserTypeRemoteUser,
 		IsAdmin:                      false,
 	}
-
 	federatedUser := user_model.FederatedUser{
 		ExternalID:       personID.ID,
 		FederationHostID: federationHostID,
 	}
-
 	err = user_model.CreateFederatedUser(ctx, &user, &federatedUser)
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Info("Created federatedUser:%q", federatedUser)
 
 	return &user, &federatedUser, nil
 }
