@@ -194,4 +194,34 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		comments := doc.Find(`.comments > .comment`)
 		assert.Len(t, comments.Nodes, 1) // the outdated comment belongs to another review and should not be shown
 	})
+
+	t.Run("Files Changed tab", func(t *testing.T) {
+		for _, c := range []struct {
+			style, outdated string
+			expectedCount   int
+		}{
+			{"unified", "true", 3},  // 1 comment on line 1 + 2 comments on line 3
+			{"unified", "false", 1}, // 1 comment on line 3 is not outdated
+			{"split", "true", 3},    // 1 comment on line 1 + 2 comments on line 3
+			{"split", "false", 1},   // 1 comment on line 3 is not outdated
+		} {
+			t.Run(c.style+"+"+c.outdated, func(t *testing.T) {
+				req := NewRequest(t, "GET", "/user2/repo1/pulls/3/files?style="+c.style+"&show-outdated="+c.outdated)
+				resp := session.MakeRequest(t, req, http.StatusOK)
+
+				doc := NewHTMLParser(t, resp.Body)
+				comments := doc.Find(`.comments > .comment`)
+				assert.Len(t, comments.Nodes, c.expectedCount)
+			})
+		}
+	})
+
+	t.Run("Conversation tab", func(t *testing.T) {
+		req := NewRequest(t, "GET", "/user2/repo1/pulls/3")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		comments := doc.Find(`.comments > .comment`)
+		assert.Len(t, comments.Nodes, 3) // 1 comment on line 1 + 2 comments on line 3
+	})
 }
