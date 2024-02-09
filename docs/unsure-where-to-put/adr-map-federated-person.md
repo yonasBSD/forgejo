@@ -94,7 +94,6 @@ classDiagram
     }
     class ActorID {
       ID               string
-      Source           string
       Schema           string
       Path             string
       Host             string
@@ -191,7 +190,6 @@ classDiagram
     }
     class ActorID {
       ID               string
-      Source           string
       Schema           string
       Path             string
       Host             string
@@ -306,7 +304,6 @@ classDiagram
     }
     class ActorID {
       ID               string
-      Source           string
       Schema           string
       Path             string
       Host             string
@@ -361,7 +358,6 @@ classDiagram
   User *-- FederatedUser: FederatedUser.UserID
   PersonID -- FederatedUser : mapped by PersonID.asWebfinger() == FederatedUser.externalID
   FederatedUser -- FederationHost
-
  
 ```
 
@@ -414,7 +410,6 @@ classDiagram
     }
     class ActorID {
       ID               string
-      Source           string
       Schema           string
       Path             string
       Host             string
