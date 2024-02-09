@@ -242,6 +242,8 @@ func getStorageForLocal(targetSec, overrideSec ConfigSection, tp targetSecType, 
 		}
 	}
 
+	fatalDuplicatedPath("storage."+name, storage.Path)
+
 	return &storage, nil
 }
 
