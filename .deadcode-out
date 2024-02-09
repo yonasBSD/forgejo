@@ -43,6 +43,14 @@ package "code.gitea.io/gitea/models/dbfs"
 	func Create
 	func Rename
 
+package "code.gitea.io/gitea/models/forgefed"
+	func GetFederationHost
+	func GetItemByType
+	func JSONUnmarshalerFn
+	func NotEmpty
+	func ToRepository
+	func OnRepository
+
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
 	func SetVersionString
@@ -127,18 +135,14 @@ package "code.gitea.io/gitea/models/user"
 	func (ErrUserInactive).Unwrap
 	func IsErrExternalLoginUserAlreadyExist
 	func IsErrExternalLoginUserNotExist
+	func NewFederatedUser
 	func IsErrUserSettingIsNotExist
 	func GetUserAllSettings
 	func DeleteUserSetting
 	func GetUserEmailsByNames
 
 package "code.gitea.io/gitea/modules/activitypub"
-	func CurrentTime
-	func containsRequiredHTTPHeaders
-	func NewClient
-	func (*Client).NewRequest
 	func (*Client).Post
-	func GetPrivateKey
 
 package "code.gitea.io/gitea/modules/assetfs"
 	func Bindata
@@ -297,6 +301,9 @@ package "code.gitea.io/gitea/modules/util"
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
+
+package "code.gitea.io/gitea/modules/validation"
+	func ValidateSuffix
 
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock
