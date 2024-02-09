@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"strings"
 
-	ap "github.com/go-ap/activitypub"
-
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
+
+	ap "github.com/go-ap/activitypub"
 )
 
 // ----------------------------- ActorID --------------------------------------------

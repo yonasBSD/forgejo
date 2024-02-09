@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	ap "github.com/go-ap/activitypub"
-
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
+
+	ap "github.com/go-ap/activitypub"
 )
 
 func TestNewPersonId(t *testing.T) {

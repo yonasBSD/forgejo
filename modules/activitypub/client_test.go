@@ -18,8 +18,9 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 /* ToDo: Set Up tests for http get requests

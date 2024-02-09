@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
-
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
