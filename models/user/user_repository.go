@@ -65,7 +65,7 @@ func FindFederatedUser(ctx context.Context, externalID string,
 	if err != nil {
 		return nil, nil, err
 	} else if !has {
-		return nil, nil, fmt.Errorf("User %v for federated user is missing.", federatedUser.UserID)
+		return nil, nil, fmt.Errorf("User %v for federated user is missing", federatedUser.UserID)
 	}
 
 	if res, err := validation.IsValid(*user); !res {

@@ -22,10 +22,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error, int, string) {
+func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
-		return err, http.StatusNotAcceptable, "Invalid activity"
+		return http.StatusNotAcceptable, "Invalid activity", err
 	}
 	log.Info("Activity validated:%v", activity)
 
@@ -33,69 +33,69 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error,
 	actorURI := activity.Actor.GetID().String()
 	rawActorID, err := forgefed.NewActorID(actorURI)
 	if err != nil {
-		return err, http.StatusInternalServerError, "Invalid ActorID"
+		return http.StatusInternalServerError, "Invalid ActorID", err
 	}
 	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
-		return err, http.StatusInternalServerError, "Could not loading FederationHost"
+		return http.StatusInternalServerError, "Could not loading FederationHost", err
 	}
 	if federationHost == nil {
 		result, err := CreateFederationHostFromAP(ctx, rawActorID)
 		if err != nil {
-			return err, http.StatusNotAcceptable, "Invalid FederationHost"
+			return http.StatusNotAcceptable, "Invalid FederationHost", err
 		}
 		federationHost = result
 	}
 	if !activity.IsNewer(federationHost.LatestActivity) {
-		return fmt.Errorf("Activity already processed"), http.StatusNotAcceptable, "Activity out of order."
+		return http.StatusNotAcceptable, "Activity out of order.", fmt.Errorf("Activity already processed")
 	}
 	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
 	if err != nil {
-		return err, http.StatusNotAcceptable, "Invalid PersonID"
+		return http.StatusNotAcceptable, "Invalid PersonID", err
 	}
 	log.Info("Actor accepted:%v", actorID)
 
 	// parse objectID (repository)
 	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
 	if err != nil {
-		return err, http.StatusNotAcceptable, "Invalid objectId"
+		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
-	if objectID.ID != fmt.Sprint(repositoryId) {
-		return err, http.StatusNotAcceptable, "Invalid objectId"
+	if objectID.ID != fmt.Sprint(repositoryID) {
+		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
 	log.Info("Object accepted:%v", objectID)
 
 	// Check if user already exists
 	user, _, err := user.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
-		return err, http.StatusInternalServerError, "Searching for user failed"
+		return http.StatusInternalServerError, "Searching for user failed", err
 	}
 	if user != nil {
 		log.Info("Found local federatedUser: %v", user)
 	} else {
 		user, _, err = CreateUserFromAP(ctx, actorID, federationHost.ID)
 		if err != nil {
-			return err, http.StatusInternalServerError, "Error creating federatedUser"
+			return http.StatusInternalServerError, "Error creating federatedUser", err
 		}
 		log.Info("Created federatedUser from ap: %v", user)
 	}
 	log.Info("Got user:%v", user.Name)
 
 	// execute the activity if the repo was not stared already
-	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryId)
+	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = repo.StarRepo(ctx, user.ID, repositoryId, true)
+		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
 		if err != nil {
-			return err, http.StatusNotAcceptable, "Error staring"
+			return http.StatusNotAcceptable, "Error staring", err
 		}
 	}
 	federationHost.LatestActivity = activity.StartTime
 	err = forgefed.UpdateFederationHost(ctx, federationHost)
 	if err != nil {
-		return err, http.StatusNotAcceptable, "Error updating federatedHost"
+		return http.StatusNotAcceptable, "Error updating federatedHost", err
 	}
 
-	return nil, 0, ""
+	return 0, "", nil
 }
 
 func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {

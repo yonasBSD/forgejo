@@ -73,7 +73,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: repo: %v", repository)
 
 	form := web.GetForm(ctx)
-	err, httpStatus, title := forgefed.LikeActivity(ctx, form, repository.ID)
+	httpStatus, title, err := forgefed.LikeActivity(ctx, form, repository.ID)
 	if err != nil {
 		ctx.Error(httpStatus, title, err)
 	}

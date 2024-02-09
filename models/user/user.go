@@ -811,12 +811,12 @@ func ValidateUser(u *User, cols ...string) error {
 	return nil
 }
 
-func (user User) Validate() []string {
+func (u User) Validate() []string {
 	var result []string
-	if err := ValidateUser(&user); err != nil {
+	if err := ValidateUser(&u); err != nil {
 		result = append(result, err.Error())
 	}
-	if err := ValidateEmail(user.Email); err != nil {
+	if err := ValidateEmail(u.Email); err != nil {
 		result = append(result, err.Error())
 	}
 	return result
