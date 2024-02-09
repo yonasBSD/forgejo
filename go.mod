@@ -101,6 +101,7 @@ require (
 	github.com/yuin/goldmark v1.6.0
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	github.com/yuin/goldmark-meta v1.1.0
+	github.com/valyala/fastjson v1.6.4
 	golang.org/x/crypto v0.18.0
 	golang.org/x/image v0.15.0
 	golang.org/x/net v0.20.0
@@ -117,11 +118,6 @@ require (
 	strk.kbt.io/projects/go/libravatar v0.0.0-20191008002943-06d1c002b251
 	xorm.io/builder v0.3.13
 	xorm.io/xorm v1.3.7
-)
-
-require (
-	github.com/sethvargo/go-password v0.2.0
-	github.com/valyala/fastjson v1.6.4
 )
 
 require (

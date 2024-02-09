@@ -13,13 +13,13 @@ import (
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
+	"code.gitea.io/gitea/modules/auth/password"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 
 	"github.com/google/uuid"
-	pwd_gen "github.com/sethvargo/go-password/password"
 )
 
 func LikeActivity(ctx *context.APIContext, form any, repositoryId int64) (error, int, string) {
@@ -165,7 +165,7 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, feder
 	if len(person.Name) == 0 {
 		fullName = name
 	}
-	password, err := pwd_gen.Generate(32, 10, 10, false, true)
+	password, err := password.Generate(32)
 	if err != nil {
 		return nil, nil, err
 	}
