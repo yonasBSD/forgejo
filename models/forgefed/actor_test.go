@@ -135,7 +135,7 @@ func TestShouldThrowErrorOnInvalidInput(t *testing.T) {
 	}
 	_, err = NewPersonID("./api/v1/something", "forgejo")
 	if err == nil {
-		t.Errorf("relative uris are not alowed")
+		t.Errorf("relative uris are not allowed")
 	}
 	_, err = NewPersonID("http://1.2.3.4/api/v1/something", "forgejo")
 	if err == nil {
