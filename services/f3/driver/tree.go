@@ -30,8 +30,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newForge()
 	case f3_tree.KindOrganizations:
 		return newOrganizations()
-	// case f3_tree.KindOrganization:
-	// 	return newOrganization()
+	case f3_tree.KindOrganization:
+		return newOrganization()
 	case f3_tree.KindUsers:
 		return newUsers()
 	case f3_tree.KindUser:
