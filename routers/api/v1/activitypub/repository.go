@@ -49,7 +49,7 @@ func Repository(ctx *context.APIContext) {
 
 // PersonInbox function handles the incoming data for a repository inbox
 func RepositoryInbox(ctx *context.APIContext) {
-	// swagger:operation POST /activitypub/repository-id/{repository-id}/inbox activitypub activitypubRepository
+	// swagger:operation POST /activitypub/repository-id/{repository-id}/inbox activitypub activitypubRepositoryInbox
 	// ---
 	// summary: Send to the inbox
 	// produces:
