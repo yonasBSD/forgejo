@@ -42,10 +42,10 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newProject()
 	case f3_tree.KindIssues:
 		return newIssues()
-	// case f3_tree.KindIssue:
-	// 	return newIssue()
-	// case f3_tree.KindComments:
-	// 	return newComments()
+	case f3_tree.KindIssue:
+		return newIssue()
+	case f3_tree.KindComments:
+		return newComments()
 	// case f3_tree.KindComment:
 	// 	return newComment()
 	case f3_tree.KindAssets:
@@ -56,8 +56,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newLabels()
 	case f3_tree.KindLabel:
 		return newLabel()
-	// case f3_tree.KindReactions:
-	// 	return newReactions()
+	case f3_tree.KindReactions:
+		return newReactions()
 	// case f3_tree.KindReaction:
 	// 	return newReaction()
 	// case f3_tree.KindReviews:
