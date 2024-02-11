@@ -320,7 +320,7 @@ aiIK5QoSDwAAAAAAAAAAAAAAAP/IK49O1e8AKAAA`
 	for _, branch := range branches {
 		for _, repository := range repositories {
 			t.Run(fmt.Sprintf("[Branch:%s,Repository:%s]", branch, repository), func(t *testing.T) {
-				for i, pkg := range packageNames {
+				for _, pkg := range packageNames {
 					t.Run(fmt.Sprintf("Upload[Package:%s]", pkg), func(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 
@@ -337,17 +337,18 @@ aiIK5QoSDwAAAAAAAAAAAAAAAP/IK49O1e8AKAAA`
 							AddBasicAuth(user.Name)
 						MakeRequest(t, req, http.StatusCreated)
 
-						pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeAlpine)
+						pvs, err := packages.GetVersionsByPackageName(db.DefaultContext, user.ID, packages.TypeAlpine, pkg)
 						assert.NoError(t, err)
+						assert.Len(t, pvs, 1)
 
-						pd, err := packages.GetPackageDescriptor(db.DefaultContext, pvs[i])
+						pd, err := packages.GetPackageDescriptor(db.DefaultContext, pvs[0])
 						assert.NoError(t, err)
 						assert.Nil(t, pd.SemVer)
 						assert.IsType(t, &alpine_module.VersionMetadata{}, pd.Metadata)
 						assert.Equal(t, pkg, pd.Package.Name)
 						assert.Equal(t, packageVersion, pd.Version.Version)
 
-						pfs, err := packages.GetFilesByVersionID(db.DefaultContext, pvs[i].ID)
+						pfs, err := packages.GetFilesByVersionID(db.DefaultContext, pvs[0].ID)
 						assert.NoError(t, err)
 						assert.NotEmpty(t, pfs)
 						assert.Condition(t, func() bool {
