@@ -44,6 +44,7 @@ classDiagram
       Path             string
       Host             string
       Port             string
+      Source           string
       UnvalidatedInput string
       Validate() []string
     }
