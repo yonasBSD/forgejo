@@ -106,13 +106,13 @@ git clone https://git.exozy.me/a/gitea.git exosy
 git remote add forgejo git@codeberg.org:forgejo/forgejo.git
 
 # rebase on top of forgejo/forge-development
-git switch forgejo-development
+git switch forgejo
 git fetch forgejo
 git reset --hard forgejo/forgejo-development
 git push --force
 
 git switch forgejo-federated-star
-git rebase forgejo-development
+git rebase forgejo
 git push --force
 
 # continue local development after rebase & force-push has happened
