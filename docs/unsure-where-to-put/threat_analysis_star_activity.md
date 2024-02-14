@@ -98,7 +98,7 @@ flowchart TD
 2. **Experienced Hacker**: Hacker with deep knowledge.
 3. **Hacker**: Hacker with some knowledge.
 4. **Malicious Fediverse Member**: Malicious Members of the fediverse, able to operate malicious forge instances.
-5. **Owners of federated forges**: Owners of good reputation forge instance in the fediverse.
+5. **Malicious Forge Admin**: Admin of good reputation forge instance in the fediverse.
 6. **Federated User**: Members of good reputation forge instance in the fediverse.
 
 ### Threat
@@ -112,7 +112,8 @@ flowchart TD
 7. **DOS by Slowlories**: Experienced Hacker may craft their malicious server to keep connections open. Then they send a Like Activity with the actor URL pointing to that malicious server, and your background job keeps waiting for data. Then they send more such requests, until you exhaust your limit of file descriptors openable for your system and cause a DoS (by causing cascading failures all over the system, given file descriptors are used for about everything, from files, to sockets, to pipes). See also [Slowloris@wikipedia][2].
 8. **Block by future StartTime**: Hacker sends an Activity having `startTime` in far future. Our Instance does no longer accept Activities till they have far far future `startTime` from the actors instance.
 9. **Malicious Forge**: If a "Malicious Fediverse Member" deploys an 'federated' forge that sends the right amount of Like activities to not hit the rate limiter, an malicious user can modify the code of any 'federated' forge to ensure that if an foreign server tries to verify and activity, it will always succeed (such as  creating users on demand, or simply mocking the data).
-10. **Side Chanel Malicious Activities**: A Owner of a good reputation instance may craft malicious activities with the hope not to get moderated.
+10. **Malicious Controlled Forge**: A "Malicious Forge Admin" of a good reputation instance may impersonate users on his instance and trigger federated activities.
+11. **Side Chanel Malicious Activities**: A Owner of a good reputation instance may craft malicious activities with the hope not to get moderated.
 
 ### Mitigations
 
