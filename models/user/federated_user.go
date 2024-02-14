@@ -8,6 +8,7 @@ import (
 )
 
 type FederatedUser struct {
+	ID               int64  `xorm:"pk autoincr"`
 	UserID           int64  `xorm:"NOT NULL"`
 	ExternalID       string `xorm:"TEXT UNIQUE(federation_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_mapping) NOT NULL"`
