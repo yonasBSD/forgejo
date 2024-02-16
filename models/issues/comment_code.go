@@ -24,14 +24,14 @@ type CodeConversationsAtLine map[int64][]CodeConversation
 type CodeConversationsAtLineAndTreePath map[string]CodeConversationsAtLine
 
 // FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this line
-func FetchCodeConversations(ctx context.Context, issue *Issue, currentUser *user_model.User, showOutdatedComments bool) (CodeConversationsAtLineAndTreePath, error) {
+func FetchCodeConversations(ctx context.Context, issue *Issue, doer *user_model.User, showOutdatedComments bool) (CodeConversationsAtLineAndTreePath, error) {
 	pathToLineToConversation := make(CodeConversationsAtLineAndTreePath)
 	opts := FindCommentsOptions{
 		Type:    CommentTypeCode,
 		IssueID: issue.ID,
 	}
 
-	comments, err := findCodeComments(ctx, opts, issue, currentUser, nil, showOutdatedComments)
+	comments, err := findCodeComments(ctx, opts, issue, doer, nil, showOutdatedComments)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func FetchCodeConversations(ctx context.Context, issue *Issue, currentUser *user
 // CodeComments represents comments on code by using this structure: FILENAME -> LINE (+ == proposed; - == previous) -> COMMENTS
 type CodeComments map[string]map[int64][]*Comment
 
-func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, currentUser *user_model.User, review *Review, showOutdatedComments bool) (CodeComments, error) {
+func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, doer *user_model.User, review *Review, showOutdatedComments bool) (CodeComments, error) {
 	pathToLineToComment := make(CodeComments)
 	if review == nil {
 		review = &Review{ID: 0}
@@ -70,7 +70,7 @@ func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, currentUser *u
 		ReviewID: review.ID,
 	}
 
-	comments, err := findCodeComments(ctx, opts, issue, currentUser, review, showOutdatedComments)
+	comments, err := findCodeComments(ctx, opts, issue, doer, review, showOutdatedComments)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, currentUser *u
 	return pathToLineToComment, nil
 }
 
-func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issue, currentUser *user_model.User, review *Review, showOutdatedComments bool) ([]*Comment, error) {
+func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issue, doer *user_model.User, review *Review, showOutdatedComments bool) ([]*Comment, error) {
 	var comments CommentList
 	if review == nil {
 		review = &Review{ID: 0}
@@ -128,7 +128,7 @@ func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issu
 		if re, ok := reviews[comment.ReviewID]; ok && re != nil {
 			// If the review is pending only the author can see the comments (except if the review is set)
 			if review.ID == 0 && re.Type == ReviewTypePending &&
-				(currentUser == nil || currentUser.ID != re.ReviewerID) {
+				(doer == nil || doer.ID != re.ReviewerID) {
 				continue
 			}
 			comment.Review = re
@@ -159,7 +159,7 @@ func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issu
 }
 
 // FetchCodeConversation fetches the code conversation of a given comment (same review, treePath and line number)
-func FetchCodeConversation(ctx context.Context, comment *Comment, currentUser *user_model.User) ([]*Comment, error) {
+func FetchCodeConversation(ctx context.Context, comment *Comment, doer *user_model.User) ([]*Comment, error) {
 	opts := FindCommentsOptions{
 		Type:     CommentTypeCode,
 		IssueID:  comment.IssueID,
@@ -167,5 +167,5 @@ func FetchCodeConversation(ctx context.Context, comment *Comment, currentUser *u
 		TreePath: comment.TreePath,
 		Line:     comment.Line,
 	}
-	return findCodeComments(ctx, opts, comment.Issue, currentUser, nil, true)
+	return findCodeComments(ctx, opts, comment.Issue, doer, nil, true)
 }
