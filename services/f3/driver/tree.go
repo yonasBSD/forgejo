@@ -50,8 +50,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newComment()
 	case f3_tree.KindAssets:
 		return newAssets()
-	// case f3_tree.KindAsset:
-	// 	return newAsset()
+	case f3_tree.KindAsset:
+		return newAsset()
 	case f3_tree.KindLabels:
 		return newLabels()
 	case f3_tree.KindLabel:

@@ -5,11 +5,36 @@
 package driver
 
 import (
+	"context"
+	"fmt"
+
+	repo_model "code.gitea.io/gitea/models/repo"
+
+	f3_tree "lab.forgefriends.org/friendlyforgeformat/gof3/tree/f3"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/tree/generic"
 )
 
 type assets struct {
 	container
+}
+
+func (o *assets) ListPage(ctx context.Context, page int) generic.ChildrenSlice {
+	if page > 1 {
+		return generic.NewChildrenSlice(0)
+	}
+
+	releaseID := f3_tree.GetReleaseID(o.GetNode())
+
+	release, err := repo_model.GetReleaseByID(ctx, releaseID)
+	if err != nil {
+		panic(fmt.Errorf("GetReleaseByID %v %w", releaseID, err))
+	}
+
+	if err := release.LoadAttributes(ctx); err != nil {
+		panic(fmt.Errorf("error while listing assets: %v", err))
+	}
+
+	return f3_tree.ConvertListed(ctx, o.GetNode(), f3_tree.ConvertToAny(release.Attachments...)...)
 }
 
 func newAssets() generic.NodeDriverInterface {
