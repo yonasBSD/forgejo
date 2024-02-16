@@ -23,37 +23,43 @@ type CodeConversationsAtLine map[int64][]CodeConversation
 // CodeConversationsAtLineAndTreePath contains the conversations for a given TreePath and line
 type CodeConversationsAtLineAndTreePath map[string]CodeConversationsAtLine
 
+func newCodeConversationsAtLineAndTreePath(comments []*Comment) CodeConversationsAtLineAndTreePath {
+	tree := make(CodeConversationsAtLineAndTreePath)
+	for _, comment := range comments {
+		tree.insertComment(comment)
+	}
+	return tree
+}
+
+func (tree CodeConversationsAtLineAndTreePath) insertComment(comment *Comment) {
+	// attempt to append comment to existing conversations (i.e. list of comments belonging to the same review)
+	for i, conversation := range tree[comment.TreePath][comment.Line] {
+		if conversation[0].ReviewID == comment.ReviewID {
+			tree[comment.TreePath][comment.Line][i] = append(conversation, comment)
+			return
+		}
+	}
+
+	// no previous conversation was found at this line, create it
+	if tree[comment.TreePath] == nil {
+		tree[comment.TreePath] = make(map[int64][]CodeConversation)
+	}
+
+	tree[comment.TreePath][comment.Line] = append(tree[comment.TreePath][comment.Line], CodeConversation{comment})
+}
+
 // FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this line
 func FetchCodeConversations(ctx context.Context, issue *Issue, doer *user_model.User, showOutdatedComments bool) (CodeConversationsAtLineAndTreePath, error) {
-	pathToLineToConversation := make(CodeConversationsAtLineAndTreePath)
 	opts := FindCommentsOptions{
 		Type:    CommentTypeCode,
 		IssueID: issue.ID,
 	}
-
 	comments, err := findCodeComments(ctx, opts, issue, doer, nil, showOutdatedComments)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, comment := range comments {
-		if pathToLineToConversation[comment.TreePath] == nil {
-			pathToLineToConversation[comment.TreePath] = make(map[int64][]CodeConversation)
-		}
-
-		found := false
-		for i, conversation := range pathToLineToConversation[comment.TreePath][comment.Line] {
-			if conversation[0].ReviewID == comment.ReviewID {
-				pathToLineToConversation[comment.TreePath][comment.Line][i] = append(conversation, comment)
-				found = true
-				break
-			}
-		}
-		if !found {
-			pathToLineToConversation[comment.TreePath][comment.Line] = append(pathToLineToConversation[comment.TreePath][comment.Line], CodeConversation{comment})
-		}
-	}
-	return pathToLineToConversation, nil
+	return newCodeConversationsAtLineAndTreePath(comments), nil
 }
 
 // CodeComments represents comments on code by using this structure: FILENAME -> LINE (+ == proposed; - == previous) -> COMMENTS
