@@ -35,6 +35,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 	session.MakeRequest(t, req, http.StatusOK)
 
 	t.Run("single outdated review (line 1)", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 		req := NewRequest(t, "GET", "/user2/repo1/pulls/3/files/reviews/new_comment")
 		resp := session.MakeRequest(t, req, http.StatusOK)
 		doc := NewHTMLParser(t, resp.Body)
@@ -93,6 +94,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 	})
 
 	t.Run("outdated and newer review (line 2)", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 		req := NewRequest(t, "GET", "/user2/repo1/pulls/3/files/reviews/new_comment")
 		resp := session.MakeRequest(t, req, http.StatusOK)
 		doc := NewHTMLParser(t, resp.Body)
@@ -196,6 +198,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 	})
 
 	t.Run("Files Changed tab", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 		for _, c := range []struct {
 			style, outdated string
 			expectedCount   int
@@ -217,6 +220,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 	})
 
 	t.Run("Conversation tab", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 		req := NewRequest(t, "GET", "/user2/repo1/pulls/3")
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
