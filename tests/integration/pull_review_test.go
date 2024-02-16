@@ -80,10 +80,9 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		// adjust the database to mark the comment as invalidated
 		// (to invalidate it properly, one should push a commit which should trigger this logic,
 		// in the meantime, use this quick-and-dirty trick)
-		id, err := strconv.ParseInt(commentID, 10, 64)
-		assert.NoError(t, err)
+		comment := loadComment(t, commentID)
 		assert.NoError(t, issues.UpdateCommentInvalidate(context.Background(), &issues.Comment{
-			ID:          id,
+			ID:          comment.ID,
 			Invalidated: true,
 		}))
 
