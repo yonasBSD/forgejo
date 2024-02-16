@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/issues"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -25,6 +26,13 @@ func TestPullView_ReviewerMissed(t *testing.T) {
 
 	req = NewRequest(t, "GET", "/user2/repo1/pulls/3")
 	session.MakeRequest(t, req, http.StatusOK)
+}
+
+func loadComment(t *testing.T, commentID string) *issues.Comment {
+	t.Helper()
+	id, err := strconv.ParseInt(commentID, 10, 64)
+	assert.NoError(t, err)
+	return unittest.AssertExistsAndLoadBean(t, &issues.Comment{ID: id})
 }
 
 func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
@@ -98,6 +106,8 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		req := NewRequest(t, "GET", "/user2/repo1/pulls/3/files/reviews/new_comment")
 		resp := session.MakeRequest(t, req, http.StatusOK)
 		doc := NewHTMLParser(t, resp.Body)
+
+		var firstReviewID int64
 		{
 			// first (outdated) review
 			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/3/files/reviews/comments", map[string]string{
@@ -133,14 +143,16 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 			// adjust the database to mark the comment as invalidated
 			// (to invalidate it properly, one should push a commit which should trigger this logic,
 			// in the meantime, use this quick-and-dirty trick)
-			id, err := strconv.ParseInt(commentID, 10, 64)
-			assert.NoError(t, err)
+			comment := loadComment(t, commentID)
 			assert.NoError(t, issues.UpdateCommentInvalidate(context.Background(), &issues.Comment{
-				ID:          id,
+				ID:          comment.ID,
 				Invalidated: true,
 			}))
+			firstReviewID = comment.ReviewID
+			assert.NotZero(t, firstReviewID)
 		}
 
+		// ID of the first comment for the second (up-to-date) review
 		var commentID string
 
 		{
@@ -179,7 +191,17 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 				return v
 			})
 			assert.Len(t, commentIDs, 2) // 1 for the outdated review, 1 for the current review
-			commentID = commentIDs[1]
+
+			// check that the first comment is for the previous review
+			comment := loadComment(t, commentIDs[0])
+			assert.Equal(t, comment.ReviewID, firstReviewID)
+
+			// check that the second comment is for a different review
+			comment = loadComment(t, commentIDs[1])
+			assert.NotZero(t, comment.ReviewID)
+			assert.NotEqual(t, comment.ReviewID, firstReviewID)
+
+			commentID = commentIDs[1] // save commentID for later
 		}
 
 		req = NewRequestWithValues(t, "POST", "/user2/repo1/issues/resolve_conversation", map[string]string{
