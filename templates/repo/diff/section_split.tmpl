@@ -113,24 +113,24 @@
 						<td class="add-comment-left" colspan="4">
 							{{if $line.Conversations}}
 								{{if eq $line.GetCommentSide "previous"}}
-									{{template "repo/diff/conversations" dict "." $.root "comments" $line.Conversations}}
+									{{template "repo/diff/conversations" dict "." $.root "conversations" $line.Conversations}}
 								{{end}}
 							{{end}}
 							{{if $match.Conversations}}
 								{{if eq $match.GetCommentSide "previous"}}
-									{{template "repo/diff/conversations" dict "." $.root "comments" $match.Conversations}}
+									{{template "repo/diff/conversations" dict "." $.root "conversations" $match.Conversations}}
 								{{end}}
 							{{end}}
 						</td>
 						<td class="add-comment-right" colspan="4">
 							{{if $line.Conversations}}
 								{{if eq $line.GetCommentSide "proposed"}}
-									{{template "repo/diff/conversations" dict "." $.root "comments" $line.Conversations}}
+									{{template "repo/diff/conversations" dict "." $.root "conversations" $line.Conversations}}
 								{{end}}
 							{{end}}
 							{{if $match.Conversations}}
 								{{if eq $match.GetCommentSide "proposed"}}
-									{{template "repo/diff/conversations" dict "." $.root "comments" $match.Conversations}}
+									{{template "repo/diff/conversations" dict "." $.root "conversations" $match.Conversations}}
 								{{end}}
 							{{end}}
 						</td>
@@ -140,12 +140,12 @@
 				<tr class="add-comment" data-line-type="{{.GetHTMLDiffLineType}}">
 					<td class="add-comment-left" colspan="4">
 						{{if eq $line.GetCommentSide "previous"}}
-							{{template "repo/diff/conversations" dict "." $.root "comments" $line.Conversations}}
+							{{template "repo/diff/conversations" dict "." $.root "conversations" $line.Conversations}}
 						{{end}}
 					</td>
 					<td class="add-comment-right" colspan="4">
 						{{if eq $line.GetCommentSide "proposed"}}
-							{{template "repo/diff/conversations" dict "." $.root "comments" $line.Conversations}}
+							{{template "repo/diff/conversations" dict "." $.root "conversations" $line.Conversations}}
 						{{end}}
 					</td>
 				</tr>
