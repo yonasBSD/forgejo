@@ -60,8 +60,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newReactions()
 	// case f3_tree.KindReaction:
 	// 	return newReaction()
-	// case f3_tree.KindReviews:
-	// 	return newReviews()
+	case f3_tree.KindReviews:
+		return newReviews()
 	// case f3_tree.KindReview:
 	// 	return newReview()
 	// case f3_tree.KindReviewComments:
@@ -74,8 +74,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newMilestone()
 	case f3_tree.KindPullRequests:
 		return newPullRequests()
-	// case f3_tree.KindPullRequest:
-	// 	return newPullRequest()
+	case f3_tree.KindPullRequest:
+		return newPullRequest()
 	case f3_tree.KindReleases:
 		return newReleases()
 	case f3_tree.KindRelease:
