@@ -26,7 +26,6 @@ func (o *forgeTest) NewOptions(t *testing.T) options.Interface {
 func (o *forgeTest) GetExceptions() []generic.Kind {
 	return []generic.Kind{
 		f3_tree.KindReactions,
-		f3_tree.KindReviews,
 		f3_tree.KindReviewComments,
 		f3_tree.KindTopics,
 	}
