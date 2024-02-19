@@ -27,7 +27,6 @@ func (o *forgeTest) GetExceptions() []generic.Kind {
 	return []generic.Kind{
 		f3_tree.KindReactions,
 		f3_tree.KindReviewComments,
-		f3_tree.KindTopics,
 	}
 }
 
