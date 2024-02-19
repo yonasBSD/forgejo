@@ -421,3 +421,10 @@ type swaggerBlockedUserList struct {
 	// in:body
 	Body []api.BlockedUser `json:"body"`
 }
+
+// SyncForkInfo
+// swagger:response SyncForkInfo
+type swaggerSyncForkInfo struct {
+	// in:body
+	Body []api.SyncForkInfo `json:"body"`
+}

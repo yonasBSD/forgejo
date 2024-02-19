@@ -10,3 +10,10 @@ type CreateForkOption struct {
 	// name of the forked repository
 	Name *string `json:"name"`
 }
+
+// SyncForkInfo information about syncing a fork
+type SyncForkInfo struct {
+	Allowed    bool   `json:"allowed"`
+	ForkCommit string `json:"fork_commit"`
+	BaseCommit string `json:"base_commit"`
+}

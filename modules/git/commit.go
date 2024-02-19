@@ -439,23 +439,7 @@ func (c *Commit) GetBranchName() (string, error) {
 
 // GetAllBranches returns a slice with all branches that contains this commit
 func (c *Commit) GetAllBranches() ([]string, error) {
-	branchList := make([]string, 0)
-
-	cmd := NewCommand(c.repo.Ctx, "branch", "--format=%(refname:short)", "--contains").AddDynamicArguments(c.ID.String())
-	data, _, err := cmd.RunStdString(&RunOpts{Dir: c.repo.Path})
-	if err != nil {
-		return branchList, err
-	}
-
-	branchNames := strings.Split(strings.ReplaceAll(data, "\r\n", "\n"), "\n")
-	for _, branch := range branchNames {
-		branch = strings.TrimSpace(branch)
-		if branch != "" {
-			branchList = append(branchList, branch)
-		}
-	}
-
-	return branchList, nil
+	return c.repo.getBranches(c, 1)
 }
 
 // CommitFileStatus represents status of files in a commit.

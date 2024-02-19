@@ -13388,7 +13388,44 @@
         }
       }
     },
-    "/repos/{owner}/{repo}/sync_fork/{branch}": {
+    "/repos/{owner}/{repo}/sync_fork": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Gets information about syncing the fork default branch with the base branch",
+        "operationId": "repoSyncForkDefaultInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/SyncForkInfo"
+          },
+          "400": {
+            "$ref": "#/responses/error"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
       "post": {
         "produces": [
           "application/json"
@@ -13396,7 +13433,90 @@
         "tags": [
           "repository"
         ],
-        "summary": "Syncs a fork",
+        "summary": "Syncs the default branch of a fork with the base branch",
+        "operationId": "repoSyncForkDefault",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "400": {
+            "$ref": "#/responses/error"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/sync_fork/{branch}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Gets information about syncing a fork branch with the base branch",
+        "operationId": "repoSyncForkBranchInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The branch",
+            "name": "branch",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/SyncForkInfo"
+          },
+          "400": {
+            "$ref": "#/responses/error"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Syncs a fork branch with the base branch",
         "operationId": "repoSyncForkBranch",
         "parameters": [
           {
@@ -23232,6 +23352,25 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "SyncForkInfo": {
+      "description": "SyncForkInfo information about syncing a fork",
+      "type": "object",
+      "properties": {
+        "allowed": {
+          "type": "boolean",
+          "x-go-name": "Allowed"
+        },
+        "base_commit": {
+          "type": "string",
+          "x-go-name": "BaseCommit"
+        },
+        "fork_commit": {
+          "type": "string",
+          "x-go-name": "ForkCommit"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "Tag": {
       "description": "Tag represents a repository tag",
       "type": "object",
@@ -24794,6 +24933,15 @@
         "type": "array",
         "items": {
           "type": "string"
+        }
+      }
+    },
+    "SyncForkInfo": {
+      "description": "SyncForkInfo",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SyncForkInfo"
         }
       }
     },

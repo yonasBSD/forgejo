@@ -49,8 +49,8 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/feed"
 	issue_service "code.gitea.io/gitea/services/issue"
-	files_service "code.gitea.io/gitea/services/repository/files"
 	repo_service "code.gitea.io/gitea/services/repository"
+	files_service "code.gitea.io/gitea/services/repository/files"
 
 	"github.com/nektos/act/pkg/model"
 
@@ -1115,14 +1115,14 @@ PostRecentBranchCheck:
 			return
 		}
 
-		canSync, err := repo_service.CanSyncFork(ctx, ctx.Repo.Repository, ctx.Repo.BranchName)
+		syncForkInfo, err := repo_service.GetSyncForkInfo(ctx, ctx.Repo.Repository, ctx.Repo.BranchName)
 		if err != nil {
 			ctx.ServerError("CanSync", err)
 			return
 		}
 
-		if canSync {
-			ctx.Data["CanSyncFork"] = canSync
+		if syncForkInfo.Allowed {
+			ctx.Data["CanSyncFork"] = true
 			ctx.Data["SyncForkLink"] = fmt.Sprintf("%s/sync_fork/%s", ctx.Repo.RepoLink, util.PathEscapeSegments(ctx.Repo.BranchName))
 			ctx.Data["BaseBranchLink"] = fmt.Sprintf("%s/src/branch/%s", ctx.Repo.Repository.BaseRepo.HTMLURL(), util.PathEscapeSegments(ctx.Repo.BranchName))
 		}
