@@ -1341,6 +1341,9 @@ func Routes() *web.Route {
 					m.Post("", bind(api.UpdateRepoAvatarOption{}), repo.UpdateAvatar)
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
+				m.Group("/sync_fork", func() {
+					m.Post("/{branch}", repo.SyncForkBranch)
+				}, reqToken(), reqRepoWriter(unit.TypeCode))
 			}, repoAssignment())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 

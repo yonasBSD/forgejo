@@ -737,3 +737,15 @@ func PrepareBranchList(ctx *context.Context) {
 	}
 	ctx.Data["Branches"] = brs
 }
+
+func SyncFork(ctx *context.Context) {
+	branch := ctx.Params("branch")
+
+	err := repo_service.SyncFork(ctx, ctx.Doer, ctx.Repo.Repository, branch)
+	if err != nil {
+		ctx.ServerError("SyncFork", err)
+		return
+	}
+
+	ctx.Redirect(fmt.Sprintf("%s/src/branch/%s", ctx.Repo.RepoLink, util.PathEscapeSegments(ctx.Repo.BranchName)))
+}

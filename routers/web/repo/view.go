@@ -50,6 +50,7 @@ import (
 	"code.gitea.io/gitea/routers/web/feed"
 	issue_service "code.gitea.io/gitea/services/issue"
 	files_service "code.gitea.io/gitea/services/repository/files"
+	repo_service "code.gitea.io/gitea/services/repository"
 
 	"github.com/nektos/act/pkg/model"
 
@@ -1104,6 +1105,26 @@ PostRecentBranchCheck:
 		ctx.Data["HasParentPath"] = true
 		if len(paths)-2 >= 0 {
 			ctx.Data["ParentPath"] = "/" + paths[len(paths)-2]
+		}
+	}
+
+	if ctx.Repo.Repository.IsFork && ctx.Repo.IsViewBranch && len(ctx.Repo.TreePath) == 0 && ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, ctx.Repo.BranchName) {
+		err = ctx.Repo.Repository.GetBaseRepo(ctx)
+		if err != nil {
+			ctx.ServerError("GetBaseRepo", err)
+			return
+		}
+
+		canSync, err := repo_service.CanSyncFork(ctx, ctx.Repo.Repository, ctx.Repo.BranchName)
+		if err != nil {
+			ctx.ServerError("CanSync", err)
+			return
+		}
+
+		if canSync {
+			ctx.Data["CanSyncFork"] = canSync
+			ctx.Data["SyncForkLink"] = fmt.Sprintf("%s/sync_fork/%s", ctx.Repo.RepoLink, util.PathEscapeSegments(ctx.Repo.BranchName))
+			ctx.Data["BaseBranchLink"] = fmt.Sprintf("%s/src/branch/%s", ctx.Repo.Repository.BaseRepo.HTMLURL(), util.PathEscapeSegments(ctx.Repo.BranchName))
 		}
 	}
 
