@@ -58,8 +58,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newLabel()
 	case f3_tree.KindReactions:
 		return newReactions()
-	// case f3_tree.KindReaction:
-	// 	return newReaction()
+	case f3_tree.KindReaction:
+		return newReaction()
 	case f3_tree.KindReviews:
 		return newReviews()
 	case f3_tree.KindReview:
