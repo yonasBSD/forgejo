@@ -440,7 +440,6 @@ menu:
 - `MAX_OPEN_CONNS`：**0**：数据库最大打开连接数 - 默认为 0，表示没有限制。
 - `MAX_IDLE_CONNS`：**2**：连接池上的最大空闲数据库连接数，默认为 2 - 这将限制为 `MAX_OPEN_CONNS`。
 - `CONN_MAX_LIFETIME`：**0 或 3s**：设置 DB 连接可以重用的最长时间 - 默认为 0，表示没有限制（除了 MySQL，其中为 3s - 请参见 #6804 和 #7071）。
-- `CONN_MAX_IDLETIME` **0**: Sets the maximum amount of time a DB connection may be idle - default is 0, meaning there is no limit.
 - `AUTO_MIGRATION`：**true**：是否自动执行数据库模型迁移。
 
 请参见 #8540 和 #8273 以获取有关 `MAX_OPEN_CONNS`、`MAX_IDLE_CONNS` 和 `CONN_MAX_LIFETIME` 的适当值及其与端口耗尽的关系的进一步讨论。
