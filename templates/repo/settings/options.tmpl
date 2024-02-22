@@ -943,7 +943,7 @@
 		<div class="content">
 			<div class="ui warning message">
 				{{.locale.Tr "repo.settings.delete_notices_1" | Safe}}<br>
-				{{.locale.Tr "repo.settings.delete_notices_2" .Repository.FullName | Safe}}
+				{{.locale.Tr "repo.settings.delete_notices_2" (.Repository.FullName | Escape) | Safe}}
 				{{if .Repository.NumForks}}<br>
 				{{.locale.Tr "repo.settings.delete_notices_fork_1"}}
 				{{end}}
@@ -978,7 +978,7 @@
 		<div class="content">
 			<div class="ui warning message">
 				{{.locale.Tr "repo.settings.delete_notices_1" | Safe}}<br>
-				{{.locale.Tr "repo.settings.wiki_delete_notices_1" .Repository.Name | Safe}}
+				{{.locale.Tr "repo.settings.wiki_delete_notices_1" (.Repository.Name | Escape) | Safe}}
 			</div>
 			<form class="ui form" action="{{.Link}}" method="post">
 				{{.CsrfTokenHtml}}
