@@ -10,7 +10,6 @@ import (
 	driver_options "code.gitea.io/gitea/services/f3/driver/options"
 
 	"lab.forgefriends.org/friendlyforgeformat/gof3/options"
-	f3_tree "lab.forgefriends.org/friendlyforgeformat/gof3/tree/f3"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/tree/generic"
 	forge_test "lab.forgefriends.org/friendlyforgeformat/gof3/tree/tests/f3/forge"
 )
@@ -24,9 +23,7 @@ func (o *forgeTest) NewOptions(t *testing.T) options.Interface {
 }
 
 func (o *forgeTest) GetExceptions() []generic.Kind {
-	return []generic.Kind{
-		f3_tree.KindReviewComments,
-	}
+	return []generic.Kind{}
 }
 
 func (o *forgeTest) GetNonTestUsers() []string {

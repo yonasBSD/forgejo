@@ -66,8 +66,8 @@ func (o *treeDriver) Factory(ctx context.Context, kind generic.Kind) generic.Nod
 		return newReview()
 	case f3_tree.KindReviewComments:
 		return newReviewComments()
-	// case f3_tree.KindReviewComment:
-	// 	return newReviewComment()
+	case f3_tree.KindReviewComment:
+		return newReviewComment()
 	case f3_tree.KindMilestones:
 		return newMilestones()
 	case f3_tree.KindMilestone:

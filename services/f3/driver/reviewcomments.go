@@ -5,11 +5,37 @@
 package driver
 
 import (
+	"context"
+	"fmt"
+
+	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
+
+	f3_tree "lab.forgefriends.org/friendlyforgeformat/gof3/tree/f3"
 	"lab.forgefriends.org/friendlyforgeformat/gof3/tree/generic"
 )
 
 type reviewComments struct {
 	container
+}
+
+func (o *reviewComments) ListPage(ctx context.Context, page int) generic.ChildrenSlice {
+	pageSize := o.getPageSize()
+
+	id := f3_tree.GetReviewID(o.GetNode())
+
+	sess := db.GetEngine(ctx).
+		Table("comment").
+		Where("`review_id` = ? AND `type` = ?", id, issues_model.CommentTypeCode)
+	if page != 0 {
+		sess = db.SetSessionPagination(sess, &db.ListOptions{Page: page, PageSize: pageSize})
+	}
+	forgejoReviewComments := make([]*issues_model.Comment, 0, pageSize)
+	if err := sess.Find(&forgejoReviewComments); err != nil {
+		panic(fmt.Errorf("error while listing reviewComments: %v", err))
+	}
+
+	return f3_tree.ConvertListed(ctx, o.GetNode(), f3_tree.ConvertToAny(forgejoReviewComments...)...)
 }
 
 func newReviewComments() generic.NodeDriverInterface {
