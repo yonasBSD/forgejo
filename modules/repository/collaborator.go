@@ -34,7 +34,7 @@ func AddCollaborator(ctx context.Context, repo *repo_model.Repository, u *user_m
 		if err = db.Insert(ctx, &repo_model.Collaboration{
 			RepoID: repo.ID,
 			UserID: u.ID,
-			Mode:   perm.AccessModeWrite,
+			Mode:   perm.AccessModeRead,
 		}); err != nil {
 			return err
 		}
