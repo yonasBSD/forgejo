@@ -48,6 +48,18 @@
 					{{svg "octicon-x"}}
 				{{end}}
 			</div>
+			<div class="flex-item-body">
+				<b>{{ctx.Locale.Tr "admin.users.created"}}:</b>
+				{{DateTime "short" .User.CreatedUnix}}
+			</div>
+			<div class="flex-item-body">
+				<b>{{ctx.Locale.Tr "admin.users.last_login"}}:</b>
+				{{if .User.LastLoginUnix}}
+					{{DateTime "short" .User.LastLoginUnix}}
+				{{else}}
+					{{ctx.Locale.Tr "admin.users.never_login"}}
+				{{end}}
+			</div>
 			{{if .User.Location}}
 				<div class="flex-item-body">
 					<span class="flex-text-inline">{{svg "octicon-location"}}{{.User.Location}}</span>
