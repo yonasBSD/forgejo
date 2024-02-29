@@ -160,6 +160,11 @@ func (q *WorkerPoolQueue[T]) doStartNewWorker(wp *workerGroup[T]) {
 					stopWorking()
 				} else {
 					q.doWorkerHandle(batch)
+					// drain the ticks before reseting the ticker
+					select {
+					case <-t.C:
+					default:
+					}
 					t.Reset(workerIdleDuration)
 				}
 			case <-t.C:
