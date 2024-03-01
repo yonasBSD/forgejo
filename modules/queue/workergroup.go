@@ -162,10 +162,10 @@ func (q *WorkerPoolQueue[T]) doStartNewWorker(wp *workerGroup[T]) {
 					q.doWorkerHandle(batch)
 					t.Reset(workerIdleDuration)
 					// drain the existing ticks
-					// select {
-					// case <-t.C:
-					// default:
-					// }
+					select {
+					case <-t.C:
+					default:
+					}
 				}
 			case <-t.C:
 				q.workerNumMu.Lock()
