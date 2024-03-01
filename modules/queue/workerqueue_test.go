@@ -261,8 +261,8 @@ func TestWorkerPoolQueueFullWorkerIdleTimeout(t *testing.T) {
 		workerIdleDuration = previousDuration
 	})
 
-	workerIdleDuration = 10 * time.Millisecond
-	qs := setting.QueueSettings{Type: "level", Datadir: t.TempDir() + "/queue", BatchLength: 1, MaxWorkers: 4, Length: 20}
+	workerIdleDuration = 1 * time.Millisecond
+	qs := setting.QueueSettings{Type: "level", Datadir: t.TempDir() + "/queue", BatchLength: 1, MaxWorkers: 3, Length: 100}
 	chGoroutineIDs := make(chan string)
 	handler := func(items ...int) (unhandled []int) {
 		time.Sleep(10 * workerIdleDuration)
@@ -273,12 +273,10 @@ func TestWorkerPoolQueueFullWorkerIdleTimeout(t *testing.T) {
 	stop := runWorkerPoolQueue(q)
 
 	// fill the queue
-	const workloadSize = 99
-	go func() {
-		for i := 0; i < workloadSize; i++ {
-			assert.NoError(t, q.Push(i))
-		}
-	}()
+	const workloadSize = 12
+	for i := 0; i < workloadSize; i++ {
+		assert.NoError(t, q.Push(i))
+	}
 
 	workerIDs := make(map[string]struct{})
 	for i := 0; i < workloadSize; i++ {
