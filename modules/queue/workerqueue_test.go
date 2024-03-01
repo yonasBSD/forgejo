@@ -4,7 +4,9 @@
 package queue
 
 import (
+	"bytes"
 	"context"
+	"runtime"
 	"strconv"
 	"sync"
 	"testing"
@@ -13,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runWorkerPoolQueue[T any](q *WorkerPoolQueue[T]) func() {
@@ -249,4 +252,51 @@ func TestWorkerPoolQueueShutdown(t *testing.T) {
 	// no item was ever handled, so we still get all of them again
 	q, _ = newWorkerPoolQueueForTest("test-workpoolqueue", qs, handler, false)
 	assert.EqualValues(t, 20, q.GetQueueItemNumber())
+}
+
+func TestWorkerPoolQueueFullWorkerIdleTimeout(t *testing.T) {
+	// when the queue is full, the existing workers should not quit
+	previousDuration := workerIdleDuration
+	t.Cleanup(func() {
+		workerIdleDuration = previousDuration
+	})
+
+	workerIdleDuration = 10 * time.Millisecond
+	qs := setting.QueueSettings{Type: "level", Datadir: t.TempDir() + "/queue", BatchLength: 1, MaxWorkers: 4, Length: 20}
+	chGoroutineIDs := make(chan string)
+	handler := func(items ...int) (unhandled []int) {
+		time.Sleep(10 * workerIdleDuration)
+		chGoroutineIDs <- goroutineID() // hacky way to identify a worker
+		return nil
+	}
+	q, _ := newWorkerPoolQueueForTest("test-workpoolqueue", qs, handler, false)
+	stop := runWorkerPoolQueue(q)
+
+	// fill the queue
+	const workloadSize = 99
+	go func() {
+		for i := 0; i < workloadSize; i++ {
+			assert.NoError(t, q.Push(i))
+		}
+	}()
+
+	workerIDs := make(map[string]struct{})
+	for i := 0; i < workloadSize; i++ {
+		c := <-chGoroutineIDs
+		workerIDs[c] = struct{}{}
+		t.Logf("%d workers: overall=%d current=%d", i, len(workerIDs), q.GetWorkerNumber())
+
+		// ensure that no more than qs.MaxWorkers workers are created over the whole lifetime of the queue
+		// (otherwise it would mean that some workers got shut down while the queue was full)
+		require.LessOrEqual(t, len(workerIDs), qs.MaxWorkers)
+	}
+	close(chGoroutineIDs)
+
+	stop()
+}
+
+func goroutineID() string {
+	var buffer [31]byte
+	_ = runtime.Stack(buffer[:], false)
+	return string(bytes.Fields(buffer[10:])[0])
 }
