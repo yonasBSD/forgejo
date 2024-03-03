@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"code.gitea.io/gitea/modules/setting"
 )
 
 // ArchiveType archive types
@@ -51,12 +53,26 @@ func ToArchiveType(s string) ArchiveType {
 }
 
 // CreateArchive create archive content to the target path
-func (repo *Repository) CreateArchive(ctx context.Context, format ArchiveType, target io.Writer, usePrefix bool, commitID string) error {
+func (repo *Repository) CreateArchive(ctx context.Context, format ArchiveType, target io.Writer, usePrefix bool, commitID, lfsURL string) error {
 	if format.String() == "unknown" {
 		return fmt.Errorf("unknown format: %v", format)
 	}
 
-	cmd := NewCommand(ctx, "archive")
+	cmd := NewCommand(ctx)
+
+	// Add arguments to make git-archive LFS aware and set the LFS server URL.
+	if setting.LFS.StartServer {
+		cmd.AddArguments(ToTrustedCmdArgs([]string{
+			"-c", "filter.lfs.process=git-lfs filter-process",
+			"-c", "filter.lfs.required=true",
+			"-c", "filter.lfs.smudge=git-lfs smudge -- %f",
+			"-c", "filter.lfs.clean=git-lfs clean -- %f",
+			"-c", "remote.origin.lfsurl=" + lfsURL,
+			"-c", "http." + lfsURL + ".extraHeader=Authorization: Bearer " + setting.InternalToken,
+		})...,
+		)
+	}
+	cmd.AddArguments("archive")
 	if usePrefix {
 		cmd.AddOptionFormat("--prefix=%s", filepath.Base(strings.TrimSuffix(repo.Path, ".git"))+"/")
 	}

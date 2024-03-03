@@ -216,7 +216,9 @@ func doArchive(ctx context.Context, r *ArchiveRequest) (*repo_model.RepoArchiver
 	}
 	defer gitRepo.Close()
 
-	go func(done chan error, w *io.PipeWriter, archiver *repo_model.RepoArchiver, gitRepo *git.Repository) {
+	lfsURL := fmt.Sprintf("%sapi/internal/%s.git/info/lfs", setting.LocalURL, repo.FullName())
+
+	go func(done chan error, w *io.PipeWriter, archiver *repo_model.RepoArchiver, gitRepo *git.Repository, lfsURL string) {
 		defer func() {
 			if r := recover(); r != nil {
 				done <- fmt.Errorf("%v", r)
@@ -236,11 +238,12 @@ func doArchive(ctx context.Context, r *ArchiveRequest) (*repo_model.RepoArchiver
 				w,
 				setting.Repository.PrefixArchiveFiles,
 				archiver.CommitID,
+				lfsURL,
 			)
 		}
 		_ = w.CloseWithError(err)
 		done <- err
-	}(done, w, archiver, gitRepo)
+	}(done, w, archiver, gitRepo, lfsURL)
 
 	// TODO: add lfs data to zip
 	// TODO: add submodule data to zip

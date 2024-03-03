@@ -254,6 +254,15 @@ func BatchHandler(ctx *context.Context) {
 			}
 
 			responseObject = buildObjectResponse(rc, p, true, false, err)
+			// Rewrite the download link when it should be done over the internal API.
+			if ctx.Data["IsInternalLFS"] == true {
+				downloadLink := responseObject.Actions["download"].Href
+				if strings.HasPrefix(downloadLink, setting.AppURL) {
+					downloadLink = strings.TrimPrefix(downloadLink, setting.AppURL)
+					downloadLink = setting.LocalURL + "api/internal/" + downloadLink
+				}
+				responseObject.Actions["download"].Href = downloadLink
+			}
 		}
 		responseObjects = append(responseObjects, responseObject)
 	}
@@ -507,6 +516,10 @@ func authenticate(ctx *context.Context, repository *repo_model.Repository, autho
 	accessMode := perm.AccessModeRead
 	if requireWrite {
 		accessMode = perm.AccessModeWrite
+	}
+
+	if ctx.Data["IsInternalLFS"] == true {
+		return true
 	}
 
 	if ctx.Data["IsActionsToken"] == true {

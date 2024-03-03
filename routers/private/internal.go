@@ -79,6 +79,12 @@ func Routes() *web.Route {
 	r.Post("/mail/send", SendEmail)
 	r.Post("/restore_repo", RestoreRepo)
 	r.Post("/actions/generate_actions_runner_token", GenerateActionsRunnerToken)
+	if setting.LFS.StartServer {
+		r.Group("{username}/{reponame}/info/lfs", func() {
+			r.Post("/objects/batch", BatchHandler)
+			r.Get("/objects/{oid}", DownloadHandler)
+		})
+	}
 
 	return r
 }
