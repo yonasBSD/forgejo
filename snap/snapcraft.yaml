@@ -1,15 +1,13 @@
-name: gitea
-summary: Gitea - A painless self-hosted Git service
+name: forgejo
+summary: Forgejo
 description: |
-  The goal of this project is to make the easiest, fastest, and most painless
-  way of setting up a self-hosted Git service. With Go, this can be done with
-  an independent binary distribution across ALL platforms that Go supports,
-  including Linux, Mac OS X, Windows and ARM.
+  Forgejo is a self-hosted lightweight software forge.
+  Easy to install and low maintenance, it just does the job.
 
 icon: public/assets/img/logo.png
 confinement: strict
 base: core22
-adopt-info: gitea
+adopt-info: forgejo
 
 architectures:
   - build-on: armhf
@@ -23,23 +21,23 @@ environment:
   GIT_EXEC_PATH: "$SNAP/usr/lib/git-core"
 
 apps:
-  gitea:
-    command: gitea
+  forgejo:
+    command: forgejo
     plugs: [network, network-bind, removable-media]
   web:
-    command: gitea web
+    command: forgejo web
     daemon: simple
     plugs: [network, network-bind, removable-media]
   dump:
-    command: gitea dump
+    command: forgejo dump
     plugs: [home, removable-media]
   version:
-    command: gitea --version
+    command: forgejo --version
   sqlite:
     command: usr/bin/sqlite3
 
 parts:
-  gitea:
+  forgejo:
     plugin: make
     source: .
     stage-packages: [ git, sqlite3, openssh-client ]
@@ -50,15 +48,15 @@ parts:
     override-pull: |
       craftctl default
 
-      git config --global --add safe.directory /root/parts/gitea/src
-      last_committed_tag="$(git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -n 1)"
-      last_released_tag="$(snap info gitea | awk '$1 == "latest/candidate:" { print $2 }')"
-      # If the latest tag from the upstream project has not been released to
-      # stable, build that tag instead of master.
-      if [ "${last_committed_tag}" != "${last_released_tag}" ]; then
-        git fetch
-        git checkout "${last_committed_tag}"
-      fi
+      # git config --global --add safe.directory /root/parts/forgejo/src
+      # last_committed_tag="$(git for-each-ref --sort=taggerdate --format '%(tag)' refs/tags | tail -n 1)"
+      # last_released_tag="$(snap info forgejo | awk '$1 == "latest/candidate:" { print $2 }')"
+      # # If the latest tag from the upstream project has not been released to
+      # # stable, build that tag instead of master.
+      # if [ "${last_committed_tag}" != "${last_released_tag}" ]; then
+      #   git fetch
+      #   git checkout "${last_committed_tag}"
+      # fi
 
       version="$(git describe --always | sed -e 's/-/+git/;y/-/./')"
       [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
@@ -69,7 +67,7 @@ parts:
       set -x
       sed -i 's/os.Getuid()/1/g' modules/setting/setting.go
       TAGS="bindata sqlite sqlite_unlock_notify pam cert" make build
-      install -D gitea "${SNAPCRAFT_PART_INSTALL}/gitea"
+      install -D gitea "${SNAPCRAFT_PART_INSTALL}/forgejo"
       cp -r options "${SNAPCRAFT_PART_INSTALL}/"
 
     prime:
