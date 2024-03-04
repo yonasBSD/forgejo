@@ -108,24 +108,12 @@ git remote add forgejo git@codeberg.org:forgejo/forgejo.git
 # rebase on top of forgejo/forge-development
 git switch forgejo
 git fetch forgejo
-git reset --hard forgejo/forgejo-development
-git push --force
+git pull
+git push
 
 git switch forgejo-federated-star
-git rebase forgejo
-git push --force
-
-# continue local development after rebase & force-push has happened
-git reset --hard origin/forgejo-federated-star
-```
-
-# provide testinstance
-
-``` bash
-git switch test-release
-git rebase --onto forgejo-federated-star
-git merge forgejo/forgejo-branding
-git push --force
+git merge forgejo
+git push
 ```
 
 # generate swagger api client
@@ -134,23 +122,3 @@ go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f '
 
 # Documentation for learn & reference
 
-
-# Thoughts on testing
-
-I would like to be able to quickly test a change in the repo code.
-For that i need:
-A test server with federation enabled
-A test user
-A test repo
-A test auth token (?)
-
-A test request as input value to the API
-An expected result for comparison with the output value.
-
-Tests that provide some examples are:
-
-tests/integration/api_activitypub_person_test.go
-
-tests/integration/api_token_test.go
-
-maybe tests/integration/api_repo_test.go
