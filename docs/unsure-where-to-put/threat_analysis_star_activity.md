@@ -126,7 +126,7 @@ flowchart TD
 7. **Instance Level Moderation** (such as blocking other federated forges) can mitigate "Malicious Forge"
 8. **User Level Moderation** (such as blocking other federated users) can mitigate "Side Chanel Malicious Activities"
 
-### THREAD-Score
+### DREAD-Score
 
 | Threat | Damage  | Reproducibility | Exploitability | Affected Users | Discoverability | Mitigations |
 | :----- | :------ | :-------------- | :------------- | :------------- | :-------------- | :---------- |
