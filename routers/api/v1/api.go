@@ -731,7 +731,7 @@ func bind[T any](_ T) any {
 	}
 }
 
-func buildAuthGroup() *auth.Group {
+func BuildAuthGroup() *auth.Group {
 	group := auth.NewGroup(
 		&auth.OAuth2{},
 		&auth.HTTPSign{},
@@ -748,7 +748,7 @@ func buildAuthGroup() *auth.Group {
 	return group
 }
 
-func apiAuth(authMethod auth.Method) func(*context.APIContext) {
+func APIAuth(authMethod auth.Method) func(*context.APIContext) {
 	return func(ctx *context.APIContext) {
 		ar, err := common.AuthShared(ctx.Base, nil, authMethod)
 		if err != nil {
@@ -761,8 +761,8 @@ func apiAuth(authMethod auth.Method) func(*context.APIContext) {
 	}
 }
 
-// verifyAuthWithOptions checks authentication according to options
-func verifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIContext) {
+// VerifyAuthWithOptions checks authentication according to options
+func VerifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		// Check prohibit login users.
 		if ctx.IsSigned {
@@ -842,7 +842,7 @@ func individualPermsChecker(ctx *context.APIContext) {
 }
 
 // check for and warn against deprecated authentication options
-func checkDeprecatedAuthMethods(ctx *context.APIContext) {
+func CheckDeprecatedAuthMethods(ctx *context.APIContext) {
 	if ctx.FormString("token") != "" || ctx.FormString("access_token") != "" {
 		ctx.Resp.Header().Set("Warning", "token and access_token API authentication is deprecated and will be removed in gitea 1.23. Please use AuthorizationHeaderToken instead. Existing queries will continue to work but without authorization.")
 	}
@@ -852,7 +852,7 @@ func checkDeprecatedAuthMethods(ctx *context.APIContext) {
 func Routes() *web.Route {
 	m := web.NewRoute()
 
-	m.Use(securityHeaders())
+	m.Use(SecurityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   setting.CORSConfig.AllowDomain,
@@ -864,12 +864,12 @@ func Routes() *web.Route {
 	}
 	m.Use(context.APIContexter())
 
-	m.Use(checkDeprecatedAuthMethods)
+	m.Use(CheckDeprecatedAuthMethods)
 
 	// Get user from session if logged in.
-	m.Use(apiAuth(buildAuthGroup()))
+	m.Use(APIAuth(BuildAuthGroup()))
 
-	m.Use(verifyAuthWithOptions(&common.VerifyOptions{
+	m.Use(VerifyAuthWithOptions(&common.VerifyOptions{
 		SignInRequired: setting.Service.RequireSignInView,
 	}))
 
@@ -1628,7 +1628,7 @@ func Routes() *web.Route {
 	return m
 }
 
-func securityHeaders() func(http.Handler) http.Handler {
+func SecurityHeaders() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			// CORB: https://www.chromium.org/Home/chromium-security/corb-for-developers
