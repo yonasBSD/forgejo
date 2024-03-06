@@ -6,7 +6,7 @@ package v1
 import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
-	v1 "code.gitea.io/gitea/routers/api/v1"
+	"code.gitea.io/gitea/routers/api/shared"
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/services/context"
 	"github.com/go-chi/cors"
@@ -15,7 +15,7 @@ import (
 func Routes() *web.Route {
 	m := web.NewRoute()
 
-	m.Use(v1.SecurityHeaders())
+	m.Use(shared.SecurityHeaders())
 	if setting.CORSConfig.Enabled {
 		m.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   setting.CORSConfig.AllowDomain,
@@ -27,12 +27,12 @@ func Routes() *web.Route {
 	}
 	m.Use(context.APIContexter())
 
-	m.Use(v1.CheckDeprecatedAuthMethods)
+	m.Use(shared.CheckDeprecatedAuthMethods)
 
 	// Get user from session if logged in.
-	m.Use(v1.APIAuth(v1.BuildAuthGroup()))
+	m.Use(shared.APIAuth(shared.BuildAuthGroup()))
 
-	m.Use(v1.VerifyAuthWithOptions(&common.VerifyOptions{
+	m.Use(shared.VerifyAuthWithOptions(&common.VerifyOptions{
 		SignInRequired: setting.Service.RequireSignInView,
 	}))
 
