@@ -67,12 +67,22 @@
 		{{$newMirrorsPartiallyEnabled := or (not .DisableNewPullMirrors) (not .DisableNewPushMirrors)}}
 		{{/* .Repository.IsMirror is not always reliable if the repository is not actively acting as a mirror because of errors. */}}
 		{{$showMirrorSettings := and (.Repository.UnitEnabled $.Context $.UnitTypeCode) (or $newMirrorsPartiallyEnabled .Repository.IsMirror .PullMirror .PushMirrors)}}
+		{{$showFederationSettings := true}}
 		{{$newMirrorsEntirelyEnabled := and (not .DisableNewPullMirrors) (not .DisableNewPushMirrors)}}
 		{{$onlyNewPushMirrorsEnabled := and (not .DisableNewPushMirrors) .DisableNewPullMirrors}}
 		{{$onlyNewPullMirrorsEnabled := and .DisableNewPushMirrors (not .DisableNewPullMirrors)}}
 		{{$existingPushMirror := or .Repository.IsMirror .PushMirrors}}
 		{{$modifyBrokenPullMirror := and .Repository.IsMirror (not .PullMirror)}}
 		{{$isWorkingPullMirror := .PullMirror}}
+
+		{{if $showFederationSettings}}
+			<h4 class="ui top attached header">
+				Federation
+			</h4>
+			<div class="ui attached segment">
+				Repositories federated with the current one.
+			</div>
+		{{end}}
 
 		{{if $showMirrorSettings}}
 			<h4 class="ui top attached header">
