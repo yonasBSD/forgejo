@@ -16,7 +16,7 @@ import (
 )
 
 type Result struct {
-	RepoID      int64              // ignored
+	RepoID      int64 // ignored
 	Filename    string
 	CommitID    string             // branch
 	UpdatedUnix timeutil.TimeStamp // ignored
@@ -37,12 +37,12 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 	if err != nil {
 		return nil, err
 	}
-	
+
 	data := []*Result{}
 
 	stdout, _, err := git.NewCommand(ctx,
 		"grep",
-		"-1",              // n before and after lines
+		"-1", // n before and after lines
 		"-z",
 		"--heading",
 		"--break",         // easier parsing
@@ -51,7 +51,7 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 		"-i",              // ignore case
 		"--full-name",     // full file path, rel to repo
 		//"--column",      // for adding better highlighting support
-		"-e",              // for queries starting with "-"
+		"-e", // for queries starting with "-"
 	).
 		AddDynamicArguments(keyword).
 		AddArguments("HEAD").
@@ -88,7 +88,7 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 		}
 
 		var hl template.HTML
-		
+
 		hl, res.Language = highlight.Code(res.Filename, "", strings.Join(code, "\n"))
 		res.Color = enry.GetColor(res.Language)
 
@@ -99,7 +99,7 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 
 		for i := 0; i < n; i++ {
 			res.Lines[i] = ResultLine{
-				Num: linenum[i],
+				Num:              linenum[i],
 				FormattedContent: template.HTML(hlCode[i]),
 			}
 		}
