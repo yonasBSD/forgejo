@@ -22,13 +22,19 @@ export function initCompWebHookEditor() {
     });
   }
 
-  const updateContentType = function () {
-    const visible = document.getElementById('http_method').value === 'POST';
-    toggleElem(document.getElementById('content_type').parentNode.parentNode, visible);
-  };
-  updateContentType();
+  const httpMethod = document.getElementById('http_method');
+  if (httpMethod) {
+    const updateContentType = function () {
+      const visible = httpMethod.value === 'POST';
+      toggleElem(
+        document.getElementById('content_type').parentNode.parentNode,
+        visible
+      );
+    };
+    updateContentType();
 
-  document.getElementById('http_method').addEventListener('change', updateContentType);
+    httpMethod.addEventListener('change', updateContentType);
+  }
 
   // Test delivery
   document.getElementById('test-delivery')?.addEventListener('click', async function () {
