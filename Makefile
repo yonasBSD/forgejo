@@ -314,6 +314,10 @@ fmt:
 .PHONY: fmt-check
 fmt-check: fmt
 	@diff=$$(git diff --color=always $(GO_SOURCES) templates $(WEB_DIRS)); \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 	  echo "Please run 'make fmt' and commit the result:"; \
 	  echo "$${diff}"; \
@@ -340,6 +344,10 @@ generate-forgejo-api: $(FORGEJO_API_SPEC)
 .PHONY: forgejo-api-check
 forgejo-api-check: generate-forgejo-api
 	@diff=$$(git diff $(FORGEJO_API_SERVER) ; \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make generate-forgejo-api' and commit the result:"; \
 		echo "$${diff}"; \
@@ -362,6 +370,10 @@ $(SWAGGER_SPEC): $(GO_SOURCES_NO_BINDATA)
 .PHONY: swagger-check
 swagger-check: generate-swagger
 	@diff=$$(git diff --color=always '$(SWAGGER_SPEC)'); \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make generate-swagger' and commit the result:"; \
 		echo "$${diff}"; \
@@ -542,6 +554,10 @@ vendor: go.mod go.sum
 .PHONY: tidy-check
 tidy-check: tidy
 	@diff=$$(git diff --color=always go.mod go.sum $(GO_LICENSE_FILE)); \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make tidy' and commit the result:"; \
 		echo "$${diff}"; \
@@ -986,6 +1002,10 @@ svg: node-check | node_modules
 svg-check: svg
 	@git add $(SVG_DEST_DIR)
 	@diff=$$(git diff --color=always --cached $(SVG_DEST_DIR)); \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make svg' and 'git add $(SVG_DEST_DIR)' and commit the result:"; \
 		echo "$${diff}"; \
@@ -996,6 +1016,10 @@ svg-check: svg
 lockfile-check:
 	npm install --package-lock-only
 	@diff=$$(git diff --color=always package-lock.json); \
+	exitCode=$$?; \
+	if [ -n "$$exitCode" ]; then \
+	  exit "$$exitCode"; \
+	fi; \
 	if [ -n "$$diff" ]; then \
 		echo "package-lock.json is inconsistent with package.json"; \
 		echo "Please run 'npm install --package-lock-only' and commit the result:"; \
