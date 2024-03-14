@@ -973,7 +973,7 @@ svg-check: svg
 lockfile-check:
 	npm install --package-lock-only
 	@git diff --exit-code --color=always package-lock.json \
-	|| (code=$$?; echo "Please run 'npm install --package-lock-only' and comm"; exit $${code})
+	|| (code=$$?; echo "Please run 'npm install --package-lock-only' and commit the result"; exit $${code})
 
 .PHONY: update-translations
 update-translations:
