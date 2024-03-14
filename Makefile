@@ -313,16 +313,8 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check: fmt
-	@diff=$$(git diff --color=always $(GO_SOURCES) templates $(WEB_DIRS)); \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-	  echo "Please run 'make fmt' and commit the result:"; \
-	  echo "$${diff}"; \
-	  exit 1; \
-	fi
+	# if the following command fails, run 'make fmt' and commit the result
+	@git diff --exit-code --color=always $(GO_SOURCES) templates $(WEB_DIRS)
 
 .PHONY: $(TAGS_EVIDENCE)
 $(TAGS_EVIDENCE):
@@ -343,16 +335,8 @@ generate-forgejo-api: $(FORGEJO_API_SPEC)
 
 .PHONY: forgejo-api-check
 forgejo-api-check: generate-forgejo-api
-	@diff=$$(git diff $(FORGEJO_API_SERVER) ; \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-forgejo-api' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	# if the following command fails, run 'make generate-forgejo-api' and commit the result
+	@git diff --exit-code --color=always $(FORGEJO_API_SERVER)
 
 .PHONY: forgejo-api-validate
 forgejo-api-validate:
@@ -369,16 +353,8 @@ $(SWAGGER_SPEC): $(GO_SOURCES_NO_BINDATA)
 
 .PHONY: swagger-check
 swagger-check: generate-swagger
-	@diff=$$(git diff --color=always '$(SWAGGER_SPEC)'); \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-swagger' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	# if the following command fails, run 'make generate-swagger' and commit the result
+	@git diff --exit-code --color=always '$(SWAGGER_SPEC)'
 
 .PHONY: swagger-validate
 swagger-validate:
@@ -553,16 +529,8 @@ vendor: go.mod go.sum
 
 .PHONY: tidy-check
 tidy-check: tidy
-	@diff=$$(git diff --color=always go.mod go.sum $(GO_LICENSE_FILE)); \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make tidy' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	# if the following command fails, run 'make tidy' and commit the result
+	@git diff --exit-code --color=always go.mod go.sum $(GO_LICENSE_FILE)
 
 .PHONY: go-licenses
 go-licenses: $(GO_LICENSE_FILE)
@@ -1001,31 +969,14 @@ svg: node-check | node_modules
 .PHONY: svg-check
 svg-check: svg
 	@git add $(SVG_DEST_DIR)
-	@diff=$$(git diff --color=always --cached $(SVG_DEST_DIR)); \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make svg' and 'git add $(SVG_DEST_DIR)' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	# if the following command fails, run 'make svg' and commit the result
+	@git diff --exit-code --color=always --cached $(SVG_DEST_DIR)
 
 .PHONY: lockfile-check
 lockfile-check:
 	npm install --package-lock-only
-	@diff=$$(git diff --color=always package-lock.json); \
-	exitCode=$$?; \
-	if [ -n "$$exitCode" ]; then \
-	  exit "$$exitCode"; \
-	fi; \
-	if [ -n "$$diff" ]; then \
-		echo "package-lock.json is inconsistent with package.json"; \
-		echo "Please run 'npm install --package-lock-only' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	# if the following command fails, run 'npm install --package-lock-only' and commit the result
+	@git diff --exit-code --color=always package-lock.json
 
 .PHONY: update-translations
 update-translations:
