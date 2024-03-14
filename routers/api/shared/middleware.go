@@ -13,22 +13,35 @@ import (
 	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/context"
+
+	"github.com/go-chi/cors"
 )
 
-func APIAuth(authMethod auth.Method) func(*context.APIContext) {
-	return func(ctx *context.APIContext) {
-		ar, err := common.AuthShared(ctx.Base, nil, authMethod)
-		if err != nil {
-			ctx.Error(http.StatusUnauthorized, "APIAuth", err)
-			return
-		}
-		ctx.Doer = ar.Doer
-		ctx.IsSigned = ar.Doer != nil
-		ctx.IsBasicAuth = ar.IsBasicAuth
+func Middlewares() (stack []any) {
+	stack = append(stack, securityHeaders())
+
+	if setting.CORSConfig.Enabled {
+		stack = append(stack, cors.Handler(cors.Options{
+			AllowedOrigins:   setting.CORSConfig.AllowDomain,
+			AllowedMethods:   setting.CORSConfig.Methods,
+			AllowCredentials: setting.CORSConfig.AllowCredentials,
+			AllowedHeaders:   append([]string{"Authorization", "X-Gitea-OTP", "X-Forgejo-OTP"}, setting.CORSConfig.Headers...),
+			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
+		}))
 	}
+	return append(stack,
+		context.APIContexter(),
+
+		checkDeprecatedAuthMethods,
+		// Get user from session if logged in.
+		apiAuth(buildAuthGroup()),
+		verifyAuthWithOptions(&common.VerifyOptions{
+			SignInRequired: setting.Service.RequireSignInView,
+		}),
+	)
 }
 
-func BuildAuthGroup() *auth.Group {
+func buildAuthGroup() *auth.Group {
 	group := auth.NewGroup(
 		&auth.OAuth2{},
 		&auth.HTTPSign{},
@@ -45,26 +58,21 @@ func BuildAuthGroup() *auth.Group {
 	return group
 }
 
-// CheckDeprecatedAuthMethods check for and warn against deprecated authentication options
-func CheckDeprecatedAuthMethods(ctx *context.APIContext) {
-	if ctx.FormString("token") != "" || ctx.FormString("access_token") != "" {
-		ctx.Resp.Header().Set("Warning", "token and access_token API authentication is deprecated and will be removed in gitea 1.23. Please use AuthorizationHeaderToken instead. Existing queries will continue to work but without authorization.")
+func apiAuth(authMethod auth.Method) func(*context.APIContext) {
+	return func(ctx *context.APIContext) {
+		ar, err := common.AuthShared(ctx.Base, nil, authMethod)
+		if err != nil {
+			ctx.Error(http.StatusUnauthorized, "APIAuth", err)
+			return
+		}
+		ctx.Doer = ar.Doer
+		ctx.IsSigned = ar.Doer != nil
+		ctx.IsBasicAuth = ar.IsBasicAuth
 	}
 }
 
-func SecurityHeaders() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			// CORB: https://www.chromium.org/Home/chromium-security/corb-for-developers
-			// http://stackoverflow.com/a/3146618/244009
-			resp.Header().Set("x-content-type-options", "nosniff")
-			next.ServeHTTP(resp, req)
-		})
-	}
-}
-
-// VerifyAuthWithOptions checks authentication according to options
-func VerifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIContext) {
+// verifyAuthWithOptions checks authentication according to options
+func verifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIContext) {
 	return func(ctx *context.APIContext) {
 		// Check prohibit login users.
 		if ctx.IsSigned {
@@ -122,5 +130,23 @@ func VerifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIC
 				return
 			}
 		}
+	}
+}
+
+// check for and warn against deprecated authentication options
+func checkDeprecatedAuthMethods(ctx *context.APIContext) {
+	if ctx.FormString("token") != "" || ctx.FormString("access_token") != "" {
+		ctx.Resp.Header().Set("Warning", "token and access_token API authentication is deprecated and will be removed in gitea 1.23. Please use AuthorizationHeaderToken instead. Existing queries will continue to work but without authorization.")
+	}
+}
+
+func securityHeaders() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			// CORB: https://www.chromium.org/Home/chromium-security/corb-for-developers
+			// http://stackoverflow.com/a/3146618/244009
+			resp.Header().Set("x-content-type-options", "nosniff")
+			next.ServeHTTP(resp, req)
+		})
 	}
 }

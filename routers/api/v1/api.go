@@ -93,7 +93,6 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/repo"
 	"code.gitea.io/gitea/routers/api/v1/settings"
 	"code.gitea.io/gitea/routers/api/v1/user"
-	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
@@ -101,7 +100,6 @@ import (
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/binding"
-	"github.com/go-chi/cors"
 )
 
 func sudo() func(ctx *context.APIContext) {
@@ -753,26 +751,7 @@ func individualPermsChecker(ctx *context.APIContext) {
 func Routes() *web.Route {
 	m := web.NewRoute()
 
-	m.Use(shared.SecurityHeaders())
-	if setting.CORSConfig.Enabled {
-		m.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   setting.CORSConfig.AllowDomain,
-			AllowedMethods:   setting.CORSConfig.Methods,
-			AllowCredentials: setting.CORSConfig.AllowCredentials,
-			AllowedHeaders:   append([]string{"Authorization", "X-Gitea-OTP", "X-Forgejo-OTP"}, setting.CORSConfig.Headers...),
-			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
-		}))
-	}
-	m.Use(context.APIContexter())
-
-	m.Use(shared.CheckDeprecatedAuthMethods)
-
-	// Get user from session if logged in.
-	m.Use(shared.APIAuth(shared.BuildAuthGroup()))
-
-	m.Use(shared.VerifyAuthWithOptions(&common.VerifyOptions{
-		SignInRequired: setting.Service.RequireSignInView,
-	}))
+	m.Use(shared.Middlewares()...)
 
 	m.Group("", func() {
 		// Miscellaneous (no scope required)
