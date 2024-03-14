@@ -313,8 +313,8 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check: fmt
-	# if the following command fails, run 'make fmt' and commit the result
-	@git diff --exit-code --color=always $(GO_SOURCES) templates $(WEB_DIRS)
+	@git diff --exit-code --color=always $(GO_SOURCES) templates $(WEB_DIRS) \
+	|| (code=$$?; echo "Please run 'make fmt' and commit the result"; exit $${code})
 
 .PHONY: $(TAGS_EVIDENCE)
 $(TAGS_EVIDENCE):
@@ -335,8 +335,8 @@ generate-forgejo-api: $(FORGEJO_API_SPEC)
 
 .PHONY: forgejo-api-check
 forgejo-api-check: generate-forgejo-api
-	# if the following command fails, run 'make generate-forgejo-api' and commit the result
-	@git diff --exit-code --color=always $(FORGEJO_API_SERVER)
+	@git diff --exit-code --color=always $(FORGEJO_API_SERVER) \
+	|| (code=$$?; echo "Please run 'make generate-forgejo-api' and commit the result"; exit $${code})
 
 .PHONY: forgejo-api-validate
 forgejo-api-validate:
@@ -353,8 +353,8 @@ $(SWAGGER_SPEC): $(GO_SOURCES_NO_BINDATA)
 
 .PHONY: swagger-check
 swagger-check: generate-swagger
-	# if the following command fails, run 'make generate-swagger' and commit the result
-	@git diff --exit-code --color=always '$(SWAGGER_SPEC)'
+	@git diff --exit-code --color=always '$(SWAGGER_SPEC)' \
+	|| (code=$$?; echo "Please run 'make generate-swagger' and commit the result"; exit $${code})
 
 .PHONY: swagger-validate
 swagger-validate:
@@ -425,11 +425,8 @@ lint-spell-fix:
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
 	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
-	@$(DIFF) .deadcode-out .cur-deadcode-out; \
-	if [ $$? -eq 1 ]; then \
-		echo "Please run 'make lint-go-fix' and commit the result"; \
-		exit 1; \
-	fi
+	@$(DIFF) .deadcode-out .cur-deadcode-out \
+	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
@@ -529,8 +526,8 @@ vendor: go.mod go.sum
 
 .PHONY: tidy-check
 tidy-check: tidy
-	# if the following command fails, run 'make tidy' and commit the result
-	@git diff --exit-code --color=always go.mod go.sum $(GO_LICENSE_FILE)
+	@git diff --exit-code --color=always go.mod go.sum $(GO_LICENSE_FILE) \
+	|| (code=$$?; echo "Please run 'make tidy' and commit the result"; exit $${code})
 
 .PHONY: go-licenses
 go-licenses: $(GO_LICENSE_FILE)
@@ -969,14 +966,14 @@ svg: node-check | node_modules
 .PHONY: svg-check
 svg-check: svg
 	@git add $(SVG_DEST_DIR)
-	# if the following command fails, run 'make svg' and commit the result
-	@git diff --exit-code --color=always --cached $(SVG_DEST_DIR)
+	@git diff --exit-code --color=always --cached $(SVG_DEST_DIR) \
+	|| (code=$$?; echo "Please run 'make svg' and commit the result"; exit $${code})
 
 .PHONY: lockfile-check
 lockfile-check:
 	npm install --package-lock-only
-	# if the following command fails, run 'npm install --package-lock-only' and commit the result
-	@git diff --exit-code --color=always package-lock.json
+	@git diff --exit-code --color=always package-lock.json \
+	|| (code=$$?; echo "Please run 'npm install --package-lock-only' and comm"; exit $${code})
 
 .PHONY: update-translations
 update-translations:
