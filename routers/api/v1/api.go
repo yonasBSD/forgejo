@@ -1342,11 +1342,11 @@ func Routes() *web.Route {
 					m.Delete("", repo.DeleteAvatar)
 				}, reqAdmin(), reqToken())
 				m.Group("/sync_fork", func() {
-					m.Get("", repo.SyncForkDefaultInfo)
-					m.Post("", repo.SyncForkDefault)
-					m.Get("/{branch}", repo.SyncForkBranchInfo)
-					m.Post("/{branch}", repo.SyncForkBranch)
-				}, reqToken(), reqRepoWriter(unit.TypeCode))
+					m.Get("", reqRepoReader(unit.TypeCode), repo.SyncForkDefaultInfo)
+					m.Post("", mustNotBeArchived, reqRepoWriter(unit.TypeCode), repo.SyncForkDefault)
+					m.Get("/{branch}", reqRepoReader(unit.TypeCode), repo.SyncForkBranchInfo)
+					m.Post("/{branch}", mustNotBeArchived, reqRepoWriter(unit.TypeCode), repo.SyncForkBranch)
+				})
 			}, repoAssignment())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
 

@@ -182,7 +182,7 @@
 		{{if .CanSyncFork}}
 			<div class="ui positive message gt-df gt-ac">
 				<div class="gt-f1">
-					{{ctx.Locale.Tr "repo.sync_fork.text" (printf "<a href='%s'>%s/%s:%s</a>" .BaseBranchLink .Repository.BaseRepo.OwnerName .Repository.BaseRepo.Name .BranchName | Safe)}}
+					{{ctx.Locale.Tr "repo.sync_fork.text" (printf "<a href='%s'>%s:%s</a>" .BaseBranchLink .Repository.BaseRepo.FullName (.BranchName|Escape) | Safe)}}
 				</div>
 				<a role="button" class="ui compact positive button gt-m-0" href="{{.SyncForkLink}}">
 					{{ctx.Locale.Tr "repo.sync_fork.button"}}

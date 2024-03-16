@@ -12,80 +12,61 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/log"
-	repo_module "code.gitea.io/gitea/modules/repository"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
 // SyncFork syncs a branch of a fork with the base repo
 func SyncFork(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, branch string) error {
-	err := repo.GetBaseRepo(ctx)
+	err := repo.MustNotBeArchived()
 	if err != nil {
 		return err
 	}
 
-	tmpPath, err := repo_module.CreateTemporaryPath("sync")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := repo_module.RemoveTemporaryPath(tmpPath); err != nil {
-			log.Error("SyncFork: RemoveTemporaryPath: %s", err)
-		}
-	}()
-
-	err = git.Clone(ctx, repo.RepoPath(), tmpPath, git.CloneRepoOptions{})
+	err = repo.GetBaseRepo(ctx)
 	if err != nil {
 		return err
 	}
 
-	gitRepo, err := git.OpenRepository(ctx, tmpPath)
+	repo.RepoPath()
+
+	err = git.NewCommand(ctx, "fetch", "--force").AddDynamicArguments(repo.BaseRepo.RepoPath(), fmt.Sprintf("%s:%s", branch, branch)).Run(&git.RunOpts{Dir: repo.RepoPath()})
+	if err != nil {
+		return err
+	}
+
+	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
 	if err != nil {
 		return err
 	}
 	defer gitRepo.Close()
 
-	command := git.NewCommand(gitRepo.Ctx, "remote", "add", "upstream")
-	command = command.AddDynamicArguments(repo.BaseRepo.RepoPath())
-	err = command.Run(&git.RunOpts{Dir: gitRepo.Path})
+	forkBranch, err := gitRepo.GetBranch(branch)
 	if err != nil {
-		return fmt.Errorf("RemoteAdd: %v", err)
+		return err
 	}
 
-	err = git.NewCommand(gitRepo.Ctx, "fetch", "upstream").Run(&git.RunOpts{Dir: gitRepo.Path})
+	commit, err := forkBranch.GetCommit()
 	if err != nil {
-		return fmt.Errorf("FetchUpstream: %v", err)
+		return err
 	}
 
-	command = git.NewCommand(gitRepo.Ctx, "checkout")
-	command = command.AddDynamicArguments(branch)
-	err = command.Run(&git.RunOpts{Dir: gitRepo.Path})
+	_, err = git_model.UpdateBranch(ctx, repo.ID, doer.ID, branch, commit)
 	if err != nil {
-		return fmt.Errorf("Checkout: %v", err)
-	}
-
-	command = git.NewCommand(gitRepo.Ctx, "rebase")
-	command = command.AddDynamicArguments(fmt.Sprintf("upstream/%s", branch))
-	err = command.Run(&git.RunOpts{Dir: gitRepo.Path})
-	if err != nil {
-		return fmt.Errorf("Rebase: %v", err)
-	}
-
-	pushEnv := repo_module.PushingEnvironment(doer, repo)
-	err = git.NewCommand(ctx, "push", "origin").AddDynamicArguments(branch).Run(&git.RunOpts{Dir: tmpPath, Env: pushEnv})
-	if err != nil {
-		return fmt.Errorf("Push: %v", err)
+		return err
 	}
 
 	return nil
 }
 
-// CanSyncFork returns inofmrtaion about syncing a fork
+// CanSyncFork returns information about syncing a fork
 func GetSyncForkInfo(ctx context.Context, repo *repo_model.Repository, branch string) (*api.SyncForkInfo, error) {
 	info := new(api.SyncForkInfo)
-	info.Allowed = false
 
 	if !repo.IsFork {
+		return info, nil
+	}
+
+	if repo.IsArchived {
 		return info, nil
 	}
 
