@@ -136,6 +136,8 @@ type Repository struct {
 	OriginalURL         string             `xorm:"VARCHAR(2048)"`
 	DefaultBranch       string
 	WikiBranch          string
+	// TODO: Create own table out of this field
+	FederationRepos string
 
 	NumWatches          int
 	NumStars            int

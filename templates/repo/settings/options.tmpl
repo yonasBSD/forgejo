@@ -63,11 +63,35 @@
 			</form>
 		</div>
 
+		/* TODO: get true/false from settings */
+		{{$showFederationSettings := true}}
+		{{if $showFederationSettings}}
+			<h4 class="ui top attached header">
+				{{ctx.Locale.Tr "repo.settings.federation_settings"}}
+			</h4>
+			<div class="ui attached segment">
+				<form class="ui form" method="post">
+					{{.CsrfTokenHtml}}
+					<input type="hidden" name="action" value="federation">
+					
+					/* TODO: implement Err_FederationRepos somewhere */
+					<div class="field {{if .Err_FederationRepos}}error{{end}}">
+						/* TODO: internationalize text */
+						<label for="federation_repos">Federation Repositories</label>
+						<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
+					</div>
+					<div class="field">
+						<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_settings"}}</button>
+					</div>
+				</form>
+			</div>
+		{{end}}
+
+
 		{{/* These variables exist to make the logic in the Settings window easier to comprehend and are not used later on. */}}
 		{{$newMirrorsPartiallyEnabled := or (not .DisableNewPullMirrors) (not .DisableNewPushMirrors)}}
 		{{/* .Repository.IsMirror is not always reliable if the repository is not actively acting as a mirror because of errors. */}}
 		{{$showMirrorSettings := and (.Repository.UnitEnabled $.Context $.UnitTypeCode) (or $newMirrorsPartiallyEnabled .Repository.IsMirror .PullMirror .PushMirrors)}}
-		{{$showFederationSettings := true}}
 		{{$newMirrorsEntirelyEnabled := and (not .DisableNewPullMirrors) (not .DisableNewPushMirrors)}}
 		{{$onlyNewPushMirrorsEnabled := and (not .DisableNewPushMirrors) .DisableNewPullMirrors}}
 		{{$onlyNewPullMirrorsEnabled := and .DisableNewPushMirrors (not .DisableNewPullMirrors)}}
@@ -75,14 +99,6 @@
 		{{$modifyBrokenPullMirror := and .Repository.IsMirror (not .PullMirror)}}
 		{{$isWorkingPullMirror := .PullMirror}}
 
-		{{if $showFederationSettings}}
-			<h4 class="ui top attached header">
-				Federation
-			</h4>
-			<div class="ui attached segment">
-				Repositories federated with the current one.
-			</div>
-		{{end}}
 
 		{{if $showMirrorSettings}}
 			<h4 class="ui top attached header">
