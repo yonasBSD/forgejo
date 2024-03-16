@@ -59,6 +59,9 @@ func List(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("actions.actions")
 	ctx.Data["PageIsActions"] = true
 
+	curWorkflow := ctx.FormString("workflow")
+	ctx.Data["CurWorkflow"] = curWorkflow
+
 	var workflows []Workflow
 	if empty, err := ctx.Repo.GitRepo.IsEmpty(); err != nil {
 		ctx.ServerError("IsEmpty", err)
@@ -140,6 +143,10 @@ func List(ctx *context.Context) {
 				workflow.ErrMsg = ctx.Locale.TrString("actions.runs.no_job")
 			}
 			workflows = append(workflows, workflow)
+
+			if workflow.Entry.Name() == curWorkflow {
+				ctx.Data["CurWorkflowDispatch"] = wf.WorkflowDispatchConfig()
+			}
 		}
 	}
 	ctx.Data["workflows"] = workflows
@@ -150,17 +157,15 @@ func List(ctx *context.Context) {
 		page = 1
 	}
 
-	workflow := ctx.FormString("workflow")
 	actorID := ctx.FormInt64("actor")
 	status := ctx.FormInt("status")
-	ctx.Data["CurWorkflow"] = workflow
 
 	actionsConfig := ctx.Repo.Repository.MustGetUnit(ctx, unit.TypeActions).ActionsConfig()
 	ctx.Data["ActionsConfig"] = actionsConfig
 
-	if len(workflow) > 0 && ctx.Repo.IsAdmin() {
+	if len(curWorkflow) > 0 && ctx.Repo.IsAdmin() {
 		ctx.Data["AllowDisableOrEnableWorkflow"] = true
-		ctx.Data["CurWorkflowDisabled"] = actionsConfig.IsWorkflowDisabled(workflow)
+		ctx.Data["CurWorkflowDisabled"] = actionsConfig.IsWorkflowDisabled(curWorkflow)
 	}
 
 	// if status or actor query param is not given to frontend href, (href="/<repoLink>/actions")
@@ -177,7 +182,7 @@ func List(ctx *context.Context) {
 			PageSize: convert.ToCorrectPageSize(ctx.FormInt("limit")),
 		},
 		RepoID:        ctx.Repo.Repository.ID,
-		WorkflowID:    workflow,
+		WorkflowID:    curWorkflow,
 		TriggerUserID: actorID,
 	}
 
@@ -203,6 +208,8 @@ func List(ctx *context.Context) {
 
 	ctx.Data["Runs"] = runs
 
+	ctx.Data["Repo"] = ctx.Repo
+
 	actors, err := actions_model.GetActors(ctx, ctx.Repo.Repository.ID)
 	if err != nil {
 		ctx.ServerError("GetActors", err)
@@ -214,7 +221,7 @@ func List(ctx *context.Context) {
 
 	pager := context.NewPagination(int(total), opts.PageSize, opts.Page, 5)
 	pager.SetDefaultParams(ctx)
-	pager.AddParamString("workflow", workflow)
+	pager.AddParamString("workflow", curWorkflow)
 	pager.AddParamString("actor", fmt.Sprint(actorID))
 	pager.AddParamString("status", fmt.Sprint(status))
 	ctx.Data["Page"] = pager
