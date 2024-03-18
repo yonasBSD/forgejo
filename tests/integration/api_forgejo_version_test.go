@@ -34,12 +34,15 @@ func TestAPIForgejoVersion(t *testing.T) {
 		defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 		t.Run("Get forgejo version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
 			// GET api without auth
 			req := NewRequest(t, "GET", "/api/forgejo/v1/version")
 			MakeRequest(t, req, http.StatusForbidden)
 		})
 
 		t.Run("Get forgejo version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
 			username := "user1"
 			session := loginUser(t, username)
 			token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)

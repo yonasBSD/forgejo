@@ -37,12 +37,15 @@ func TestVersion(t *testing.T) {
 		setting.AppVer = "test-version-1"
 
 		t.Run("Get version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
 			// GET api without auth
 			req := NewRequest(t, "GET", "/api/v1/version")
 			MakeRequest(t, req, http.StatusForbidden)
 		})
 
 		t.Run("Get version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
 			username := "user1"
 			session := loginUser(t, username)
 			token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
