@@ -20,10 +20,10 @@ import (
 func TestAPIForgejoVersion(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	req := NewRequest(t, "GET", "/api/forgejo/v1/version")
-	resp := MakeRequest(t, req, http.StatusOK)
-
 	t.Run("Version", func(t *testing.T) {
+		req := NewRequest(t, "GET", "/api/forgejo/v1/version")
+		resp := MakeRequest(t, req, http.StatusOK)
+
 		var version v1.Version
 		DecodeJSON(t, resp, &version)
 		assert.Equal(t, "1.0.0", *version.Version)
