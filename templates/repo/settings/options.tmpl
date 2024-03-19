@@ -80,6 +80,10 @@
 					<div class="field">
 						<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_settings"}}</button>
 					</div>
+					<div class="field {{if .Err_FederationRepos}}error{{end}}">
+						<label for="description">{{ctx.Locale.Tr "repo.settings.federation_federated_repo_list"}}</label>
+						<textarea id="description" name="description" rows="2" placeholder="{{ctx.Locale.Tr "repo.settings.federation_repo_list_empty"}}" maxlength="255">{{.Repository.FederationRepos}}</textarea>
+					</div>
 				</form>
 			</div>
 		{{end}}
