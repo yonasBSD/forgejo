@@ -185,6 +185,16 @@ func SettingsPost(ctx *context.Context) {
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(repo.Link() + "/settings")
 
+	case "federation":
+		if !setting.Federation.Enabled {
+			ctx.NotFound("", nil)
+			return
+		}
+
+		// TODO: Validate semicolon separation
+		// TODO: Validate Element isURL
+		// TODO: Validate Element denominates Repository
+
 	case "mirror":
 		if !setting.Mirror.Enabled || !repo.IsMirror || repo.IsArchived {
 			ctx.NotFound("", nil)
