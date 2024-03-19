@@ -194,6 +194,8 @@ func SettingsPost(ctx *context.Context) {
 			// ToDo: Proper string handling
 			log.Info("web/repo/setting.go:Federation was detected as enabled.")
 			// ToDo: Ability to delete repos
+			// TODO: Review jem: no add and remove - just set
+			// repo.FederationRepos = form.FederationRepos
 			repo.FederationRepos = repo.FederationRepos + form.FederationRepos
 			if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
 				ctx.ServerError("UpdateRepository", err)
