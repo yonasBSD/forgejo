@@ -75,7 +75,7 @@
 				<!-- TODO: implement Err_FederationRepos somewhere -->
 				<div class="field {{if .Err_FederationRepos}}error{{end}}">
 					<label for="federation_repos">{{ctx.Locale.Tr "repo.settings.federation_labelname_repo"}}</label>
-					<textarea id="repo_list" name="repo_list" rows="2" placeholder="{{ctx.Locale.Tr "repo.settings.federation_repo_list_empty"}}">{{.Repository.FederationRepos}}</textarea>
+					<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
 				</div>
 				<div class="field">
 					<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_settings"}}</button>
