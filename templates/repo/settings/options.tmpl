@@ -63,9 +63,7 @@
 			</form>
 		</div>
 
-		<!-- TODO: get true/false from settings -->
-		{{$showFederationSettings := true}}
-		{{if $showFederationSettings}}
+		{{if FederationEnabled}}
 			<h4 class="ui top attached header">
 				{{ctx.Locale.Tr "repo.settings.federation_settings"}}
 			</h4>

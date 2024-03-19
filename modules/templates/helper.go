@@ -152,6 +152,9 @@ func NewFuncMap() template.FuncMap {
 		"MermaidMaxSourceCharacters": func() int {
 			return setting.MermaidMaxSourceCharacters
 		},
+		"FederationEnabled": func() bool {
+			return setting.Federation.Enabled
+		},
 
 		// -----------------------------------------------------------------
 		// render
