@@ -77,7 +77,7 @@
 					/* TODO: implement Err_FederationRepos somewhere */
 					<div class="field {{if .Err_FederationRepos}}error{{end}}">
 						/* TODO: internationalize text */
-						<label for="federation_repos">Federation Repositories</label>
+						<label for="federation_repos">{{ctx.Locale.Tr "settings.federation_labelname_repo"}}</label>
 						<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
 					</div>
 					<div class="field">
