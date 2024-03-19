@@ -137,7 +137,7 @@ type Repository struct {
 	DefaultBranch       string
 	WikiBranch          string
 	// TODO: Create own table out of this field
-	FederationRepos string
+	FederationRepos string `xorm:"TEXT"`
 
 	NumWatches          int
 	NumStars            int

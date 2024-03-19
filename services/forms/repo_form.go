@@ -110,9 +110,11 @@ func ParseRemoteAddr(remoteAddr, authUsername, authPassword string) (string, err
 
 // RepoSettingForm form for changing repository settings
 type RepoSettingForm struct {
-	RepoName               string `binding:"Required;AlphaDashDot;MaxSize(100)"`
-	Description            string `binding:"MaxSize(2048)"`
-	Website                string `binding:"ValidUrl;MaxSize(1024)"`
+	RepoName    string `binding:"Required;AlphaDashDot;MaxSize(100)"`
+	Description string `binding:"MaxSize(2048)"`
+	Website     string `binding:"ValidUrl;MaxSize(1024)"`
+	// ToDo: Do we need validation at this point?
+	FederationRepos        string
 	Interval               string
 	MirrorAddress          string
 	MirrorUsername         string

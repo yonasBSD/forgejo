@@ -188,7 +188,20 @@ func SettingsPost(ctx *context.Context) {
 	case "federation":
 		if !setting.Federation.Enabled {
 			ctx.NotFound("", nil)
+			ctx.Flash.Info("Federation Not enabled")
 			return
+		} else {
+			// ToDo: Proper string handling
+			log.Info("web/repo/setting.go:Federation was detected as enabled.")
+			// ToDo: Ability to delete repos
+			repo.FederationRepos = repo.FederationRepos + form.FederationRepos
+			if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
+				ctx.ServerError("UpdateRepository", err)
+				return
+			}
+			log.Info("Repos are: %v", repo.FederationRepos)
+			ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
+			ctx.Redirect(repo.Link() + "/settings")
 		}
 
 		// TODO: Validate semicolon separation
