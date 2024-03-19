@@ -59,3 +59,16 @@ func TestOrgProjectAccess(t *testing.T) {
 	req = NewRequest(t, "GET", "/org3/-/projects")
 	session.MakeRequest(t, req, http.StatusNotFound)
 }
+
+func TestOrgProjectHeader(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/org3/-/projects/5")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	menu := htmlDoc.Find(".page-content .secondary.menu a")
+	for _, l := range menu.Nodes {
+		t.Log(l.Attr) // check href attribute
+	}
+	t.FailNow()
+}
