@@ -63,30 +63,26 @@
 			</form>
 		</div>
 
-		{{if FederationEnabled}}
-			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.settings.federation_settings"}}
-			</h4>
-			<div class="ui attached segment">
-				<form class="ui form" method="post">
-					{{.CsrfTokenHtml}}
-					<input type="hidden" name="action" value="federation">
-					
-					<!-- TODO: implement Err_FederationRepos somewhere -->
-					<div class="field {{if .Err_FederationRepos}}error{{end}}">
-						<label for="federation_repos">{{ctx.Locale.Tr "repo.settings.federation_labelname_repo"}}</label>
-						<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
-					</div>
-					<div class="field">
-						<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_settings"}}</button>
-					</div>
-					<div class="field {{if .Err_FederationRepos}}error{{end}}">
-						<label for="description">{{ctx.Locale.Tr "repo.settings.federation_federated_repo_list"}}</label>
-						<textarea id="description" name="description" rows="2" placeholder="{{ctx.Locale.Tr "repo.settings.federation_repo_list_empty"}}" maxlength="255">{{.Repository.FederationRepos}}</textarea>
-					</div>
-				</form>
-			</div>
-		{{end}}
+	{{if FederationEnabled}}
+		<h4 class="ui top attached header">
+			{{ctx.Locale.Tr "repo.settings.federation_settings"}}
+		</h4>
+		<div class="ui attached segment">
+			<form class="ui form" method="post">
+				{{.CsrfTokenHtml}}
+				<input type="hidden" name="action" value="federation">
+				
+				<!-- TODO: implement Err_FederationRepos somewhere -->
+				<div class="field {{if .Err_FederationRepos}}error{{end}}">
+					<label for="federation_repos">{{ctx.Locale.Tr "repo.settings.federation_labelname_repo"}}</label>
+					<textarea id="repo_list" name="repo_list" rows="2" placeholder="{{ctx.Locale.Tr "repo.settings.federation_repo_list_empty"}}"></textarea>
+				</div>
+				<div class="field">
+					<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_settings"}}</button>
+				</div>
+			</form>
+		</div>
+	{{end}}
 
 
 		{{/* These variables exist to make the logic in the Settings window easier to comprehend and are not used later on. */}}
