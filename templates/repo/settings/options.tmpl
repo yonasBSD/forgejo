@@ -63,7 +63,7 @@
 			</form>
 		</div>
 
-		/* TODO: get true/false from settings */
+		<!-- TODO: get true/false from settings -->
 		{{$showFederationSettings := true}}
 		{{if $showFederationSettings}}
 			<h4 class="ui top attached header">
@@ -74,10 +74,9 @@
 					{{.CsrfTokenHtml}}
 					<input type="hidden" name="action" value="federation">
 					
-					/* TODO: implement Err_FederationRepos somewhere */
+					<!-- TODO: implement Err_FederationRepos somewhere -->
 					<div class="field {{if .Err_FederationRepos}}error{{end}}">
-						/* TODO: internationalize text */
-						<label for="federation_repos">{{ctx.Locale.Tr "settings.federation_labelname_repo"}}</label>
+						<label for="federation_repos">{{ctx.Locale.Tr "repo.settings.federation_labelname_repo"}}</label>
 						<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
 					</div>
 					<div class="field">
