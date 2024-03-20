@@ -190,25 +190,30 @@ func SettingsPost(ctx *context.Context) {
 			ctx.NotFound("", nil)
 			ctx.Flash.Info("Federation Not enabled")
 			return
-		} else {
-			// ToDo: Proper string handling
-			log.Info("web/repo/setting.go:Federation was detected as enabled.")
-			// ToDo: Ability to delete repos
-			// TODO: Review jem: no add and remove - just set
-			// repo.FederationRepos = form.FederationRepos
-			repo.FederationRepos = repo.FederationRepos + form.FederationRepos
-			if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
-				ctx.ServerError("UpdateRepository", err)
-				return
-			}
-			log.Info("Repos are: %v", repo.FederationRepos)
-			ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
-			ctx.Redirect(repo.Link() + "/settings")
 		}
 
-		// TODO: Validate semicolon separation
-		// TODO: Validate Element isURL
-		// TODO: Validate Element denominates Repository
+		switch {
+		// Allow clearing the field
+		case form.FederationRepos == "":
+			repo.FederationRepos = ""
+		// Validate
+		case validation.IsValidFederatedRepoURL(form.FederationRepos):
+			repo.FederationRepos = form.FederationRepos
+		default:
+			ctx.Data["ERR_FederationRepos"] = true
+			ctx.Flash.Error("The given Repo URL was not valid")
+			ctx.Redirect(repo.Link() + "/settings")
+			return
+		}
+
+		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
+			ctx.ServerError("UpdateRepository", err)
+			return
+		}
+
+		log.Info("Repo Saved: %v", repo.FederationRepos)
+		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
+		ctx.Redirect(repo.Link() + "/settings")
 
 	case "mirror":
 		if !setting.Mirror.Enabled || !repo.IsMirror || repo.IsArchived {
