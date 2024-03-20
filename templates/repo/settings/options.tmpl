@@ -73,7 +73,6 @@
 				<input type="hidden" name="action" value="federation">
 				<div class="field {{if .Err_FederationRepos}}error{{end}}">
 					<label for="federation_repos">{{ctx.Locale.Tr "repo.settings.federation_labelname_repo"}}</label>
-					<!-- TODO: input is far from ideal, we might want something that allows for more overview -->
 					<input id="federation_repos" name="federation_repos" value="{{.Repository.FederationRepos}}" data-repo-name="{{.Repository.FederationRepos}}">
 				</div>
 				<div class="field">
