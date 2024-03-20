@@ -143,6 +143,20 @@ func IsValidFederatedRepoURL(url string) bool {
 	return true
 }
 
+func IsValidFederatedRepoURLList(urls string) bool {
+	switch {
+	case len(strings.Split(urls, ";")) == 1:
+		return IsValidFederatedRepoURL(urls)
+	default:
+		for _, url := range strings.Split(urls, ";") {
+			if !IsValidFederatedRepoURLList(url) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 var (
 	validUsernamePatternWithDots    = regexp.MustCompile(`^[\da-zA-Z][-.\w]*$`)
 	validUsernamePatternWithoutDots = regexp.MustCompile(`^[\da-zA-Z][-\w]*$`)
