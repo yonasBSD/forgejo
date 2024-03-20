@@ -114,7 +114,7 @@ type RepoSettingForm struct {
 	Description string `binding:"MaxSize(2048)"`
 	Website     string `binding:"ValidUrl;MaxSize(1024)"`
 	// ToDo: Do we need validation at this point?
-	FederationRepos        string
+	FederationRepos        string `binding:"ValidUrl;MaxSize(1024)"`
 	Interval               string
 	MirrorAddress          string
 	MirrorUsername         string
