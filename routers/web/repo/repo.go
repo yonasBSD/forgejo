@@ -366,7 +366,7 @@ func ActionTransfer(accept bool) func(ctx *context.Context) {
 			return
 		}
 
-		ctx.RedirectToFirst(ctx.FormString("redirect_to"), ctx.Repo.RepoLink)
+		ctx.RedirectToCurrentSite(ctx.FormString("redirect_to"), ctx.Repo.RepoLink)
 	}
 }
 
