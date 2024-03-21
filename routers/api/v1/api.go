@@ -898,7 +898,7 @@ func Routes() *web.Route {
 				}, context_service.UserIDAssignmentAPI())
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
-					m.Post("/inbox", // ToDo: Post or Put?
+					m.Post("/inbox",
 						// TODO: bind ativities here
 						bind(forgefed.ForgeLike{}),
 						// TODO: activitypub.ReqHTTPSignature(),
