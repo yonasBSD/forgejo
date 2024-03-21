@@ -192,6 +192,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
+		// ToDo: Use Federated Repo Struct & Update Federated Repo Table
 		switch {
 		// Allow clearing the field
 		case form.FederationRepos == "":
