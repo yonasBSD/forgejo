@@ -37,7 +37,7 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, s
 	}
 	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
-		return http.StatusInternalServerError, "Could not loading FederationHost", err
+		return http.StatusInternalServerError, "Could not load FederationHost", err
 	}
 	if federationHost == nil {
 		result, err := CreateFederationHostFromAP(ctx, rawActorID)
