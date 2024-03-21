@@ -259,7 +259,7 @@ func (d *DiscordPayload) Release(p *api.ReleasePayload) (api.Payloader, error) {
 func (d *DiscordPayload) Package(p *api.PackagePayload) (api.Payloader, error) {
 	text, color := getPackagePayloadInfo(p, noneLinkFormatter, false)
 
-	return d.createPayload(p.Sender, text, "", p.Package.HTMLURL, color), nil
+	return d.createPayload(p.Sender, text, "", setting.appURL + p.Package.HTMLURL, color), nil
 }
 
 // GetDiscordPayload converts a discord webhook into a DiscordPayload
