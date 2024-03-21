@@ -102,8 +102,26 @@ classDiagram
     }
   }
 
+  namespace repository {
+    class Repository {
+      <<Aggregate Root>>
+      ID        int64      
+    }
+
+    class FederatedRepository {
+      ID             int64
+      RepositoryID   int64
+      ExternalID     string
+      FederationHost int64
+      Validate()     []string
+    }
+  }
+
   User *-- FederatedUser: FederatedUser.UserID
   PersonID -- FederatedUser : mapped by PersonID.ID == FederatedUser.externalID & FederationHost.ID
   PersonID -- FederationHost : mapped by PersonID.Host == FederationHost.HostFqdn
   FederatedUser -- FederationHost 
+
+  Repository *-- FederatedRepository
+  FederatedRepository -- FederationHost
 ```
