@@ -197,6 +197,11 @@ func SettingsPost(ctx *context.Context) {
 		case form.FederationRepos == "":
 			repo.FederationRepos = ""
 		// Validate
+		case !validation.IsOfValidLength(form.FederationRepos): // ToDo: Use for public testing only. In production we might need longer strings.
+			ctx.Data["ERR_FederationRepos"] = true
+			ctx.Flash.Error("The given string was larger than 2048 bytes")
+			ctx.Redirect(repo.Link() + "/settings")
+			return
 		case validation.IsValidFederatedRepoURL(form.FederationRepos):
 			repo.FederationRepos = form.FederationRepos
 		default:
@@ -205,7 +210,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Redirect(repo.Link() + "/settings")
 			return
 		}
-		// ToDo: Validate for max length before committing to db
+
 		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
