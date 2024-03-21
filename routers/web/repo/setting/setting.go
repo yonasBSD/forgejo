@@ -205,7 +205,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Redirect(repo.Link() + "/settings")
 			return
 		}
-
+		// ToDo: Validate for max length before committing to db
 		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
