@@ -46,7 +46,7 @@ func ValidateNotEmpty(value any, fieldName string) []string {
 	if isValid {
 		return []string{}
 	}
-	return []string{fmt.Sprintf("Field %v may not be empty", fieldName)}
+	return []string{fmt.Sprintf("Field %v should not be empty", fieldName)}
 }
 
 func ValidateMaxLen(value string, maxLen int, fieldName string) []string {
