@@ -22,6 +22,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ToDo: May need to change the name to reflect workings of function better
 // LikeActivity receives a ForgeLike activity and does the following:
 // Validation of the activity
 // Creation of a (remote) federationHost if not existing
