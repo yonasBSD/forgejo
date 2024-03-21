@@ -301,6 +301,11 @@ func (u *User) HTMLURL() string {
 	return setting.AppURL + url.PathEscape(u.Name)
 }
 
+// APAPIURL returns the IRI to the api endpoint of the user
+func (u *User) APAPIURL() string {
+	return setting.AppURL + url.PathEscape("api/v1/activitypub/user-id/") + url.PathEscape(string(u.ID))
+}
+
 // OrganisationLink returns the organization sub page link.
 func (u *User) OrganisationLink() string {
 	return setting.AppSubURL + "/org/" + url.PathEscape(u.Name)
