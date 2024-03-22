@@ -312,6 +312,10 @@ func EditRelease(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 
 	form := web.GetForm(ctx).(*api.EditReleaseOption)
+	if ctx.Req.Header.Get("Content-Type") != "application/json" {
+		ctx.Error(http.StatusUnprocessableEntity, "Invalid Content-Type", "This endpoint requires 'Content-Type: application/json'")
+		return
+	}
 	id := ctx.ParamsInt64(":id")
 	rel, err := repo_model.GetReleaseForRepoByID(ctx, ctx.Repo.Repository.ID, id)
 	if err != nil && !repo_model.IsErrReleaseNotExist(err) {
