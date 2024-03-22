@@ -157,6 +157,10 @@ func IsValidFederatedRepoURLList(urls string) bool {
 	return true
 }
 
+func IsOfValidLength(str string) bool {
+	return len(str) <= 2048
+}
+
 var (
 	validUsernamePatternWithDots    = regexp.MustCompile(`^[\da-zA-Z][-.\w]*$`)
 	validUsernamePatternWithoutDots = regexp.MustCompile(`^[\da-zA-Z][-\w]*$`)

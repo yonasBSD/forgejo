@@ -346,6 +346,11 @@ func (repo *Repository) APIURL() string {
 	return setting.AppURL + "api/v1/repos/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
 }
 
+// APAPIURL returns the activitypub repository API URL
+func (repo *Repository) APAPIURL() string {
+	return setting.AppURL + "api/v1/activitypub/repository-id/" + url.PathEscape(string(repo.ID))
+}
+
 // GetCommitsCountCacheKey returns cache key used for commits count caching.
 func (repo *Repository) GetCommitsCountCacheKey(contextName string, isRef bool) string {
 	var prefix string

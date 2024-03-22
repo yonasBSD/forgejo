@@ -22,6 +22,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// ToDo: May need to change the name to reflect workings of function better
+// LikeActivity receives a ForgeLike activity and does the following:
+// Validation of the activity
+// Creation of a (remote) federationHost if not existing
+// Creation of a forgefed Person if not existing
+// Validation of incoming RepositoryID against Local RepositoryID
+// Star the repo if it wasn't already stared
+// Do some mitigation against out of order attacks
 func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
@@ -37,7 +45,7 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, s
 	}
 	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
-		return http.StatusInternalServerError, "Could not loading FederationHost", err
+		return http.StatusInternalServerError, "Could not load FederationHost", err
 	}
 	if federationHost == nil {
 		result, err := CreateFederationHostFromAP(ctx, rawActorID)
