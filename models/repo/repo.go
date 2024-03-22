@@ -350,7 +350,8 @@ func (repo *Repository) APIURL() string {
 // TODO: At least camel case?
 // TODO: Mv federation related stuff to federated_repo
 func (repo *Repository) APAPIURL() string {
-	return setting.AppURL + "api/v1/activitypub/repository-id/" + url.PathEscape(string(repo.ID))
+	// TODO: use spintf instead of concat - might mitigate injections
+	return fmt.Sprintf("%vapi/v1/activitypub/repository-id/%v", setting.AppURL, url.PathEscape(fmt.Sprint(repo.ID)))
 }
 
 // GetCommitsCountCacheKey returns cache key used for commits count caching.
