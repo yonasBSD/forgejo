@@ -194,6 +194,7 @@ func SettingsPost(ctx *context.Context) {
 
 		// Create Federated Repo Structs & commit to DB
 		// ToDo: Implement in federation_service.go
+		// ToDo: validation.ValidateMaxLen() seems not to be suited for this case. We may need to approach differently here
 
 		// ToDo: Use Federated Repo Struct & Update Federated Repo Table
 		// TODO: move as much functions to some kind of service in order to keep controller clean an simple
