@@ -192,13 +192,15 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
+		// Create Federated Repo Structs & commit to DB
+		// ToDo: Implement in federation_service.go
+
 		// ToDo: Use Federated Repo Struct & Update Federated Repo Table
 		// TODO: move as much functions to some kind of service in order to keep controller clean an simple
 		switch {
 		// Allow clearing the field
 		case form.FederationRepos == "":
 			repo.FederationRepos = ""
-
 		// Validate
 		case !validation.IsOfValidLength(form.FederationRepos): // ToDo: Use for public testing only. In production we might need longer strings.
 			ctx.Data["ERR_FederationRepos"] = true
