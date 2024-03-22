@@ -157,6 +157,7 @@ func IsValidFederatedRepoURLList(urls string) bool {
 	return true
 }
 
+// TODO: use validateable/ValidateMaxLen instead !!
 func IsOfValidLength(str string) bool {
 	return len(str) <= 2048
 }

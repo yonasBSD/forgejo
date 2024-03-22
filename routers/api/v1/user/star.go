@@ -1,5 +1,6 @@
 // Copyright 2016 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors.
+// Copyright 2024 The forgejo Authors.
 // SPDX-License-Identifier: MIT
 
 package user
@@ -164,6 +165,7 @@ func Star(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
 	}
+	// TODO: move this code to repo.federated_repository
 	if setting.Federation.Enabled {
 
 		likeActivity, err := forgefed.NewForgeLike(ctx)
@@ -183,6 +185,7 @@ func Star(ctx *context.APIContext) {
 			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 			return
 		}
+		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
 		// ToDo: Change this to the standalone table of FederatedRepos
 		for _, target := range strings.Split(ctx.Repo.Repository.FederationRepos, ";") {
 			apclient.Post([]byte(json), target)

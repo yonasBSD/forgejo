@@ -347,6 +347,8 @@ func (repo *Repository) APIURL() string {
 }
 
 // APAPIURL returns the activitypub repository API URL
+// TODO: At least camel case?
+// TODO: Mv federation related stuff to federated_repo
 func (repo *Repository) APAPIURL() string {
 	return setting.AppURL + "api/v1/activitypub/repository-id/" + url.PathEscape(string(repo.ID))
 }

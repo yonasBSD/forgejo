@@ -19,6 +19,7 @@ type ForgeLike struct {
 	ap.Activity
 }
 
+// TODO: Use explicit values instead of ctx !!
 func NewForgeLike(ctx *context.APIContext) (ForgeLike, error) {
 	result := ForgeLike{}
 	actorIRI := ctx.Repo.Owner.APAPIURL()
