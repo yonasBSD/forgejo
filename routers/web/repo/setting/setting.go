@@ -20,6 +20,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/indexer/stats"
@@ -192,33 +193,17 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		// Create Federated Repo Structs & commit to DB
-		// ToDo: Implement in federation_service.go
-		// ToDo: validation.ValidateMaxLen() seems not to be suited for this case. We may need to approach differently here
+		federationRepos := form.FederationRepos
 
-		// ToDo: Use Federated Repo Struct & Update Federated Repo Table
-		// TODO: move as much functions to some kind of service in order to keep controller clean an simple
-		switch {
-		// Allow clearing the field
-		case form.FederationRepos == "":
-			repo.FederationRepos = ""
-		// Validate
-		case !validation.IsOfValidLength(form.FederationRepos): // ToDo: Use for public testing only. In production we might need longer strings.
+		errs := validation.ValidateMaxLen(federationRepos, 2048, "federationRepos")
+		if len(errs) > 0 {
 			ctx.Data["ERR_FederationRepos"] = true
 			ctx.Flash.Error("The given string was larger than 2048 bytes")
 			ctx.Redirect(repo.Link() + "/settings")
 			return
-		case validation.IsValidFederatedRepoURL(form.FederationRepos):
-			// TODO: Move this validation to Domain!!
-			repo.FederationRepos = form.FederationRepos
-		default:
-			ctx.Data["ERR_FederationRepos"] = true
-			ctx.Flash.Error("The given Repo URL was not valid")
-			ctx.Redirect(repo.Link() + "/settings")
-			return
 		}
 
-		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
+		if _, _, err := forgefed.UpdateFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}

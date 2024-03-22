@@ -30,7 +30,7 @@ import (
 // Validation of incoming RepositoryID against Local RepositoryID
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
-func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, string, error) {
+func LikeActivity(ctx *context.Context, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
@@ -39,20 +39,9 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, s
 
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
-	rawActorID, err := forgefed.NewActorID(actorURI)
+	federationHost, err := GetFederationHostForUri(ctx, actorURI)
 	if err != nil {
-		return http.StatusInternalServerError, "Invalid ActorID", err
-	}
-	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
-	if err != nil {
-		return http.StatusInternalServerError, "Could not load FederationHost", err
-	}
-	if federationHost == nil {
-		result, err := CreateFederationHostFromAP(ctx, rawActorID)
-		if err != nil {
-			return http.StatusNotAcceptable, "Invalid FederationHost", err
-		}
-		federationHost = result
+		return http.StatusInternalServerError, "Wrong FederationHost", err
 	}
 	if !activity.IsNewer(federationHost.LatestActivity) {
 		return http.StatusNotAcceptable, "Activity out of order.", fmt.Errorf("Activity already processed")
@@ -106,7 +95,7 @@ func LikeActivity(ctx *context.APIContext, form any, repositoryID int64) (int, s
 	return 0, "", nil
 }
 
-func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
+func CreateFederationHostFromAP(ctx *context.Context, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -139,7 +128,27 @@ func CreateFederationHostFromAP(ctx *context.APIContext, actorID forgefed.ActorI
 	return &result, nil
 }
 
-func CreateUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
+func GetFederationHostForUri(ctx *context.Context, actorURI string) (*forgefed.FederationHost, error) {
+	// parse actorID (person)
+	rawActorID, err := forgefed.NewActorID(actorURI)
+	if err != nil {
+		return nil, err
+	}
+	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
+	if err != nil {
+		return nil, err
+	}
+	if federationHost == nil {
+		result, err := CreateFederationHostFromAP(ctx, rawActorID)
+		if err != nil {
+			return nil, err
+		}
+		federationHost = result
+	}
+	return federationHost, nil
+}
+
+func CreateUserFromAP(ctx *context.Context, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -202,34 +211,26 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, feder
 	return &newUser, &federatedUser, nil
 }
 
-func CreateFederatedRepo(ctx *context.APIContext, federatedRepoID forgefed.RepositoryID, federationHostID int64) (repo.FederatedRepo, error) {
-	// ToDo
-	// Note: We may want to discuss about side effects here
-}
-
-// Create a list of FederatedRepo structs
-func CreateFederadedRepoList(ctx *context.APIContext, repoList []string, localRepoId int64) ([]repo.FederatedRepo, error) {
-
-	federatedRepos := make([]repo.FederatedRepo, len(repoList))
-	for _, uri := range repoList {
-
-		federatedRepoID, err := forgefed.NewRepositoryID(uri, "forgejo") // ToDo: Don't hardcode this but where do we get this from
+// Create or update a list of FederatedRepo structs
+func UpdateFederatedRepoList(ctx *context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
+	federatedRepos := make([]*repo.FederatedRepo, len(federatedRepoList))
+	for _, uri := range federatedRepoList {
+		federationHost, err := GetFederationHostForUri(ctx, uri)
 		if err != nil {
-			return make([]repo.FederatedRepo, 0), err
+			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-
-		federationHost, err := forgefed.FindFederationHostByFqdn(ctx, federatedRepoID.Host)
+		federatedRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.Source))
 		if err != nil {
-			return make([]repo.FederatedRepo, 0), err
+			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-
-		federatedRepo, err := CreateFederatedRepo(ctx, federatedRepoID, federationHost.ID)
+		federatedRepo, err := repo.NewFederatedRepo(localRepoId, federatedRepoID.ID, federationHost.ID)
 		if err != nil {
-			return make([]repo.FederatedRepo, 0), err
+			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-
-		federatedRepos = append(federatedRepos, federatedRepo)
+		federatedRepos = append(federatedRepos, &federatedRepo)
 	}
 
-	return federatedRepos, nil
+	repo.UpdateFederatedRepo(ctx, localRepoId, federatedRepos)
+
+	return 0, "", nil
 }

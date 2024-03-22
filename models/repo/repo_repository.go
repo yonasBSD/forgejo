@@ -16,6 +16,7 @@ func init() {
 	db.RegisterModel(new(FederatedRepo))
 }
 
+// TODO: do we need this?
 func GetFederatedRepo(ctx context.Context, ID int64) (*FederatedRepo, error) {
 	repo := new(FederatedRepo)
 	has, err := db.GetEngine(ctx).Where("id=?", ID).Get(repo)
@@ -30,6 +31,7 @@ func GetFederatedRepo(ctx context.Context, ID int64) (*FederatedRepo, error) {
 	return repo, nil
 }
 
+// TODO: do we need this?
 func FindFederatedRepoByFQDN(ctx context.Context, fqdn string) (*FederatedRepo, error) {
 	repo := new(FederatedRepo)
 	has, err := db.GetEngine(ctx).Where("host_fqdn=?", strings.ToLower(fqdn)).Get(repo)
@@ -44,6 +46,7 @@ func FindFederatedRepoByFQDN(ctx context.Context, fqdn string) (*FederatedRepo, 
 	return repo, nil
 }
 
+// TODO: do we need this?
 func CreateFederatedRepo(ctx context.Context, repo *FederatedRepo) error {
 	if res, err := validation.IsValid(repo); !res {
 		return fmt.Errorf("FederationInfo is not valid: %v", err)
@@ -52,10 +55,31 @@ func CreateFederatedRepo(ctx context.Context, repo *FederatedRepo) error {
 	return err
 }
 
-func UpdateFederatedRepo(ctx context.Context, repo *FederatedRepo) error {
-	if res, err := validation.IsValid(repo); !res {
-		return fmt.Errorf("FederationInfo is not valid: %v", err)
+func UpdateFederatedRepo(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
+	for _, federatedRepo := range federatedRepoList {
+		if res, err := validation.IsValid(federatedRepo); !res {
+			return fmt.Errorf("FederationInfo is not valid: %v", err)
+		}
 	}
-	_, err := db.GetEngine(ctx).ID(repo.ID).Update(repo)
-	return err
+
+	// Begin transaction
+	ctx, committer, err := db.TxContext((ctx))
+	if err != nil {
+		return err
+	}
+	defer committer.Close()
+
+	_, err = db.GetEngine(ctx).Where("repo_id=?", localRepoId).Delete(FederatedRepo{})
+	if err != nil {
+		return err
+	}
+	for _, federatedRepo := range federatedRepoList {
+		_, err = db.GetEngine(ctx).Insert(federatedRepo)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Commit transaction
+	return committer.Commit()
 }
