@@ -201,3 +201,35 @@ func CreateUserFromAP(ctx *context.APIContext, personID forgefed.PersonID, feder
 
 	return &newUser, &federatedUser, nil
 }
+
+func CreateFederatedRepo(ctx *context.APIContext, federatedRepoID forgefed.RepositoryID, federationHostID int64) (repo.FederatedRepo, error) {
+	// ToDo
+	// Note: We may want to discuss about side effects here
+}
+
+// Create a list of FederatedRepo structs
+func CreateFederadedRepoList(ctx *context.APIContext, repoList []string, localRepoId int64) ([]repo.FederatedRepo, error) {
+
+	federatedRepos := make([]repo.FederatedRepo, len(repoList))
+	for _, uri := range repoList {
+
+		federatedRepoID, err := forgefed.NewRepositoryID(uri, "forgejo") // ToDo: Don't hardcode this but where do we get this from
+		if err != nil {
+			return make([]repo.FederatedRepo, 0), err
+		}
+
+		federationHost, err := forgefed.FindFederationHostByFqdn(ctx, federatedRepoID.Host)
+		if err != nil {
+			return make([]repo.FederatedRepo, 0), err
+		}
+
+		federatedRepo, err := CreateFederatedRepo(ctx, federatedRepoID, federationHost.ID)
+		if err != nil {
+			return make([]repo.FederatedRepo, 0), err
+		}
+
+		federatedRepos = append(federatedRepos, federatedRepo)
+	}
+
+	return federatedRepos, nil
+}
