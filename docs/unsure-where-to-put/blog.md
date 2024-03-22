@@ -4,7 +4,7 @@ This month we discussed how a federated Person should be mapped to a local Feder
 
 I am very glad about the constructive & good discussion and many cool inputs. If you are interested in the federation related architecture you can have a sneak preview here: https://codeberg.org/meissa/forgejo/src/branch/forgejo-federated-star/docs/unsure-where-to-put/federation-architecture.md
 
-Next an final step on our way to "fereated Stars" will be "UI star triggers a federated Like Activity (in case of mirrored repos?)" - stay tuned for next month step :-).
+Next an final step on our way to "federated Stars" will be "UI star triggers a federated Like Activity (in case of mirrored repos?)" - stay tuned for next month step :-).
 
 In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680
 
