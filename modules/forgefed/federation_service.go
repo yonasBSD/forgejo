@@ -4,6 +4,7 @@
 package forgefed
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/auth/password"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
@@ -30,7 +30,7 @@ import (
 // Validation of incoming RepositoryID against Local RepositoryID
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
-func LikeActivity(ctx *context.Context, form any, repositoryID int64) (int, string, error) {
+func LikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
@@ -95,7 +95,7 @@ func LikeActivity(ctx *context.Context, form any, repositoryID int64) (int, stri
 	return 0, "", nil
 }
 
-func CreateFederationHostFromAP(ctx *context.Context, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
+func CreateFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -128,7 +128,7 @@ func CreateFederationHostFromAP(ctx *context.Context, actorID forgefed.ActorID) 
 	return &result, nil
 }
 
-func GetFederationHostForUri(ctx *context.Context, actorURI string) (*forgefed.FederationHost, error) {
+func GetFederationHostForUri(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
 	// parse actorID (person)
 	rawActorID, err := forgefed.NewActorID(actorURI)
 	if err != nil {
@@ -148,7 +148,7 @@ func GetFederationHostForUri(ctx *context.Context, actorURI string) (*forgefed.F
 	return federationHost, nil
 }
 
-func CreateUserFromAP(ctx *context.Context, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
+func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -212,7 +212,7 @@ func CreateUserFromAP(ctx *context.Context, personID forgefed.PersonID, federati
 }
 
 // Create or update a list of FederatedRepo structs
-func UpdateFederatedRepoList(ctx *context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
+func UpdateFederatedRepoList(ctx context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
 	federatedRepos := make([]*repo.FederatedRepo, len(federatedRepoList))
 	for _, uri := range federatedRepoList {
 		federationHost, err := GetFederationHostForUri(ctx, uri)
