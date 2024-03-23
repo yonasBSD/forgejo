@@ -57,7 +57,7 @@ func CreateFederatedRepo(ctx context.Context, repo *FederatedRepo) error {
 
 func UpdateFederatedRepo(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
 	for _, federatedRepo := range federatedRepoList {
-		if res, err := validation.IsValid(federatedRepo); !res {
+		if res, err := validation.IsValid(*federatedRepo); !res {
 			return fmt.Errorf("FederationInfo is not valid: %v", err)
 		}
 	}
