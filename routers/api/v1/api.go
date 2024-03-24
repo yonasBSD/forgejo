@@ -68,6 +68,7 @@ package v1
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	actions_model "code.gitea.io/gitea/models/actions"
@@ -725,6 +726,13 @@ func bind[T any](_ T) any {
 			ctx.Error(http.StatusUnprocessableEntity, "validationError", fmt.Sprintf("%s: %s", errs[0].FieldNames, errs[0].Error()))
 			return
 		}
+
+		// Check for non-population: compare theObj to a freshly instantiated T for 'emptiness'
+		if reflect.DeepEqual(theObj, new(T)) {
+			ctx.Error(http.StatusBadRequest, "emptyRequest", "Request body does not contain valid data for the expected type.")
+			return
+		}
+
 		web.SetForm(ctx, theObj)
 	}
 }

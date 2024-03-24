@@ -102,6 +102,38 @@ func createNewReleaseUsingAPI(t *testing.T, session *TestSession, token string, 
 	return &newRelease
 }
 
+func TestAPIUpdateReleaseWithMismatchContentType(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	session := loginUser(t, owner.LowerName)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	// Creating a tag and a corresponding release as setup for the test.
+	gitRepo, err := gitrepo.OpenRepository(git.DefaultContext, repo)
+	assert.NoError(t, err)
+	defer gitRepo.Close()
+
+	err = gitRepo.CreateTag("v0.0.1", "master")
+	assert.NoError(t, err)
+
+	target, err := gitRepo.GetTagCommitID("v0.0.1")
+	assert.NoError(t, err)
+
+	newRelease := createNewReleaseUsingAPI(t, session, token, owner, repo, "v0.0.1", target, "v0.0.1", "test")
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/releases/%d", owner.Name, repo.Name, newRelease.ID)
+
+	// Creating a JSON body but setting the content type to form-urlencoded.
+	jsonBody := `{"tag_name":"v0.0.1", "title":"Updated Title", "note":"Updated note"}`
+	req := NewRequestWithBody(t, "PATCH", urlStr, strings.NewReader(jsonBody)).AddTokenAuth(token)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	// Making the request and expecting an unsuccessful response due to the content type mismatch.
+	MakeRequest(t, req, http.StatusUnprocessableEntity)
+}
+
 func TestAPICreateAndUpdateRelease(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
