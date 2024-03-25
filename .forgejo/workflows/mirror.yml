@@ -9,7 +9,7 @@ jobs:
     if: ${{ secrets.MIRROR_TOKEN != '' }}
     runs-on: docker
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     steps:
       - name: git push {v*/,}forgejo
         run: |

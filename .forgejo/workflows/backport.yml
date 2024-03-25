@@ -47,7 +47,7 @@ jobs:
       )
     runs-on: docker
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     steps:
       - name: Fetch labels
         id: fetch-labels
@@ -77,7 +77,7 @@ jobs:
           echo "target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}"
           echo "pull-request: ${{ github.event.pull_request.url }}"
 
-      - uses: https://code.forgejo.org/actions/git-backporting@v4.5.2
+      - uses: https://code.forgejo.org/actions/git-backporting@f4a2683189e62ce0acf2f3285b3b27debf2eacc9 # v4.5.2
         with:
           target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}/forgejo
           no-squash: true

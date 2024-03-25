@@ -12,10 +12,10 @@ jobs:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-      - uses: https://code.forgejo.org/actions/setup-go@v4
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: https://code.forgejo.org/actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4
         with:
           go-version: "1.22"
           check-latest: true
@@ -25,9 +25,9 @@ jobs:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - run: make deps-frontend
       - run: make lint-frontend
       - run: make checks-frontend
@@ -38,10 +38,10 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.2.26@sha256:d1e338419382b658b1e8d50b52a2bc9afb85e96256477100eff225d5857d9176
         options: >-
           --hostname gitea.minio
         env:
@@ -49,8 +49,8 @@ jobs:
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-      - uses: https://code.forgejo.org/actions/setup-go@v4
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: https://code.forgejo.org/actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4
         with:
           go-version: "1.22"
       - run: |
@@ -82,10 +82,10 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     services:
       mysql:
-        image: 'docker.io/mysql:8-debian'
+        image: 'docker.io/mysql:8-debian@sha256:49f4fcb0087318aa1c222c7e8ceacbb541cdc457c6307d45e6ee4313f4902e33'
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: testgitea
@@ -94,8 +94,8 @@ jobs:
         #
         cmd: ['mysqld', '--innodb-adaptive-flushing=OFF', '--innodb-buffer-pool-size=4G', '--innodb-log-buffer-size=128M', '--innodb-flush-log-at-trx-commit=0', '--innodb-flush-log-at-timeout=30', '--innodb-flush-method=nosync', '--innodb-fsync-threshold=1000000000']
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-      - uses: https://code.forgejo.org/actions/setup-go@v4
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: https://code.forgejo.org/actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4
         with:
           go-version: "1.22"
       - name: install dependencies & git >= 2.42
@@ -128,21 +128,21 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.2.26@sha256:d1e338419382b658b1e8d50b52a2bc9afb85e96256477100eff225d5857d9176
         env:
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
       pgsql:
-        image: 'docker.io/postgres:15'
+        image: 'docker.io/postgres:15@sha256:ea40a028dd42740d6cff34135ff6b3119ff7ce0ed60120d992216456b5987fe7'
         env:
           POSTGRES_DB: test
           POSTGRES_PASSWORD: postgres
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-      - uses: https://code.forgejo.org/actions/setup-go@v4
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: https://code.forgejo.org/actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4
         with:
           go-version: "1.22"
       - name: install dependencies & git >= 2.42
@@ -176,10 +176,10 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'docker.io/node:20-bookworm'
+      image: 'docker.io/node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5'
     steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-      - uses: https://code.forgejo.org/actions/setup-go@v4
+      - uses: https://code.forgejo.org/actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: https://code.forgejo.org/actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4
         with:
           go-version: "1.22"
       - name: install dependencies & git >= 2.42

@@ -27,7 +27,7 @@ jobs:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
-      image: node:20-bookworm
+      image: node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5
     steps:
       - name: event
         run: |
@@ -52,9 +52,9 @@ jobs:
       )
     runs-on: docker
     container:
-      image: node:20-bookworm
+      image: node:20-bookworm@sha256:e06aae17c40c7a6b5296ca6f942a02e6737ae61bbbf3e2158624bb0f887991b5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           fetch-depth: '0'
           show-progress: 'false'

@@ -1,6 +1,6 @@
-FROM --platform=$BUILDPLATFORM docker.io/tonistiigi/xx AS xx
+FROM --platform=$BUILDPLATFORM docker.io/tonistiigi/xx@sha256:0cd3f05c72d6c9b038eb135f91376ee1169ef3a330d34e418e65e2a5c2e9c0d4 AS xx
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.21-alpine3.19 as build-env
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.21-alpine3.19@sha256:d7c6083c5400694f7a17b07c4fad8db9115c0e8e3cf62f781cb29cc890a64e8e as build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -49,7 +49,7 @@ RUN chmod 755 /tmp/local/usr/local/bin/docker-entrypoint.sh \
               /go/src/code.gitea.io/gitea/environment-to-ini
 RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
 
-FROM docker.io/library/alpine:3.19
+FROM docker.io/library/alpine:3.19@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b
 LABEL maintainer="contact@forgejo.org"
 
 EXPOSE 2222 3000
