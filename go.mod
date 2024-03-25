@@ -77,7 +77,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/msteinert/pam v1.2.0
-	github.com/nektos/act v0.2.52
+	github.com/nektos/act v0.2.60
 	github.com/niklasfasching/go-org v1.7.0
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opencontainers/go-digest v1.0.0
