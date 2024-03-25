@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/sitemap"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/forgefed"
 )
 
 const (
@@ -99,6 +100,31 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 			return
 		}
 	}
+
+	if len(opts.Keyword) > 0 && forgefed.IsFingerable(opts.Keyword) {
+		webfingerRes, err := forgefed.WebFingerLookup(opts.Keyword)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+		person, err := forgefed.GetActor(webfingerRes.GetActorLink().Href)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+
+		_, err = forgefed.SavePerson(ctx, person)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+		//		users, count, err = user_model.SearchUsers(ctx, opts)
+		//		if err != nil {
+		//			ctx.ServerError("SearchUsers", err)
+		//			return
+		//		}
+	}
+
 	if isSitemap {
 		m := sitemap.NewSitemap()
 		for _, item := range users {
