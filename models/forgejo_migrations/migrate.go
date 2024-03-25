@@ -64,6 +64,10 @@ var migrations = []*Migration{
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
 	// v13 -> v14
 	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
+	// v14 -> v15
+	NewMigration("create federated_host table", forgejo_v1_22.AddFederatedHost),
+	// v15 -> v16
+	NewMigration("create federated_user table", forgejo_v1_22.AddFederatedUser),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
@@ -132,6 +136,7 @@ func Migrate(x *xorm.Engine) error {
 	}
 
 	v := currentVersion.Version
+	log.Info("Current version: %d", v)
 
 	// Downgrading Forgejo's database version not supported
 	if v > ExpectedVersion() {
@@ -170,5 +175,6 @@ func Migrate(x *xorm.Engine) error {
 		return fmt.Errorf("sync: %w", err)
 	}
 
+	//	panic("fn end")
 	return semver.SetVersionStringWithEngine(x, setting.ForgejoVersion)
 }
