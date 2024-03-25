@@ -15,7 +15,7 @@ func init() {
 	db.RegisterModel(new(FederatedRepo))
 }
 
-func FindFederatedRepoByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
+func FindFederatedReposByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
 	maxFederatedRepos := 10
 	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
 	sess = sess.Limit(maxFederatedRepos, 0)
