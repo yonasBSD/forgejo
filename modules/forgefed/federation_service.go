@@ -212,7 +212,7 @@ func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federatio
 }
 
 // Create or update a list of FederatedRepo structs
-func UpdateFederatedRepoList(ctx context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
+func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
 	federatedRepos := make([]*repo.FederatedRepo, 0, len(federatedRepoList))
 	for _, uri := range federatedRepoList {
 		federationHost, err := GetFederationHostForUri(ctx, uri)
@@ -230,7 +230,7 @@ func UpdateFederatedRepoList(ctx context.Context, localRepoId int64, federatedRe
 		federatedRepos = append(federatedRepos, &federatedRepo)
 	}
 
-	repo.UpdateFederatedRepo(ctx, localRepoId, federatedRepos)
+	repo.StoreFederatedRepos(ctx, localRepoId, federatedRepos)
 
 	return 0, "", nil
 }

@@ -204,7 +204,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if _, _, err := forgefed.UpdateFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
+		if _, _, err := forgefed.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}

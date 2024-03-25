@@ -24,8 +24,7 @@ func FindFederatedRepoByRepoID(ctx context.Context, repoId int64) ([]*FederatedR
 	return federatedRepoList, sess.Find(&federatedRepoList)
 }
 
-// ToDo: Name this ...repos
-func UpdateFederatedRepo(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
+func StoreFederatedRepos(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
 	for _, federatedRepo := range federatedRepoList {
 		if res, err := validation.IsValid(*federatedRepo); !res {
 			return fmt.Errorf("FederationInfo is not valid: %v", err)
