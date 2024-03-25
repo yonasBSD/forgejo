@@ -200,6 +200,9 @@ package "code.gitea.io/gitea/modules/graceful"
 package "code.gitea.io/gitea/modules/hcaptcha"
 	func WithHTTP
 
+package "code.gitea.io/gitea/modules/httplib"
+	func IsRelativeURL
+
 package "code.gitea.io/gitea/modules/json"
 	func (StdJSON).Marshal
 	func (StdJSON).Unmarshal
