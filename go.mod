@@ -297,7 +297,7 @@ require (
 
 replace github.com/hashicorp/go-version => github.com/6543/go-version v1.3.1
 
-replace github.com/shurcooL/vfsgen => github.com/lunny/vfsgen v0.0.0-20220105142115-2c99e1ffdfa0
+replace github.com/shurcooL/vfsgen => github.com/lunny/vfsgen v0.0.0-20200824052919-0d455de96546
 
 replace github.com/nektos/act => gitea.com/gitea/act v0.259.1
 
