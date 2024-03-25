@@ -15,13 +15,21 @@ func init() {
 	db.RegisterModel(new(FederatedRepo))
 }
 
-// ToDo: Validate before returning
 func FindFederatedRepoByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
 	maxFederatedRepos := 10
 	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
 	sess = sess.Limit(maxFederatedRepos, 0)
 	federatedRepoList := make([]*FederatedRepo, 0, maxFederatedRepos)
-	return federatedRepoList, sess.Find(&federatedRepoList)
+	err := sess.Find(&federatedRepoList)
+	if err != nil {
+		return federatedRepoList, err
+	}
+	for _, federatedRepo := range federatedRepoList {
+		if res, err := validation.IsValid(*federatedRepo); !res {
+			return federatedRepoList, fmt.Errorf("FederationInfo is not valid: %v", err)
+		}
+	}
+	return federatedRepoList, nil
 }
 
 func StoreFederatedRepos(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
