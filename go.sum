@@ -835,8 +835,8 @@ github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 h1:nIPpBwaJSVYIxUFsDv3M8ofm
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8/go.mod h1:HUYIGzjTL3rfEspMxjDjgmT5uz5wzYJKVo23qUhYTos=
 github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e h1:+SOyEddqYF09QP7vr7CgJ1eti3pY9Fn3LHO1M1r/0sI=
 github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e/go.mod h1:N3UwUGtsrSj3ccvlPHLoLsHnpR27oXr4ZE984MbSER8=
-github.com/yardenshoham/feeds v0.0.0-20240110072658-f3d0c21c0bd5 h1:3seWKGVhGoc66Ht5QlhQsr4xT2caDnFegsnh2NqvENU=
-github.com/yardenshoham/feeds v0.0.0-20240110072658-f3d0c21c0bd5/go.mod h1:WMib8uJP3BbY+X8Szd1rA5Pzhdfh+HCCAYT2z7Fza6Y=
+github.com/yardenshoham/feeds v0.0.0-20231018112706-51ef1e4dc2a4 h1:NAN4oP3ma44GqZQaAw+YQM5NRW+RpyUrfGljQA3Kpvw=
+github.com/yardenshoham/feeds v0.0.0-20231018112706-51ef1e4dc2a4/go.mod h1:WMib8uJP3BbY+X8Szd1rA5Pzhdfh+HCCAYT2z7Fza6Y=
 github.com/yohcop/openid-go v1.0.1 h1:DPRd3iPO5F6O5zX2e62XpVAbPT6wV51cuucH0z9g3js=
 github.com/yohcop/openid-go v1.0.1/go.mod h1:b/AvD03P0KHj4yuihb+VtLD6bYYgsy0zqBzPCRjkCNs=
 github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d/go.mod h1:rHwXgn7JulP+udvsHwJoVG1YGAP6VLg4y9I5dyZdqmA=
