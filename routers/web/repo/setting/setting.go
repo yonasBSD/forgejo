@@ -189,16 +189,17 @@ func SettingsPost(ctx *context.Context) {
 	case "federation":
 		if !setting.Federation.Enabled {
 			ctx.NotFound("", nil)
-			ctx.Flash.Info("Federation Not enabled")
+			ctx.Flash.Info(ctx.Tr("repo.settings.federation_not_enabled"))
 			return
 		}
 
 		federationRepos := form.FederationRepos
 
-		errs := validation.ValidateMaxLen(federationRepos, 2048, "federationRepos")
+		maxFederatedRepoStrLength := 2048
+		errs := validation.ValidateMaxLen(federationRepos, maxFederatedRepoStrLength, "federationRepos")
 		if len(errs) > 0 {
 			ctx.Data["ERR_FederationRepos"] = true
-			ctx.Flash.Error("The given string was larger than 2048 bytes")
+			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFederatedRepoStrLength))
 			ctx.Redirect(repo.Link() + "/settings")
 			return
 		}

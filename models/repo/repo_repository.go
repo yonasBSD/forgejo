@@ -15,6 +15,7 @@ func init() {
 	db.RegisterModel(new(FederatedRepo))
 }
 
+// ToDo: Validate before returning
 func FindFederatedRepoByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
 	maxFederatedRepos := 10
 	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
@@ -23,6 +24,7 @@ func FindFederatedRepoByRepoID(ctx context.Context, repoId int64) ([]*FederatedR
 	return federatedRepoList, sess.Find(&federatedRepoList)
 }
 
+// ToDo: Name this ...repos
 func UpdateFederatedRepo(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
 	for _, federatedRepo := range federatedRepoList {
 		if res, err := validation.IsValid(*federatedRepo); !res {
