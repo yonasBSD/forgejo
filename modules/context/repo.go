@@ -383,8 +383,11 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	federatedRepoList, err := repo_model.FindFederatedReposByRepoID(ctx, repo.ID)
 	if err == nil {
 		federatedRepoString := ""
-		for _, federatedRepo := range federatedRepoList {
-
+		for idx, federatedRepo := range federatedRepoList {
+			if idx > 0 {
+				federatedRepoString += ";"
+			}
+			federatedRepoString += (*federatedRepo).Uri
 		}
 		ctx.Data["FederatedRepos"] = federatedRepoString
 	} else if err != repo_model.ErrMirrorNotExist {

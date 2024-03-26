@@ -223,7 +223,7 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-		federatedRepo, err := repo.NewFederatedRepo(localRepoId, federatedRepoID.ID, federationHost.ID)
+		federatedRepo, err := repo.NewFederatedRepo(localRepoId, federatedRepoID.ID, federationHost.ID, uri)
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
@@ -233,12 +233,4 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 	repo.StoreFederatedRepos(ctx, localRepoId, federatedRepos)
 
 	return 0, "", nil
-}
-
-func FederatedRepoUrl(ctx context.Context, federatedRepo repo.FederatedRepo) (string, error) {
-	federationHost, err := forgefed.GetFederationHost(ctx, federatedRepo.FederationHostID)
-	if err != nil {
-		return "", err
-	}
-	return federationHost.HostFqdn
 }
