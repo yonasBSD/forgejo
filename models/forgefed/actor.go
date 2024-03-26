@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 
@@ -58,7 +59,7 @@ func (id ActorID) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(id.UnvalidatedInput, "unvalidatedInput")...)
 
 	if id.UnvalidatedInput != id.AsURI() {
-		result = append(result, fmt.Sprintf("not all input: %q was parsed: %q", id.UnvalidatedInput, id.AsURI()))
+		result = append(result, fmt.Sprintf("not all input was parsed, \nUnvalidated Input:%q \nParsed URI: %q", id.UnvalidatedInput, id.AsURI()))
 	}
 
 	return result
@@ -178,6 +179,8 @@ func removeEmptyStrings(ls []string) []string {
 
 func newActorID(uri string) (ActorID, error) {
 	validatedURI, err := url.ParseRequestURI(uri)
+	log.Info("Validated URI is: %v", validatedURI)
+	log.Info("Input is: %v", validatedURI)
 	if err != nil {
 		return ActorID{}, err
 	}
@@ -195,7 +198,7 @@ func newActorID(uri string) (ActorID, error) {
 	result.Host = validatedURI.Hostname()
 	result.Path = pathWithoutActorID
 	result.Port = validatedURI.Port()
-	result.UnvalidatedInput = validatedURI.String()
+	result.UnvalidatedInput = validatedURI.String() // ToDo: Whats happening here?
 	return result, nil
 }
 
