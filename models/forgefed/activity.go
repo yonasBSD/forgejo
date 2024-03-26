@@ -6,6 +6,7 @@ package forgefed
 import (
 	"time"
 
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/validation"
 
 	ap "github.com/go-ap/activitypub"
@@ -23,8 +24,13 @@ func NewForgeLike(actorIRI string, objectIRI string) (ForgeLike, error) {
 	result := ForgeLike{}
 	result.Type = ap.LikeType
 	// ToDo: Would validating the source by Actor.Type field make sense?
-	result.Actor = ap.ActorNew(ap.IRI(actorIRI), "ForgejoUser")        // Thats us, a User
-	result.Object = ap.ObjectNew(ap.ActivityVocabularyType(objectIRI)) // Thats them, a Repository
+	object := new(ap.Object)
+	object.ID = ap.IRI(objectIRI)
+	object.URL = ap.IRI(objectIRI)
+
+	result.Actor = ap.ActorNew(ap.IRI(actorIRI), "ForgejoUser") // Thats us, a User
+	result.Object = object                                      // Thats them, a Repository
+	log.Info("Object is: %v", object)
 	result.StartTime = time.Now()
 	if valid, err := validation.IsValid(result); !valid {
 		return ForgeLike{}, err
