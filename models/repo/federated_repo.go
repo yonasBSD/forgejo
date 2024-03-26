@@ -13,6 +13,8 @@ type FederatedRepo struct {
 	RepoID           int64  `xorm:"NOT NULL"`
 	ExternalID       string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
+	Schema           string
+	Port             string
 }
 
 func NewFederatedRepo(repoID int64, externalID string, federationHostID int64) (FederatedRepo, error) {

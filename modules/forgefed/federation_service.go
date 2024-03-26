@@ -234,3 +234,11 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 
 	return 0, "", nil
 }
+
+func FederatedRepoUrl(ctx context.Context, federatedRepo repo.FederatedRepo) (string, error) {
+	federationHost, err := forgefed.GetFederationHost(ctx, federatedRepo.FederationHostID)
+	if err != nil {
+		return "", err
+	}
+	return federationHost.HostFqdn
+}

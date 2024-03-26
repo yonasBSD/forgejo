@@ -380,10 +380,13 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	ctx.Data["HasAccess"] = true
 	ctx.Data["Permission"] = &ctx.Repo.Permission
 
-	federatedRepo, err := repo_model.FindFederatedReposByRepoID(ctx, repo.ID)
+	federatedRepoList, err := repo_model.FindFederatedReposByRepoID(ctx, repo.ID)
 	if err == nil {
-		// TODO: concat string to semicolon sperated list here
-		ctx.Data["FederatedRepos"] = federatedRepo
+		federatedRepoString := ""
+		for _, federatedRepo := range federatedRepoList {
+
+		}
+		ctx.Data["FederatedRepos"] = federatedRepoString
 	} else if err != repo_model.ErrMirrorNotExist {
 		ctx.ServerError("FindFederatedRepoByRepoID", err)
 		return
