@@ -26,7 +26,6 @@ func NewForgeLike(actorIRI string, objectIRI string) (ForgeLike, error) {
 	// ToDo: Would validating the source by Actor.Type field make sense?
 	object := new(ap.Object)
 	object.ID = ap.IRI(objectIRI)
-	object.URL = ap.IRI(objectIRI)
 
 	result.Actor = ap.ActorNew(ap.IRI(actorIRI), "ForgejoUser") // Thats us, a User
 	result.Object = object                                      // Thats them, a Repository
