@@ -156,9 +156,17 @@ func Star(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
+	userID := ctx.Doer.ID
+	repoID := ctx.Repo.Repository.ID
+
 	// TODO: why is this *context.APIContext passed, where a context.Context is expected?
-	err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, true)
+	err := repo_model.StarRepo(ctx, userID, repoID, true)
 	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
+		return
+	}
+
+	if err := repo_model.SendLikeActivities(ctx, userID, repoID); err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
 	}
