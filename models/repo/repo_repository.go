@@ -22,11 +22,11 @@ func FindFederatedReposByRepoID(ctx context.Context, repoId int64) ([]*Federated
 	federatedRepoList := make([]*FederatedRepo, 0, maxFederatedRepos)
 	err := sess.Find(&federatedRepoList)
 	if err != nil {
-		return federatedRepoList, err
+		return make([]*FederatedRepo, 0, maxFederatedRepos), err
 	}
 	for _, federatedRepo := range federatedRepoList {
 		if res, err := validation.IsValid(*federatedRepo); !res {
-			return federatedRepoList, fmt.Errorf("FederationInfo is not valid: %v", err)
+			return make([]*FederatedRepo, 0, maxFederatedRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
 		}
 	}
 	return federatedRepoList, nil
