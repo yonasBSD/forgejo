@@ -8,6 +8,7 @@ import (
 )
 
 // FederatedRepo represents a federated Repository Actor connected with a local Repo
+// ToDo: We currently get database errors if different repos on the same server want to save the same federated repos in their list
 type FederatedRepo struct {
 	ID               int64  `xorm:"pk autoincr"`
 	RepoID           int64  `xorm:"NOT NULL"`
