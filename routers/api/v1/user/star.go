@@ -156,6 +156,7 @@ func Star(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
+	// TODO: why is this *context.APIContext passed, where a context.Context is expected?
 	err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, true)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)

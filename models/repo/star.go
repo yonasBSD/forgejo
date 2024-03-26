@@ -7,8 +7,9 @@ import (
 	"context"
 
 	"code.gitea.io/gitea/models/db"
-	//"code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/models/forgefed"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 )
@@ -25,7 +26,6 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
-// TODO: why is this ctx not type *context.APIContext, as in routers/api/v1/user/star.go?
 // StarRepo or unstar repository.
 func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	ctx, committer, err := db.TxContext(ctx)
@@ -49,7 +49,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 		if _, err := db.Exec(ctx, "UPDATE `user` SET num_stars = num_stars + 1 WHERE id = ?", userID); err != nil {
 			return err
 		}
-		if err := SendLikeActivities(ctx, userID); err != nil {
+		if err := SendLikeActivities(ctx, userID, repoID); err != nil {
 			return err
 		}
 	} else {
@@ -71,22 +71,16 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	return committer.Commit()
 }
 
-// TODO: solve circular dependencies caused by import of forgefed!
-func SendLikeActivities(ctx context.Context, userID int64) error {
+func SendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
+	// TODO: should this be checked somewhere else/outside?
 	if setting.Federation.Enabled {
-
-		/*likeActivity, err := forgefed.NewForgeLike(ctx)
-		if err != nil {
-			return err
-		}
-
-		json, err := likeActivity.MarshalJSON()
-		if err != nil {
-			return err
-		}
-
 		// TODO: is user loading necessary here?
 		user, err := user_model.GetUserByID(ctx, userID)
+		if err != nil {
+			return err
+		}
+
+		federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
 		if err != nil {
 			return err
 		}
@@ -96,13 +90,23 @@ func SendLikeActivities(ctx context.Context, userID int64) error {
 			return err
 		}
 
-		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
-		// ToDo: Change this to the standalone table of FederatedRepos
-		for _, target := range strings.Split(ctx.Repo.Repository.FederationRepos, ";") {
+		for _, federatedRepo := range federatedRepos {
+			target := federatedRepo.Uri
+			likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target)
+			if err != nil {
+				return err
+			}
+
+			json, err := likeActivity.MarshalJSON()
+			if err != nil {
+				return err
+			}
+
+			// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
+			// TODO: Check if we need to respect rate limits
+			// ToDo: Change this to the standalone table of FederatedRepos
 			apclient.Post([]byte(json), target)
 		}
-		*/
-		// Send to list of federated repos
 	}
 	return nil
 }
