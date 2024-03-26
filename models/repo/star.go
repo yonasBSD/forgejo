@@ -10,6 +10,7 @@ import (
 	"code.gitea.io/gitea/models/forgefed"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 )
@@ -26,8 +27,22 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
-// StarRepo or unstar repository.
 func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
+	if err := starLocalRepo(ctx, userID, repoID, star); err != nil {
+		return err
+	}
+
+	if star {
+		if err := sendLikeActivities(ctx, userID, repoID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// StarRepo or unstar repository.
+func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
@@ -49,9 +64,6 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 		if _, err := db.Exec(ctx, "UPDATE `user` SET num_stars = num_stars + 1 WHERE id = ?", userID); err != nil {
 			return err
 		}
-		if err := SendLikeActivities(ctx, userID, repoID); err != nil {
-			return err
-		}
 	} else {
 		if !staring {
 			return nil
@@ -71,16 +83,20 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	return committer.Commit()
 }
 
-func SendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
+// ToDo: Move to federation service or simillar
+func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 	// TODO: should this be checked somewhere else/outside?
 	if setting.Federation.Enabled {
 		// TODO: is user loading necessary here?
+		log.Info("User ID: %v, Repo ID: %v", userID, repoID)
 		user, err := user_model.GetUserByID(ctx, userID)
+		log.Info("User is: %v", user)
 		if err != nil {
 			return err
 		}
 
 		federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
+		log.Info("Federated Repos is: %v", federatedRepos)
 		if err != nil {
 			return err
 		}
@@ -92,11 +108,12 @@ func SendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 
 		for _, federatedRepo := range federatedRepos {
 			target := federatedRepo.Uri
+			log.Info("Federated Repo URI is: %v", target)
 			likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target)
 			if err != nil {
 				return err
 			}
-
+			log.Info("Like Activity: %v", likeActivity)
 			json, err := likeActivity.MarshalJSON()
 			if err != nil {
 				return err
