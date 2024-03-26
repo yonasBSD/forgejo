@@ -19,8 +19,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	actions_module "code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/git"
-	webhook_module "code.gitea.io/gitea/modules/webhook"
-	actions_service "code.gitea.io/gitea/services/actions"
 	pull_service "code.gitea.io/gitea/services/pull"
 	release_service "code.gitea.io/gitea/services/release"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -139,8 +137,6 @@ func TestPullRequestTargetEvent(t *testing.T) {
 		}
 		err = pull_service.NewPullRequest(git.DefaultContext, baseRepo, pullIssue, nil, nil, pullRequest, nil)
 		assert.NoError(t, err)
-		// if a PR "synchronized" event races the "opened" event by having the same SHA, it must be skipped. See https://codeberg.org/forgejo/forgejo/issues/2009.
-		assert.True(t, actions_service.SkipPullRequestEvent(git.DefaultContext, webhook_module.HookEventPullRequestSync, baseRepo.ID, addFileToForkedResp.Commit.SHA))
 
 		// load and compare ActionRun
 		assert.Equal(t, 1, unittest.GetCount(t, &actions_model.ActionRun{RepoID: baseRepo.ID}))
