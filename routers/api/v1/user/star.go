@@ -8,16 +8,12 @@ package user
 import (
 	std_context "context"
 	"net/http"
-	"strings"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/forgefed"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/convert"
@@ -165,34 +161,7 @@ func Star(ctx *context.APIContext) {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
 	}
-	// TODO: move this code to repo.federated_repository
-	if setting.Federation.Enabled {
 
-		likeActivity, err := forgefed.NewForgeLike(ctx)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-			return
-		}
-
-		json, err := likeActivity.MarshalJSON()
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-			return
-		}
-
-		apclient, err := activitypub.NewClient(ctx, ctx.Doer, ctx.Doer.APAPIURL())
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "StarRepo", err)
-			return
-		}
-		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
-		// ToDo: Change this to the standalone table of FederatedRepos
-		for _, target := range strings.Split(ctx.Repo.Repository.FederationRepos, ";") {
-			apclient.Post([]byte(json), target)
-		}
-
-		// Send to list of federated repos
-	}
 	ctx.Status(http.StatusNoContent)
 }
 
