@@ -39,6 +39,7 @@ func LikeActivity(ctx context.Context, form any, repositoryID int64) (int, strin
 
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
+	log.Info("actorURI was: %v", actorURI)
 	federationHost, err := GetFederationHostForUri(ctx, actorURI)
 	if err != nil {
 		return http.StatusInternalServerError, "Wrong FederationHost", err
@@ -130,6 +131,7 @@ func CreateFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (
 
 func GetFederationHostForUri(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
 	// parse actorID (person)
+	log.Info("Input was: %v", actorURI)
 	rawActorID, err := forgefed.NewActorID(actorURI)
 	if err != nil {
 		return nil, err
