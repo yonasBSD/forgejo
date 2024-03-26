@@ -32,7 +32,7 @@ func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 		return err
 	}
 
-	if star {
+	if star && setting.Federation.Enabled {
 		if err := sendLikeActivities(ctx, userID, repoID); err != nil {
 			return err
 		}
@@ -85,46 +85,45 @@ func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 
 // ToDo: Move to federation service or simillar
 func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
-	// TODO: should this be checked somewhere else/outside?
-	if setting.Federation.Enabled {
-		// TODO: is user loading necessary here?
-		log.Info("User ID: %v, Repo ID: %v", userID, repoID)
-		user, err := user_model.GetUserByID(ctx, userID)
-		log.Info("User is: %v", user)
-		if err != nil {
-			return err
-		}
 
-		federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
-		log.Info("Federated Repos is: %v", federatedRepos)
-		if err != nil {
-			return err
-		}
-
-		apclient, err := activitypub.NewClient(ctx, user, user.APAPIURL())
-		if err != nil {
-			return err
-		}
-
-		for _, federatedRepo := range federatedRepos {
-			target := federatedRepo.Uri
-			log.Info("Federated Repo URI is: %v", target)
-			likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target)
-			if err != nil {
-				return err
-			}
-			log.Info("Like Activity: %v", likeActivity)
-			json, err := likeActivity.MarshalJSON()
-			if err != nil {
-				return err
-			}
-
-			// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
-			// TODO: Check if we need to respect rate limits
-			// ToDo: Change this to the standalone table of FederatedRepos
-			apclient.Post([]byte(json), target)
-		}
+	// TODO: is user loading necessary here?
+	log.Info("User ID: %v, Repo ID: %v", userID, repoID)
+	user, err := user_model.GetUserByID(ctx, userID)
+	log.Info("User is: %v", user)
+	if err != nil {
+		return err
 	}
+
+	federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
+	log.Info("Federated Repos is: %v", federatedRepos)
+	if err != nil {
+		return err
+	}
+
+	apclient, err := activitypub.NewClient(ctx, user, user.APAPIURL())
+	if err != nil {
+		return err
+	}
+
+	for _, federatedRepo := range federatedRepos {
+		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
+		log.Info("Federated Repo URI is: %v", target)
+		likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target)
+		if err != nil {
+			return err
+		}
+		log.Info("Like Activity: %v", likeActivity)
+		json, err := likeActivity.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
+		// TODO: Check if we need to respect rate limits
+		// ToDo: Change this to the standalone table of FederatedRepos
+		apclient.Post([]byte(json), target)
+	}
+
 	return nil
 }
 
