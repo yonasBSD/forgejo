@@ -1,3 +1,15 @@
+# 2024-03 UI-Work for sending like activities
+
+Put link to post here: https://domaindrivenarchitecture.org/
+
+Bild von repo-settings-ui
+
+Bild von architektur mit federation-host - fühlt sich gut an
+
+Erkenntniss: Activity only by human - request for comments: https://codeberg.org/forgejo/discussions/issues/143
+
+In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680
+
 # 2024-02 Considerations on Mapping and Architectural decisions
 
 This month we discussed how a federated Person should be mapped to a local FederatedUser representation. Having a reliable mapping will be very important to trace code- / issue- and other ownerships.
