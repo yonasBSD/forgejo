@@ -10,12 +10,20 @@ While implementing the trigger of federated stars we have to handle the distribu
 
 This must be done consistently and without circularity, such that a repository starring by a user leads to exactly one added star in every federated repository.
 
+```mermaid
+flowchart TD
+    U(User) -->|Press Star on UI| A(A: repository - follow C by incident) 
+    A ~~~ B(B: follow A)
+    B ~~~ C(C: follow B)
+    C ~~~ A
+```
+
 ## Decision
 
 
 ## Choices
 
-### 1. Star Activity Triggers Sending of Star Activity to Federated Repositories
+### 1. Transient Federation
 
 In this case the star federation process would look like:
 
@@ -25,6 +33,14 @@ In this case the star federation process would look like:
 #### Problem - Circularity And Inconsistency
 
 Circular federation would lead to a infinite circular distribution of Like-Activities:
+
+```mermaid
+flowchart TD
+    U(User) -->|Press Star on UI| A(A: repository - follow C by incident) 
+    A -->|federate Like Activity| B(B: follow A)
+    B -->|federate Like Activity| C(C: follow B)
+    C -->|federate Like Activity| A
+```
 
 1. Given a repo on the 3 instances A, B, C.   
    Repo on instance A has set repo on instance B as federation repo.   
@@ -38,7 +54,14 @@ Circular federation would lead to a infinite circular distribution of Like-Activ
    Thus, the repo on instance A gets another star by this user and sends Like-Activity to the repo on instance C.
 7. The circular distribution of Like-Activities continues, since the actor is always the local FederatedUser of the sending instance.
 
-### 2. Only Repository-Starring By Authenticated User Triggers Sending of Star Activity to Federated Repositories
+### 2. Direct Federation
+
+```mermaid
+flowchart TD
+    U(User) -->|Press Star on UI| A(A: repository - follow C not allowed) 
+    A -->|federate Like Activity| B(B: follow A)
+    A -->|federate Like Activity| C(C: follow B not allowed, has to follow A)
+```
 
 In this case the star federation process would look like:
 
