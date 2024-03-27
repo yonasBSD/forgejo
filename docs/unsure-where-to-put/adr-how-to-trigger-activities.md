@@ -1,4 +1,4 @@
-# Activities Are Only Triggered by Human Interaction
+# How to Trigger Activities
 
 ## Status
 
