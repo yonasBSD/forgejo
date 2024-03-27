@@ -1,14 +1,6 @@
-# 2024-03 UI-Work for sending like activities
+# 2024-03 Ui-Work for Sending Like Activities
 
-Put link to post here: https://domaindrivenarchitecture.org/
-
-Bild von repo-settings-ui
-
-Bild von architektur mit federation-host - fühlt sich gut an
-
-Erkenntniss: Activity only by human - request for comments: https://codeberg.org/forgejo/discussions/issues/143
-
-In case of interest find the current roadmap at: https://codeberg.org/forgejo/forgejo/pulls/1680
+You can find this post here: https://domaindrivenarchitecture.org/posts/2024-03-27-state-of-federation/
 
 # 2024-02 Considerations on Mapping and Architectural decisions
 
