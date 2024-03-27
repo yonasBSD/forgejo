@@ -12,6 +12,30 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
+// TODO: fix this test. mock time.Now?
+func Test_NewForgeLike(t *testing.T) {
+	actorIRI := "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1"
+	objectIRI := "https://codeberg.org/api/v1/activitypub/repository-id/1"
+	want := []byte(`{"type":"Like","actor":"https://repo.prod.meissa.de/api/v1/activitypub/user-id/1","object":"https://codeberg.org/api/v1/activitypub/repository-id/1"}`)
+
+	sut, err := NewForgeLike(actorIRI, objectIRI)
+	if err != nil {
+		t.Errorf("unexpected error: %v\n", err)
+	}
+	if valid, _ := validation.IsValid(sut); !valid {
+		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
+	}
+
+	got, err := sut.MarshalJSON()
+	if err != nil {
+		t.Errorf("MarshalJSON() error = \"%v\"", err)
+		return
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("MarshalJSON() got = %q, want %q", got, want)
+	}
+}
+
 func Test_StarMarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    ForgeLike

@@ -6,7 +6,6 @@ package forgefed
 import (
 	"time"
 
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/validation"
 
 	ap "github.com/go-ap/activitypub"
@@ -19,17 +18,12 @@ type ForgeLike struct {
 	ap.Activity
 }
 
-// TODO: Use explicit values instead of ctx !!
 func NewForgeLike(actorIRI string, objectIRI string) (ForgeLike, error) {
 	result := ForgeLike{}
 	result.Type = ap.LikeType
 	// ToDo: Would validating the source by Actor.Type field make sense?
-	object := new(ap.Object)
-	object.ID = ap.IRI(objectIRI)
-
-	result.Actor = ap.ActorNew(ap.IRI(actorIRI), "ForgejoUser") // Thats us, a User
-	result.Object = object                                      // Thats them, a Repository
-	log.Info("Object is: %v", object)
+	result.Actor = ap.IRI(actorIRI)   // Thats us, a User
+	result.Object = ap.IRI(objectIRI) // Thats them, a Repository
 	result.StartTime = time.Now()
 	if valid, err := validation.IsValid(result); !valid {
 		return ForgeLike{}, err
