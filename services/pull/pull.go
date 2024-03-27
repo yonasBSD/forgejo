@@ -293,31 +293,30 @@ func checkForInvalidation(ctx context.Context, requests issues_model.PullRequest
 // AddTestPullRequestTask adds new test tasks by given head/base repository and head/base branch,
 // and generate new patch for testing as needed.
 func AddTestPullRequestTask(ctx context.Context, doer *user_model.User, repoID int64, branch string, isSync bool, oldCommitID, newCommitID string) {
-	// When TestPullRequest runs it must ignore any PR with an index > maxPR because they
-	// would have been created after the goroutine started. They are in the future.
+	// When TestPullRequest runs it must ignore any PR that did not already exist
+	// at this point in time.
+	//
 	// This guards the following race:
 	// * commit A is pushed
 	// * goroutine starts but does not run TestPullRequest yet
-	// * a pull request with commit A as the head is created
+	// * a pull request P with commit A as the head is created
 	// * goroutine continues and runs TestPullRequest
-	maxPR, err := issues_model.GetMaxIssueIndexForRepo(ctx, repoID)
-	if err != nil {
-		log.Error("AddTestPullRequestTask GetMaxIssueIndexForRepo(%d): %v", repoID, err)
-		return
-	}
-	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: only pull requests with index <= %d will be considered", repoID, branch, maxPR)
+	// * TestPullRequest ignores pull request P because it was
+	//   created after A was pushed
+	olderThan := time.Now().UnixNano()
+	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: only pull requests created before nano time %d will be considered", repoID, branch, olderThan)
 	go graceful.GetManager().RunWithShutdownContext(func(ctx context.Context) {
 		// There is no sensible way to shut this down ":-("
 		// If you don't let it run all the way then you will lose data
 		// TODO: graceful: TestPullRequest needs to become a queue!
 
-		TestPullRequest(ctx, doer, repoID, maxPR, branch, isSync, oldCommitID, newCommitID)
+		TestPullRequest(ctx, doer, repoID, olderThan, branch, isSync, oldCommitID, newCommitID)
 	})
 }
 
-func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, maxPR int64, branch string, isSync bool, oldCommitID, newCommitID string) {
+func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, olderThan int64, branch string, isSync bool, oldCommitID, newCommitID string) {
 	// GetUnmergedPullRequestsByHeadInfo() only return open and unmerged PR.
-	prs, err := issues_model.GetUnmergedPullRequestsByHeadInfoMax(ctx, repoID, maxPR, branch)
+	prs, err := issues_model.GetUnmergedPullRequestsByHeadInfoMax(ctx, repoID, olderThan, branch)
 	if err != nil {
 		log.Error("Find pull requests [head_repo_id: %d, head_branch: %s]: %v", repoID, branch, err)
 		return

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
@@ -16,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/timeutil"
 	pull_service "code.gitea.io/gitea/services/pull"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
@@ -31,6 +33,9 @@ func TestPullRequestSynchronized(t *testing.T) {
 	pull := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{ID: 2})
 	// tip of tests/gitea-repositories-meta/user2/repo1 branch2
 	pull.HeadCommitID = "985f0301dba5e7b34be866819cd15ad3d8f508ee"
+	pull.LoadIssue(db.DefaultContext)
+	pull.Issue.Created = timeutil.TimeStampNanoNow()
+	issues_model.UpdateIssueCols(db.DefaultContext, pull.Issue, "created")
 
 	require.Equal(t, pull.HeadRepoID, pull.BaseRepoID)
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: pull.HeadRepoID})
@@ -57,19 +62,19 @@ func TestPullRequestSynchronized(t *testing.T) {
 	})
 
 	for _, testCase := range []struct {
-		name     string
-		maxPR    int64
-		expected bool
+		name      string
+		olderThan int64
+		expected  bool
 	}{
 		{
-			name:     "TestPullRequest process PR",
-			maxPR:    pull.Index,
-			expected: true,
+			name:      "TestPullRequest process PR",
+			olderThan: int64(pull.Issue.Created),
+			expected:  true,
 		},
 		{
-			name:     "TestPullRequest skip PR",
-			maxPR:    pull.Index - 1,
-			expected: false,
+			name:      "TestPullRequest skip PR",
+			olderThan: int64(pull.Issue.Created) - 1,
+			expected:  false,
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -77,7 +82,7 @@ func TestPullRequestSynchronized(t *testing.T) {
 			logChecker.Filter("Updating PR").StopMark("TestPullRequest ")
 			defer cleanup()
 
-			pull_service.TestPullRequest(context.Background(), owner, repo.ID, testCase.maxPR, "branch2", true, pull.HeadCommitID, pull.HeadCommitID)
+			pull_service.TestPullRequest(context.Background(), owner, repo.ID, testCase.olderThan, "branch2", true, pull.HeadCommitID, pull.HeadCommitID)
 			logFiltered, logStopped := logChecker.Check(5 * time.Second)
 			assert.True(t, logStopped)
 			assert.Equal(t, testCase.expected, logFiltered[0])
