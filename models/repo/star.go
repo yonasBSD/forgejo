@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
@@ -86,7 +87,7 @@ func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 // ToDo: Move to federation service or simillar
 func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 
-	// TODO: is user loading necessary here?
+	// TODO: is user loading necessary here? - imho no!
 	log.Info("User ID: %v, Repo ID: %v", userID, repoID)
 	user, err := user_model.GetUserByID(ctx, userID)
 	log.Info("User is: %v", user)
@@ -100,6 +101,7 @@ func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 		return err
 	}
 
+	// TODO: That's wrong - we've to send the activities to repo not to user!
 	apclient, err := activitypub.NewClient(ctx, user, user.APAPIURL())
 	if err != nil {
 		return err
@@ -108,7 +110,7 @@ func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 	for _, federatedRepo := range federatedRepos {
 		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
 		log.Info("Federated Repo URI is: %v", target)
-		likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target)
+		likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target, time.Now())
 		if err != nil {
 			return err
 		}
@@ -118,6 +120,7 @@ func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 			return err
 		}
 
+		// TODO: decouple loading & creating activities from sending them - use two loops.
 		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
 		// TODO: Check if we need to respect rate limits
 		// ToDo: Change this to the standalone table of FederatedRepos
