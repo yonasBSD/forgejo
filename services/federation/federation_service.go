@@ -82,7 +82,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	// execute the activity if the repo was not stared already
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = StarRepoAndFederate(ctx, *user, repositoryID, true)
+		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Error staring", err
 		}
@@ -267,20 +267,6 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 		// TODO: Check if we need to respect rate limits
 		// ToDo: Change this to the standalone table of FederatedRepos
 		apclient.Post([]byte(json), target)
-	}
-
-	return nil
-}
-
-func StarRepoAndFederate(ctx context.Context, doer user.User, repoID int64, star bool) error {
-	if err := repo.StarRepo(ctx, doer.ID, repoID, star); err != nil {
-		return err
-	}
-
-	if star && setting.Federation.Enabled {
-		if err := SendLikeActivities(ctx, doer, repoID); err != nil {
-			return err
-		}
 	}
 
 	return nil

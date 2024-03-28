@@ -14,10 +14,10 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/forgefed"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/convert"
+	"code.gitea.io/gitea/services/repository"
 )
 
 // getStarredRepos returns the repos that the user with the specified userID has
@@ -157,7 +157,7 @@ func Star(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	err := forgefed.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
+	err := repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
@@ -188,7 +188,7 @@ func Unstar(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	err := forgefed.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
+	err := repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
