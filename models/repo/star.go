@@ -10,8 +10,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 
-	//"code.gitea.io/gitea/modules/activitypub"
-
 	"code.gitea.io/gitea/modules/timeutil"
 )
 
@@ -27,8 +25,7 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
-// StarRepo or unstar repository.
-func StarLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
+func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err

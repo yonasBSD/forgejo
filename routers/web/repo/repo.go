@@ -23,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -317,9 +318,9 @@ func Action(ctx *context.Context) {
 	case "unwatch":
 		err = repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
 	case "star":
-		err = repo_service.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
+		err = forgefed.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
 	case "unstar":
-		err = repo_service.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
+		err = forgefed.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
 	case "accept_transfer":
 		err = acceptOrRejectRepoTransfer(ctx, true)
 	case "reject_transfer":

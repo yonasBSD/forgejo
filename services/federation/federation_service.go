@@ -82,7 +82,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	// execute the activity if the repo was not stared already
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = repo.StarLocalRepo(ctx, user.ID, repositoryID, true)
+		err = StarRepoAndFederate(ctx, *user, repositoryID, true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Error staring", err
 		}
@@ -238,17 +238,16 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 }
 
 func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
-
 	federatedRepos, err := repo.FindFederatedReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", federatedRepos)
 	if err != nil {
 		return err
 	}
 
-	/*apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
+	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
 	if err != nil {
 		return err
-	}*/
+	}
 
 	for _, federatedRepo := range federatedRepos {
 		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
@@ -258,16 +257,30 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 			return err
 		}
 		log.Info("Like Activity: %v", likeActivity)
-		/*json, err := likeActivity.MarshalJSON()
+		json, err := likeActivity.MarshalJSON()
 		if err != nil {
 			return err
-		}*/
+		}
 
 		// TODO: decouple loading & creating activities from sending them - use two loops.
 		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
 		// TODO: Check if we need to respect rate limits
 		// ToDo: Change this to the standalone table of FederatedRepos
-		//apclient.Post([]byte(json), target)
+		apclient.Post([]byte(json), target)
+	}
+
+	return nil
+}
+
+func StarRepoAndFederate(ctx context.Context, doer user.User, repoID int64, star bool) error {
+	if err := repo.StarRepo(ctx, doer.ID, repoID, star); err != nil {
+		return err
+	}
+
+	if star && setting.Federation.Enabled {
+		if err := SendLikeActivities(ctx, doer, repoID); err != nil {
+			return err
+		}
 	}
 
 	return nil
