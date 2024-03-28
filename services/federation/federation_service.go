@@ -1,7 +1,7 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package forgefed
+package federation
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/models/repo"
@@ -22,15 +23,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// ToDo: May need to change the name to reflect workings of function better
-// LikeActivity receives a ForgeLike activity and does the following:
+// ProcessLikeActivity receives a ForgeLike activity and does the following:
 // Validation of the activity
 // Creation of a (remote) federationHost if not existing
 // Creation of a forgefed Person if not existing
 // Validation of incoming RepositoryID against Local RepositoryID
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
-func LikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
+func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*forgefed.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
@@ -82,7 +82,7 @@ func LikeActivity(ctx context.Context, form any, repositoryID int64) (int, strin
 	// execute the activity if the repo was not stared already
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = repo.StarRepo(ctx, *user, repositoryID, true)
+		err = repo.StarLocalRepo(ctx, user.ID, repositoryID, true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Error staring", err
 		}
@@ -235,4 +235,40 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 	repo.StoreFederatedRepos(ctx, localRepoId, federatedRepos)
 
 	return 0, "", nil
+}
+
+func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
+
+	federatedRepos, err := repo.FindFederatedReposByRepoID(ctx, repoID)
+	log.Info("Federated Repos is: %v", federatedRepos)
+	if err != nil {
+		return err
+	}
+
+	/*apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
+	if err != nil {
+		return err
+	}*/
+
+	for _, federatedRepo := range federatedRepos {
+		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
+		log.Info("Federated Repo URI is: %v", target)
+		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
+		if err != nil {
+			return err
+		}
+		log.Info("Like Activity: %v", likeActivity)
+		/*json, err := likeActivity.MarshalJSON()
+		if err != nil {
+			return err
+		}*/
+
+		// TODO: decouple loading & creating activities from sending them - use two loops.
+		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
+		// TODO: Check if we need to respect rate limits
+		// ToDo: Change this to the standalone table of FederatedRepos
+		//apclient.Post([]byte(json), target)
+	}
+
+	return nil
 }

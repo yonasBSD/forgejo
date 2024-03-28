@@ -9,22 +9,21 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStarRepo(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
-	doer := user.User{ID: 2}
+	const doerID = 2
 	const repoID = 1
-	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: doer.ID, RepoID: repoID})
-	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, doer, repoID, true))
-	unittest.AssertExistsAndLoadBean(t, &repo_model.Star{UID: doer.ID, RepoID: repoID})
-	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, doer, repoID, true))
-	unittest.AssertExistsAndLoadBean(t, &repo_model.Star{UID: doer.ID, RepoID: repoID})
-	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, doer, repoID, false))
-	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: doer.ID, RepoID: repoID})
+	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: doerID, RepoID: repoID})
+	assert.NoError(t, repo_model.StarLocalRepo(db.DefaultContext, doerID, repoID, true))
+	unittest.AssertExistsAndLoadBean(t, &repo_model.Star{UID: doerID, RepoID: repoID})
+	assert.NoError(t, repo_model.StarLocalRepo(db.DefaultContext, doerID, repoID, true))
+	unittest.AssertExistsAndLoadBean(t, &repo_model.Star{UID: doerID, RepoID: repoID})
+	assert.NoError(t, repo_model.StarLocalRepo(db.DefaultContext, doerID, repoID, false))
+	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: doerID, RepoID: repoID})
 }
 
 func TestIsStaring(t *testing.T) {
@@ -56,12 +55,11 @@ func TestRepository_GetStargazers2(t *testing.T) {
 func TestClearRepoStars(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	const userID = 2
-	doer := user.User{ID: userID}
 	const repoID = 1
 	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: userID, RepoID: repoID})
-	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, doer, repoID, true))
+	assert.NoError(t, repo_model.StarLocalRepo(db.DefaultContext, userID, repoID, true))
 	unittest.AssertExistsAndLoadBean(t, &repo_model.Star{UID: userID, RepoID: repoID})
-	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, doer, repoID, false))
+	assert.NoError(t, repo_model.StarLocalRepo(db.DefaultContext, userID, repoID, false))
 	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: userID, RepoID: repoID})
 	assert.NoError(t, repo_model.ClearRepoStars(db.DefaultContext, repoID))
 	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: userID, RepoID: repoID})

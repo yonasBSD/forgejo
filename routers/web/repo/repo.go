@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors. All rights reserved.
+// Copyright 2024 The forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -316,9 +317,9 @@ func Action(ctx *context.Context) {
 	case "unwatch":
 		err = repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
 	case "star":
-		err = repo_model.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
+		err = repo_service.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
 	case "unstar":
-		err = repo_model.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
+		err = repo_service.StarRepo(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
 	case "accept_transfer":
 		err = acceptOrRejectRepoTransfer(ctx, true)
 	case "reject_transfer":

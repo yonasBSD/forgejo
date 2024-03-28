@@ -6,15 +6,12 @@ package repo
 
 import (
 	"context"
-	"time"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/forgefed"
 	user_model "code.gitea.io/gitea/models/user"
 
 	//"code.gitea.io/gitea/modules/activitypub"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/setting"
+
 	"code.gitea.io/gitea/modules/timeutil"
 )
 
@@ -30,22 +27,8 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
-func StarRepo(ctx context.Context, doer user_model.User, repoID int64, star bool) error {
-	if err := starLocalRepo(ctx, doer.ID, repoID, star); err != nil {
-		return err
-	}
-
-	if star && setting.Federation.Enabled {
-		if err := sendLikeActivities(ctx, doer, repoID); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // StarRepo or unstar repository.
-func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
+func StarLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
@@ -84,43 +67,6 @@ func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	}
 
 	return committer.Commit()
-}
-
-// ToDo: Move to federation service or simillar
-func sendLikeActivities(ctx context.Context, doer user_model.User, repoID int64) error {
-
-	federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
-	log.Info("Federated Repos is: %v", federatedRepos)
-	if err != nil {
-		return err
-	}
-
-	/*apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
-	if err != nil {
-		return err
-	}*/
-
-	for _, federatedRepo := range federatedRepos {
-		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
-		log.Info("Federated Repo URI is: %v", target)
-		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
-		if err != nil {
-			return err
-		}
-		log.Info("Like Activity: %v", likeActivity)
-		/*json, err := likeActivity.MarshalJSON()
-		if err != nil {
-			return err
-		}*/
-
-		// TODO: decouple loading & creating activities from sending them - use two loops.
-		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
-		// TODO: Check if we need to respect rate limits
-		// ToDo: Change this to the standalone table of FederatedRepos
-		//apclient.Post([]byte(json), target)
-	}
-
-	return nil
 }
 
 // IsStaring checks if user has starred given repository.

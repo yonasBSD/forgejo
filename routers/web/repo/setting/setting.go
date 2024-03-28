@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2024 The forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package setting
@@ -20,7 +21,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/indexer/stats"
@@ -33,6 +33,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
+	"code.gitea.io/gitea/services/federation"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
@@ -204,7 +205,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if _, _, err := forgefed.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
+		if _, _, err := federation.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}

@@ -10,10 +10,10 @@ import (
 
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/federation"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -72,7 +72,7 @@ func RepositoryInbox(ctx *context.APIContext) {
 	log.Info("RepositoryInbox: repo: %v", repository)
 
 	form := web.GetForm(ctx)
-	httpStatus, title, err := forgefed.LikeActivity(ctx, form, repository.ID)
+	httpStatus, title, err := federation.ProcessLikeActivity(ctx, form, repository.ID)
 	if err != nil {
 		ctx.Error(httpStatus, title, err)
 	}
