@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 
@@ -179,8 +178,6 @@ func removeEmptyStrings(ls []string) []string {
 
 func newActorID(uri string) (ActorID, error) {
 	validatedURI, err := url.ParseRequestURI(uri)
-	log.Info("Validated URI is: %v", validatedURI)
-	log.Info("Input is: %v", validatedURI)
 	if err != nil {
 		return ActorID{}, err
 	}

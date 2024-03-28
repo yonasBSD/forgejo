@@ -250,7 +250,7 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 	}
 
 	for _, federatedRepo := range federatedRepos {
-		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
+		target := federatedRepo.Uri
 		log.Info("Federated Repo URI is: %v", target)
 		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {
@@ -266,7 +266,9 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
 		// TODO: Check if we need to respect rate limits
 		// ToDo: Change this to the standalone table of FederatedRepos
-		apclient.Post([]byte(json), target)
+		log.Info("Like JSON: %v", string(json))
+		log.Info("Target URI: %v", target)
+		apclient.Post([]byte(json), fmt.Sprintf("%v/inbox/", target))
 	}
 
 	return nil
