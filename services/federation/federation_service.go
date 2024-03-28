@@ -244,31 +244,30 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 		return err
 	}
 
-	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
-	if err != nil {
-		return err
-	}
-
+	likeActivityList := make([]forgefed.ForgeLike, 0)
 	for _, federatedRepo := range federatedRepos {
 		target := federatedRepo.Uri
-		log.Info("Federated Repo URI is: %v", target)
 		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {
 			return err
 		}
-		log.Info("Like Activity: %v", likeActivity)
-		json, err := likeActivity.MarshalJSON()
+		likeActivityList = append(likeActivityList, likeActivity)
+	}
+
+	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
+	if err != nil {
+		return err
+	}
+	for _, activity := range likeActivityList {
+		json, err := activity.MarshalJSON()
 		if err != nil {
 			return err
 		}
 
-		// TODO: decouple loading & creating activities from sending them - use two loops.
-		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
-		// TODO: Check if we need to respect rate limits
-		// ToDo: Change this to the standalone table of FederatedRepos
-		log.Info("Like JSON: %v", string(json))
-		log.Info("Target URI: %v", target)
-		apclient.Post([]byte(json), fmt.Sprintf("%v/inbox/", target))
+		_, err = apclient.Post([]byte(json), fmt.Sprintf("%v/inbox/", activity.Object))
+		if err != nil {
+			log.Error("error %v while sending activity: %q", err, activity)
+		}
 	}
 
 	return nil
