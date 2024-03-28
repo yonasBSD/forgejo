@@ -42,6 +42,21 @@ func GetActor(id string) (*ap.Actor, error) {
 	return actorObj, nil
 }
 
+func GetPersonAvatar(ctx context.Context, person *ap.Person) ([]byte, error) {
+
+	avatarObj := new(ap.Image)
+	ap.CopyItemProperties(avatarObj, person.Icon)
+	log.Info("Getting avatar from link : %s", avatarObj.URL.GetLink().String())
+
+	r, err := http.Get(avatarObj.URL.GetLink().String())
+	if err != nil {
+		log.Error("Got error while fetching avatar fn: %w", err)
+		return nil, err
+	}
+	defer r.Body.Close()
+	return io.ReadAll(r.Body)
+}
+
 func SavePerson(ctx context.Context, person *ap.Person) (*user.User, error) {
 	hostname, err := GetHostnameFromResource(person.ID.String())
 	if err != nil {
@@ -88,6 +103,16 @@ func SavePerson(ctx context.Context, person *ap.Person) (*user.User, error) {
 
 	if err = federation.CreateUser(ctx, u); err != nil {
 		return nil, err
+	}
+
+	avatar, err := GetPersonAvatar(ctx, person)
+	if err != nil {
+		log.Error("Got error while fetching avatar: %w", err)
+		return nil, err
+	}
+
+	if u.IsUploadAvatarChanged(avatar) {
+		_ = user_service.UploadAvatar(ctx, u, avatar)
 	}
 
 	if err = federation.CreateFederatedUser(ctx, u, &federatedHost); err != nil {
