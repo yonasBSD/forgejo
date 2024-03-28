@@ -13,7 +13,6 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
-// TODO: fix this test. mock time.Now?
 func Test_NewForgeLike(t *testing.T) {
 	actorIRI := "https://repo.prod.meissa.de/api/v1/activitypub/user-id/1"
 	objectIRI := "https://codeberg.org/api/v1/activitypub/repository-id/1"
