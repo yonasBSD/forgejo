@@ -303,7 +303,7 @@ func (u *User) HTMLURL() string {
 
 // APAPIURL returns the IRI to the api endpoint of the user
 func (u *User) APAPIURL() string {
-	return setting.AppURL + url.PathEscape("api/v1/activitypub/user-id/") + url.PathEscape(string(u.ID))
+	return fmt.Sprintf("%vapi/v1/activitypub/user-id/%v", setting.AppURL, url.PathEscape(fmt.Sprintf("%v", u.ID)))
 }
 
 // OrganisationLink returns the organization sub page link.

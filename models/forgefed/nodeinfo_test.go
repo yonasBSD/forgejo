@@ -52,7 +52,7 @@ func Test_NodeInfoWellKnownValidate(t *testing.T) {
 	}
 
 	sut = NodeInfoWellKnown{Href: "./federated-repo.prod.meissa.de/api/v1/nodeinfo"}
-	if _, err := validation.IsValid(sut); err.Error() != "Href has to be absolute\nValue  is not contained in allowed values [[http https]]" {
+	if _, err := validation.IsValid(sut); err.Error() != "Href has to be absolute\nValue  is not contained in allowed values [http https]" {
 		t.Errorf("validation error expected but was: %v\n", err)
 	}
 

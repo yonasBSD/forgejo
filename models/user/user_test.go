@@ -60,6 +60,15 @@ func TestCanCreateOrganization(t *testing.T) {
 	assert.False(t, user.CanCreateOrganization())
 }
 
+func TestAPAPIURL(t *testing.T) {
+	user := user_model.User{ID: 1}
+	url := user.APAPIURL()
+	expected := "https://try.gitea.io/api/v1/activitypub/user-id/1"
+	if url != expected {
+		t.Errorf("unexpected APAPIURL, expected: %q, actual: %q", expected, url)
+	}
+}
+
 func TestSearchUsers(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	testSuccess := func(opts *user_model.SearchUserOptions, expectedUserOrOrgIDs []int64) {

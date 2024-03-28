@@ -11,7 +11,8 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/activitypub"
+
+	//"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -94,10 +95,10 @@ func sendLikeActivities(ctx context.Context, doer user_model.User, repoID int64)
 		return err
 	}
 
-	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
+	/*apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
 	if err != nil {
 		return err
-	}
+	}*/
 
 	for _, federatedRepo := range federatedRepos {
 		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
@@ -107,16 +108,16 @@ func sendLikeActivities(ctx context.Context, doer user_model.User, repoID int64)
 			return err
 		}
 		log.Info("Like Activity: %v", likeActivity)
-		json, err := likeActivity.MarshalJSON()
+		/*json, err := likeActivity.MarshalJSON()
 		if err != nil {
 			return err
-		}
+		}*/
 
 		// TODO: decouple loading & creating activities from sending them - use two loops.
 		// TODO: set timeouts for outgoing request in oder to mitigate DOS by slow lories
 		// TODO: Check if we need to respect rate limits
 		// ToDo: Change this to the standalone table of FederatedRepos
-		apclient.Post([]byte(json), target)
+		//apclient.Post([]byte(json), target)
 	}
 
 	return nil

@@ -110,7 +110,7 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestAcivityValidation(t *testing.T) {
+func TestActivityValidation(t *testing.T) {
 	sut := new(ForgeLike)
 	sut.UnmarshalJSON([]byte(`{"type":"Like",
 	"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
@@ -123,16 +123,16 @@ func TestAcivityValidation(t *testing.T) {
 	sut.UnmarshalJSON([]byte(`{"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	if sut.Validate()[0] != "Field type may not be empty" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	if sut.Validate()[0] != "Field type should not be empty" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 
 	sut.UnmarshalJSON([]byte(`{"type":"bad-type",
 		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	if sut.Validate()[0] != "Value bad-type is not contained in allowed values [[Like]]" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	if sut.Validate()[0] != "Value bad-type is not contained in allowed values [Like]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 
 	sut.UnmarshalJSON([]byte(`{"type":"Like",

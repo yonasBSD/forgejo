@@ -66,7 +66,7 @@ func TestActorIdValidation(t *testing.T) {
 	sut.Host = "an.other.host"
 	sut.Port = ""
 	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/"
-	if sut.Validate()[0] != "Field userId may not be empty" {
+	if sut.Validate()[0] != "Field userId should not be empty" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
@@ -78,8 +78,8 @@ func TestActorIdValidation(t *testing.T) {
 	sut.Host = "an.other.host"
 	sut.Port = ""
 	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1?illegal=action"
-	if sut.Validate()[0] != "not all input: \"https://an.other.host/api/v1/activitypub/user-id/1?illegal=action\" was parsed: \"https://an.other.host/api/v1/activitypub/user-id/1\"" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	if sut.Validate()[0] != "not all input was parsed, \nUnvalidated Input:\"https://an.other.host/api/v1/activitypub/user-id/1?illegal=action\" \nParsed URI: \"https://an.other.host/api/v1/activitypub/user-id/1\"" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 }
 
@@ -104,8 +104,8 @@ func TestPersonIdValidation(t *testing.T) {
 	sut.Host = "an.other.host"
 	sut.Port = ""
 	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/1"
-	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [[forgejo gitea]]" {
-		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	if sut.Validate()[0] != "Value forgejox is not contained in allowed values [forgejo gitea]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 }
 

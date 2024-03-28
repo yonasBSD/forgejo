@@ -217,3 +217,12 @@ func TestComposeSSHCloneURL(t *testing.T) {
 	setting.SSH.Port = 123
 	assert.Equal(t, "ssh://git@[::1]:123/user/repo.git", repo_model.ComposeSSHCloneURL("user", "repo"))
 }
+
+func TestAPAPIURL(t *testing.T) {
+	repo := repo_model.Repository{ID: 1}
+	url := repo.APAPIURL()
+	expected := "https://try.gitea.io/api/v1/activitypub/repository-id/1"
+	if url != expected {
+		t.Errorf("unexpected APAPIURL, expected: %q, actual: %q", expected, url)
+	}
+}
