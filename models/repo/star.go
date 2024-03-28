@@ -29,13 +29,13 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
-func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
-	if err := starLocalRepo(ctx, userID, repoID, star); err != nil {
+func StarRepo(ctx context.Context, doer user_model.User, repoID int64, star bool) error {
+	if err := starLocalRepo(ctx, doer.ID, repoID, star); err != nil {
 		return err
 	}
 
 	if star && setting.Federation.Enabled {
-		if err := sendLikeActivities(ctx, userID, repoID); err != nil {
+		if err := sendLikeActivities(ctx, doer, repoID); err != nil {
 			return err
 		}
 	}
@@ -86,15 +86,7 @@ func starLocalRepo(ctx context.Context, userID, repoID int64, star bool) error {
 }
 
 // ToDo: Move to federation service or simillar
-func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
-
-	// TODO: is user loading necessary here? - imho no!
-	log.Info("User ID: %v, Repo ID: %v", userID, repoID)
-	user, err := user_model.GetUserByID(ctx, userID)
-	log.Info("User is: %v", user)
-	if err != nil {
-		return err
-	}
+func sendLikeActivities(ctx context.Context, doer user_model.User, repoID int64) error {
 
 	federatedRepos, err := FindFederatedReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", federatedRepos)
@@ -102,8 +94,7 @@ func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 		return err
 	}
 
-	// TODO: That's wrong - we've to send the activities to repo not to user!
-	apclient, err := activitypub.NewClient(ctx, user, user.APAPIURL())
+	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
 	if err != nil {
 		return err
 	}
@@ -111,7 +102,7 @@ func sendLikeActivities(ctx context.Context, userID int64, repoID int64) error {
 	for _, federatedRepo := range federatedRepos {
 		target := federatedRepo.Uri + "/inbox/" // A like goes to the inbox of the federated repo
 		log.Info("Federated Repo URI is: %v", target)
-		likeActivity, err := forgefed.NewForgeLike(user.APAPIURL(), target, time.Now())
+		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {
 			return err
 		}

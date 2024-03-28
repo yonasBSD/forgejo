@@ -82,7 +82,7 @@ func LikeActivity(ctx context.Context, form any, repositoryID int64) (int, strin
 	// execute the activity if the repo was not stared already
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
+		err = repo.StarRepo(ctx, user, repositoryID, true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Error staring", err
 		}
