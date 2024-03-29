@@ -6,10 +6,13 @@ package federation
 import (
 	"context"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"xorm.io/builder"
 )
 
 type FederatedHost struct {
@@ -155,4 +158,39 @@ func CreateUser(ctx context.Context, u *user.User) error {
 	}
 
 	return committer.Commit()
+}
+
+func GetRemotePersons(ctx context.Context, page int) ([]FederatedUser, error) {
+	limit := 1
+	offset := page * limit
+	var federatedUsers []FederatedUser
+
+	err := db.GetEngine(ctx).
+		Table("federated_user").
+		Limit(limit, offset).
+		Find(&federatedUsers)
+	if err != nil {
+		log.Trace("Error: GetRemotePersons: %w", err)
+		return nil, err
+	}
+	return federatedUsers, nil
+}
+
+func GetRemoteUsersWithNoLocalFollowers(ctx context.Context, olderThan time.Duration, page int) ([]user.User, error) {
+	limit := 40
+	offset := page * limit
+	var users []user.User
+
+	err := db.GetEngine(ctx).
+		Table("user").
+		Where("num_followers = 0").
+		And(builder.Lt{"user.created_unix": time.Now().Add(-olderThan).Unix()}).
+		Join("inner", "federated_user", "federated_user.user_id = user.id").
+		Limit(limit, offset).
+		Find(&users)
+	if err != nil {
+		log.Trace("Error: GetRemoteUserWithNoLocalFollowers: %w", err)
+		return nil, err
+	}
+	return users, nil
 }

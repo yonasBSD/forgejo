@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/actions"
 	"code.gitea.io/gitea/services/auth"
+	forgefed_service "code.gitea.io/gitea/services/forgefed"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
 	packages_cleanup_service "code.gitea.io/gitea/services/packages/cleanup"
@@ -190,4 +191,35 @@ func initBasicTasks() {
 	if setting.Actions.Enabled {
 		registerActionsCleanup()
 	}
+
+	if setting.Federation.Enabled {
+		registerCleanupRemotePersonsWithNoFollowers()
+		registerUpdateRemotePersons()
+	}
+}
+
+func registerCleanupRemotePersonsWithNoFollowers() {
+	RegisterTaskFatal("remote_actor_cleanup", &OlderThanConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    true,
+			RunAtStart: true,
+			Schedule:   "@midnight",
+		},
+		OlderThan: 24 * time.Hour,
+	}, func(ctx context.Context, _ *user_model.User, config Config) error {
+		acConfig := config.(*OlderThanConfig)
+		return forgefed_service.CleanUpRemotePersons(ctx, acConfig.OlderThan)
+	})
+}
+
+func registerUpdateRemotePersons() {
+	RegisterTaskFatal("remote_actor_update", &OlderThanConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    true,
+			RunAtStart: true,
+			Schedule:   "@every 6h",
+		},
+	}, func(ctx context.Context, _ *user_model.User, config Config) error {
+		return forgefed_service.UpdatePersonActor(ctx)
+	})
 }
