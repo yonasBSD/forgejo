@@ -93,13 +93,6 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 
 	opts.Keyword = ctx.FormTrim("q")
 	opts.OrderBy = orderBy
-	if len(opts.Keyword) == 0 || isKeywordValid(opts.Keyword) {
-		users, count, err = user_model.SearchUsers(ctx, opts)
-		if err != nil {
-			ctx.ServerError("SearchUsers", err)
-			return
-		}
-	}
 
 	if len(opts.Keyword) > 0 && forgefed.IsFingerable(opts.Keyword) {
 		webfingerRes, err := forgefed.WebFingerLookup(opts.Keyword)
@@ -123,6 +116,14 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 		//			ctx.ServerError("SearchUsers", err)
 		//			return
 		//		}
+	}
+
+	if len(opts.Keyword) == 0 || isKeywordValid(opts.Keyword) {
+		users, count, err = user_model.SearchUsers(ctx, opts)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
 	}
 
 	if isSitemap {
