@@ -74,13 +74,5 @@
 	</div>
 
 	<div class="modal-buttons flex-text-block tw-flex-wrap"></div>
-	<script type="module">
-		for (const el of $('.ui.modal')) {
-			const $btn = $('<button>').text(`${el.id}`).on('click', () => {
-				$(el).modal({onApprove() {alert('confirmed')}}).modal('show');
-			});
-			$('.modal-buttons').append($btn);
-		}
-	</script>
 </div>
 {{template "base/footer" .}}

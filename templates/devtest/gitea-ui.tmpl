@@ -74,15 +74,6 @@
 					</div>
 				</li>
 			</ul>
-			<script type="module">
-				const $buttons = $('#devtest-button-samples').find('button.ui');
-
-				const $buttonStyles = $('input[name*="button-style"]');
-				$buttonStyles.on('click', () => $buttonStyles.map((_ ,el) => $buttons.toggleClass(el.value, el.checked)));
-
-				const $buttonStates = $('input[name*="button-state"]');
-				$buttonStates.on('click', () => $buttonStates.map((_ ,el) => $buttons.prop(el.value, el.checked)));
-			</script>
 		</div>
 	</div>
 
@@ -324,7 +315,5 @@
 	<div>
 		<button class="{{if true}}tw-bg-red{{end}} tw-p-5 tw-border tw-rounded hover:tw-bg-blue active:tw-bg-yellow">Button</button>
 	</div>
-
-	<script src="{{AssetUrlPrefix}}/js/devtest.js?v={{AssetVersion}}"></script>
 </div>
 {{template "base/footer" .}}
