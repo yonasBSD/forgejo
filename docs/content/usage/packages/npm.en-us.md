@@ -19,7 +19,7 @@ Publish [npm](https://www.npmjs.com/) packages for your user or organization.
 
 ## Requirements
 
-To work with the npm package registry, you need [Node.js](https://nodejs.org/en/download/) coupled with a package manager such as [Yarn](https://classic.yarnpkg.com/en/docs/install) or [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm/) itself.
+To work with the npm package registry, you need [Node.js](https://nodejs.org/en/download/) coupled with a package manager such as [Yarn](https://classic.yarnpkg.com/en/docs/install) or [npm](https://docs.npmjs.com/downloading-and-installing-node-and-npm/) itself.
 
 The registry supports [scoped](https://docs.npmjs.com/misc/scope/) and unscoped packages.
 

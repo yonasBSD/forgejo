@@ -232,7 +232,7 @@ help:
 	@echo " - lint-go-fix                      lint go files and fix issues"
 	@echo " - lint-go-vet                      lint go files with vet"
 	@echo " - lint-js                          lint js files"
-	@echo " - lint-js-fix                      lint js files and fix issues"
+	@echo " - lint-fix                      lint js files and fix issues"
 	@echo " - lint-css                         lint css files"
 	@echo " - lint-css-fix                     lint css files and fix issues"
 	@echo " - lint-md                          lint markdown files"
@@ -395,7 +395,7 @@ lint-fix: lint-frontend-fix lint-backend-fix lint-spell-fix
 lint-frontend: lint-js lint-css
 
 .PHONY: lint-frontend-fix
-lint-frontend-fix: lint-js-fix lint-css-fix
+lint-frontend-fix: lint-fix lint-css-fix
 
 .PHONY: lint-backend
 lint-backend: lint-go lint-go-vet lint-editorconfig
@@ -407,8 +407,8 @@ lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
 lint-js: node_modules
 	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES)
 
-.PHONY: lint-js-fix
-lint-js-fix: node_modules
+.PHONY: lint-fix
+lint-fix: node_modules
 	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES) --fix
 
 .PHONY: lint-css
@@ -1031,5 +1031,5 @@ endif
 
 # Disable parallel execution because it would break some targets that don't
 # specify exact dependencies like 'backend' which does currently not depend
-# on 'frontend' to enable Node.js-less builds from source tarballs.
+# on 'frontend' to enable Node.less builds from source tarballs.
 .NOTPARALLEL:

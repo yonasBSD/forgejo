@@ -38,7 +38,7 @@ HTML 页面由[Go HTML Template](https://pkg.go.dev/html/template)渲染。
 
 1. 每个功能（Fomantic-UI/jQuery 模块）应放在单独的文件/目录中。
 2. HTML 的 id 和 class 应使用 kebab-case，最好包含2-3个与功能相关的关键词。
-3. 在 JavaScript 中使用的 HTML 的 id 和 class 应在整个项目中是唯一的，并且应包含2-3个与功能相关的关键词。建议在仅在 JavaScript 中使用的 class 中使用 `js-` 前缀。
+3. 在 JavaScript 中使用的 HTML 的 id 和 class 应在整个项目中是唯一的，并且应包含2-3个与功能相关的关键词。建议在仅在 JavaScript 中使用的 class 中使用 `` 前缀。
 4. 不应覆盖框架提供的 class 的 CSS 样式。始终使用具有2-3个与功能相关的关键词的新 class 名称来覆盖框架样式。Gitea 中的帮助 CSS 类在 `helpers.less` 中。
 5. 后端可以通过使用`ctx.PageData["myModuleData"] = map[]{}`将复杂数据传递给前端，但不要将整个模型暴露给前端，以避免泄露敏感数据。
 6. 简单页面和与 SEO 相关的页面使用 Go HTML 模板渲染生成静态的 Fomantic-UI HTML 输出。复杂页面可以使用 Vue3。

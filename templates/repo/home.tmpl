@@ -137,11 +137,11 @@
 									<a class="item" id="cite-repo-button">{{svg "octicon-cross-reference" 16 "tw-mr-2"}}{{ctx.Locale.Tr "repo.cite_this_repo"}}</a>
 								{{end}}
 								{{range .OpenWithEditorApps}}
-									<a class="item js-clone-url-editor" data-href-template="{{.OpenURL}}">{{.IconHTML}}{{ctx.Locale.Tr "repo.open_with_editor" .DisplayName}}</a>
+									<a class="item clone-url-editor" data-href-template="{{.OpenURL}}">{{.IconHTML}}{{ctx.Locale.Tr "repo.open_with_editor" .DisplayName}}</a>
 								{{end}}
 							</div>
 						</button>
-						{{template "repo/clone_script" .}}{{/* the script will update `.js-clone-url` and related elements */}}
+						{{template "repo/clone_script" .}}{{/* the script will update `.clone-url` and related elements */}}
 					</div>
 					{{template "repo/cite/cite_modal" .}}
 				{{end}}

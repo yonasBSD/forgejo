@@ -69,19 +69,19 @@
 					<div class="ui radio checkbox">
 						{{$externalTracker := (.Repository.MustGetUnit $.Context $.UnitTypeExternalTracker)}}
 						{{$externalTrackerStyle := $externalTracker.ExternalTrackerConfig.ExternalTrackerStyle}}
-						<input class="js-tracker-issue-style" name="tracker_issue_style" type="radio" value="numeric" {{if eq $externalTrackerStyle "numeric"}}checked{{end}}>
+						<input class="tracker-issue-style" name="tracker_issue_style" type="radio" value="numeric" {{if eq $externalTrackerStyle "numeric"}}checked{{end}}>
 						<label>{{ctx.Locale.Tr "repo.settings.tracker_issue_style.numeric"}} <span class="ui light grey text">#1234</span></label>
 					</div>
 				</div>
 				<div class="field">
 					<div class="ui radio checkbox">
-						<input class="js-tracker-issue-style" name="tracker_issue_style" type="radio" value="alphanumeric" {{if eq $externalTrackerStyle "alphanumeric"}}checked{{end}}>
+						<input class="tracker-issue-style" name="tracker_issue_style" type="radio" value="alphanumeric" {{if eq $externalTrackerStyle "alphanumeric"}}checked{{end}}>
 						<label>{{ctx.Locale.Tr "repo.settings.tracker_issue_style.alphanumeric"}} <span class="ui light grey text">ABC-123 , DEFG-234</span></label>
 					</div>
 				</div>
 				<div class="field">
 					<div class="ui radio checkbox">
-						<input class="js-tracker-issue-style" name="tracker_issue_style" type="radio" value="regexp" {{if eq $externalTrackerStyle "regexp"}}checked{{end}}>
+						<input class="tracker-issue-style" name="tracker_issue_style" type="radio" value="regexp" {{if eq $externalTrackerStyle "regexp"}}checked{{end}}>
 						<label>{{ctx.Locale.Tr "repo.settings.tracker_issue_style.regexp"}} <span class="ui light grey text">(ISSUE-\d+) , ISSUE-(\d+)</span></label>
 					</div>
 				</div>

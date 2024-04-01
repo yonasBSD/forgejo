@@ -54,5 +54,5 @@ func doTestPRDiff(t *testing.T, prDiffURL string, reviewBtnDisabled bool, expect
 	})
 
 	// Ensure the review button is enabled for full PR reviews
-	assert.Equal(t, reviewBtnDisabled, doc.doc.Find(".js-btn-review").HasClass("disabled"))
+	assert.Equal(t, reviewBtnDisabled, doc.doc.Find(".btn-review").HasClass("disabled"))
 }

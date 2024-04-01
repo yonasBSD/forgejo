@@ -38,7 +38,7 @@ We recommend [Google HTML/CSS Style Guide](https://google.github.io/styleguide/h
 
 1. Every feature (Fomantic-UI/jQuery module) should be put in separate files/directories.
 2. HTML ids and classes should use kebab-case, it's preferred to contain 2-3 feature related keywords.
-3. HTML ids and classes used in JavaScript should be unique for the whole project, and should contain 2-3 feature related keywords. We recommend to use the `js-` prefix for classes that are only used in JavaScript.
+3. HTML ids and classes used in JavaScript should be unique for the whole project, and should contain 2-3 feature related keywords. We recommend to use the `` prefix for classes that are only used in JavaScript.
 4. CSS styling for classes provided by frameworks should not be overwritten. Always use new class names with 2-3 feature related keywords to overwrite framework styles. Gitea's helper CSS classes in `helpers.less` could be helpful.
 5. The backend can pass complex data to the frontend by using `ctx.PageData["myModuleData"] = map[]{}`, but do not expose whole models to the frontend to avoid leaking sensitive data.
 6. Simple pages and SEO-related pages use Go HTML Template render to generate static Fomantic-UI HTML output. Complex pages can use Vue3.

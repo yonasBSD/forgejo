@@ -943,7 +943,7 @@ func TestViewRepoOpenWith(t *testing.T) {
 		resp := MakeRequest(t, req, http.StatusOK)
 
 		htmlDoc := NewHTMLParser(t, resp.Body)
-		openWithHTML := htmlDoc.doc.Find(".js-clone-url-editor")
+		openWithHTML := htmlDoc.doc.Find(".clone-url-editor")
 
 		var methods []string
 		openWithHTML.Each(func(i int, s *goquery.Selection) {
