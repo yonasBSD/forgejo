@@ -1,5 +1,18 @@
 # How to Trigger Activities
 
+- [How to Trigger Activities](#how-to-trigger-activities)
+  - [Status](#status)
+  - [Context](#context)
+  - [Decision](#decision)
+  - [Choices](#choices)
+    - [1. Transient Federation without Constraints](#1-transient-federation-without-constraints)
+      - [Problem - Circularity And Inconsistency](#problem---circularity-and-inconsistency)
+    - [2. Direct Federation only](#2-direct-federation-only)
+      - [Discussion for option 2.](#discussion-for-option-2)
+    - [3. Transient Federation and Remember Processed](#3-transient-federation-and-remember-processed)
+  - [See also](#see-also)
+
+
 ## Status
 
 Proposal
@@ -23,7 +36,7 @@ flowchart TD
 
 ## Choices
 
-### 1. Transient Federation
+### 1. Transient Federation without Constraints
 
 In this case the star federation process would look like:
 
@@ -54,7 +67,7 @@ flowchart TD
    Thus, the repo on instance A gets another star by this user and sends Like-Activity to the repo on instance C.
 7. The circular distribution of Like-Activities continues, since the actor is always the local FederatedUser of the sending instance.
 
-### 2. Direct Federation
+### 2. Direct Federation only
 
 ```mermaid
 flowchart TD
@@ -71,6 +84,19 @@ In this case the star federation process would look like:
 2. Case: Repo on an instance receives a star via a Like-Activity:
     1. Instance creates FederatedUser and stars the repository.
     2. No further star federation to federated repos is triggered.
+
+#### Discussion for option 2.
+
+1. pro
+   1. Prevent circular communication
+   2. Clear semantic also in case of "Who should authorize a digital signature"
+
+### 3. Transient Federation and Remember Processed
+
+In this case the star federation process would look like:
+
+1. Repo on an instance receives a star (regardless of whether via UI or federation)
+2. If this activity was not operated already in this instance, federate star to all repos that are set as federated repositories.
 
 ## See also
 
