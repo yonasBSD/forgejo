@@ -76,3 +76,8 @@ func FindFederatedUser(ctx context.Context, externalID string,
 	}
 	return user, federatedUser, nil
 }
+
+func DeleteFederatedUser(ctx context.Context, userID int64) error {
+	_, err := db.GetEngine(ctx).Delete(&FederatedUser{UserID: userID})
+	return err
+}

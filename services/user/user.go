@@ -208,6 +208,13 @@ func DeleteUser(ctx context.Context, u *user_model.User, purge bool) error {
 				return err
 			}
 		}
+
+		// Delete Federated Users
+		if setting.Federation.Enabled {
+			if err := user_model.DeleteFederatedUser(ctx, u.ID); err != nil {
+				return err
+			}
+		}
 	}
 
 	ctx, committer, err := db.TxContext(ctx)
