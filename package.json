@@ -67,7 +67,7 @@
     "@playwright/test": "1.42.1",
     "@stoplight/spectral-cli": "6.11.0",
     "@stylistic/eslint-plugin-js": "1.7.0",
-    "@stylistic/stylelint-plugin": "2.1.0",
+    "@stylistic/stylelint-plugin": "2.1.1",
     "@vitejs/plugin-vue": "5.0.4",
     "@vue/test-utils": "2.4.5",
     "eslint": "8.57.0",
