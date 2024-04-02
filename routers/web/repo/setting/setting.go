@@ -209,6 +209,9 @@ func SettingsPost(ctx *context.Context) {
 		if strings.TrimSpace(federationRepos) == "" {
 			federationRepoSplit = []string{}
 		}
+		for idx, repo := range federationRepoSplit {
+			federationRepoSplit[idx] = strings.TrimSpace(repo)
+		}
 
 		if _, _, err := federation.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
 			ctx.ServerError("UpdateRepository", err)
