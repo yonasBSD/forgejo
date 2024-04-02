@@ -21,6 +21,7 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
+	federation_service "code.gitea.io/gitea/services/federation"
 	notify_service "code.gitea.io/gitea/services/notify"
 	pull_service "code.gitea.io/gitea/services/pull"
 )
@@ -65,6 +66,8 @@ func DeleteRepository(ctx context.Context, doer *user_model.User, repo *repo_mod
 	if err := DeleteRepositoryDirectly(ctx, doer, repo.ID); err != nil {
 		return err
 	}
+
+	federation_service.DeleteFederatedRepos(ctx, repo.ID)
 
 	return packages_model.UnlinkRepositoryFromAllPackages(ctx, repo.ID)
 }

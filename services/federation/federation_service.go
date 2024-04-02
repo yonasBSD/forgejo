@@ -237,6 +237,13 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 	return 0, "", nil
 }
 
+func DeleteFederatedRepos(ctx context.Context, localRepoId int64) error {
+	if err := repo.StoreFederatedRepos(ctx, localRepoId, []*repo.FederatedRepo{}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
 	federatedRepos, err := repo.FindFederatedReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", federatedRepos)
