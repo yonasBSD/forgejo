@@ -238,10 +238,7 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 }
 
 func DeleteFederatedRepos(ctx context.Context, localRepoId int64) error {
-	if err := repo.StoreFederatedRepos(ctx, localRepoId, []*repo.FederatedRepo{}); err != nil {
-		return err
-	}
-	return nil
+	return repo.StoreFederatedRepos(ctx, localRepoId, []*repo.FederatedRepo{})
 }
 
 func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
