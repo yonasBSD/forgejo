@@ -205,7 +205,12 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if _, _, err := federation.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, strings.Split(federationRepos, ";")); err != nil {
+		federationRepoSplit := strings.Split(federationRepos, ";")
+		if strings.TrimSpace(federationRepos) == "" {
+			federationRepoSplit = []string{}
+		}
+
+		if _, _, err := federation.StoreFederatedRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}
