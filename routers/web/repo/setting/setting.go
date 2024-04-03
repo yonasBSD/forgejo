@@ -194,7 +194,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		federationRepos := form.FederationRepos
+		federationRepos := strings.TrimSpace(form.FederationRepos)
 
 		maxFederatedRepoStrLength := 2048
 		errs := validation.ValidateMaxLen(federationRepos, maxFederatedRepoStrLength, "federationRepos")
@@ -205,9 +205,9 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		federationRepoSplit := strings.Split(federationRepos, ";")
-		if strings.TrimSpace(federationRepos) == "" {
-			federationRepoSplit = []string{}
+		federationRepoSplit := []string{}
+		if federationRepos != "" {
+			federationRepoSplit = strings.Split(federationRepos, ";")
 		}
 		for idx, repo := range federationRepoSplit {
 			federationRepoSplit[idx] = strings.TrimSpace(repo)
