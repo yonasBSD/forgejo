@@ -197,11 +197,11 @@ func SettingsPost(ctx *context.Context) {
 		federationRepos := strings.TrimSpace(form.FederationRepos)
 		federationRepos = strings.TrimSuffix(federationRepos, ";")
 
-		maxFederatedRepoStrLength := 2048
-		errs := validation.ValidateMaxLen(federationRepos, maxFederatedRepoStrLength, "federationRepos")
+		maxFollowingRepoStrLength := 2048
+		errs := validation.ValidateMaxLen(federationRepos, maxFollowingRepoStrLength, "federationRepos")
 		if len(errs) > 0 {
 			ctx.Data["ERR_FederationRepos"] = true
-			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFederatedRepoStrLength))
+			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFollowingRepoStrLength))
 			ctx.Redirect(repo.Link() + "/settings")
 			return
 		}

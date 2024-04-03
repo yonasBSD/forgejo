@@ -380,16 +380,16 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	ctx.Data["HasAccess"] = true
 	ctx.Data["Permission"] = &ctx.Repo.Permission
 
-	federatedRepoList, err := repo_model.FindFederatedReposByRepoID(ctx, repo.ID)
+	federatedRepoList, err := repo_model.FindFollowingReposByRepoID(ctx, repo.ID)
 	if err == nil {
-		federatedRepoString := ""
+		followingRepoString := ""
 		for idx, federatedRepo := range federatedRepoList {
 			if idx > 0 {
-				federatedRepoString += ";"
+				followingRepoString += ";"
 			}
-			federatedRepoString += (*federatedRepo).Uri
+			followingRepoString += (*federatedRepo).Uri
 		}
-		ctx.Data["FederatedRepos"] = federatedRepoString
+		ctx.Data["FollowingRepos"] = followingRepoString
 	} else if err != repo_model.ErrMirrorNotExist {
 		ctx.ServerError("FindFederatedRepoByRepoID", err)
 		return

@@ -108,7 +108,7 @@ classDiagram
       ID        int64      
     }
 
-    class FederatedRepository {
+    class FollowingRepository {
       ID             int64
       RepositoryID   int64
       ExternalID     string
@@ -122,6 +122,6 @@ classDiagram
   PersonID -- FederationHost : mapped by PersonID.Host == FederationHost.HostFqdn
   FederatedUser -- FederationHost 
 
-  Repository *-- FederatedRepository
-  FederatedRepository -- FederationHost
+  Repository *-- FollowingRepository
+  FollowingRepository -- FederationHost
 ```

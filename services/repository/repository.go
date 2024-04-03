@@ -67,7 +67,7 @@ func DeleteRepository(ctx context.Context, doer *user_model.User, repo *repo_mod
 		return err
 	}
 
-	federation_service.DeleteFederatedRepos(ctx, repo.ID)
+	federation_service.DeleteFollowingRepos(ctx, repo.ID)
 
 	return packages_model.UnlinkRepositoryFromAllPackages(ctx, repo.ID)
 }

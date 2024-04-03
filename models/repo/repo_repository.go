@@ -15,24 +15,24 @@ func init() {
 	db.RegisterModel(new(FederatedRepo))
 }
 
-func FindFederatedReposByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
-	maxFederatedRepos := 10
+func FindFollowingReposByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
+	maxFollowingRepos := 10
 	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
-	sess = sess.Limit(maxFederatedRepos, 0)
-	federatedRepoList := make([]*FederatedRepo, 0, maxFederatedRepos)
+	sess = sess.Limit(maxFollowingRepos, 0)
+	federatedRepoList := make([]*FederatedRepo, 0, maxFollowingRepos)
 	err := sess.Find(&federatedRepoList)
 	if err != nil {
-		return make([]*FederatedRepo, 0, maxFederatedRepos), err
+		return make([]*FederatedRepo, 0, maxFollowingRepos), err
 	}
 	for _, federatedRepo := range federatedRepoList {
 		if res, err := validation.IsValid(*federatedRepo); !res {
-			return make([]*FederatedRepo, 0, maxFederatedRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
+			return make([]*FederatedRepo, 0, maxFollowingRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
 		}
 	}
 	return federatedRepoList, nil
 }
 
-func StoreFederatedRepos(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
+func StoreFollowingRepos(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
 	for _, federatedRepo := range federatedRepoList {
 		if res, err := validation.IsValid(*federatedRepo); !res {
 			return fmt.Errorf("FederationInfo is not valid: %v", err)
