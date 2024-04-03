@@ -14,7 +14,7 @@ _test
 
 # MS VSCode
 .vscode
-__debug_bin
+__debug_bin*
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -62,7 +62,6 @@ cpu.out
 /data
 /indexers
 /log
-/public/img/avatar
 /tests/integration/gitea-integration-*
 /tests/integration/indexers-*
 /tests/e2e/gitea-e2e-*
@@ -71,13 +70,13 @@ cpu.out
 /tests/e2e/test-artifacts
 /tests/e2e/test-snapshots
 /tests/*.ini
-/node_modules
 /yarn.lock
 /yarn-error.log
 /npm-debug.log*
 /public/assets/js
 /public/assets/css
 /public/assets/fonts
+/public/assets/img/avatar
 /public/assets/img/webpack
 /vendor
 /web_src/fomantic/node_modules

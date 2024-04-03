@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM docker.io/tonistiigi/xx AS xx
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.21-alpine3.19 as build-env
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.22-alpine3.19 as build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -33,7 +33,7 @@ RUN apk --no-cache add build-base git nodejs npm
 COPY . ${GOPATH}/src/code.gitea.io/gitea
 WORKDIR ${GOPATH}/src/code.gitea.io/gitea
 
-RUN make clean-all
+RUN make clean
 RUN make frontend
 RUN go build contrib/environment-to-ini/environment-to-ini.go && xx-verify environment-to-ini
 RUN make RELEASE_VERSION=$RELEASE_VERSION go-check generate-backend static-executable && xx-verify gitea

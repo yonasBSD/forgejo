@@ -13,9 +13,10 @@ import (
 	"net/url"
 
 	"code.gitea.io/gitea/modules/activitypub"
-	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/httplib"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	gitea_context "code.gitea.io/gitea/services/context"
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-fed/httpsig"
@@ -89,7 +90,8 @@ func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, er
 func ReqHTTPSignature() func(ctx *gitea_context.APIContext) {
 	return func(ctx *gitea_context.APIContext) {
 		if authenticated, err := verifyHTTPSignatures(ctx); err != nil {
-			ctx.ServerError("verifyHttpSignatures", err)
+			log.Warn("verifyHttpSignatures failed: %v", err)
+			ctx.Error(http.StatusBadRequest, "reqSignature", "request signature verification failed")
 		} else if !authenticated {
 			ctx.Error(http.StatusForbidden, "reqSignature", "request signature verification failed")
 		}

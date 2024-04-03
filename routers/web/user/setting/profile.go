@@ -20,7 +20,6 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
@@ -29,6 +28,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/modules/web/middleware"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	user_service "code.gitea.io/gitea/services/user"
 )
@@ -390,6 +390,25 @@ func UpdateUserLang(ctx *context.Context) {
 
 	log.Trace("User settings updated: %s", ctx.Doer.Name)
 	ctx.Flash.Success(translation.NewLocale(ctx.Doer.Language).TrString("settings.update_language_success"))
+	ctx.Redirect(setting.AppSubURL + "/user/settings/appearance")
+}
+
+// UpdateUserHints updates a user's hints settings
+func UpdateUserHints(ctx *context.Context) {
+	form := web.GetForm(ctx).(*forms.UpdateHintsForm)
+	ctx.Data["Title"] = ctx.Tr("settings")
+	ctx.Data["PageIsSettingsAppearance"] = true
+
+	opts := &user_service.UpdateOptions{
+		EnableRepoUnitHints: optional.Some(form.EnableRepoUnitHints),
+	}
+	if err := user_service.UpdateUser(ctx, ctx.Doer, opts); err != nil {
+		ctx.ServerError("UpdateUser", err)
+		return
+	}
+
+	log.Trace("User settings updated: %s", ctx.Doer.Name)
+	ctx.Flash.Success(translation.NewLocale(ctx.Doer.Language).TrString("settings.update_hints_success"))
 	ctx.Redirect(setting.AppSubURL + "/user/settings/appearance")
 }
 

@@ -20,12 +20,12 @@ import (
 	"strings"
 
 	packages_model "code.gitea.io/gitea/models/packages"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	packages_module "code.gitea.io/gitea/modules/packages"
 	maven_module "code.gitea.io/gitea/modules/packages/maven"
 	"code.gitea.io/gitea/routers/api/packages/helper"
+	"code.gitea.io/gitea/services/context"
 	packages_service "code.gitea.io/gitea/services/packages"
 )
 
@@ -49,7 +49,10 @@ var (
 func apiError(ctx *context.Context, status int, obj any) {
 	helper.LogAndProcessError(ctx, status, obj, func(message string) {
 		// The maven client does not present the error message to the user. Log it for users with access to server logs.
-		if status == http.StatusBadRequest || status == http.StatusInternalServerError {
+		switch status {
+		case http.StatusBadRequest:
+			log.Warn(message)
+		case http.StatusInternalServerError:
 			log.Error(message)
 		}
 

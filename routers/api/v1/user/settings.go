@@ -6,10 +6,10 @@ package user
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/optional"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 	user_service "code.gitea.io/gitea/services/user"
 )
@@ -55,6 +55,7 @@ func UpdateUserSettings(ctx *context.APIContext) {
 		DiffViewStyle:       optional.FromPtr(form.DiffViewStyle),
 		KeepEmailPrivate:    optional.FromPtr(form.HideEmail),
 		KeepActivityPrivate: optional.FromPtr(form.HideActivity),
+		EnableRepoUnitHints: optional.FromPtr(form.EnableRepoUnitHints),
 	}
 	if err := user_service.UpdateUser(ctx, ctx.Doer, opts); err != nil {
 		ctx.InternalServerError(err)

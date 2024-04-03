@@ -17,17 +17,17 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/typesniffer"
-	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/utils"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/forms"
 	files_service "code.gitea.io/gitea/services/repository/files"
 )
@@ -121,6 +121,18 @@ func getSelectableEmailAddresses(ctx *context.Context) ([]*user_model.ActivatedE
 	return commitEmails, nil
 }
 
+// CommonEditorData sets common context data that is used by the editor.
+func CommonEditorData(ctx *context.Context) {
+	// Set context for selectable email addresses.
+	commitEmails, err := getSelectableEmailAddresses(ctx)
+	if err != nil {
+		ctx.ServerError("getSelectableEmailAddresses", err)
+		return
+	}
+	ctx.Data["CommitMails"] = commitEmails
+	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
+}
+
 func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -183,9 +195,6 @@ func editFile(ctx *context.Context, isNewFile bool) {
 		}
 
 		d, _ := io.ReadAll(dataRc)
-		if err := dataRc.Close(); err != nil {
-			log.Error("Error whilst closing blob data: %v", err)
-		}
 
 		buf = append(buf, d...)
 		if content, err := charset.ToUTF8(buf, charset.ConvertOpts{KeepBOM: true}); err != nil {
@@ -197,12 +206,6 @@ func editFile(ctx *context.Context, isNewFile bool) {
 	} else {
 		// Append filename from query, or empty string to allow user name the new file.
 		treeNames = append(treeNames, fileName)
-	}
-
-	commitEmails, err := getSelectableEmailAddresses(ctx)
-	if err != nil {
-		ctx.ServerError("getSelectableEmailAddresses", err)
-		return
 	}
 
 	ctx.Data["TreeNames"] = treeNames
@@ -220,8 +223,6 @@ func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, treePath)
-	ctx.Data["CommitMails"] = commitEmails
-	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	ctx.HTML(http.StatusOK, tplEditFile)
 }
@@ -257,12 +258,6 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		branchName = form.NewBranchName
 	}
 
-	commitEmails, err := getSelectableEmailAddresses(ctx)
-	if err != nil {
-		ctx.ServerError("getSelectableEmailAddresses", err)
-		return
-	}
-
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["PageHasPosted"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -279,8 +274,6 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, form.TreePath)
-	ctx.Data["CommitMails"] = commitEmails
-	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplEditFile)
@@ -315,28 +308,9 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		operation = "create"
 	}
 
-	gitIdentity := &files_service.IdentityOptions{
-		Name: ctx.Doer.Name,
-	}
-
-	// -1 is defined as placeholder email.
-	if form.CommitMailID == -1 {
-		gitIdentity.Email = ctx.Doer.GetPlaceholderEmail()
-	} else {
-		// Check if the given email is activated.
-		email, err := user_model.GetEmailAddressByID(ctx, ctx.Doer.ID, form.CommitMailID)
-		if err != nil {
-			ctx.ServerError("GetEmailAddressByID", err)
-			return
-		}
-
-		if email == nil || !email.IsActivated {
-			ctx.Data["Err_CommitMailID"] = true
-			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tplEditFile, &form)
-			return
-		}
-
-		gitIdentity.Email = email.Email
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplEditFile, form)
+	if ctx.Written() {
+		return
 	}
 
 	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
@@ -400,15 +374,15 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 				ctx.Error(http.StatusInternalServerError, err.Error())
 			}
 		} else if models.IsErrCommitIDDoesNotMatch(err) {
-			ctx.RenderWithErr(ctx.Tr("repo.editor.file_changed_while_editing", ctx.Repo.RepoLink+"/compare/"+util.PathEscapeSegments(form.LastCommit)+"..."+util.PathEscapeSegments(ctx.Repo.CommitID)), tplEditFile, &form)
+			ctx.RenderWithErr(ctx.Tr("repo.editor.commit_id_not_matching"), tplEditFile, &form)
 		} else if git.IsErrPushOutOfDate(err) {
-			ctx.RenderWithErr(ctx.Tr("repo.editor.file_changed_while_editing", ctx.Repo.RepoLink+"/compare/"+util.PathEscapeSegments(form.LastCommit)+"..."+util.PathEscapeSegments(form.NewBranchName)), tplEditFile, &form)
+			ctx.RenderWithErr(ctx.Tr("repo.editor.push_out_of_date"), tplEditFile, &form)
 		} else if git.IsErrPushRejected(err) {
 			errPushRej := err.(*git.ErrPushRejected)
 			if len(errPushRej.Message) == 0 {
 				ctx.RenderWithErr(ctx.Tr("repo.editor.push_rejected_no_message"), tplEditFile, &form)
 			} else {
-				flashError, err := ctx.RenderToString(tplAlertDetails, map[string]any{
+				flashError, err := ctx.RenderToHTML(tplAlertDetails, map[string]any{
 					"Message": ctx.Tr("repo.editor.push_rejected"),
 					"Summary": ctx.Tr("repo.editor.push_rejected_summary"),
 					"Details": utils.SanitizeFlashErrorString(errPushRej.Message),
@@ -420,7 +394,7 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 				ctx.RenderWithErr(flashError, tplEditFile, &form)
 			}
 		} else {
-			flashError, err := ctx.RenderToString(tplAlertDetails, map[string]any{
+			flashError, err := ctx.RenderToHTML(tplAlertDetails, map[string]any{
 				"Message": ctx.Tr("repo.editor.fail_to_update_file", form.TreePath),
 				"Summary": ctx.Tr("repo.editor.fail_to_update_file_summary"),
 				"Details": utils.SanitizeFlashErrorString(err.Error()),
@@ -553,6 +527,11 @@ func DeleteFilePost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplDeleteFile, &form)
+	if ctx.Written() {
+		return
+	}
+
 	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
@@ -563,8 +542,10 @@ func DeleteFilePost(ctx *context.Context) {
 				TreePath:  ctx.Repo.TreePath,
 			},
 		},
-		Message: message,
-		Signoff: form.Signoff,
+		Message:   message,
+		Signoff:   form.Signoff,
+		Author:    gitIdentity,
+		Committer: gitIdentity,
 	}); err != nil {
 		// This is where we handle all the errors thrown by repofiles.DeleteRepoFile
 		if git.IsErrNotExist(err) || models.IsErrRepoFileDoesNotExist(err) {
@@ -609,7 +590,7 @@ func DeleteFilePost(ctx *context.Context) {
 			if len(errPushRej.Message) == 0 {
 				ctx.RenderWithErr(ctx.Tr("repo.editor.push_rejected_no_message"), tplDeleteFile, &form)
 			} else {
-				flashError, err := ctx.RenderToString(tplAlertDetails, map[string]any{
+				flashError, err := ctx.RenderToHTML(tplAlertDetails, map[string]any{
 					"Message": ctx.Tr("repo.editor.push_rejected"),
 					"Summary": ctx.Tr("repo.editor.push_rejected_summary"),
 					"Details": utils.SanitizeFlashErrorString(errPushRej.Message),
@@ -763,6 +744,11 @@ func UploadFilePost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplUploadFile, &form)
+	if ctx.Written() {
+		return
+	}
+
 	if err := files_service.UploadRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.UploadRepoFileOptions{
 		LastCommitID: ctx.Repo.CommitID,
 		OldBranch:    oldBranchName,
@@ -771,6 +757,8 @@ func UploadFilePost(ctx *context.Context) {
 		Message:      message,
 		Files:        form.Files,
 		Signoff:      form.Signoff,
+		Author:       gitIdentity,
+		Committer:    gitIdentity,
 	}); err != nil {
 		if git_model.IsErrLFSFileLocked(err) {
 			ctx.Data["Err_TreePath"] = true
@@ -809,7 +797,7 @@ func UploadFilePost(ctx *context.Context) {
 			if len(errPushRej.Message) == 0 {
 				ctx.RenderWithErr(ctx.Tr("repo.editor.push_rejected_no_message"), tplUploadFile, &form)
 			} else {
-				flashError, err := ctx.RenderToString(tplAlertDetails, map[string]any{
+				flashError, err := ctx.RenderToHTML(tplAlertDetails, map[string]any{
 					"Message": ctx.Tr("repo.editor.push_rejected"),
 					"Summary": ctx.Tr("repo.editor.push_rejected_summary"),
 					"Details": utils.SanitizeFlashErrorString(errPushRej.Message),
@@ -940,4 +928,34 @@ func GetClosestParentWithFiles(treePath string, commit *git.Commit) string {
 		return GetClosestParentWithFiles(path.Dir(treePath), commit)
 	}
 	return treePath
+}
+
+// getGitIdentity returns the Git identity that should be used for an Git
+// operation, that takes into account an user's specified email.
+func getGitIdentity(ctx *context.Context, commitMailID int64, tpl base.TplName, form any) *files_service.IdentityOptions {
+	gitIdentity := &files_service.IdentityOptions{
+		Name: ctx.Doer.Name,
+	}
+
+	// -1 is defined as placeholder email.
+	if commitMailID == -1 {
+		gitIdentity.Email = ctx.Doer.GetPlaceholderEmail()
+	} else {
+		// Check if the given email is activated.
+		email, err := user_model.GetEmailAddressByID(ctx, ctx.Doer.ID, commitMailID)
+		if err != nil {
+			ctx.ServerError("GetEmailAddressByID", err)
+			return nil
+		}
+
+		if email == nil || !email.IsActivated {
+			ctx.Data["Err_CommitMailID"] = true
+			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tpl, form)
+			return nil
+		}
+
+		gitIdentity.Email = email.Email
+	}
+
+	return gitIdentity
 }

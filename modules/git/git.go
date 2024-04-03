@@ -33,9 +33,10 @@ var (
 	// DefaultContext is the default context to run git commands in, must be initialized by git.InitXxx
 	DefaultContext context.Context
 
-	SupportProcReceive  bool // >= 2.29
-	SupportHashSha256   bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
-	InvertedGitFlushEnv bool // 2.43.1
+	SupportProcReceive     bool // >= 2.29
+	SupportHashSha256      bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
+	InvertedGitFlushEnv    bool // 2.43.1
+	SupportCheckAttrOnBare bool // >= 2.40
 
 	gitVersion *version.Version
 )
@@ -187,6 +188,7 @@ func InitFull(ctx context.Context) (err error) {
 	}
 	SupportProcReceive = CheckGitVersionAtLeast("2.29") == nil
 	SupportHashSha256 = CheckGitVersionAtLeast("2.42") == nil && !isGogit
+	SupportCheckAttrOnBare = CheckGitVersionAtLeast("2.40") == nil
 	if SupportHashSha256 {
 		SupportedObjectFormats = append(SupportedObjectFormats, Sha256ObjectFormat)
 	} else {
@@ -340,7 +342,7 @@ func CheckGitVersionEqual(equal string) error {
 
 func configSet(key, value string) error {
 	stdout, _, err := NewCommand(DefaultContext, "config", "--global", "--get").AddDynamicArguments(key).RunStdString(nil)
-	if err != nil && !err.IsExitCode(1) {
+	if err != nil && !IsErrorExitCode(err, 1) {
 		return fmt.Errorf("failed to get git config %s, err: %w", key, err)
 	}
 
@@ -363,7 +365,7 @@ func configSetNonExist(key, value string) error {
 		// already exist
 		return nil
 	}
-	if err.IsExitCode(1) {
+	if IsErrorExitCode(err, 1) {
 		// not exist, set new config
 		_, _, err = NewCommand(DefaultContext, "config", "--global").AddDynamicArguments(key, value).RunStdString(nil)
 		if err != nil {
@@ -381,7 +383,7 @@ func configAddNonExist(key, value string) error {
 		// already exist
 		return nil
 	}
-	if err.IsExitCode(1) {
+	if IsErrorExitCode(err, 1) {
 		// not exist, add new config
 		_, _, err = NewCommand(DefaultContext, "config", "--global", "--add").AddDynamicArguments(key, value).RunStdString(nil)
 		if err != nil {
@@ -402,7 +404,7 @@ func configUnsetAll(key, value string) error {
 		}
 		return nil
 	}
-	if err.IsExitCode(1) {
+	if IsErrorExitCode(err, 1) {
 		// not exist
 		return nil
 	}

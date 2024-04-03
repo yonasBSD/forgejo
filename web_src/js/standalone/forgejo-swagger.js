@@ -5,17 +5,17 @@ window.addEventListener('load', async () => {
   const url = document.getElementById('swagger-ui').getAttribute('data-source');
 
   const ui = SwaggerUI({
-    url: url,
+    url,
     dom_id: '#swagger-ui',
     deepLinking: true,
     docExpansion: 'none',
     defaultModelRendering: 'model', // don't show examples by default, because they may be incomplete
     presets: [
-      SwaggerUI.presets.apis
+      SwaggerUI.presets.apis,
     ],
     plugins: [
-      SwaggerUI.plugins.DownloadUrl
-    ]
+      SwaggerUI.plugins.DownloadUrl,
+    ],
   });
 
   window.ui = ui;

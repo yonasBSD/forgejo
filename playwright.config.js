@@ -11,6 +11,13 @@ export default {
   testDir: './tests/e2e/',
   testMatch: /.*\.test\.e2e\.js/, // Match any .test.e2e.js files
 
+  /**
+   * Only run one test at a time, running multiple could lead to a inconsistent
+   * database state.
+   */
+  fullyParallel: false,
+  workers: 1,
+
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
 
@@ -20,7 +27,7 @@ export default {
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 2000
+    timeout: 2000,
   },
 
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -64,13 +71,12 @@ export default {
       },
     },
 
-    // disabled because of https://github.com/go-gitea/gitea/issues/21355
-    // {
-    //   name: 'firefox',
-    //   use: {
-    //     ...devices['Desktop Firefox'],
-    //   },
-    // },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+      },
+    },
 
     {
       name: 'webkit',

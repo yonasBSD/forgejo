@@ -40,7 +40,7 @@ type ChangeRepoFile struct {
 	Operation     string
 	TreePath      string
 	FromTreePath  string
-	ContentReader io.Reader
+	ContentReader io.ReadSeeker
 	SHA           string
 	Options       *RepoFileOptions
 }
@@ -400,16 +400,12 @@ func CreateOrUpdateFile(ctx context.Context, t *TemporaryUploadRepository, file 
 	var lfsMetaObject *git_model.LFSMetaObject
 	if setting.LFS.StartServer && hasOldBranch {
 		// Check there is no way this can return multiple infos
-		filename2attribute2info, err := t.gitRepo.CheckAttribute(git.CheckAttributeOpts{
-			Attributes: []string{"filter"},
-			Filenames:  []string{file.Options.treePath},
-			CachedOnly: true,
-		})
+		filterAttribute, err := t.gitRepo.GitAttributeFirst("", file.Options.treePath, "filter")
 		if err != nil {
 			return err
 		}
 
-		if filename2attribute2info[file.Options.treePath] != nil && filename2attribute2info[file.Options.treePath]["filter"] == "lfs" {
+		if filterAttribute == "lfs" {
 			// OK so we are supposed to LFS this data!
 			pointer, err := lfs.GeneratePointer(treeObjectContentReader)
 			if err != nil {
@@ -448,6 +444,10 @@ func CreateOrUpdateFile(ctx context.Context, t *TemporaryUploadRepository, file 
 			return err
 		}
 		if !exist {
+			_, err := file.ContentReader.Seek(0, io.SeekStart)
+			if err != nil {
+				return err
+			}
 			if err := contentStore.Put(lfsMetaObject.Pointer, file.ContentReader); err != nil {
 				if _, err2 := git_model.RemoveLFSMetaObjectByOid(ctx, repoID, lfsMetaObject.Oid); err2 != nil {
 					return fmt.Errorf("unable to remove failed inserted LFS object %s: %v (Prev Error: %w)", lfsMetaObject.Oid, err2, err)

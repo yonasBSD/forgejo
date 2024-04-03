@@ -19,7 +19,7 @@
 				<div class="markup"><pre class="code-block"><code>{{range .PackageDescriptor.Files}}{{if eq .File.LowerName "manifest.json"}}{{.Properties.GetByName "container.digest"}}{{end}}{{end}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Container" "https://forgejo.org/docs/latest/user/packages/container/" | Safe}}</label>
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Container" "https://forgejo.org/docs/latest/user/packages/container/"}}</label>
 			</div>
 		</div>
 	</div>
@@ -39,7 +39,7 @@
 					<tr>
 						<td><a href="{{$.PackageDescriptor.PackageWebLink}}/{{PathEscape .Digest}}">{{.Digest}}</a></td>
 						<td>{{.Platform}}</td>
-						<td>{{FileSize .Size}}</td>
+						<td>{{ctx.Locale.TrSize .Size}}</td>
 					</tr>
 					{{end}}
 				</tbody>

@@ -39,17 +39,23 @@ func NewMigration(desc string, fn func(*xorm.Engine) error) *Migration {
 // Add new migrations to the bottom of the list.
 var migrations = []*Migration{
 	// v0 -> v1
-	NewMigration("Add Forgejo Blocked Users table", forgejo_v1_20.AddForgejoBlockedUser),
+	NewMigration("Create the `forgejo_blocked_user` table", forgejo_v1_20.AddForgejoBlockedUser),
 	// v1 -> v2
-	NewMigration("create the forgejo_sem_ver table", forgejo_v1_20.CreateSemVerTable),
+	NewMigration("Create the `forgejo_sem_ver` table", forgejo_v1_20.CreateSemVerTable),
 	// v2 -> v3
-	NewMigration("create the forgejo_auth_token table", forgejo_v1_20.CreateAuthorizationTokenTable),
+	NewMigration("Create the `forgejo_auth_token` table", forgejo_v1_20.CreateAuthorizationTokenTable),
 	// v3 -> v4
-	NewMigration("Add default_permissions to repo_unit", forgejo_v1_22.AddDefaultPermissionsToRepoUnit),
+	NewMigration("Add the `default_permissions` column to the `repo_unit` table", forgejo_v1_22.AddDefaultPermissionsToRepoUnit),
 	// v4 -> v5
-	NewMigration("create the forgejo_repo_flag table", forgejo_v1_22.CreateRepoFlagTable),
+	NewMigration("Create the `forgejo_repo_flag` table", forgejo_v1_22.CreateRepoFlagTable),
 	// v5 -> v6
-	NewMigration("Add wiki_branch to repository", forgejo_v1_22.AddWikiBranchToRepository),
+	NewMigration("Add the `wiki_branch` column to the `repository` table", forgejo_v1_22.AddWikiBranchToRepository),
+	// v6 -> v7
+	NewMigration("Add the `enable_repo_unit_hints` column to the `user` table", forgejo_v1_22.AddUserRepoUnitHintsSetting),
+	// v7 -> v8
+	NewMigration("Modify the `release`.`note` content to remove SSH signatures", forgejo_v1_22.RemoveSSHSignaturesFromReleaseNotes),
+	// v8 -> v9
+	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

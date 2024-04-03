@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package actions
@@ -12,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,12 +23,13 @@ import (
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/base"
-	context_module "code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	actions_service "code.gitea.io/gitea/services/actions"
+	context_module "code.gitea.io/gitea/services/context"
 
 	"xorm.io/builder"
 )
@@ -35,13 +38,19 @@ func View(ctx *context_module.Context) {
 	ctx.Data["PageIsActions"] = true
 	runIndex := ctx.ParamsInt64("run")
 	jobIndex := ctx.ParamsInt64("job")
+
+	job, _ := getRunJobs(ctx, runIndex, jobIndex)
+	if ctx.Written() {
+		return
+	}
+
+	workflowName := job.Run.WorkflowID
+
 	ctx.Data["RunIndex"] = runIndex
 	ctx.Data["JobIndex"] = jobIndex
 	ctx.Data["ActionsURL"] = ctx.Repo.RepoLink + "/actions"
-
-	if getRunJobs(ctx, runIndex, jobIndex); ctx.Written() {
-		return
-	}
+	ctx.Data["WorkflowName"] = workflowName
+	ctx.Data["WorkflowURL"] = ctx.Repo.RepoLink + "/actions?workflow=" + workflowName
 
 	ctx.HTML(http.StatusOK, tplViewActions)
 }
@@ -98,15 +107,16 @@ type ViewRequest struct {
 type ViewResponse struct {
 	State struct {
 		Run struct {
-			Link       string     `json:"link"`
-			Title      string     `json:"title"`
-			Status     string     `json:"status"`
-			CanCancel  bool       `json:"canCancel"`
-			CanApprove bool       `json:"canApprove"` // the run needs an approval and the doer has permission to approve
-			CanRerun   bool       `json:"canRerun"`
-			Done       bool       `json:"done"`
-			Jobs       []*ViewJob `json:"jobs"`
-			Commit     ViewCommit `json:"commit"`
+			Link              string     `json:"link"`
+			Title             string     `json:"title"`
+			Status            string     `json:"status"`
+			CanCancel         bool       `json:"canCancel"`
+			CanApprove        bool       `json:"canApprove"` // the run needs an approval and the doer has permission to approve
+			CanRerun          bool       `json:"canRerun"`
+			CanDeleteArtifact bool       `json:"canDeleteArtifact"`
+			Done              bool       `json:"done"`
+			Jobs              []*ViewJob `json:"jobs"`
+			Commit            ViewCommit `json:"commit"`
 		} `json:"run"`
 		CurrentJob struct {
 			Title  string         `json:"title"`
@@ -130,6 +140,7 @@ type ViewJob struct {
 type ViewCommit struct {
 	LocaleCommit   string     `json:"localeCommit"`
 	LocalePushedBy string     `json:"localePushedBy"`
+	LocaleWorkflow string     `json:"localeWorkflow"`
 	ShortSha       string     `json:"shortSHA"`
 	Link           string     `json:"link"`
 	Pusher         ViewUser   `json:"pusher"`
@@ -187,6 +198,7 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.Run.CanCancel = !run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.CanApprove = run.NeedApproval && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.CanRerun = run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
+	resp.State.Run.CanDeleteArtifact = run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.Done = run.Status.IsDone()
 	resp.State.Run.Jobs = make([]*ViewJob, 0, len(jobs)) // marshal to '[]' instead fo 'null' in json
 	resp.State.Run.Status = run.Status.String()
@@ -211,6 +223,7 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.Run.Commit = ViewCommit{
 		LocaleCommit:   ctx.Locale.TrString("actions.runs.commit"),
 		LocalePushedBy: ctx.Locale.TrString("actions.runs.pushed_by"),
+		LocaleWorkflow: ctx.Locale.TrString("actions.runs.workflow"),
 		ShortSha:       base.ShortSha(run.CommitSHA),
 		Link:           fmt.Sprintf("%s/commit/%s", run.Repo.Link(), run.CommitSHA),
 		Pusher:         pusher,
@@ -301,10 +314,14 @@ func ViewPost(ctx *context_module.Context) {
 }
 
 // Rerun will rerun jobs in the given run
-// jobIndex = 0 means rerun all jobs
+// If jobIndexStr is a blank string, it means rerun all jobs
 func Rerun(ctx *context_module.Context) {
 	runIndex := ctx.ParamsInt64("run")
-	jobIndex := ctx.ParamsInt64("job")
+	jobIndexStr := ctx.Params("job")
+	var jobIndex int64
+	if jobIndexStr != "" {
+		jobIndex, _ = strconv.ParseInt(jobIndexStr, 10, 64)
+	}
 
 	run, err := actions_model.GetRunByIndex(ctx, ctx.Repo.Repository.ID, runIndex)
 	if err != nil {
@@ -336,12 +353,25 @@ func Rerun(ctx *context_module.Context) {
 		return
 	}
 
-	if jobIndex != 0 {
-		jobs = []*actions_model.ActionRunJob{job}
+	if jobIndexStr == "" { // rerun all jobs
+		for _, j := range jobs {
+			// if the job has needs, it should be set to "blocked" status to wait for other jobs
+			shouldBlock := len(j.Needs) > 0
+			if err := rerunJob(ctx, j, shouldBlock); err != nil {
+				ctx.Error(http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		ctx.JSON(http.StatusOK, struct{}{})
+		return
 	}
 
-	for _, j := range jobs {
-		if err := rerunJob(ctx, j); err != nil {
+	rerunJobs := actions_service.GetAllRerunJobs(job, jobs)
+
+	for _, j := range rerunJobs {
+		// jobs other than the specified one should be set to "blocked" status
+		shouldBlock := j.JobID != job.JobID
+		if err := rerunJob(ctx, j, shouldBlock); err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -350,7 +380,7 @@ func Rerun(ctx *context_module.Context) {
 	ctx.JSON(http.StatusOK, struct{}{})
 }
 
-func rerunJob(ctx *context_module.Context, job *actions_model.ActionRunJob) error {
+func rerunJob(ctx *context_module.Context, job *actions_model.ActionRunJob, shouldBlock bool) error {
 	status := job.Status
 	if !status.IsDone() {
 		return nil
@@ -358,6 +388,9 @@ func rerunJob(ctx *context_module.Context, job *actions_model.ActionRunJob) erro
 
 	job.TaskID = 0
 	job.Status = actions_model.StatusWaiting
+	if shouldBlock {
+		job.Status = actions_model.StatusBlocked
+	}
 	job.Started = 0
 	job.Stopped = 0
 
@@ -576,6 +609,24 @@ func ArtifactsView(ctx *context_module.Context) {
 	ctx.JSON(http.StatusOK, artifactsResponse)
 }
 
+func ArtifactsDeleteView(ctx *context_module.Context) {
+	runIndex := ctx.ParamsInt64("run")
+	artifactName := ctx.Params("artifact_name")
+
+	run, err := actions_model.GetRunByIndex(ctx, ctx.Repo.Repository.ID, runIndex)
+	if err != nil {
+		ctx.NotFoundOrServerError("GetRunByIndex", func(err error) bool {
+			return errors.Is(err, util.ErrNotExist)
+		}, err)
+		return
+	}
+	if err = actions_model.SetArtifactNeedDelete(ctx, run.ID, artifactName); err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, struct{}{})
+}
+
 func ArtifactsDownloadView(ctx *context_module.Context) {
 	runIndex := ctx.ParamsInt64("run")
 	artifactName := ctx.Params("artifact_name")
@@ -603,8 +654,38 @@ func ArtifactsDownloadView(ctx *context_module.Context) {
 		return
 	}
 
+	// if artifacts status is not uploaded-confirmed, treat it as not found
+	for _, art := range artifacts {
+		if art.Status != int64(actions_model.ArtifactStatusUploadConfirmed) {
+			ctx.Error(http.StatusNotFound, "artifact not found")
+			return
+		}
+	}
+
 	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip; filename*=UTF-8''%s.zip", url.PathEscape(artifactName), artifactName))
 
+	// Artifacts using the v4 backend are stored as a single combined zip file per artifact on the backend
+	// The v4 backend enshures ContentEncoding is set to "application/zip", which is not the case for the old backend
+	if len(artifacts) == 1 && artifacts[0].ArtifactName+".zip" == artifacts[0].ArtifactPath && artifacts[0].ContentEncoding == "application/zip" {
+		art := artifacts[0]
+		if setting.Actions.ArtifactStorage.MinioConfig.ServeDirect {
+			u, err := storage.ActionsArtifacts.URL(art.StoragePath, art.ArtifactPath)
+			if u != nil && err == nil {
+				ctx.Redirect(u.String())
+				return
+			}
+		}
+		f, err := storage.ActionsArtifacts.Open(art.StoragePath)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return
+		}
+		_, _ = io.Copy(ctx.Resp, f)
+		return
+	}
+
+	// Artifacts using the v1-v3 backend are stored as multiple individual files per artifact on the backend
+	// Those need to be zipped for download
 	writer := zip.NewWriter(ctx.Resp)
 	defer writer.Close()
 	for _, art := range artifacts {

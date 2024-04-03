@@ -42,8 +42,9 @@ type Manager struct {
 	terminateCtxCancel     context.CancelFunc
 	managerCtxCancel       context.CancelFunc
 	runningServerWaitGroup sync.WaitGroup
-	createServerWaitGroup  sync.WaitGroup
 	terminateWaitGroup     sync.WaitGroup
+	createServerCond       sync.Cond
+	createdServer          int
 	shutdownRequested      chan struct{}
 
 	toRunAtShutdown  []func()
@@ -52,7 +53,7 @@ type Manager struct {
 
 func newGracefulManager(ctx context.Context) *Manager {
 	manager := &Manager{ctx: ctx, shutdownRequested: make(chan struct{})}
-	manager.createServerWaitGroup.Add(numberOfServersToCreate)
+	manager.createServerCond.L = &sync.Mutex{}
 	manager.prepare(ctx)
 	manager.start()
 	return manager
@@ -64,10 +65,10 @@ func (g *Manager) prepare(ctx context.Context) {
 	g.hammerCtx, g.hammerCtxCancel = context.WithCancel(ctx)
 	g.managerCtx, g.managerCtxCancel = context.WithCancel(ctx)
 
-	g.terminateCtx = pprof.WithLabels(g.terminateCtx, pprof.Labels("graceful-lifecycle", "with-terminate"))
-	g.shutdownCtx = pprof.WithLabels(g.shutdownCtx, pprof.Labels("graceful-lifecycle", "with-shutdown"))
-	g.hammerCtx = pprof.WithLabels(g.hammerCtx, pprof.Labels("graceful-lifecycle", "with-hammer"))
-	g.managerCtx = pprof.WithLabels(g.managerCtx, pprof.Labels("graceful-lifecycle", "with-manager"))
+	g.terminateCtx = pprof.WithLabels(g.terminateCtx, pprof.Labels("gracefulLifecycle", "with-terminate"))
+	g.shutdownCtx = pprof.WithLabels(g.shutdownCtx, pprof.Labels("gracefulLifecycle", "with-shutdown"))
+	g.hammerCtx = pprof.WithLabels(g.hammerCtx, pprof.Labels("gracefulLifecycle", "with-hammer"))
+	g.managerCtx = pprof.WithLabels(g.managerCtx, pprof.Labels("gracefulLifecycle", "with-manager"))
 
 	if !g.setStateTransition(stateInit, stateRunning) {
 		panic("invalid graceful manager state: transition from init to running failed")

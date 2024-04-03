@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/services/context"
 )
 
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
@@ -118,4 +118,5 @@ func WebfingerQuery(ctx *context.Context) {
 		Aliases: aliases,
 		Links:   links,
 	})
+	ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 }

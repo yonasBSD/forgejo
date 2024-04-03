@@ -12,7 +12,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/unit"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/metrics"
 	"code.gitea.io/gitea/modules/public"
@@ -44,7 +43,7 @@ import (
 	user_setting "code.gitea.io/gitea/routers/web/user/setting"
 	"code.gitea.io/gitea/routers/web/user/setting/security"
 	auth_service "code.gitea.io/gitea/services/auth"
-	context_service "code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/lfs"
 
@@ -401,37 +400,6 @@ func registerRoutes(m *web.Route) {
 		}
 	}
 
-	addWebhookAddRoutes := func() {
-		m.Get("/{type}/new", repo_setting.WebhooksNew)
-		m.Post("/forgejo/new", web.Bind(forms.NewWebhookForm{}), repo_setting.ForgejoHooksNewPost)
-		m.Post("/gitea/new", web.Bind(forms.NewWebhookForm{}), repo_setting.GiteaHooksNewPost)
-		m.Post("/gogs/new", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksNewPost)
-		m.Post("/slack/new", web.Bind(forms.NewSlackHookForm{}), repo_setting.SlackHooksNewPost)
-		m.Post("/discord/new", web.Bind(forms.NewDiscordHookForm{}), repo_setting.DiscordHooksNewPost)
-		m.Post("/dingtalk/new", web.Bind(forms.NewDingtalkHookForm{}), repo_setting.DingtalkHooksNewPost)
-		m.Post("/telegram/new", web.Bind(forms.NewTelegramHookForm{}), repo_setting.TelegramHooksNewPost)
-		m.Post("/matrix/new", web.Bind(forms.NewMatrixHookForm{}), repo_setting.MatrixHooksNewPost)
-		m.Post("/msteams/new", web.Bind(forms.NewMSTeamsHookForm{}), repo_setting.MSTeamsHooksNewPost)
-		m.Post("/feishu/new", web.Bind(forms.NewFeishuHookForm{}), repo_setting.FeishuHooksNewPost)
-		m.Post("/wechatwork/new", web.Bind(forms.NewWechatWorkHookForm{}), repo_setting.WechatworkHooksNewPost)
-		m.Post("/packagist/new", web.Bind(forms.NewPackagistHookForm{}), repo_setting.PackagistHooksNewPost)
-	}
-
-	addWebhookEditRoutes := func() {
-		m.Post("/forgejo/{id}", web.Bind(forms.NewWebhookForm{}), repo_setting.ForgejoHooksEditPost)
-		m.Post("/gitea/{id}", web.Bind(forms.NewWebhookForm{}), repo_setting.GiteaHooksEditPost)
-		m.Post("/gogs/{id}", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksEditPost)
-		m.Post("/slack/{id}", web.Bind(forms.NewSlackHookForm{}), repo_setting.SlackHooksEditPost)
-		m.Post("/discord/{id}", web.Bind(forms.NewDiscordHookForm{}), repo_setting.DiscordHooksEditPost)
-		m.Post("/dingtalk/{id}", web.Bind(forms.NewDingtalkHookForm{}), repo_setting.DingtalkHooksEditPost)
-		m.Post("/telegram/{id}", web.Bind(forms.NewTelegramHookForm{}), repo_setting.TelegramHooksEditPost)
-		m.Post("/matrix/{id}", web.Bind(forms.NewMatrixHookForm{}), repo_setting.MatrixHooksEditPost)
-		m.Post("/msteams/{id}", web.Bind(forms.NewMSTeamsHookForm{}), repo_setting.MSTeamsHooksEditPost)
-		m.Post("/feishu/{id}", web.Bind(forms.NewFeishuHookForm{}), repo_setting.FeishuHooksEditPost)
-		m.Post("/wechatwork/{id}", web.Bind(forms.NewWechatWorkHookForm{}), repo_setting.WechatworkHooksEditPost)
-		m.Post("/packagist/{id}", web.Bind(forms.NewPackagistHookForm{}), repo_setting.PackagistHooksEditPost)
-	}
-
 	addSettingsVariablesRoutes := func() {
 		m.Group("/variables", func() {
 			m.Get("", repo_setting.Variables)
@@ -569,6 +537,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("/appearance", func() {
 			m.Get("", user_setting.Appearance)
 			m.Post("/language", web.Bind(forms.UpdateLanguageForm{}), user_setting.UpdateUserLang)
+			m.Post("/hints", web.Bind(forms.UpdateHintsForm{}), user_setting.UpdateUserHints)
 			m.Post("/hidden_comments", user_setting.UpdateUserHiddenComments)
 			m.Post("/theme", web.Bind(forms.UpdateThemeForm{}), user_setting.UpdateUIThemePost)
 		})
@@ -640,12 +609,13 @@ func registerRoutes(m *web.Route) {
 		m.Group("/hooks", func() {
 			m.Get("", user_setting.Webhooks)
 			m.Post("/delete", user_setting.DeleteWebhook)
-			addWebhookAddRoutes()
+			m.Get("/{type}/new", repo_setting.WebhookNew)
+			m.Post("/{type}/new", repo_setting.WebhookCreate)
 			m.Group("/{id}", func() {
-				m.Get("", repo_setting.WebHooksEdit)
-				m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+				m.Get("", repo_setting.WebhookEdit)
+				m.Post("", repo_setting.WebhookUpdate)
+				m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 			})
-			addWebhookEditRoutes()
 		}, webhooksEnabled)
 
 		m.Group("/blocked_users", func() {
@@ -681,6 +651,7 @@ func registerRoutes(m *web.Route) {
 	// ***** START: Admin *****
 	m.Group("/admin", func() {
 		m.Get("", admin.Dashboard)
+		m.Get("/system_status", admin.SystemStatus)
 		m.Post("", web.Bind(forms.AdminDashboardForm{}), admin.DashboardPost)
 
 		if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
@@ -691,6 +662,7 @@ func registerRoutes(m *web.Route) {
 			m.Get("", admin.Config)
 			m.Post("", admin.ChangeConfig)
 			m.Post("/test_mail", admin.SendTestMail)
+			m.Get("/settings", admin.ConfigSettings)
 		})
 
 		m.Group("/monitor", func() {
@@ -742,14 +714,15 @@ func registerRoutes(m *web.Route) {
 			m.Get("", admin.DefaultOrSystemWebhooks)
 			m.Post("/delete", admin.DeleteDefaultOrSystemWebhook)
 			m.Group("/{id}", func() {
-				m.Get("", repo_setting.WebHooksEdit)
-				m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+				m.Get("", repo_setting.WebhookEdit)
+				m.Post("", repo_setting.WebhookUpdate)
+				m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 			})
-			addWebhookEditRoutes()
 		}, webhooksEnabled)
 
 		m.Group("/{configType:default-hooks|system-hooks}", func() {
-			addWebhookAddRoutes()
+			m.Get("/{type}/new", repo_setting.WebhookNew)
+			m.Post("/{type}/new", repo_setting.WebhookCreate)
 		})
 
 		m.Group("/auths", func() {
@@ -794,7 +767,7 @@ func registerRoutes(m *web.Route) {
 		m.Methods("GET, OPTIONS", "/attachments/{uuid}", optionsCorsHandler(), repo.GetAttachment)
 	}, ignSignIn)
 
-	m.Post("/{username}", reqSignIn, context_service.UserAssignmentWeb(), user.Action)
+	m.Post("/{username}", reqSignIn, context.UserAssignmentWeb(), user.Action)
 
 	reqRepoAdmin := context.RequireRepoAdmin()
 	reqRepoCodeWriter := context.RequireRepoWriter(unit.TypeCode)
@@ -907,12 +880,13 @@ func registerRoutes(m *web.Route) {
 				m.Group("/hooks", func() {
 					m.Get("", org.Webhooks)
 					m.Post("/delete", org.DeleteWebhook)
-					addWebhookAddRoutes()
+					m.Get("/{type}/new", repo_setting.WebhookNew)
+					m.Post("/{type}/new", repo_setting.WebhookCreate)
 					m.Group("/{id}", func() {
-						m.Get("", repo_setting.WebHooksEdit)
-						m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+						m.Get("", repo_setting.WebhookEdit)
+						m.Post("", repo_setting.WebhookUpdate)
+						m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 					})
-					addWebhookEditRoutes()
 				}, webhooksEnabled)
 
 				m.Group("/labels", func() {
@@ -967,7 +941,9 @@ func registerRoutes(m *web.Route) {
 		m.Post("/create", web.Bind(forms.CreateRepoForm{}), repo.CreatePost)
 		m.Get("/migrate", repo.Migrate)
 		m.Post("/migrate", web.Bind(forms.MigrateRepoForm{}), repo.MigratePost)
-		m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
+		if !setting.Repository.DisableForks {
+			m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
+		}
 		m.Get("/search", repo.SearchRepo)
 	}, reqSignIn)
 
@@ -1010,7 +986,6 @@ func registerRoutes(m *web.Route) {
 						m.Put("", web.Bind(forms.EditProjectBoardForm{}), org.EditProjectBoard)
 						m.Delete("", org.DeleteProjectBoard)
 						m.Post("/default", org.SetDefaultProjectBoard)
-						m.Post("/unsetdefault", org.UnsetDefaultProjectBoard)
 
 						m.Post("/move", org.MoveIssues)
 					})
@@ -1026,7 +1001,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("", func() {
 			m.Get("/code", user.CodeSearch)
 		}, reqUnitAccess(unit.TypeCode, perm.AccessModeRead, false), individualPermsChecker)
-	}, ignSignIn, context_service.UserAssignmentWeb(), context.OrgAssignment()) // for "/{username}/-" (packages, projects, code)
+	}, ignSignIn, context.UserAssignmentWeb(), context.OrgAssignment()) // for "/{username}/-" (packages, projects, code)
 
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/settings", func() {
@@ -1077,15 +1052,16 @@ func registerRoutes(m *web.Route) {
 			}, context.GitHookService())
 
 			m.Group("/hooks", func() {
-				m.Get("", repo_setting.Webhooks)
-				m.Post("/delete", repo_setting.DeleteWebhook)
-				addWebhookAddRoutes()
+				m.Get("", repo_setting.WebhookList)
+				m.Post("/delete", repo_setting.WebhookDelete)
+				m.Get("/{type}/new", repo_setting.WebhookNew)
+				m.Post("/{type}/new", repo_setting.WebhookCreate)
 				m.Group("/{id}", func() {
-					m.Get("", repo_setting.WebHooksEdit)
-					m.Post("/test", repo_setting.TestWebhook)
-					m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+					m.Get("", repo_setting.WebhookEdit)
+					m.Post("", repo_setting.WebhookUpdate)
+					m.Post("/test", repo_setting.WebhookTest)
+					m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 				})
-				addWebhookEditRoutes()
 			}, webhooksEnabled)
 
 			m.Group("/keys", func() {
@@ -1121,7 +1097,16 @@ func registerRoutes(m *web.Route) {
 		}, ctxDataSet("PageIsRepoSettings", true, "LFSStartServer", setting.LFS.StartServer))
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes(), reqRepoAdmin, context.RepoRef())
 
-	m.Post("/{username}/{reponame}/action/{action}", reqSignIn, context.RepoAssignment, context.UnitTypes(), repo.Action)
+	m.Group("/{username}/{reponame}/action", func() {
+		m.Post("/watch", repo.ActionWatch(true))
+		m.Post("/unwatch", repo.ActionWatch(false))
+		m.Post("/accept_transfer", repo.ActionTransfer(true))
+		m.Post("/reject_transfer", repo.ActionTransfer(false))
+		if !setting.Repository.DisableStars {
+			m.Post("/star", repo.ActionStar(true))
+			m.Post("/unstar", repo.ActionStar(false))
+		}
+	}, reqSignIn, context.RepoAssignment, context.UnitTypes())
 
 	// Grouping for those endpoints not requiring authentication (but should respect ignSignIn)
 	m.Group("/{username}/{reponame}", func() {
@@ -1147,8 +1132,10 @@ func registerRoutes(m *web.Route) {
 
 	// Grouping for those endpoints that do require authentication
 	m.Group("/{username}/{reponame}", func() {
-		m.Combo("/fork", reqRepoCodeReader).Get(repo.Fork).
-			Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
+		if !setting.Repository.DisableForks {
+			m.Combo("/fork", reqRepoCodeReader).Get(repo.Fork).
+				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
+		}
 		m.Group("/issues", func() {
 			m.Group("/new", func() {
 				m.Combo("").Get(context.RepoRef(), repo.NewIssue).
@@ -1251,7 +1238,7 @@ func registerRoutes(m *web.Route) {
 					Post(web.Bind(forms.EditRepoFileForm{}), repo.NewDiffPatchPost)
 				m.Combo("/_cherrypick/{sha:([a-f0-9]{4,64})}/*").Get(repo.CherryPick).
 					Post(web.Bind(forms.CherryPickForm{}), repo.CherryPickPost)
-			}, repo.MustBeEditable)
+			}, repo.MustBeEditable, repo.CommonEditorData)
 			m.Group("", func() {
 				m.Post("/upload-file", repo.UploadFileToServer)
 				m.Post("/upload-remove", web.Bind(forms.RemoveUploadFileForm{}), repo.RemoveUploadFileFromServer)
@@ -1347,7 +1334,9 @@ func registerRoutes(m *web.Route) {
 					m.Get("/open.svg", badges.GetOpenPullsBadge)
 					m.Get("/closed.svg", badges.GetClosedPullsBadge)
 				})
-				m.Get("/stars.svg", badges.GetStarsBadge)
+				if !setting.Repository.DisableStars {
+					m.Get("/stars.svg", badges.GetStarsBadge)
+				}
 				m.Get("/release.svg", badges.GetLatestReleaseBadge)
 			})
 		}
@@ -1370,7 +1359,6 @@ func registerRoutes(m *web.Route) {
 						m.Put("", web.Bind(forms.EditProjectBoardForm{}), repo.EditProjectBoard)
 						m.Delete("", repo.DeleteProjectBoard)
 						m.Post("/default", repo.SetDefaultProjectBoard)
-						m.Post("/unsetdefault", repo.UnSetDefaultProjectBoard)
 
 						m.Post("/move", repo.MoveIssues)
 					})
@@ -1398,8 +1386,9 @@ func registerRoutes(m *web.Route) {
 					})
 					m.Post("/cancel", reqRepoActionsWriter, actions.Cancel)
 					m.Post("/approve", reqRepoActionsWriter, actions.Approve)
-					m.Post("/artifacts", actions.ArtifactsView)
+					m.Get("/artifacts", actions.ArtifactsView)
 					m.Get("/artifacts/{artifact_name}", actions.ArtifactsDownloadView)
+					m.Delete("/artifacts/{artifact_name}", reqRepoActionsWriter, actions.ArtifactsDeleteView)
 					m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
 				})
 			})
@@ -1431,6 +1420,18 @@ func registerRoutes(m *web.Route) {
 		m.Group("/activity", func() {
 			m.Get("", repo.Activity)
 			m.Get("/{period}", repo.Activity)
+			m.Group("/contributors", func() {
+				m.Get("", repo.Contributors)
+				m.Get("/data", repo.ContributorsData)
+			})
+			m.Group("/code-frequency", func() {
+				m.Get("", repo.CodeFrequency)
+				m.Get("/data", repo.CodeFrequencyData)
+			})
+			m.Group("/recent-commits", func() {
+				m.Get("", repo.RecentCommits)
+				m.Get("/data", repo.RecentCommitsData)
+			})
 		}, context.RepoRef(), repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases))
 
 		m.Group("/activity_author_data", func() {
@@ -1554,9 +1555,11 @@ func registerRoutes(m *web.Route) {
 			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.Home)
 		}, repo.SetEditorconfigIfExists)
 
-		m.Group("", func() {
-			m.Get("/forks", repo.Forks)
-		}, context.RepoRef(), reqRepoCodeReader)
+		if !setting.Repository.DisableForks {
+			m.Group("", func() {
+				m.Get("/forks", repo.Forks)
+			}, context.RepoRef(), reqRepoCodeReader)
+		}
 		m.Get("/commit/{sha:([a-f0-9]{4,64})}.{ext:patch|diff}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RawDiff)
 
 		m.Get("/sync_fork/{branch}", repo.MustBeNotEmpty, reqRepoCodeWriter, repo.SyncFork)
@@ -1565,7 +1568,9 @@ func registerRoutes(m *web.Route) {
 	m.Post("/{username}/{reponame}/lastcommit/*", ignSignInAndCsrf, context.RepoAssignment, context.UnitTypes(), context.RepoRefByType(context.RepoRefCommit), reqRepoCodeReader, repo.LastCommit)
 
 	m.Group("/{username}/{reponame}", func() {
-		m.Get("/stars", repo.Stars)
+		if !setting.Repository.DisableStars {
+			m.Get("/stars", repo.Stars)
+		}
 		m.Get("/watchers", repo.Watchers)
 		m.Get("/search", reqRepoCodeReader, repo.Search)
 	}, ignSignIn, context.RepoAssignment, context.RepoRef(), context.UnitTypes())

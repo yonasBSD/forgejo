@@ -14,7 +14,7 @@
 				</div>
 				<div class="inline field">
 					<label>{{ctx.Locale.Tr "repo.repo_size"}}</label>
-					<span {{if not (eq .Repository.Size 0)}} data-tooltip-content="{{.Repository.SizeDetailsString}}"{{end}}>{{FileSize .Repository.Size}}</span>
+					<span {{if not (eq .Repository.Size 0)}} data-tooltip-content="{{.Repository.SizeDetailsString ctx.Locale}}"{{end}}>{{ctx.Locale.TrSize .Repository.Size}}</span>
 				</div>
 				<div class="inline field">
 					<label>{{ctx.Locale.Tr "repo.template"}}</label>
@@ -32,7 +32,7 @@
 							{{else}}
 							<input name="private" type="checkbox" {{if .Repository.IsPrivate}}checked{{end}}{{if and $.ForcePrivate .Repository.IsPrivate}} readonly{{end}}>
 							{{end}}
-							<label>{{ctx.Locale.Tr "repo.visibility_helper" | Safe}} {{if .Repository.NumForks}}<span class="text red">{{ctx.Locale.Tr "repo.visibility_fork_helper"}}</span>{{end}}</label>
+							<label>{{ctx.Locale.Tr "repo.visibility_helper"}} {{if .Repository.NumForks}}<span class="text red">{{ctx.Locale.Tr "repo.visibility_fork_helper"}}</span>{{end}}</label>
 						</div>
 					</div>
 				{{end}}
@@ -80,7 +80,7 @@
 			</h4>
 			<div class="ui attached segment">
 				{{if .Repository.IsArchived}}
-					<div class="ui warning message gt-text-center">
+					<div class="ui warning message tw-text-center">
 						{{ctx.Locale.Tr "repo.settings.archive.mirrors_unavailable"}}
 					</div>
 				{{else}}
@@ -110,19 +110,18 @@
 					<table class="ui table">
 						<thead>
 							<tr>
-								<th style="width:40%">{{ctx.Locale.Tr "repo.settings.mirror_settings.mirrored_repository"}}</th>
+								<th class="tw-w-2/5">{{ctx.Locale.Tr "repo.settings.mirror_settings.mirrored_repository"}}</th>
 								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction"}}</th>
 								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.last_update"}}</th>
 								<th></th>
 							</tr>
 						</thead>
-						{{end}}
 						{{if $modifyBrokenPullMirror}}
 							{{/* even if a repo is a pull mirror (IsMirror=true), the PullMirror might still be nil if the mirror migration is broken */}}
 							<tbody>
 								<tr>
 									<td colspan="4">
-										<div class="text red gt-py-4 gt-border-secondary-bottom">{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.pull"}}: {{ctx.Locale.Tr "error.occurred"}}</div>
+										<div class="text red tw-py-4">{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.pull"}}: {{ctx.Locale.Tr "error.occurred"}}</div>
 									</td>
 								</tr>
 							</tbody>
@@ -133,7 +132,7 @@
 								<td>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.pull"}}</td>
 								<td>{{DateTime "full" .PullMirror.UpdatedUnix}}</td>
 								<td class="right aligned">
-									<form method="post" class="gt-dib">
+									<form method="post" class="tw-inline-block">
 										{{.CsrfTokenHtml}}
 										<input type="hidden" name="action" value="mirror-sync">
 										<button class="ui primary tiny button inline text-thin">{{ctx.Locale.Tr "repo.settings.sync_mirror"}}</button>
@@ -164,10 +163,10 @@
 											<p class="help">{{ctx.Locale.Tr "repo.mirror_address_desc"}}</p>
 										</div>
 										<details class="ui optional field" {{if or .Err_Auth $address.Username}}open{{end}}>
-											<summary class="gt-p-2">
+											<summary class="tw-p-1">
 												{{ctx.Locale.Tr "repo.need_auth"}}
 											</summary>
-											<div class="gt-p-2">
+											<div class="tw-p-1">
 												<div class="inline field {{if .Err_Auth}}error{{end}}">
 													<label for="mirror_username">{{ctx.Locale.Tr "username"}}</label>
 													<input id="mirror_username" name="mirror_username" value="{{$address.Username}}" {{if not .mirror_username}}data-need-clear="true"{{end}}>
@@ -191,7 +190,7 @@
 										<div class="field {{if .Err_LFSEndpoint}}error{{end}}">
 											<label for="mirror_lfs_endpoint">{{ctx.Locale.Tr "repo.mirror_lfs_endpoint"}}</label>
 											<input id="mirror_lfs_endpoint" name="mirror_lfs_endpoint" value="{{.PullMirror.LFSEndpoint}}" placeholder="{{ctx.Locale.Tr "repo.migrate_options_lfs_endpoint.placeholder"}}">
-											<p class="help">{{ctx.Locale.Tr "repo.mirror_lfs_endpoint_desc" "https://github.com/git-lfs/git-lfs/blob/main/docs/api/server-discovery.md#server-discovery" | Str2html}}</p>
+											<p class="help">{{ctx.Locale.Tr "repo.mirror_lfs_endpoint_desc" "https://github.com/git-lfs/git-lfs/blob/main/docs/api/server-discovery.md#server-discovery"}}</p>
 										</div>
 										{{end}}
 										<div class="field">
@@ -201,13 +200,14 @@
 								</td>
 							</tr>
 						</tbody>
+						{{end}}{{/* end if: $modifyBrokenPullMirror / $isWorkingPullMirror */}}
 					</table>
-					{{end}}{{/* end if: IsMirror */}}
+					{{end}}{{/* end if .Repository.IsMirror */}}
 
 					<table class="ui table">
 						<thead>
 							<tr>
-								<th style="width:40%">{{ctx.Locale.Tr "repo.settings.mirror_settings.pushed_repository"}}</th>
+								<th class="tw-w-2/5">{{ctx.Locale.Tr "repo.settings.mirror_settings.pushed_repository"}}</th>
 								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction"}}</th>
 								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.last_update"}}</th>
 								<th></th>
@@ -230,13 +230,13 @@
 									>
 										{{svg "octicon-pencil" 14}}
 									</button>
-									<form method="post" class="gt-dib">
+									<form method="post" class="tw-inline-block">
 										{{$.CsrfTokenHtml}}
 										<input type="hidden" name="action" value="push-mirror-sync">
 										<input type="hidden" name="push_mirror_id" value="{{.ID}}">
 										<button class="ui primary tiny button" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.sync_mirror"}}">{{svg "octicon-sync" 14}}</button>
 									</form>
-									<form method="post" class="gt-dib">
+									<form method="post" class="tw-inline-block">
 										{{$.CsrfTokenHtml}}
 										<input type="hidden" name="action" value="push-mirror-remove">
 										<input type="hidden" name="push_mirror_id" value="{{.ID}}">
@@ -262,10 +262,10 @@
 												<p class="help">{{ctx.Locale.Tr "repo.mirror_address_desc"}}</p>
 											</div>
 											<details class="ui optional field" {{if or .Err_PushMirrorAuth .push_mirror_username}}open{{end}}>
-												<summary class="gt-p-2">
+												<summary class="tw-p-1">
 													{{ctx.Locale.Tr "repo.need_auth"}}
 												</summary>
-												<div class="gt-p-2">
+												<div class="tw-p-1">
 													<div class="inline field {{if .Err_PushMirrorAuth}}error{{end}}">
 														<label for="push_mirror_username">{{ctx.Locale.Tr "username"}}</label>
 														<input id="push_mirror_username" name="push_mirror_username" value="{{.push_mirror_username}}">
@@ -492,7 +492,7 @@
 					</div>
 				</div>
 				{{if not .Repository.IsMirror}}
-					<div class="flex-item gt-ac">
+					<div class="flex-item tw-items-center">
 						<div class="flex-item-main">
 							{{if .Repository.IsArchived}}
 								<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.unarchive.header"}}</div>
@@ -539,7 +539,7 @@
 						</label>
 					</div>
 					<div class="required field">
-						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<label for="repo_name">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 						<input id="repo_name" name="repo_name" required maxlength="100">
 					</div>
 
@@ -570,7 +570,7 @@
 						</label>
 					</div>
 					<div class="required field">
-						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<label for="repo_name">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 						<input id="repo_name" name="repo_name" required>
 					</div>
 
@@ -602,7 +602,7 @@
 					</label>
 				</div>
 				<div class="required field">
-					<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+					<label for="repo_name">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 					<input id="repo_name" name="repo_name" required>
 				</div>
 				<div class="required field">
@@ -624,8 +624,8 @@
 		</div>
 		<div class="content">
 			<div class="ui warning message">
-				{{ctx.Locale.Tr "repo.settings.delete_notices_1" | Safe}}<br>
-				{{ctx.Locale.Tr "repo.settings.delete_notices_2" .Repository.FullName | Safe}}
+				{{ctx.Locale.Tr "repo.settings.delete_notices_1"}}<br>
+				{{ctx.Locale.Tr "repo.settings.delete_notices_2" .Repository.FullName}}
 				{{if .Repository.NumForks}}<br>
 				{{ctx.Locale.Tr "repo.settings.delete_notices_fork_1"}}
 				{{end}}
@@ -640,7 +640,7 @@
 					</label>
 				</div>
 				<div class="required field">
-					<label for="repo_name_to_delete">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+					<label for="repo_name_to_delete">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 					<input id="repo_name_to_delete" name="repo_name" required>
 				</div>
 
@@ -659,8 +659,8 @@
 		</div>
 		<div class="content">
 			<div class="ui warning message">
-				{{ctx.Locale.Tr "repo.settings.delete_notices_1" | Safe}}<br>
-				{{ctx.Locale.Tr "repo.settings.wiki_delete_notices_1" .Repository.Name | Safe}}
+				{{ctx.Locale.Tr "repo.settings.delete_notices_1"}}<br>
+				{{ctx.Locale.Tr "repo.settings.wiki_delete_notices_1" .Repository.Name}}
 			</div>
 			<form class="ui form" action="{{.Link}}" method="post">
 				{{.CsrfTokenHtml}}
@@ -672,7 +672,7 @@
 					</label>
 				</div>
 				<div class="required field">
-					<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+					<label for="repo_name">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 					<input id="repo_name" name="repo_name" required>
 				</div>
 
@@ -691,7 +691,7 @@
 			<div class="content">
 				<div class="ui warning message">
 					<ul>
-						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_1" | Safe}}</li>
+						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_1"}}</li>
 						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_2" .Repository.Name}}</li>
 					</ul>
 				</div>
@@ -705,7 +705,7 @@
 						</label>
 					</div>
 					<div class="required field">
-						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<label for="repo_name">{{ctx.Locale.Tr "repo.settings.confirmation_string"}}</label>
 						<input id="repo_name" name="repo_name" required>
 					</div>
 
@@ -742,7 +742,13 @@
 					<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
 					<div class="text right actions">
 						<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-						<button class="ui red button">{{ctx.Locale.Tr "repo.settings.archive.button"}}</button>
+						<button class="ui red button">
+							{{if .Repository.IsArchived}}
+								{{ctx.Locale.Tr "repo.settings.unarchive.button"}}
+							{{else}}
+								{{ctx.Locale.Tr "repo.settings.archive.button"}}
+							{{end}}
+						</button>
 					</div>
 			</form>
 			</div>

@@ -12,13 +12,14 @@ import (
 
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/charset"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/services/context"
 	files_service "code.gitea.io/gitea/services/repository/files"
 )
 
@@ -69,6 +70,14 @@ func RefBlame(ctx *context.Context) {
 	ctx.Data["FileSize"] = blob.Size()
 	ctx.Data["FileName"] = blob.Name()
 
+	// Do not display a blame view if the size of the file is
+	// larger than what is configured as the maximum.
+	if blob.Size() >= setting.UI.MaxDisplayFileSize {
+		ctx.Data["IsFileTooLarge"] = true
+		ctx.HTML(http.StatusOK, tplRepoHome)
+		return
+	}
+
 	ctx.Data["NumLinesSet"] = true
 	ctx.Data["NumLines"], err = blob.GetBlobLineCount()
 	if err != nil {
@@ -103,10 +112,7 @@ type blameResult struct {
 
 func performBlame(ctx *context.Context, commit *git.Commit, file string, bypassBlameIgnore bool) (*blameResult, error) {
 	repoPath := ctx.Repo.Repository.RepoPath()
-	objectFormat, err := ctx.Repo.GitRepo.GetObjectFormat()
-	if err != nil {
-		return nil, err
-	}
+	objectFormat := ctx.Repo.GetObjectFormat()
 
 	blameReader, err := git.CreateBlameReader(ctx, objectFormat, repoPath, commit, file, bypassBlameIgnore)
 	if err != nil {
@@ -252,9 +258,9 @@ func renderBlame(ctx *context.Context, blameParts []*git.BlamePart, commitNames 
 
 				var avatar string
 				if commit.User != nil {
-					avatar = string(avatarUtils.Avatar(commit.User, 18, "gt-mr-3"))
+					avatar = string(avatarUtils.Avatar(commit.User, 18))
 				} else {
-					avatar = string(avatarUtils.AvatarByEmail(commit.Author.Email, commit.Author.Name, 18, "gt-mr-3"))
+					avatar = string(avatarUtils.AvatarByEmail(commit.Author.Email, commit.Author.Name, 18, "tw-mr-2"))
 				}
 
 				br.Avatar = gotemplate.HTML(avatar)
@@ -279,7 +285,7 @@ func renderBlame(ctx *context.Context, blameParts []*git.BlamePart, commitNames 
 				lexerName = lexerNameForLine
 			}
 
-			br.EscapeStatus, br.Code = charset.EscapeControlHTML(line, ctx.Locale)
+			br.EscapeStatus, br.Code = charset.EscapeControlHTML(line, ctx.Locale, charset.FileviewContext)
 			rows = append(rows, br)
 			escapeStatus = escapeStatus.Or(br.EscapeStatus)
 		}

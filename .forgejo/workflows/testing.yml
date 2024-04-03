@@ -14,32 +14,50 @@ jobs:
     container:
       image: 'docker.io/node:20-bookworm'
     steps:
+      - name: event info
+        run: |
+          cat <<'EOF'
+          ${{ toJSON(github) }}
+          EOF
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.22"
           check-latest: true
       - run: make deps-backend deps-tools
       - run: make --always-make -j$(nproc) lint-backend checks-backend # ensure the "go-licenses" make target runs
-        env:
-          TAGS: bindata sqlite sqlite_unlock_notify
+  frontend-checks:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - run: make deps-frontend
+      - run: make lint-frontend
+      - run: make checks-frontend
+      - run: make test-frontend
+      - run: make frontend
   test-unit:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
-    needs: [backend-checks]
+    needs: [backend-checks, frontend-checks]
     container:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: 'docker.io/bitnami/minio:2023.8.31'
+        image: bitnami/minio:2024.2.26
+        options: >-
+          --hostname gitea.minio
         env:
+          MINIO_DOMAIN: minio
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.22"
       - run: |
           git config --add safe.directory '*'
           adduser --quiet --comment forgejo --disabled-password forgejo
@@ -67,7 +85,7 @@ jobs:
   test-mysql:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
-    needs: [backend-checks]
+    needs: [backend-checks, frontend-checks]
     container:
       image: 'docker.io/node:20-bookworm'
     services:
@@ -84,7 +102,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.22"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -113,15 +131,15 @@ jobs:
   test-pgsql:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
-    needs: [backend-checks]
+    needs: [backend-checks, frontend-checks]
     container:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2021.3.17
+        image: bitnami/minio:2024.2.26
         env:
-          MINIO_ACCESS_KEY: 123456
-          MINIO_SECRET_KEY: 12345678
+          MINIO_ROOT_USER: 123456
+          MINIO_ROOT_PASSWORD: 12345678
       pgsql:
         image: 'docker.io/postgres:15'
         env:
@@ -131,7 +149,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.22"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -161,14 +179,14 @@ jobs:
   test-sqlite:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
-    needs: [backend-checks]
+    needs: [backend-checks, frontend-checks]
     container:
       image: 'docker.io/node:20-bookworm'
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.22"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive

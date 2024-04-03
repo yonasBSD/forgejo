@@ -11,11 +11,11 @@ import (
 
 	"code.gitea.io/gitea/models/avatars"
 	issues_model "code.gitea.io/gitea/models/issues"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/services/context"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -70,7 +70,7 @@ func GetContentHistoryList(ctx *context.Context) {
 		}
 
 		src := html.EscapeString(item.UserAvatarLink)
-		class := avatars.DefaultAvatarClass + " gt-mr-3"
+		class := avatars.DefaultAvatarClass + " tw-mr-2"
 		name := html.EscapeString(username)
 		avatarHTML := string(templates.AvatarHTML(src, 28, class, username))
 		timeSinceText := string(timeutil.TimeSinceUnix(item.EditedUnix, ctx.Locale))

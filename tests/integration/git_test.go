@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -18,16 +19,19 @@ import (
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
+	git_model "code.gitea.io/gitea/models/git"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	gitea_context "code.gitea.io/gitea/services/context"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -80,6 +84,7 @@ func testGit(t *testing.T, u *url.URL) {
 		mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
 
 		t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "master", "test/head"))
+		t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
 		t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
 		t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
 		t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
@@ -121,6 +126,7 @@ func testGit(t *testing.T, u *url.URL) {
 			mediaTest(t, &sshContext, little, big, littleLFS, bigLFS)
 
 			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "master", "test/head2"))
+			t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
 			t.Run("BranchProtectMerge", doBranchProtectPRMerge(&sshContext, dstPath))
 			t.Run("MergeFork", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -413,12 +419,17 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFilePatterns string) func(t *testing.T) {
 	// We are going to just use the owner to set the protection.
 	return func(t *testing.T) {
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: ctx.Reponame, OwnerName: ctx.Username})
+		rule := &git_model.ProtectedBranch{RuleName: branch, RepoID: repo.ID}
+		unittest.LoadBeanIfExists(rule)
+
 		csrf := GetCSRF(t, ctx.Session, fmt.Sprintf("/%s/%s/settings/branches", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)))
 
 		if userToWhitelist == "" {
 			// Change branch to protected
 			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
 				"_csrf":                     csrf,
+				"rule_id":                   strconv.FormatInt(rule.ID, 10),
 				"rule_name":                 branch,
 				"unprotected_file_patterns": unprotectedFilePatterns,
 			})
@@ -430,6 +441,7 @@ func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFil
 			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
 				"_csrf":                     csrf,
 				"rule_name":                 branch,
+				"rule_id":                   strconv.FormatInt(rule.ID, 10),
 				"enable_push":               "whitelist",
 				"enable_whitelist":          "on",
 				"whitelist_users":           strconv.FormatInt(user.ID, 10),
@@ -450,7 +462,7 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 		var pr api.PullRequest
 		var err error
 
-		// Create a test pullrequest
+		// Create a test pull request
 		t.Run("CreatePullRequest", func(t *testing.T) {
 			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, baseBranch, headBranch)(t)
 			assert.NoError(t, err)
@@ -469,6 +481,19 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 			Reponame: baseCtx.Reponame,
 		}
 		t.Run("EnsureCanSeePull", doEnsureCanSeePull(headCtx, pr, true))
+
+		// Confirm that there is no AGit Label
+		// TODO: Refactor and move this check to a function
+		t.Run("AGitLabelIsMissing", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, ctx.Username)
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d", baseCtx.Username, baseCtx.Reponame, pr.Index))
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#agit-label", false)
+		})
 
 		// Then get the diff string
 		var diffHash string
@@ -711,6 +736,20 @@ func doAutoPRMerge(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
 	}
 }
 
+func doInternalReferences(ctx *APITestContext, dstPath string) func(t *testing.T) {
+	return func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: ctx.Username, Name: ctx.Reponame})
+		pr1 := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{HeadRepoID: repo.ID})
+
+		_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments(fmt.Sprintf(":refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
+		assert.Error(t, gitErr)
+		assert.Contains(t, stdErr, fmt.Sprintf("remote: Forgejo: The deletion of refs/pull/%d/head is skipped as it's an internal reference.", pr1.Index))
+		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] refs/pull/%d/head (hook declined)", pr1.Index))
+	}
+}
+
 func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headBranch string) func(t *testing.T) {
 	return func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
@@ -812,6 +851,17 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 		if pr1 == nil || pr2 == nil {
 			return
 		}
+
+		t.Run("AGitLabelIsPresent", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, ctx.Username)
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame), pr2.Index))
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#agit-label", true)
+		})
 
 		t.Run("AddCommit2", func(t *testing.T) {
 			err := os.WriteFile(path.Join(dstPath, "test_file"), []byte("## test content \n ## test content 2"), 0o666)
@@ -936,7 +986,111 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 				assert.Contains(t, pr.Issue.Content, "custom")
 			})
 		})
+
+		upstreamGitRepo, err := git.OpenRepository(git.DefaultContext, filepath.Join(setting.RepoRootPath, ctx.Username, ctx.Reponame+".git"))
+		require.NoError(t, err)
+		defer upstreamGitRepo.Close()
+
+		t.Run("Force push", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+6)
+			pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+				HeadRepoID: repo.ID,
+				Flow:       issues_model.PullRequestFlowAGit,
+				Index:      pr1.Index + 5,
+			})
+
+			headCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+			require.NoError(t, err)
+
+			_, _, gitErr = git.NewCommand(git.DefaultContext, "reset", "--hard", "HEAD~1").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			t.Run("Fails", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.Error(t, gitErr)
+
+				assert.Contains(t, stdErr, "-o force-push=true")
+
+				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+				assert.NoError(t, err)
+				assert.EqualValues(t, headCommitID, currentHeadCommitID)
+			})
+			t.Run("Succeeds", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push=true").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.NoError(t, gitErr)
+
+				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+				assert.NoError(t, err)
+				assert.NotEqualValues(t, headCommitID, currentHeadCommitID)
+			})
+		})
+
+		t.Run("Branch already contains commit", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			branchCommit, err := upstreamGitRepo.GetBranchCommit("master")
+			require.NoError(t, err)
+
+			_, _, gitErr := git.NewCommand(git.DefaultContext, "reset", "--hard").AddDynamicArguments(branchCommit.ID.String() + "~1").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-already-contains").RunStdString(&git.RunOpts{Dir: dstPath})
+			assert.Error(t, gitErr)
+
+			assert.Contains(t, stdErr, "already contains this commit")
+		})
+
 		t.Run("Merge", doAPIMergePullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index))
 		t.Run("CheckoutMasterAgain", doGitCheckoutBranch(dstPath, "master"))
 	}
+}
+
+func TestDataAsync_Issue29101(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+		resp, err := files_service.ChangeRepoFiles(db.DefaultContext, repo, user, &files_service.ChangeRepoFilesOptions{
+			Files: []*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "test.txt",
+					ContentReader: bytes.NewReader(make([]byte, 10000)),
+				},
+			},
+			OldBranch: repo.DefaultBranch,
+			NewBranch: repo.DefaultBranch,
+		})
+		assert.NoError(t, err)
+
+		sha := resp.Commit.SHA
+
+		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
+		assert.NoError(t, err)
+
+		commit, err := gitRepo.GetCommit(sha)
+		assert.NoError(t, err)
+
+		entry, err := commit.GetTreeEntryByPath("test.txt")
+		assert.NoError(t, err)
+
+		b := entry.Blob()
+
+		r, err := b.DataAsync()
+		assert.NoError(t, err)
+		defer r.Close()
+
+		r2, err := b.DataAsync()
+		assert.NoError(t, err)
+		defer r2.Close()
+	})
 }

@@ -14,7 +14,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -22,10 +21,12 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
 	user_setting "code.gitea.io/gitea/routers/web/user/setting"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	org_service "code.gitea.io/gitea/services/org"
 	repo_service "code.gitea.io/gitea/services/repository"
 	user_service "code.gitea.io/gitea/services/user"
+	webhook_service "code.gitea.io/gitea/services/webhook"
 )
 
 const (
@@ -210,6 +211,7 @@ func Webhooks(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Org.OrgLink + "/settings/hooks"
 	ctx.Data["BaseLinkNew"] = ctx.Org.OrgLink + "/settings/hooks"
+	ctx.Data["WebhookList"] = webhook_service.List()
 	ctx.Data["Description"] = ctx.Tr("org.settings.hooks_desc")
 
 	ws, err := db.Find[webhook.Webhook](ctx, webhook.ListWebhookOptions{OwnerID: ctx.Org.Organization.ID})

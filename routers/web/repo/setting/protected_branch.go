@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,9 +16,9 @@ import (
 	"code.gitea.io/gitea/models/perm"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/web/repo"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	pull_service "code.gitea.io/gitea/services/pull"
 	"code.gitea.io/gitea/services/repository"
@@ -132,12 +133,15 @@ func SettingsProtectedBranchPost(ctx *context.Context) {
 			}
 		}
 	} else {
-		// FIXME: If a new ProtectBranch has a duplicate RuleName, an error should be returned.
-		// Currently, if a new ProtectBranch with a duplicate RuleName is created, the existing ProtectBranch will be updated.
-		// But we cannot modify this logic now because many unit tests rely on it.
+		// Check if a rule already exists with this rulename, if so redirect to it.
 		protectBranch, err = git_model.GetProtectedBranchRuleByName(ctx, ctx.Repo.Repository.ID, f.RuleName)
 		if err != nil {
-			ctx.ServerError("GetProtectBranchOfRepoByName", err)
+			ctx.ServerError("GetProtectedBranchRuleByName", err)
+			return
+		}
+		if protectBranch != nil {
+			ctx.Flash.Error(ctx.Tr("repo.settings.protected_branch_duplicate_rule_name"))
+			ctx.Redirect(fmt.Sprintf("%s/settings/branches/edit?rule_name=%s", ctx.Repo.RepoLink, protectBranch.RuleName))
 			return
 		}
 	}
@@ -233,6 +237,7 @@ func SettingsProtectedBranchPost(ctx *context.Context) {
 	protectBranch.ProtectedFilePatterns = f.ProtectedFilePatterns
 	protectBranch.UnprotectedFilePatterns = f.UnprotectedFilePatterns
 	protectBranch.BlockOnOutdatedBranch = f.BlockOnOutdatedBranch
+	protectBranch.ApplyToAdmins = f.ApplyToAdmins
 
 	err = git_model.UpdateProtectBranch(ctx, ctx.Repo.Repository, protectBranch, git_model.WhitelistOptions{
 		UserIDs:          whitelistUsers,
@@ -313,7 +318,12 @@ func RenameBranchPost(ctx *context.Context) {
 
 	msg, err := repository.RenameBranch(ctx, ctx.Repo.Repository, ctx.Doer, ctx.Repo.GitRepo, form.From, form.To)
 	if err != nil {
-		ctx.ServerError("RenameBranch", err)
+		if errors.Is(err, git_model.ErrBranchIsProtected) {
+			ctx.Flash.Error(ctx.Tr("repo.settings.rename_branch_failed_protected", form.To))
+			ctx.Redirect(fmt.Sprintf("%s/branches", ctx.Repo.RepoLink))
+		} else {
+			ctx.ServerError("RenameBranch", err)
+		}
 		return
 	}
 

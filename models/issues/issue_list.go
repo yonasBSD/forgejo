@@ -370,6 +370,9 @@ func (issues IssueList) LoadPullRequests(ctx context.Context) error {
 
 	for _, issue := range issues {
 		issue.PullRequest = pullRequestMaps[issue.ID]
+		if issue.PullRequest != nil {
+			issue.PullRequest.Issue = issue
+		}
 	}
 	return nil
 }
@@ -475,6 +478,16 @@ func (issues IssueList) loadTotalTrackedTimes(ctx context.Context) (err error) {
 		return nil
 	}
 	trackedTimes := make(map[int64]int64, len(issues))
+
+	reposMap := make(map[int64]*repo_model.Repository, len(issues))
+	for _, issue := range issues {
+		reposMap[issue.RepoID] = issue.Repo
+	}
+	repos := repo_model.RepositoryListOfMap(reposMap)
+
+	if err := repos.LoadUnits(ctx); err != nil {
+		return err
+	}
 
 	ids := make([]int64, 0, len(issues))
 	for _, issue := range issues {

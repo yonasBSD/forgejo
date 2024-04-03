@@ -6,9 +6,9 @@ package settings
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/services/context"
 )
 
 // GetGeneralUISettings returns instance's global settings for ui
@@ -61,6 +61,7 @@ func GetGeneralRepoSettings(ctx *context.APIContext) {
 		HTTPGitDisabled:      setting.Repository.DisableHTTPGit,
 		MigrationsDisabled:   setting.Repository.DisableMigrations,
 		StarsDisabled:        setting.Repository.DisableStars,
+		ForksDisabled:        setting.Repository.DisableForks,
 		TimeTrackingDisabled: !setting.Service.EnableTimetracking,
 		LFSDisabled:          !setting.LFS.StartServer,
 	})

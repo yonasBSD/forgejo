@@ -7,36 +7,158 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
+
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
 )
 
 func TestPktLine(t *testing.T) {
-	// test read
 	ctx := context.Background()
-	s := strings.NewReader("0000")
-	r := bufio.NewReader(s)
-	result, err := readPktLine(ctx, r, pktLineTypeFlush)
-	assert.NoError(t, err)
-	assert.Equal(t, pktLineTypeFlush, result.Type)
 
-	s = strings.NewReader("0006a\n")
-	r = bufio.NewReader(s)
-	result, err = readPktLine(ctx, r, pktLineTypeData)
-	assert.NoError(t, err)
-	assert.Equal(t, pktLineTypeData, result.Type)
-	assert.Equal(t, []byte("a\n"), result.Data)
+	t.Run("Read", func(t *testing.T) {
+		s := strings.NewReader("0000")
+		r := bufio.NewReader(s)
+		result, err := readPktLine(ctx, r, pktLineTypeFlush)
+		assert.NoError(t, err)
+		assert.Equal(t, pktLineTypeFlush, result.Type)
 
-	// test write
-	w := bytes.NewBuffer([]byte{})
-	err = writeFlushPktLine(ctx, w)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("0000"), w.Bytes())
+		s = strings.NewReader("0006a\n")
+		r = bufio.NewReader(s)
+		result, err = readPktLine(ctx, r, pktLineTypeData)
+		assert.NoError(t, err)
+		assert.Equal(t, pktLineTypeData, result.Type)
+		assert.Equal(t, []byte("a\n"), result.Data)
 
-	w.Reset()
-	err = writeDataPktLine(ctx, w, []byte("a\nb"))
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("0007a\nb"), w.Bytes())
+		s = strings.NewReader("0004")
+		r = bufio.NewReader(s)
+		result, err = readPktLine(ctx, r, pktLineTypeData)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		data := strings.Repeat("x", 65516)
+		r = bufio.NewReader(strings.NewReader("fff0" + data))
+		result, err = readPktLine(ctx, r, pktLineTypeData)
+		assert.NoError(t, err)
+		assert.Equal(t, pktLineTypeData, result.Type)
+		assert.Equal(t, []byte(data), result.Data)
+
+		r = bufio.NewReader(strings.NewReader("fff1a"))
+		result, err = readPktLine(ctx, r, pktLineTypeData)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("Write", func(t *testing.T) {
+		w := bytes.NewBuffer([]byte{})
+		err := writeFlushPktLine(ctx, w)
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("0000"), w.Bytes())
+
+		w.Reset()
+		err = writeDataPktLine(ctx, w, []byte("a\nb"))
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("0007a\nb"), w.Bytes())
+
+		w.Reset()
+		data := bytes.Repeat([]byte{0x05}, 288)
+		err = writeDataPktLine(ctx, w, data)
+		assert.NoError(t, err)
+		assert.Equal(t, append([]byte("0124"), data...), w.Bytes())
+
+		w.Reset()
+		err = writeDataPktLine(ctx, w, nil)
+		assert.Error(t, err)
+		assert.Empty(t, w.Bytes())
+
+		w.Reset()
+		data = bytes.Repeat([]byte{0x64}, 65516)
+		err = writeDataPktLine(ctx, w, data)
+		assert.NoError(t, err)
+		assert.Equal(t, append([]byte("fff0"), data...), w.Bytes())
+
+		w.Reset()
+		err = writeDataPktLine(ctx, w, bytes.Repeat([]byte{0x64}, 65516+1))
+		assert.Error(t, err)
+		assert.Empty(t, w.Bytes())
+	})
+}
+
+func TestDelayWriter(t *testing.T) {
+	// Setup the environment.
+	defer test.MockVariableValue(&setting.InternalToken, "Random")()
+	defer test.MockVariableValue(&setting.InstallLock, true)()
+	defer test.MockVariableValue(&setting.Git.VerbosePush, true)()
+	require.NoError(t, os.Setenv("SSH_ORIGINAL_COMMAND", "true"))
+
+	// Setup the Stdin.
+	f, err := os.OpenFile(t.TempDir()+"/stdin", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666)
+	require.NoError(t, err)
+	_, err = f.Write([]byte("00000000000000000000 00000000000000000001 refs/head/main\n"))
+	require.NoError(t, err)
+	_, err = f.Seek(0, 0)
+	require.NoError(t, err)
+	defer test.MockVariableValue(os.Stdin, *f)()
+
+	// Setup the server that processes the hooks.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Millisecond * 600)
+	}))
+	defer ts.Close()
+	defer test.MockVariableValue(&setting.LocalURL, ts.URL+"/")()
+
+	app := cli.NewApp()
+	app.Commands = []*cli.Command{subcmdHookPreReceive}
+
+	// Capture what's being written into stdout
+	captureStdout := func(t *testing.T) (finish func() (output string)) {
+		t.Helper()
+
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		resetStdout := test.MockVariableValue(os.Stdout, *w)
+
+		return func() (output string) {
+			w.Close()
+			resetStdout()
+
+			out, err := io.ReadAll(r)
+			require.NoError(t, err)
+			return string(out)
+		}
+	}
+
+	t.Run("Should delay", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Git.VerbosePushDelay, time.Millisecond*500)()
+		finish := captureStdout(t)
+
+		err = app.Run([]string{"./forgejo", "pre-receive"})
+		require.NoError(t, err)
+		out := finish()
+
+		require.Contains(t, out, "* Checking 1 references")
+		require.Contains(t, out, "Checked 1 references in total")
+	})
+
+	t.Run("Shouldn't delay", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Git.VerbosePushDelay, time.Second*5)()
+		finish := captureStdout(t)
+
+		err = app.Run([]string{"./forgejo", "pre-receive"})
+		require.NoError(t, err)
+		out := finish()
+
+		require.NoError(t, err)
+		require.Empty(t, out)
+	})
 }

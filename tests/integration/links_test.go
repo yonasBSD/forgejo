@@ -36,8 +36,6 @@ func TestLinksNoLogin(t *testing.T) {
 		"/user2/repo1/",
 		"/user2/repo1/projects",
 		"/user2/repo1/projects/1",
-		"/assets/img/404.png",
-		"/assets/img/500.png",
 		"/.well-known/security.txt",
 	}
 
@@ -195,8 +193,8 @@ func TestRedirectsWebhooks(t *testing.T) {
 			{from: "/user2/repo1/settings/hooks/" + kind + "/new", to: "/", verb: "POST"},
 			{from: "/admin/system-hooks/" + kind + "/new", to: "/", verb: "POST"},
 			{from: "/admin/default-hooks/" + kind + "/new", to: "/", verb: "POST"},
-			{from: "/user2/repo1/settings/hooks/" + kind + "/1", to: "/", verb: "POST"},
-			{from: "/admin/hooks/" + kind + "/1", to: "/", verb: "POST"},
+			{from: "/user2/repo1/settings/hooks/1", to: "/", verb: "POST"},
+			{from: "/admin/hooks/1", to: "/", verb: "POST"},
 		}
 		for _, info := range redirects {
 			req := NewRequest(t, info.verb, info.from)

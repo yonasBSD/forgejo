@@ -19,9 +19,9 @@
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
     },
-    "version": "{{AppVer | JSEscape | Safe}}"
+    "version": "{{AppVer | JSEscape}}"
   },
-  "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
+  "basePath": "{{AppSubUrl | JSEscape}}/api/v1",
   "paths": {
     "/activitypub/user-id/{user-id}": {
       "get": {
@@ -4686,6 +4686,49 @@
         }
       }
     },
+    "/repos/{owner}/{repo}/commits/{sha}/pull": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get the pull request of the commit",
+        "operationId": "repoGetCommitPullRequest",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "SHA of the commit to get",
+            "name": "sha",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/PullRequest"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/contents": {
       "get": {
         "produces": [
@@ -6509,7 +6552,7 @@
           },
           {
             "type": "string",
-            "description": "Only show items which were created by the the given user",
+            "description": "Only show items which were created by the given user",
             "name": "created_by",
             "in": "query"
           },
@@ -10769,6 +10812,56 @@
         }
       }
     },
+    "/repos/{owner}/{repo}/pulls/{base}/{head}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get a pull request by base and head",
+        "operationId": "repoGetPullRequestByBaseHead",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "base of the pull request to get",
+            "name": "base",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "head of the pull request to get",
+            "name": "head",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/PullRequest"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/pulls/{index}": {
       "get": {
         "produces": [
@@ -11328,6 +11421,9 @@
         "responses": {
           "204": {
             "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
           },
           "404": {
             "$ref": "#/responses/notFound"
@@ -12735,7 +12831,8 @@
       },
       "post": {
         "consumes": [
-          "multipart/form-data"
+          "multipart/form-data",
+          "application/octet-stream"
         ],
         "produces": [
           "application/json"
@@ -12778,8 +12875,7 @@
             "type": "file",
             "description": "attachment to upload",
             "name": "attachment",
-            "in": "formData",
-            "required": true
+            "in": "formData"
           }
         ],
         "responses": {
@@ -17829,6 +17925,10 @@
       "description": "BranchProtection represents a branch protection for a repository",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {
@@ -18479,6 +18579,10 @@
       "description": "CreateBranchProtectionOption options for creating a branch protection",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {
@@ -19650,6 +19754,10 @@
       "description": "EditBranchProtectionOption options for editing a branch protection",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {
@@ -20731,6 +20839,10 @@
       "description": "GeneralRepoSettings contains global repository settings exposed by API",
       "type": "object",
       "properties": {
+        "forks_disabled": {
+          "type": "boolean",
+          "x-go-name": "ForksDisabled"
+        },
         "http_git_disabled": {
           "type": "boolean",
           "x-go-name": "HTTPGitDisabled"
@@ -21021,11 +21133,16 @@
           "x-go-name": "BranchFilter"
         },
         "config": {
+          "description": "Deprecated: use Metadata instead",
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
           "x-go-name": "Config"
+        },
+        "content_type": {
+          "type": "string",
+          "x-go-name": "ContentType"
         },
         "created_at": {
           "type": "string",
@@ -21044,6 +21161,9 @@
           "format": "int64",
           "x-go-name": "ID"
         },
+        "metadata": {
+          "x-go-name": "Metadata"
+        },
         "type": {
           "type": "string",
           "x-go-name": "Type"
@@ -21052,6 +21172,10 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Updated"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -21294,6 +21418,13 @@
           "type": "object",
           "additionalProperties": {},
           "x-go-name": "Validations"
+        },
+        "visible": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IssueFormFieldVisible"
+          },
+          "x-go-name": "Visible"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -21301,6 +21432,11 @@
     "IssueFormFieldType": {
       "type": "string",
       "title": "IssueFormFieldType defines issue form field type, can be \"markdown\", \"textarea\", \"input\", \"dropdown\" or \"checkboxes\"",
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "IssueFormFieldVisible": {
+      "description": "IssueFormFieldVisible defines issue form field visible",
+      "type": "string",
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
     "IssueLabelsOption": {
@@ -23929,6 +24065,10 @@
           "type": "string",
           "x-go-name": "DiffViewStyle"
         },
+        "enable_repo_unit_hints": {
+          "type": "boolean",
+          "x-go-name": "EnableRepoUnitHints"
+        },
         "full_name": {
           "type": "string",
           "x-go-name": "FullName"
@@ -23972,6 +24112,10 @@
         "diff_view_style": {
           "type": "string",
           "x-go-name": "DiffViewStyle"
+        },
+        "enable_repo_unit_hints": {
+          "type": "boolean",
+          "x-go-name": "EnableRepoUnitHints"
         },
         "full_name": {
           "type": "string",
@@ -24258,7 +24402,7 @@
           "format": "int64",
           "description": "Commits per page"
         },
-        "X-Total": {
+        "X-Total-Count": {
           "type": "integer",
           "format": "int64",
           "description": "Total commit count"

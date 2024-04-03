@@ -10,8 +10,8 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	user_model "code.gitea.io/gitea/models/user"
 	pwd "code.gitea.io/gitea/modules/auth/password"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
 
 	"github.com/urfave/cli/v2"
 )
@@ -47,7 +47,8 @@ var microcmdUserCreate = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:  "must-change-password",
-			Usage: "Set this option to false to prevent forcing the user to change their password after initial login, (Default: true)",
+			Usage: "Set this option to false to prevent forcing the user to change their password after initial login",
+			Value: true,
 		},
 		&cli.IntFlag{
 			Name:  "random-password-length",
@@ -110,8 +111,7 @@ func runCreateUser(c *cli.Context) error {
 		return errors.New("must set either password or random-password flag")
 	}
 
-	// always default to true
-	changePassword := true
+	changePassword := c.Bool("must-change-password")
 
 	// If this is the first user being created.
 	// Take it as the admin and don't force a password update.
@@ -119,14 +119,10 @@ func runCreateUser(c *cli.Context) error {
 		changePassword = false
 	}
 
-	if c.IsSet("must-change-password") {
-		changePassword = c.Bool("must-change-password")
-	}
-
-	restricted := util.OptionalBoolNone
+	restricted := optional.None[bool]()
 
 	if c.IsSet("restricted") {
-		restricted = util.OptionalBoolOf(c.Bool("restricted"))
+		restricted = optional.Some(c.Bool("restricted"))
 	}
 
 	// default user visibility in app.ini
@@ -142,7 +138,7 @@ func runCreateUser(c *cli.Context) error {
 	}
 
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolTrue,
+		IsActive:     optional.Some(true),
 		IsRestricted: restricted,
 	}
 

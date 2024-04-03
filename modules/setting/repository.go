@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
@@ -20,10 +19,12 @@ const (
 	RepoCreatingPublic             = "public"
 )
 
-var RecognisedRepositoryDownloadOrCloneMethods = []string{"download-zip", "download-targz", "download-bundle", "vscode-clone", "vscodium-clone", "cite"}
+// MaxUserCardsPerPage sets maximum amount of watchers and stargazers shown per page
+// those pages use 2 or 3 column layout, so the value should be divisible by 2 and 3
+var MaxUserCardsPerPage = 36
 
-// ItemsPerPage maximum items per page in forks, watchers and stars of a repo
-const ItemsPerPage = 40
+// MaxForksPerPage sets maximum amount of forks shown per page
+var MaxForksPerPage = 40
 
 // Repository settings
 var (
@@ -46,10 +47,10 @@ var (
 		DisabledRepoUnits                       []string
 		DefaultRepoUnits                        []string
 		DefaultForkRepoUnits                    []string
-		DownloadOrCloneMethods                  []string
 		PrefixArchiveFiles                      bool
 		DisableMigrations                       bool
-		DisableStars                            bool `ini:"DISABLE_STARS"`
+		DisableStars                            bool
+		DisableForks                            bool
 		DefaultBranch                           string
 		AllowAdoptionOfUnadoptedRepositories    bool
 		AllowDeleteOfUnadoptedRepositories      bool
@@ -168,10 +169,10 @@ var (
 		DisabledRepoUnits:                       []string{},
 		DefaultRepoUnits:                        []string{},
 		DefaultForkRepoUnits:                    []string{},
-		DownloadOrCloneMethods:                  []string{"download-zip", "download-targz", "download-bundle", "vscode-clone"},
 		PrefixArchiveFiles:                      true,
 		DisableMigrations:                       false,
 		DisableStars:                            false,
+		DisableForks:                            false,
 		DefaultBranch:                           "main",
 		AllowForkWithoutMaximumLimit:            true,
 
@@ -371,12 +372,5 @@ func loadRepositoryFrom(rootCfg ConfigProvider) {
 	if err := loadRepoArchiveFrom(rootCfg); err != nil {
 		log.Fatal("loadRepoArchiveFrom: %v", err)
 	}
-
-	for _, method := range Repository.DownloadOrCloneMethods {
-		if !slices.Contains(RecognisedRepositoryDownloadOrCloneMethods, method) {
-			log.Error("Unrecognised repository download or clone method: %s", method)
-		}
-	}
-
 	Repository.EnableFlags = sec.Key("ENABLE_FLAGS").MustBool()
 }

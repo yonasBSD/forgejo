@@ -11,21 +11,25 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/db"
+	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/web/feed"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/forms"
 	releaseservice "code.gitea.io/gitea/services/release"
 )
@@ -67,6 +71,88 @@ func calReleaseNumCommitsBehind(repoCtx *context.Repository, release *repo_model
 	return nil
 }
 
+type ReleaseInfo struct {
+	Release        *repo_model.Release
+	CommitStatus   *git_model.CommitStatus
+	CommitStatuses []*git_model.CommitStatus
+}
+
+func getReleaseInfos(ctx *context.Context, opts *repo_model.FindReleasesOptions) ([]*ReleaseInfo, error) {
+	releases, err := db.Find[repo_model.Release](ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, release := range releases {
+		release.Repo = ctx.Repo.Repository
+	}
+
+	if err = repo_model.GetReleaseAttachments(ctx, releases...); err != nil {
+		return nil, err
+	}
+
+	// Temporary cache commits count of used branches to speed up.
+	countCache := make(map[string]int64)
+	cacheUsers := make(map[int64]*user_model.User)
+	if ctx.Doer != nil {
+		cacheUsers[ctx.Doer.ID] = ctx.Doer
+	}
+	var ok bool
+
+	canReadActions := ctx.Repo.CanRead(unit.TypeActions)
+
+	releaseInfos := make([]*ReleaseInfo, 0, len(releases))
+	for _, r := range releases {
+		if r.Publisher, ok = cacheUsers[r.PublisherID]; !ok {
+			r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
+			if err != nil {
+				if user_model.IsErrUserNotExist(err) {
+					r.Publisher = user_model.NewGhostUser()
+				} else {
+					return nil, err
+				}
+			}
+			cacheUsers[r.PublisherID] = r.Publisher
+		}
+
+		r.RenderedNote, err = markdown.RenderString(&markup.RenderContext{
+			Links: markup.Links{
+				Base: ctx.Repo.RepoLink,
+			},
+			Metas:   ctx.Repo.Repository.ComposeMetas(ctx),
+			GitRepo: ctx.Repo.GitRepo,
+			Ctx:     ctx,
+		}, r.Note)
+		if err != nil {
+			return nil, err
+		}
+
+		if !r.IsDraft {
+			if err := calReleaseNumCommitsBehind(ctx.Repo, r, countCache); err != nil {
+				return nil, err
+			}
+		}
+
+		info := &ReleaseInfo{
+			Release: r,
+		}
+
+		if canReadActions {
+			statuses, _, err := git_model.GetLatestCommitStatus(ctx, r.Repo.ID, r.Sha1, db.ListOptionsAll)
+			if err != nil {
+				return nil, err
+			}
+
+			info.CommitStatus = git_model.CalcCommitStatus(statuses)
+			info.CommitStatuses = statuses
+		}
+
+		releaseInfos = append(releaseInfos, info)
+	}
+
+	return releaseInfos, nil
+}
+
 // Releases render releases list page
 func Releases(ctx *context.Context) {
 	ctx.Data["PageIsReleaseList"] = true
@@ -91,81 +177,69 @@ func Releases(ctx *context.Context) {
 	writeAccess := ctx.Repo.CanWrite(unit.TypeReleases)
 	ctx.Data["CanCreateRelease"] = writeAccess && !ctx.Repo.Repository.IsArchived
 
-	opts := repo_model.FindReleasesOptions{
+	releases, err := getReleaseInfos(ctx, &repo_model.FindReleasesOptions{
 		ListOptions: listOptions,
 		// only show draft releases for users who can write, read-only users shouldn't see draft releases.
 		IncludeDrafts: writeAccess,
 		RepoID:        ctx.Repo.Repository.ID,
-	}
-
-	releases, err := db.Find[repo_model.Release](ctx, opts)
+	})
 	if err != nil {
-		ctx.ServerError("GetReleasesByRepoID", err)
+		ctx.ServerError("getReleaseInfos", err)
 		return
 	}
-
-	for _, release := range releases {
-		release.Repo = ctx.Repo.Repository
-	}
-
-	if err = repo_model.GetReleaseAttachments(ctx, releases...); err != nil {
-		ctx.ServerError("GetReleaseAttachments", err)
-		return
-	}
-
-	// Temporary cache commits count of used branches to speed up.
-	countCache := make(map[string]int64)
-	cacheUsers := make(map[int64]*user_model.User)
-	if ctx.Doer != nil {
-		cacheUsers[ctx.Doer.ID] = ctx.Doer
-	}
-	var ok bool
-
-	for _, r := range releases {
-		if r.Publisher, ok = cacheUsers[r.PublisherID]; !ok {
-			r.Publisher, err = user_model.GetUserByID(ctx, r.PublisherID)
-			if err != nil {
-				if user_model.IsErrUserNotExist(err) {
-					r.Publisher = user_model.NewGhostUser()
-				} else {
-					ctx.ServerError("GetUserByID", err)
-					return
-				}
-			}
-			cacheUsers[r.PublisherID] = r.Publisher
-		}
-
-		r.Note, err = markdown.RenderString(&markup.RenderContext{
-			Links: markup.Links{
-				Base: ctx.Repo.RepoLink,
-			},
-			Metas:   ctx.Repo.Repository.ComposeMetas(ctx),
-			GitRepo: ctx.Repo.GitRepo,
-			Ctx:     ctx,
-		}, r.Note)
-		if err != nil {
-			ctx.ServerError("RenderString", err)
-			return
-		}
-
-		if r.IsDraft {
-			continue
-		}
-
-		if err := calReleaseNumCommitsBehind(ctx.Repo, r, countCache); err != nil {
-			ctx.ServerError("calReleaseNumCommitsBehind", err)
-			return
+	for _, rel := range releases {
+		if rel.Release.IsTag && rel.Release.Title == "" {
+			rel.Release.Title = rel.Release.TagName
 		}
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numReleases := ctx.Data["NumReleases"].(int64)
-	pager := context.NewPagination(int(numReleases), opts.PageSize, opts.Page, 5)
+	pager := context.NewPagination(int(numReleases), listOptions.PageSize, listOptions.Page, 5)
 	pager.SetDefaultParams(ctx)
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplReleasesList)
+}
+
+func verifyTagSignature(ctx *context.Context, r *repo_model.Release) (*asymkey.ObjectVerification, error) {
+	if err := r.LoadAttributes(ctx); err != nil {
+		return nil, err
+	}
+	gitRepo, err := gitrepo.OpenRepository(ctx, r.Repo)
+	if err != nil {
+		return nil, err
+	}
+	defer gitRepo.Close()
+
+	tag, err := gitRepo.GetTag(r.TagName)
+	if err != nil {
+		return nil, err
+	}
+	if tag.Signature == nil {
+		return nil, nil
+	}
+
+	verification := asymkey.ParseTagWithSignature(ctx, gitRepo, tag)
+	return verification, nil
+}
+
+func addVerifyTagToContext(ctx *context.Context) {
+	ctx.Data["VerifyTag"] = func(r *repo_model.Release) *asymkey.ObjectVerification {
+		v, err := verifyTagSignature(ctx, r)
+		if err != nil {
+			return nil
+		}
+		return v
+	}
+	ctx.Data["HasSignature"] = func(verification *asymkey.ObjectVerification) bool {
+		if verification == nil {
+			return false
+		}
+		return verification.Reason != "gpg.error.not_signed_commit"
+	}
 }
 
 // TagsList render tags list page
@@ -196,7 +270,7 @@ func TagsList(ctx *context.Context) {
 		// the drafts should also be included because a real tag might be used as a draft.
 		IncludeDrafts: true,
 		IncludeTags:   true,
-		HasSha1:       util.OptionalBoolTrue,
+		HasSha1:       optional.Some(true),
 		RepoID:        ctx.Repo.Repository.ID,
 	}
 
@@ -207,6 +281,7 @@ func TagsList(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numTags := ctx.Data["NumTags"].(int64)
 	pager := context.NewPagination(int(numTags), opts.PageSize, opts.Page, 5)
@@ -249,15 +324,30 @@ func SingleRelease(ctx *context.Context) {
 	writeAccess := ctx.Repo.CanWrite(unit.TypeReleases)
 	ctx.Data["CanCreateRelease"] = writeAccess && !ctx.Repo.Repository.IsArchived
 
-	release, err := repo_model.GetRelease(ctx, ctx.Repo.Repository.ID, ctx.Params("*"))
+	releases, err := getReleaseInfos(ctx, &repo_model.FindReleasesOptions{
+		ListOptions: db.ListOptions{Page: 1, PageSize: 1},
+		RepoID:      ctx.Repo.Repository.ID,
+		// Include tags in the search too.
+		IncludeTags: true,
+		TagNames:    []string{ctx.Params("*")},
+		// only show draft releases for users who can write, read-only users shouldn't see draft releases.
+		IncludeDrafts: writeAccess,
+	})
 	if err != nil {
-		if repo_model.IsErrReleaseNotExist(err) {
-			ctx.NotFound("GetRelease", err)
-			return
-		}
-		ctx.ServerError("GetReleasesByRepoID", err)
+		ctx.ServerError("getReleaseInfos", err)
 		return
 	}
+	if len(releases) != 1 {
+		ctx.NotFound("SingleRelease", err)
+		return
+	}
+
+	release := releases[0].Release
+	if release.IsTag && release.Title == "" {
+		release.Title = release.TagName
+	}
+	addVerifyTagToContext(ctx)
+
 	ctx.Data["PageIsSingleTag"] = release.IsTag
 	if release.IsTag {
 		ctx.Data["Title"] = release.TagName
@@ -265,43 +355,7 @@ func SingleRelease(ctx *context.Context) {
 		ctx.Data["Title"] = release.Title
 	}
 
-	release.Repo = ctx.Repo.Repository
-
-	err = repo_model.GetReleaseAttachments(ctx, release)
-	if err != nil {
-		ctx.ServerError("GetReleaseAttachments", err)
-		return
-	}
-
-	release.Publisher, err = user_model.GetUserByID(ctx, release.PublisherID)
-	if err != nil {
-		if user_model.IsErrUserNotExist(err) {
-			release.Publisher = user_model.NewGhostUser()
-		} else {
-			ctx.ServerError("GetUserByID", err)
-			return
-		}
-	}
-	if !release.IsDraft {
-		if err := calReleaseNumCommitsBehind(ctx.Repo, release, make(map[string]int64)); err != nil {
-			ctx.ServerError("calReleaseNumCommitsBehind", err)
-			return
-		}
-	}
-	release.Note, err = markdown.RenderString(&markup.RenderContext{
-		Links: markup.Links{
-			Base: ctx.Repo.RepoLink,
-		},
-		Metas:   ctx.Repo.Repository.ComposeMetas(ctx),
-		GitRepo: ctx.Repo.GitRepo,
-		Ctx:     ctx,
-	}, release.Note)
-	if err != nil {
-		ctx.ServerError("RenderString", err)
-		return
-	}
-
-	ctx.Data["Releases"] = []*repo_model.Release{release}
+	ctx.Data["Releases"] = releases
 	ctx.HTML(http.StatusOK, tplReleasesList)
 }
 

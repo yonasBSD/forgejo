@@ -10,10 +10,10 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/repository/files"
 )
@@ -87,12 +87,19 @@ func NewDiffPatchPost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdenitity := getGitIdentity(ctx, form.CommitMailID, tplPatchFile, &form)
+	if ctx.Written() {
+		return
+	}
+
 	fileResponse, err := files.ApplyDiffPatch(ctx, ctx.Repo.Repository, ctx.Doer, &files.ApplyDiffPatchOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
 		NewBranch:    branchName,
 		Message:      message,
 		Content:      strings.ReplaceAll(form.Content, "\r", ""),
+		Author:       gitIdenitity,
+		Committer:    gitIdenitity,
 	})
 	if err != nil {
 		if git_model.IsErrBranchAlreadyExists(err) {

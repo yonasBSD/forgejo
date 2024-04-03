@@ -6,7 +6,9 @@ package webhook
 import (
 	"fmt"
 	"html"
+	"html/template"
 	"net/url"
+	"strconv"
 	"strings"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
@@ -314,33 +316,47 @@ func getPackagePayloadInfo(p *api.PackagePayload, linkFormatter linkFormatter, w
 // ToHook convert models.Webhook to api.Hook
 // This function is not part of the convert package to prevent an import cycle
 func ToHook(repoLink string, w *webhook_model.Webhook) (*api.Hook, error) {
+	// config is deprecated, but kept for compatibility
 	config := map[string]string{
 		"url":          w.URL,
 		"content_type": w.ContentType.Name(),
 	}
 	if w.Type == webhook_module.SLACK {
-		s := GetSlackHook(w)
-		config["channel"] = s.Channel
-		config["username"] = s.Username
-		config["icon_url"] = s.IconURL
-		config["color"] = s.Color
+		if s, ok := (slackHandler{}.Metadata(w)).(*SlackMeta); ok {
+			config["channel"] = s.Channel
+			config["username"] = s.Username
+			config["icon_url"] = s.IconURL
+			config["color"] = s.Color
+		}
 	}
 
 	authorizationHeader, err := w.HeaderAuthorization()
 	if err != nil {
 		return nil, err
 	}
+	var metadata any
+	if handler := GetWebhookHandler(w.Type); handler != nil {
+		metadata = handler.Metadata(w)
+	}
 
 	return &api.Hook{
 		ID:                  w.ID,
 		Type:                w.Type,
-		URL:                 fmt.Sprintf("%s/settings/hooks/%d", repoLink, w.ID),
-		Active:              w.IsActive,
+		BranchFilter:        w.BranchFilter,
+		URL:                 w.URL,
 		Config:              config,
 		Events:              w.EventsArray(),
 		AuthorizationHeader: authorizationHeader,
+		ContentType:         w.ContentType.Name(),
+		Metadata:            metadata,
+		Active:              w.IsActive,
 		Updated:             w.UpdatedUnix.AsTime(),
 		Created:             w.CreatedUnix.AsTime(),
-		BranchFilter:        w.BranchFilter,
 	}, nil
+}
+
+func imgIcon(name string, size int) template.HTML {
+	s := strconv.Itoa(size)
+	src := html.EscapeString(setting.StaticURLPrefix + "/assets/img/" + name)
+	return template.HTML(`<img width="` + s + `" height="` + s + `" src="` + src + `">`)
 }

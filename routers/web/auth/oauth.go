@@ -21,7 +21,6 @@ import (
 	auth_module "code.gitea.io/gitea/modules/auth"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/container"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
@@ -33,6 +32,7 @@ import (
 	auth_service "code.gitea.io/gitea/services/auth"
 	source_service "code.gitea.io/gitea/services/auth/source"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	user_service "code.gitea.io/gitea/services/user"
@@ -579,16 +579,8 @@ func GrantApplicationOAuth(ctx *context.Context) {
 
 // OIDCWellKnown generates JSON so OIDC clients know Gitea's capabilities
 func OIDCWellKnown(ctx *context.Context) {
-	t, err := ctx.Render.TemplateLookup("user/auth/oidc_wellknown", nil)
-	if err != nil {
-		ctx.ServerError("unable to find template", err)
-		return
-	}
-	ctx.Resp.Header().Set("Content-Type", "application/json")
 	ctx.Data["SigningKey"] = oauth2.DefaultSigningKey
-	if err = t.Execute(ctx.Resp, ctx.Data); err != nil {
-		ctx.ServerError("unable to execute template", err)
-	}
+	ctx.JSONTemplate("user/auth/oidc_wellknown")
 }
 
 // OIDCKeys generates the JSON Web Key Set
@@ -990,7 +982,7 @@ func SignInOAuthCallback(ctx *context.Context) {
 			}
 
 			overwriteDefault := &user_model.CreateUserOverwriteOptions{
-				IsActive: util.OptionalBoolOf(!setting.OAuth2Client.RegisterEmailConfirm && !setting.Service.RegisterManualConfirm),
+				IsActive: optional.Some(!setting.OAuth2Client.RegisterEmailConfirm && !setting.Service.RegisterManualConfirm),
 			}
 
 			source := authSource.Cfg.(*oauth2.Source)

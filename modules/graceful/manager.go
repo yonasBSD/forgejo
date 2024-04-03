@@ -136,7 +136,7 @@ func (g *Manager) doShutdown() {
 	}
 	g.lock.Lock()
 	g.shutdownCtxCancel()
-	atShutdownCtx := pprof.WithLabels(g.hammerCtx, pprof.Labels("graceful-lifecycle", "post-shutdown"))
+	atShutdownCtx := pprof.WithLabels(g.hammerCtx, pprof.Labels("gracefulLifecycle", "post-shutdown"))
 	pprof.SetGoroutineLabels(atShutdownCtx)
 	for _, fn := range g.toRunAtShutdown {
 		go fn()
@@ -167,7 +167,7 @@ func (g *Manager) doHammerTime(d time.Duration) {
 	default:
 		log.Warn("Setting Hammer condition")
 		g.hammerCtxCancel()
-		atHammerCtx := pprof.WithLabels(g.terminateCtx, pprof.Labels("graceful-lifecycle", "post-hammer"))
+		atHammerCtx := pprof.WithLabels(g.terminateCtx, pprof.Labels("gracefulLifecycle", "post-hammer"))
 		pprof.SetGoroutineLabels(atHammerCtx)
 	}
 	g.lock.Unlock()
@@ -183,7 +183,7 @@ func (g *Manager) doTerminate() {
 	default:
 		log.Warn("Terminating")
 		g.terminateCtxCancel()
-		atTerminateCtx := pprof.WithLabels(g.managerCtx, pprof.Labels("graceful-lifecycle", "post-terminate"))
+		atTerminateCtx := pprof.WithLabels(g.managerCtx, pprof.Labels("gracefulLifecycle", "post-terminate"))
 		pprof.SetGoroutineLabels(atTerminateCtx)
 
 		for _, fn := range g.toRunAtTerminate {
@@ -233,7 +233,10 @@ func (g *Manager) setStateTransition(old, new state) bool {
 // At the moment the total number of servers (numberOfServersToCreate) are pre-defined as a const before global init,
 // so this function MUST be called if a server is not used.
 func (g *Manager) InformCleanup() {
-	g.createServerWaitGroup.Done()
+	g.createServerCond.L.Lock()
+	defer g.createServerCond.L.Unlock()
+	g.createdServer++
+	g.createServerCond.Signal()
 }
 
 // Done allows the manager to be viewed as a context.Context, it returns a channel that is closed when the server is finished terminating

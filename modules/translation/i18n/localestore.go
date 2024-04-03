@@ -114,15 +114,21 @@ func (l *locale) TrString(trKey string, trArgs ...any) string {
 	format := trKey
 
 	idx, ok := l.store.trKeyToIdxMap[trKey]
+	found := false
 	if ok {
 		if msg, ok := l.idxToMsgMap[idx]; ok {
 			format = msg // use the found translation
+			found = true
 		} else if def, ok := l.store.localeMap[l.store.defaultLang]; ok {
 			// try to use default locale's translation
 			if msg, ok := def.idxToMsgMap[idx]; ok {
 				format = msg
+				found = true
 			}
 		}
+	}
+	if !found {
+		log.Error("Missing translation %q", trKey)
 	}
 
 	msg, err := Format(format, trArgs...)
@@ -136,12 +142,14 @@ func (l *locale) TrHTML(trKey string, trArgs ...any) template.HTML {
 	args := slices.Clone(trArgs)
 	for i, v := range args {
 		switch v := v.(type) {
+		case nil, bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, template.HTML:
+			// for most basic types (including template.HTML which is safe), just do nothing and use it
 		case string:
-			args[i] = template.HTML(template.HTMLEscapeString(v))
+			args[i] = template.HTMLEscapeString(v)
 		case fmt.Stringer:
 			args[i] = template.HTMLEscapeString(v.String())
-		default: // int, float, include template.HTML
-			// do nothing, just use it
+		default:
+			args[i] = template.HTMLEscapeString(fmt.Sprint(v))
 		}
 	}
 	return template.HTML(l.TrString(trKey, args...))

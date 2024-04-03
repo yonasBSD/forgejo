@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,13 +25,13 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/cmd"
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/json"
@@ -40,6 +41,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	gitea_context "code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	user_service "code.gitea.io/gitea/services/user"
@@ -93,7 +95,43 @@ func NewNilResponseHashSumRecorder() *NilResponseHashSumRecorder {
 	}
 }
 
+// runMainApp runs the subcommand and returns its standard output. Any returned error will usually be of type *ExitError. If c.Stderr was nil, Output populates ExitError.Stderr.
+func runMainApp(subcommand string, args ...string) (string, error) {
+	return runMainAppWithStdin(nil, subcommand, args...)
+}
+
+// runMainAppWithStdin runs the subcommand and returns its standard output. Any returned error will usually be of type *ExitError. If c.Stderr was nil, Output populates ExitError.Stderr.
+func runMainAppWithStdin(stdin io.Reader, subcommand string, args ...string) (string, error) {
+	// running the main app directly will very likely mess with the testing setup (logger & co.)
+	// hence we run it as a subprocess and capture its output
+	args = append([]string{subcommand}, args...)
+	cmd := exec.Command(os.Args[0], args...)
+	cmd.Env = append(os.Environ(),
+		"GITEA_TEST_CLI=true",
+		"GITEA_CONF="+setting.CustomConf,
+		"GITEA_WORK_DIR="+setting.AppWorkPath)
+	cmd.Stdin = stdin
+	out, err := cmd.Output()
+	return string(out), err
+}
+
 func TestMain(m *testing.M) {
+	// GITEA_TEST_CLI is set by runMainAppWithStdin
+	// inspired by https://abhinavg.net/2022/05/15/hijack-testmain/
+	if testCLI := os.Getenv("GITEA_TEST_CLI"); testCLI == "true" {
+		app := cmd.NewMainApp("test-version", "integration-test")
+		args := append([]string{
+			"executable-name", // unused, but expected at position 1
+			"--config", os.Getenv("GITEA_CONF"),
+		},
+			os.Args[1:]..., // skip the executable name
+		)
+		if err := cmd.RunMainApp(app, args...); err != nil {
+			panic(err) // should never happen since RunMainApp exits on error
+		}
+		return
+	}
+
 	defer log.GetManager().Close()
 
 	managerCtx, cancel := context.WithCancel(context.Background())
@@ -145,7 +183,10 @@ func TestMain(m *testing.M) {
 	// Instead, "No tests were found",  last nonsense log is "According to the configuration, subsequent logs will not be printed to the console"
 	exitCode := m.Run()
 
-	testlogger.WriterCloser.Reset()
+	if err := testlogger.WriterCloser.Reset(); err != nil {
+		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
+		os.Exit(1)
+	}
 
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)
@@ -174,6 +215,16 @@ func (s *TestSession) GetCookie(name string) *http.Cookie {
 			return c
 		}
 	}
+	return nil
+}
+
+func (s *TestSession) SetCookie(cookie *http.Cookie) *http.Cookie {
+	baseURL, err := url.Parse(setting.AppURL)
+	if err != nil {
+		return nil
+	}
+
+	s.jar.SetCookies(baseURL, []*http.Cookie{cookie})
 	return nil
 }
 
@@ -632,7 +683,7 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 			}
 		}
 
-		err := repo_model.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
 		assert.NoError(t, err)
 	}
 

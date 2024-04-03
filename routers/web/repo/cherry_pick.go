@@ -12,11 +12,11 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/repository/files"
 )
@@ -115,11 +115,18 @@ func CherryPickPost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplCherryPick, &form)
+	if ctx.Written() {
+		return
+	}
+
 	opts := &files.ApplyDiffPatchOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
 		NewBranch:    branchName,
 		Message:      message,
+		Author:       gitIdentity,
+		Committer:    gitIdentity,
 	}
 
 	// First lets try the simple plain read-tree -m approach

@@ -16,13 +16,14 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -233,6 +234,7 @@ type SizeDetail struct {
 }
 
 // SizeDetails forms a struct with various size details about repository
+// Note: SizeDetailsString below expects it to have 2 entries
 func (repo *Repository) SizeDetails() []SizeDetail {
 	sizeDetails := []SizeDetail{
 		{
@@ -248,13 +250,9 @@ func (repo *Repository) SizeDetails() []SizeDetail {
 }
 
 // SizeDetailsString returns a concatenation of all repository size details as a string
-func (repo *Repository) SizeDetailsString() string {
-	var str strings.Builder
+func (repo *Repository) SizeDetailsString(locale translation.Locale) string {
 	sizeDetails := repo.SizeDetails()
-	for _, detail := range sizeDetails {
-		str.WriteString(fmt.Sprintf("%s: %s, ", detail.Name, base.FileSize(detail.Size)))
-	}
-	return strings.TrimSuffix(str.String(), ", ")
+	return locale.TrString("repo.size_format", sizeDetails[0].Name, locale.TrSize(sizeDetails[0].Size), sizeDetails[1].Name, locale.TrSize(sizeDetails[1].Size))
 }
 
 func (repo *Repository) LogString() string {
@@ -439,6 +437,31 @@ func (repo *Repository) GetUnit(ctx context.Context, tp unit.Type) (*RepoUnit, e
 	return nil, ErrUnitTypeNotExist{tp}
 }
 
+// AllUnitsEnabled returns true if all units are enabled for the repo.
+func (repo *Repository) AllUnitsEnabled(ctx context.Context) bool {
+	hasAnyUnitEnabled := func(unitGroup []unit.Type) bool {
+		// Loop over the group of units
+		for _, unit := range unitGroup {
+			// If *any* of them is enabled, return true.
+			if repo.UnitEnabled(ctx, unit) {
+				return true
+			}
+		}
+
+		// If none are enabled, return false.
+		return false
+	}
+
+	for _, unitGroup := range unit.AllowedRepoUnitGroups {
+		// If any disabled unit is found, return false immediately.
+		if !hasAnyUnitEnabled(unitGroup) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // LoadOwner loads owner user
 func (repo *Repository) LoadOwner(ctx context.Context) (err error) {
 	if repo.Owner != nil {
@@ -527,6 +550,9 @@ func (repo *Repository) GetBaseRepo(ctx context.Context) (err error) {
 		return nil
 	}
 
+	if repo.BaseRepo != nil {
+		return nil
+	}
 	repo.BaseRepo, err = GetRepositoryByID(ctx, repo.ForkID)
 	return err
 }
@@ -848,7 +874,7 @@ func (repo *Repository) TemplateRepo(ctx context.Context) *Repository {
 
 type CountRepositoryOptions struct {
 	OwnerID int64
-	Private util.OptionalBool
+	Private optional.Option[bool]
 }
 
 // CountRepositories returns number of repositories.
@@ -860,8 +886,8 @@ func CountRepositories(ctx context.Context, opts CountRepositoryOptions) (int64,
 	if opts.OwnerID > 0 {
 		sess.And("owner_id = ?", opts.OwnerID)
 	}
-	if !opts.Private.IsNone() {
-		sess.And("is_private=?", opts.Private.IsTrue())
+	if opts.Private.Has() {
+		sess.And("is_private=?", opts.Private.Value())
 	}
 
 	count, err := sess.Count(new(Repository))

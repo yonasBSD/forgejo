@@ -32,7 +32,7 @@ GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0
 GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1
 GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11
 MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1
-SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5
+SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786
 XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3
@@ -44,9 +44,6 @@ DOCKER_TAG ?= latest
 DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 ifeq ($(HAS_GO), yes)
-	GOPATH ?= $(shell $(GO) env GOPATH)
-	export PATH := $(GOPATH)/bin:$(PATH)
-
 	CGO_EXTRA_CFLAGS := -DSQLITE_MAX_VARIABLE_NUMBER=32766
 	CGO_CFLAGS ?= $(shell $(GO) env CGO_CFLAGS) $(CGO_EXTRA_CFLAGS)
 endif
@@ -85,29 +82,53 @@ endif
 STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
+GITEA_COMPATIBILITY ?= gitea-1.22.0
 
 STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
   FORGEJO_VERSION ?= $(STORED_VERSION)
 else
-  FORGEJO_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+  ifneq ($(GITEA_VERSION),)
+    FORGEJO_VERSION ?= $(GITEA_VERSION)
+    FORGEJO_VERSION_API ?= $(GITEA_VERSION)+${GITEA_COMPATIBILITY}
+  else
+    # drop the "g" prefix prepended by git describe to the commit hash
+    FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//' | sed 's/\-g/-/')+${GITEA_COMPATIBILITY}
+  endif
 endif
+FORGEJO_VERSION_MAJOR=$(shell echo $(FORGEJO_VERSION) | sed -e 's/\..*//')
+FORGEJO_VERSION_MINOR=$(shell echo $(FORGEJO_VERSION) | sed -E -e 's/^([0-9]+\.[0-9]+).*/\1/')
+
+show-version-full:
+	@echo ${FORGEJO_VERSION}
+
+show-version-major:
+	@echo ${FORGEJO_VERSION_MAJOR}
+
+show-version-minor:
+	@echo ${FORGEJO_VERSION_MINOR}
+
 RELEASE_VERSION ?= ${FORGEJO_VERSION}
 VERSION ?= ${RELEASE_VERSION}
 
-GITEA_VERSION ?= 1.22.0
+FORGEJO_VERSION_API ?= ${FORGEJO_VERSION}
 
-LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
+show-version-api:
+	@echo ${FORGEJO_VERSION_API}
+
+LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(FORGEJO_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION_API)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
-GO_PACKAGES ?= $(filter-out code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
-GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+ifeq ($(HAS_GO), yes)
+	GO_PACKAGES ?= $(filter-out code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+	GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+endif
 
 FOMANTIC_WORK_DIR := web_src/fomantic
 
 WEBPACK_SOURCES := $(shell find web_src/js web_src/css -type f)
-WEBPACK_CONFIGS := webpack.config.js
+WEBPACK_CONFIGS := webpack.config.js tailwind.config.js
 WEBPACK_DEST := public/assets/js/index.js public/assets/css/index.css
 WEBPACK_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts public/assets/img/webpack
 
@@ -134,6 +155,8 @@ TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMAN
 GO_DIRS := build cmd models modules routers services tests
 WEB_DIRS := web_src/js web_src/css
 
+ESLINT_FILES := web_src/js tools *.config.js tests/e2e
+STYLELINT_FILES := web_src/css web_src/js/components/*.vue
 SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github
 
 GO_SOURCES := $(wildcard *.go)
@@ -141,7 +164,9 @@ GO_SOURCES += $(shell find $(GO_DIRS) -type f -name "*.go" ! -path modules/optio
 GO_SOURCES += $(GENERATED_GO_DEST)
 GO_SOURCES_NO_BINDATA := $(GO_SOURCES)
 
-MIGRATION_PACKAGES := $(shell $(GO) list code.gitea.io/gitea/models/migrations/... code.gitea.io/gitea/models/forgejo_migrations/...)
+ifeq ($(HAS_GO), yes)
+	MIGRATION_PACKAGES := $(shell $(GO) list code.gitea.io/gitea/models/migrations/... code.gitea.io/gitea/models/forgejo_migrations/...)
+endif
 
 ifeq ($(filter $(TAGS_SPLIT),bindata),bindata)
 	GO_SOURCES += $(BINDATA_DEST)
@@ -156,8 +181,8 @@ endif
 FORGEJO_API_SPEC := public/assets/forgejo/api.v1.yml
 
 SWAGGER_SPEC := templates/swagger/v1_json.tmpl
-SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|g
-SWAGGER_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|"basePath": "/api/v1"|g
+SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEscape}}/api/v1"|g
+SWAGGER_SPEC_S_JSON := s|"basePath": *"{{AppSubUrl \| JSEscape}}/api/v1"|"basePath": "/api/v1"|g
 SWAGGER_EXCLUDE := code.gitea.io/sdk
 SWAGGER_NEWLINE_COMMAND := -e '$$a\'
 SWAGGER_SPEC_BRANDING := s|Gitea API|Forgejo API|g
@@ -220,6 +245,8 @@ help:
 	@echo " - checks-frontend                  check frontend files"
 	@echo " - checks-backend                   check backend files"
 	@echo " - test                             test everything"
+	@echo " - show-version-full                show the same version as the API endpoint"
+	@echo " - show-version-major               show major release number only"
 	@echo " - test-frontend                    test frontend files"
 	@echo " - test-backend                     test backend files"
 	@echo " - test-e2e[\#TestSpecificName]     test end to end using playwright"
@@ -300,12 +327,8 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check: fmt
-	@diff=$$(git diff --color=always $(GO_SOURCES) templates $(WEB_DIRS)); \
-	if [ -n "$$diff" ]; then \
-	  echo "Please run 'make fmt' and commit the result:"; \
-	  echo "$${diff}"; \
-	  exit 1; \
-	fi
+	@git diff --exit-code --color=always $(GO_SOURCES) templates $(WEB_DIRS) \
+	|| (code=$$?; echo "Please run 'make fmt' and commit the result"; exit $${code})
 
 .PHONY: $(TAGS_EVIDENCE)
 $(TAGS_EVIDENCE):
@@ -326,12 +349,8 @@ generate-forgejo-api: $(FORGEJO_API_SPEC)
 
 .PHONY: forgejo-api-check
 forgejo-api-check: generate-forgejo-api
-	@diff=$$(git diff $(FORGEJO_API_SERVER) ; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-forgejo-api' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always $(FORGEJO_API_SERVER) \
+	|| (code=$$?; echo "Please run 'make generate-forgejo-api' and commit the result"; exit $${code})
 
 .PHONY: forgejo-api-validate
 forgejo-api-validate:
@@ -348,12 +367,8 @@ $(SWAGGER_SPEC): $(GO_SOURCES_NO_BINDATA)
 
 .PHONY: swagger-check
 swagger-check: generate-swagger
-	@diff=$$(git diff --color=always '$(SWAGGER_SPEC)'); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-swagger' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always '$(SWAGGER_SPEC)' \
+	|| (code=$$?; echo "Please run 'make generate-swagger' and commit the result"; exit $${code})
 
 .PHONY: swagger-validate
 swagger-validate:
@@ -390,19 +405,19 @@ lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
 
 .PHONY: lint-js
 lint-js: node_modules
-	npx eslint --color --max-warnings=0 --ext js,vue web_src/js build *.config.js tests/e2e
+	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES)
 
 .PHONY: lint-js-fix
 lint-js-fix: node_modules
-	npx eslint --color --max-warnings=0 --ext js,vue web_src/js build *.config.js tests/e2e --fix
+	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES) --fix
 
 .PHONY: lint-css
 lint-css: node_modules
-	npx stylelint --color --max-warnings=0 web_src/css web_src/js/components/*.vue
+	npx stylelint --color --max-warnings=0 $(STYLELINT_FILES)
 
 .PHONY: lint-css-fix
 lint-css-fix: node_modules
-	npx stylelint --color --max-warnings=0 web_src/css web_src/js/components/*.vue --fix
+	npx stylelint --color --max-warnings=0 $(STYLELINT_FILES) --fix
 
 .PHONY: lint-swagger
 lint-swagger: node_modules
@@ -424,11 +439,8 @@ lint-spell-fix:
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
 	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
-	@$(DIFF) .deadcode-out .cur-deadcode-out; \
-	if [ $$? -eq 1 ]; then \
-		echo "Please run 'make lint-go-fix' and commit the result"; \
-		exit 1; \
-	fi
+	@$(DIFF) .deadcode-out .cur-deadcode-out \
+	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
@@ -456,7 +468,8 @@ lint-actions:
 	$(GO) run $(ACTIONLINT_PACKAGE)
 
 .PHONY: lint-templates
-lint-templates: .venv
+lint-templates: .venv node_modules
+	@node tools/lint-templates-svg.js
 	@poetry run djlint $(shell find templates -type f -iname '*.tmpl')
 
 .PHONY: lint-yaml
@@ -465,7 +478,7 @@ lint-yaml: .venv
 
 .PHONY: watch
 watch:
-	@bash build/watch.sh
+	@bash tools/watch.sh
 
 .PHONY: watch-frontend
 watch-frontend: node-check node_modules
@@ -528,12 +541,8 @@ vendor: go.mod go.sum
 
 .PHONY: tidy-check
 tidy-check: tidy
-	@diff=$$(git diff --color=always go.mod go.sum $(GO_LICENSE_FILE)); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make tidy' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always go.mod go.sum $(GO_LICENSE_FILE) \
+	|| (code=$$?; echo "Please run 'make tidy' and commit the result"; exit $${code})
 
 .PHONY: go-licenses
 go-licenses: $(GO_LICENSE_FILE)
@@ -625,8 +634,7 @@ test-mssql\#%: integrations.mssql.test generate-ini-mssql
 test-mssql-migration: migrations.mssql.test migrations.individual.mssql.test
 
 .PHONY: playwright
-playwright: $(PLAYWRIGHT_DIR)
-	npm install --no-save @playwright/test
+playwright: deps-frontend
 	npx playwright install $(PLAYWRIGHT_FLAGS)
 
 .PHONY: test-e2e%
@@ -639,7 +647,7 @@ test-e2e: test-e2e-sqlite
 
 .PHONY: test-e2e-sqlite
 test-e2e-sqlite: playwright e2e.sqlite.test generate-ini-sqlite
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./e2e.sqlite.test
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./e2e.sqlite.test -test.run TestE2e
 
 .PHONY: test-e2e-sqlite\#%
 test-e2e-sqlite\#%: playwright e2e.sqlite.test generate-ini-sqlite
@@ -647,7 +655,7 @@ test-e2e-sqlite\#%: playwright e2e.sqlite.test generate-ini-sqlite
 
 .PHONY: test-e2e-mysql
 test-e2e-mysql: playwright e2e.mysql.test generate-ini-mysql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mysql.ini ./e2e.mysql.test
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mysql.ini ./e2e.mysql.test -test.run TestE2e
 
 .PHONY: test-e2e-mysql\#%
 test-e2e-mysql\#%: playwright e2e.mysql.test generate-ini-mysql
@@ -655,7 +663,7 @@ test-e2e-mysql\#%: playwright e2e.mysql.test generate-ini-mysql
 
 .PHONY: test-e2e-pgsql
 test-e2e-pgsql: playwright e2e.pgsql.test generate-ini-pgsql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/pgsql.ini ./e2e.pgsql.test
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/pgsql.ini ./e2e.pgsql.test -test.run TestE2e
 
 .PHONY: test-e2e-pgsql\#%
 test-e2e-pgsql\#%: playwright e2e.pgsql.test generate-ini-pgsql
@@ -663,11 +671,16 @@ test-e2e-pgsql\#%: playwright e2e.pgsql.test generate-ini-pgsql
 
 .PHONY: test-e2e-mssql
 test-e2e-mssql: playwright e2e.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./e2e.mssql.test
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./e2e.mssql.test -test.run TestE2e
 
 .PHONY: test-e2e-mssql\#%
 test-e2e-mssql\#%: playwright e2e.mssql.test generate-ini-mssql
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./e2e.mssql.test -test.run TestE2e/$*
+
+.PHONY: test-e2e-debugserver
+test-e2e-debugserver: e2e.sqlite.test generate-ini-sqlite
+	sed -i s/3003/3000/g tests/sqlite.ini
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./e2e.sqlite.test -test.run TestDebugserver -test.timeout 24h
 
 .PHONY: bench-sqlite
 bench-sqlite: integrations.sqlite.test generate-ini-sqlite
@@ -812,6 +825,10 @@ generate-go: $(TAGS_PREREQ)
 	@echo "Running go generate..."
 	@CC= GOOS= GOARCH= $(GO) generate -tags '$(TAGS)' $(GO_PACKAGES)
 
+.PHONY: merge-locales
+merge-locales:
+	@echo "NOT NEEDED: THIS IS A NOOP AS OF Forgejo 7.0 BUT KEPT FOR BACKWARD COMPATIBILITY"
+
 .PHONY: security-check
 security-check:
 	go run $(GOVULNCHECK_PACKAGE) ./...
@@ -882,10 +899,6 @@ release-sources: | $(DIST_DIRS)
 release-docs: | $(DIST_DIRS) docs
 	tar -czf $(DIST)/release/gitea-docs-$(VERSION).tar.gz -C ./docs .
 
-.PHONY: docs
-docs:
-	cd docs; bash scripts/trans-copy.sh;
-
 .PHONY: deps
 deps: deps-frontend deps-backend deps-tools deps-py
 
@@ -944,6 +957,7 @@ fomantic:
 	cd $(FOMANTIC_WORK_DIR) && npm install --no-save
 	cp -f $(FOMANTIC_WORK_DIR)/theme.config.less $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/src/theme.config
 	cp -rf $(FOMANTIC_WORK_DIR)/_site $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/src/
+	$(SED_INPLACE) -e 's/  overrideBrowserslist\r/  overrideBrowserslist: ["defaults"]\r/g' $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/tasks/config/tasks.js
 	cd $(FOMANTIC_WORK_DIR) && npx gulp -f node_modules/fomantic-ui/gulpfile.js build
 	# fomantic uses "touchstart" as click event for some browsers, it's not ideal, so we force fomantic to always use "click" as click event
 	$(SED_INPLACE) -e 's/clickEvent[ \t]*=/clickEvent = "click", unstableClickEvent =/g' $(FOMANTIC_WORK_DIR)/build/semantic.js
@@ -962,28 +976,19 @@ $(WEBPACK_DEST): $(WEBPACK_SOURCES) $(WEBPACK_CONFIGS) package-lock.json
 .PHONY: svg
 svg: node-check | node_modules
 	rm -rf $(SVG_DEST_DIR)
-	node build/generate-svg.js
+	node tools/generate-svg.js
 
 .PHONY: svg-check
 svg-check: svg
 	@git add $(SVG_DEST_DIR)
-	@diff=$$(git diff --color=always --cached $(SVG_DEST_DIR)); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make svg' and 'git add $(SVG_DEST_DIR)' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always --cached $(SVG_DEST_DIR) \
+	|| (code=$$?; echo "Please run 'make svg' and commit the result"; exit $${code})
 
 .PHONY: lockfile-check
 lockfile-check:
 	npm install --package-lock-only
-	@diff=$$(git diff --color=always package-lock.json); \
-	if [ -n "$$diff" ]; then \
-		echo "package-lock.json is inconsistent with package.json"; \
-		echo "Please run 'npm install --package-lock-only' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always package-lock.json \
+	|| (code=$$?; echo "Please run 'npm install --package-lock-only' and commit the result"; exit $${code})
 
 .PHONY: update-translations
 update-translations:
@@ -1005,8 +1010,8 @@ generate-gitignore:
 
 .PHONY: generate-images
 generate-images: | node_modules
-	npm install --no-save --no-package-lock fabric@5 imagemin-zopfli@7
-	node build/generate-images.js $(TAGS)
+	npm install --no-save fabric@6.0.0-beta20 imagemin-zopfli@7
+	node tools/generate-images.js $(TAGS)
 
 .PHONY: generate-manpage
 generate-manpage:
@@ -1023,3 +1028,8 @@ docker:
 
 # This endif closes the if at the top of the file
 endif
+
+# Disable parallel execution because it would break some targets that don't
+# specify exact dependencies like 'backend' which does currently not depend
+# on 'frontend' to enable Node.js-less builds from source tarballs.
+.NOTPARALLEL:
