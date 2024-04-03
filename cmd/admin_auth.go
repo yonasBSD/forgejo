@@ -53,6 +53,17 @@ var (
 			},
 		},
 	}
+	microcmdAuthSyncUsers = &cli.Command{
+		Name:  "sync-users",
+		Usage: "Synchronize external users",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "update-existing",
+				Usage: "Set to true to update existing users",
+			},
+		},
+		Action: runSyncUsers,
+	}
 )
 
 func runListAuth(c *cli.Context) error {
@@ -107,4 +118,15 @@ func runDeleteAuth(c *cli.Context) error {
 	}
 
 	return auth_service.DeleteSource(ctx, source)
+}
+
+func runSyncUsers(c *cli.Context) error {
+	ctx, cancel := installSignals()
+	defer cancel()
+
+	if err := initDB(ctx); err != nil {
+		return err
+	}
+
+	return auth_service.SyncExternalUsers(ctx, c.Bool("update-existing"))
 }
