@@ -14,14 +14,18 @@ type FollowingRepo struct {
 	RepoID           int64  `xorm:"NOT NULL"`
 	ExternalID       string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
+	ExternalOwner    string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
+	ExternalRepoName string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
 	Uri              string
 }
 
-func NewFollowingRepo(repoID int64, externalID string, federationHostID int64, uri string) (FollowingRepo, error) {
+func NewFollowingRepo(repoID int64, externalID string, federationHostID int64, externalOwner string, externalRepoName string, uri string) (FollowingRepo, error) {
 	result := FollowingRepo{
 		RepoID:           repoID,
 		ExternalID:       externalID,
 		FederationHostID: federationHostID,
+		ExternalOwner:    externalOwner,
+		ExternalRepoName: externalRepoName,
 		Uri:              uri,
 	}
 	if valid, err := validation.IsValid(result); !valid {
@@ -35,6 +39,8 @@ func (user FollowingRepo) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(user.RepoID, "UserID")...)
 	result = append(result, validation.ValidateNotEmpty(user.ExternalID, "ExternalID")...)
 	result = append(result, validation.ValidateNotEmpty(user.FederationHostID, "FederationHostID")...)
+	result = append(result, validation.ValidateNotEmpty(user.ExternalOwner, "ExternalOwner")...)
+	result = append(result, validation.ValidateNotEmpty(user.ExternalRepoName, "ExternalRepoName")...)
 	result = append(result, validation.ValidateNotEmpty(user.Uri, "Uri")...)
 	return result
 }

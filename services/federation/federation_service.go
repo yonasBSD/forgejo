@@ -5,6 +5,7 @@ package federation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -40,7 +41,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	log.Info("actorURI was: %v", actorURI)
-	federationHost, err := GetFederationHostForUri(ctx, actorURI)
+	federationHost, err := GetFederationHostFromUri(ctx, actorURI)
 	if err != nil {
 		return http.StatusInternalServerError, "Wrong FederationHost", err
 	}
@@ -129,7 +130,7 @@ func CreateFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (
 	return &result, nil
 }
 
-func GetFederationHostForUri(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
+func GetFederationHostFromUri(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
 	// parse actorID (person)
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := forgefed.NewActorID(actorURI)
@@ -213,19 +214,91 @@ func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federatio
 	return &newUser, &federatedUser, nil
 }
 
+// TODO: This needs probably an own struct/value object
+// ====================================================
+func GetRepoOwnerAndNameFromRepoUri(uri string) (string, string, error) {
+	path, err := getUriPathFromRepoUri(uri)
+	if err != nil {
+		return "", "", err
+	}
+	pathSplit := strings.Split(path, "/")
+
+	return pathSplit[0], pathSplit[1], nil
+}
+
+func GetRepoAPIUriFromRepoUri(uri string) (string, error) {
+	path, err := getUriPathFromRepoUri(uri)
+	if err != nil {
+		return "", err
+	}
+
+	parsedUri, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return "", err
+	}
+	parsedUri.Path = fmt.Sprintf("%v/%v", "api/v1/repos", path)
+
+	return parsedUri.String(), nil
+}
+
+func getUriPathFromRepoUri(uri string) (string, error) {
+	if !IsValidRepoUri(uri) {
+		return "", errors.New("malformed repository uri")
+	}
+	parsedUri, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return "", err
+	}
+	path := strings.TrimPrefix(parsedUri.Path, "/")
+	return path, nil
+}
+
+// TODO: This belongs into some value object
+func IsValidRepoUri(uri string) bool {
+	parsedUri, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return false
+	}
+	path := strings.TrimPrefix(parsedUri.Path, "/")
+	pathSplit := strings.Split(path, "/")
+	if len(pathSplit) != 2 {
+		return false
+	}
+	for _, part := range pathSplit {
+		if strings.TrimSpace(part) == "" {
+			return false
+		}
+	}
+	return true
+}
+
+// ====================================================
+
 // Create or update a list of FollowingRepo structs
 func StoreFollowingRepoList(ctx context.Context, localRepoId int64, followingRepoList []string) (int, string, error) {
 	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
 	for _, uri := range followingRepoList {
-		federationHost, err := GetFederationHostForUri(ctx, uri)
+		owner, repoName, err := GetRepoOwnerAndNameFromRepoUri(uri)
+		if err != nil {
+			return http.StatusBadRequest, "Malformed Repository URI", err
+		}
+		repoApiUri, err := GetRepoAPIUriFromRepoUri(uri)
+		if err != nil {
+			return http.StatusBadRequest, "Malformed Repository URI", err
+		}
+		log.Info("RepoApiUri: %q", repoApiUri)
+
+		// TODO: derive host from repoApiUri or derive APAPI URI from repoApiUri
+		federationHost, err := GetFederationHostFromUri(ctx, repoApiUri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-		followingRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.Source))
+		// TODO: derive id from repoApiUri
+		followingRepoID, err := forgefed.NewRepositoryID(repoApiUri, string(federationHost.NodeInfo.Source))
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-		followingRepo, err := repo.NewFollowingRepo(localRepoId, followingRepoID.ID, federationHost.ID, uri)
+		followingRepo, err := repo.NewFollowingRepo(localRepoId, followingRepoID.ID, federationHost.ID, owner, repoName, uri)
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
