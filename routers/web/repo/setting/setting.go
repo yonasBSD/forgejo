@@ -195,6 +195,7 @@ func SettingsPost(ctx *context.Context) {
 		}
 
 		federationRepos := strings.TrimSpace(form.FederationRepos)
+		federationRepos = strings.TrimSuffix(federationRepos, ";")
 
 		maxFederatedRepoStrLength := 2048
 		errs := validation.ValidateMaxLen(federationRepos, maxFederatedRepoStrLength, "federationRepos")
