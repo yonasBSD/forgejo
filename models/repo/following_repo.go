@@ -7,9 +7,9 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-// FederatedRepo represents a federated Repository Actor connected with a local Repo
+// FollowingRepo represents a federated Repository Actor connected with a local Repo
 // ToDo: We currently get database errors if different repos on the same server want to save the same federated repos in their list
-type FederatedRepo struct {
+type FollowingRepo struct {
 	ID               int64  `xorm:"pk autoincr"`
 	RepoID           int64  `xorm:"NOT NULL"`
 	ExternalID       string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
@@ -17,20 +17,20 @@ type FederatedRepo struct {
 	Uri              string
 }
 
-func NewFederatedRepo(repoID int64, externalID string, federationHostID int64, uri string) (FederatedRepo, error) {
-	result := FederatedRepo{
+func NewFollowingRepo(repoID int64, externalID string, federationHostID int64, uri string) (FollowingRepo, error) {
+	result := FollowingRepo{
 		RepoID:           repoID,
 		ExternalID:       externalID,
 		FederationHostID: federationHostID,
 		Uri:              uri,
 	}
 	if valid, err := validation.IsValid(result); !valid {
-		return FederatedRepo{}, err
+		return FollowingRepo{}, err
 	}
 	return result, nil
 }
 
-func (user FederatedRepo) Validate() []string {
+func (user FollowingRepo) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(user.RepoID, "UserID")...)
 	result = append(result, validation.ValidateNotEmpty(user.ExternalID, "ExternalID")...)

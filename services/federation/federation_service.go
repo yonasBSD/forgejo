@@ -213,23 +213,23 @@ func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federatio
 	return &newUser, &federatedUser, nil
 }
 
-// Create or update a list of FederatedRepo structs
-func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRepoList []string) (int, string, error) {
-	followingRepos := make([]*repo.FederatedRepo, 0, len(federatedRepoList))
-	for _, uri := range federatedRepoList {
+// Create or update a list of FollowingRepo structs
+func StoreFollowingRepoList(ctx context.Context, localRepoId int64, followingRepoList []string) (int, string, error) {
+	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
+	for _, uri := range followingRepoList {
 		federationHost, err := GetFederationHostForUri(ctx, uri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-		federatedRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.Source))
+		followingRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.Source))
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-		federatedRepo, err := repo.NewFederatedRepo(localRepoId, federatedRepoID.ID, federationHost.ID, uri)
+		followingRepo, err := repo.NewFollowingRepo(localRepoId, followingRepoID.ID, federationHost.ID, uri)
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
-		followingRepos = append(followingRepos, &federatedRepo)
+		followingRepos = append(followingRepos, &followingRepo)
 	}
 
 	repo.StoreFollowingRepos(ctx, localRepoId, followingRepos)
@@ -238,7 +238,7 @@ func StoreFederatedRepoList(ctx context.Context, localRepoId int64, federatedRep
 }
 
 func DeleteFollowingRepos(ctx context.Context, localRepoId int64) error {
-	return repo.StoreFollowingRepos(ctx, localRepoId, []*repo.FederatedRepo{})
+	return repo.StoreFollowingRepos(ctx, localRepoId, []*repo.FollowingRepo{})
 }
 
 func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
@@ -249,8 +249,8 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 	}
 
 	likeActivityList := make([]forgefed.ForgeLike, 0)
-	for _, federatedRepo := range followingRepos {
-		target := federatedRepo.Uri
+	for _, followingRepo := range followingRepos {
+		target := followingRepo.Uri
 		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {
 			return err

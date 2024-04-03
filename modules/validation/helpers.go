@@ -127,7 +127,7 @@ func IsValidForgejoActivityPubURL(url string) bool {
 	return true
 }
 
-func IsValidFederatedRepoURL(url string) bool {
+func IsValidFollowingRepoURL(url string) bool {
 	if !IsValidForgejoActivityPubURL(url) {
 		return false
 	}
@@ -143,13 +143,13 @@ func IsValidFederatedRepoURL(url string) bool {
 	return true
 }
 
-func IsValidFederatedRepoURLList(urls string) bool {
+func IsValidFollowingRepoURLList(urls string) bool {
 	switch {
 	case len(strings.Split(urls, ";")) == 1:
-		return IsValidFederatedRepoURL(urls)
+		return IsValidFollowingRepoURL(urls)
 	default:
 		for _, url := range strings.Split(urls, ";") {
-			if !IsValidFederatedRepoURLList(url) {
+			if !IsValidFollowingRepoURLList(url) {
 				return false
 			}
 		}

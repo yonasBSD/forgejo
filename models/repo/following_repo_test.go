@@ -9,8 +9,8 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-func Test_FederatedRepoValidation(t *testing.T) {
-	sut := FederatedRepo{
+func Test_FollowingRepoValidation(t *testing.T) {
+	sut := FollowingRepo{
 		RepoID:           12,
 		ExternalID:       "12",
 		FederationHostID: 1,
@@ -20,7 +20,7 @@ func Test_FederatedRepoValidation(t *testing.T) {
 		t.Errorf("sut should be valid but was %q", err)
 	}
 
-	sut = FederatedRepo{
+	sut = FollowingRepo{
 		ExternalID:       "12",
 		FederationHostID: 1,
 		Uri:              "http://localhost:3000/api/v1/activitypub/repo-id/1",

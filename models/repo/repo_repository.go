@@ -12,29 +12,29 @@ import (
 )
 
 func init() {
-	db.RegisterModel(new(FederatedRepo))
+	db.RegisterModel(new(FollowingRepo))
 }
 
-func FindFollowingReposByRepoID(ctx context.Context, repoId int64) ([]*FederatedRepo, error) {
+func FindFollowingReposByRepoID(ctx context.Context, repoId int64) ([]*FollowingRepo, error) {
 	maxFollowingRepos := 10
 	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
 	sess = sess.Limit(maxFollowingRepos, 0)
-	federatedRepoList := make([]*FederatedRepo, 0, maxFollowingRepos)
-	err := sess.Find(&federatedRepoList)
+	followingRepoList := make([]*FollowingRepo, 0, maxFollowingRepos)
+	err := sess.Find(&followingRepoList)
 	if err != nil {
-		return make([]*FederatedRepo, 0, maxFollowingRepos), err
+		return make([]*FollowingRepo, 0, maxFollowingRepos), err
 	}
-	for _, federatedRepo := range federatedRepoList {
-		if res, err := validation.IsValid(*federatedRepo); !res {
-			return make([]*FederatedRepo, 0, maxFollowingRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
+	for _, followingRepo := range followingRepoList {
+		if res, err := validation.IsValid(*followingRepo); !res {
+			return make([]*FollowingRepo, 0, maxFollowingRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
 		}
 	}
-	return federatedRepoList, nil
+	return followingRepoList, nil
 }
 
-func StoreFollowingRepos(ctx context.Context, localRepoId int64, federatedRepoList []*FederatedRepo) error {
-	for _, federatedRepo := range federatedRepoList {
-		if res, err := validation.IsValid(*federatedRepo); !res {
+func StoreFollowingRepos(ctx context.Context, localRepoId int64, followingRepoList []*FollowingRepo) error {
+	for _, followingRepo := range followingRepoList {
+		if res, err := validation.IsValid(*followingRepo); !res {
 			return fmt.Errorf("FederationInfo is not valid: %v", err)
 		}
 	}
@@ -46,12 +46,12 @@ func StoreFollowingRepos(ctx context.Context, localRepoId int64, federatedRepoLi
 	}
 	defer committer.Close()
 
-	_, err = db.GetEngine(ctx).Where("repo_id=?", localRepoId).Delete(FederatedRepo{})
+	_, err = db.GetEngine(ctx).Where("repo_id=?", localRepoId).Delete(FollowingRepo{})
 	if err != nil {
 		return err
 	}
-	for _, federatedRepo := range federatedRepoList {
-		_, err = db.GetEngine(ctx).Insert(federatedRepo)
+	for _, followingRepo := range followingRepoList {
+		_, err = db.GetEngine(ctx).Insert(followingRepo)
 		if err != nil {
 			return err
 		}
