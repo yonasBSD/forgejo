@@ -93,7 +93,7 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 
 	if ownerName != ctx.Metas["user"] || repoName != ctx.Metas["repo"] {
 		titleBuffer.WriteString(" &ndash; ")
-		err = html.Render(titleBuffer, createLink(node.Data[m[0]:m[3]], ownerName + "/" + repoName, "muted"))
+		err = html.Render(titleBuffer, createLink(node.Data[m[0]:m[3]], ownerName+"/"+repoName, "muted"))
 		if err != nil {
 			log.Error("failed to render repoLink: %v", err)
 		}
