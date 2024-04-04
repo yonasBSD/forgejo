@@ -117,11 +117,11 @@ classDiagram
     }
   }
 
-  User *-- FederatedUser: FederatedUser.UserID
+  User "1" *-- "1" FederatedUser: FederatedUser.UserID
   PersonID -- FederatedUser : mapped by PersonID.ID == FederatedUser.externalID & FederationHost.ID
   PersonID -- FederationHost : mapped by PersonID.Host == FederationHost.HostFqdn
   FederatedUser -- FederationHost 
 
-  Repository *-- FollowingRepository
+  Repository "1" *-- "n" FollowingRepository: FollowingRepository.RepositoryID
   FollowingRepository -- FederationHost
 ```
