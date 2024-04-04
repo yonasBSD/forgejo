@@ -72,6 +72,9 @@
 				{{.CsrfTokenHtml}}
 				<input type="hidden" name="action" value="federation">
 				<div class="field {{if .Err_FollowingRepos}}error{{end}}">
+					<p>{{ctx.Locale.Tr "repo.settings.federation_apapiurl"}}</p>
+					<p><b>{{.RepositoryAPAPIURL}}<b></p>
+					<div class="divider"></div>
 					<label for="following_repos">{{ctx.Locale.Tr "repo.settings.federation_following_repos"}}</label>
 					<input id="following_repos" name="federation_repos" value="{{.FollowingRepos}}">
 				</div>
