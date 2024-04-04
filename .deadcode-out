@@ -141,9 +141,6 @@ package "code.gitea.io/gitea/models/user"
 	func DeleteUserSetting
 	func GetUserEmailsByNames
 
-package "code.gitea.io/gitea/modules/activitypub"
-	func (*Client).Post
-
 package "code.gitea.io/gitea/modules/assetfs"
 	func Bindata
 
@@ -303,6 +300,10 @@ package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
 
 package "code.gitea.io/gitea/modules/validation"
+	func IsValidForgejoActivityPubURL
+	func IsValidFollowingRepoURL
+	func IsValidFollowingRepoURLList
+	func IsOfValidLength
 	func ValidateSuffix
 
 package "code.gitea.io/gitea/modules/web"
