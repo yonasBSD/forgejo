@@ -34,6 +34,14 @@ ENABLED = true
 TAGS="sqlite" make build generate-swagger
 ```
 
+# apply on k8s
+
+```bash
+kubectl exec -it forgejo-.. -- /bin/bash
+su git
+cd /app/gitea/
+```
+
 # launch local
 
 ```bash
