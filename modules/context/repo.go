@@ -387,7 +387,7 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 			if idx > 0 {
 				followingRepoString += ";"
 			}
-			followingRepoString += (*followingRepo).Uri
+			followingRepoString += followingRepo.URI
 		}
 		ctx.Data["FollowingRepos"] = followingRepoString
 	} else if err != repo_model.ErrMirrorNotExist {

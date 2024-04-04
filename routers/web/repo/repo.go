@@ -33,7 +33,6 @@ import (
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/forms"
-	"code.gitea.io/gitea/services/repository"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
 )
@@ -318,9 +317,9 @@ func Action(ctx *context.Context) {
 	case "unwatch":
 		err = repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
 	case "star":
-		err = repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
+		err = repo_service.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
 	case "unstar":
-		err = repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
+		err = repo_service.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
 	case "accept_transfer":
 		err = acceptOrRejectRepoTransfer(ctx, true)
 	case "reject_transfer":

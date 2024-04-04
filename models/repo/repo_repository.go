@@ -15,9 +15,9 @@ func init() {
 	db.RegisterModel(new(FollowingRepo))
 }
 
-func FindFollowingReposByRepoID(ctx context.Context, repoId int64) ([]*FollowingRepo, error) {
+func FindFollowingReposByRepoID(ctx context.Context, repoID int64) ([]*FollowingRepo, error) {
 	maxFollowingRepos := 10
-	sess := db.GetEngine(ctx).Where("repo_id=?", repoId)
+	sess := db.GetEngine(ctx).Where("repo_id=?", repoID)
 	sess = sess.Limit(maxFollowingRepos, 0)
 	followingRepoList := make([]*FollowingRepo, 0, maxFollowingRepos)
 	err := sess.Find(&followingRepoList)
@@ -32,7 +32,7 @@ func FindFollowingReposByRepoID(ctx context.Context, repoId int64) ([]*Following
 	return followingRepoList, nil
 }
 
-func StoreFollowingRepos(ctx context.Context, localRepoId int64, followingRepoList []*FollowingRepo) error {
+func StoreFollowingRepos(ctx context.Context, localRepoID int64, followingRepoList []*FollowingRepo) error {
 	for _, followingRepo := range followingRepoList {
 		if res, err := validation.IsValid(*followingRepo); !res {
 			return fmt.Errorf("FederationInfo is not valid: %v", err)
@@ -46,7 +46,7 @@ func StoreFollowingRepos(ctx context.Context, localRepoId int64, followingRepoLi
 	}
 	defer committer.Close()
 
-	_, err = db.GetEngine(ctx).Where("repo_id=?", localRepoId).Delete(FollowingRepo{})
+	_, err = db.GetEngine(ctx).Where("repo_id=?", localRepoID).Delete(FollowingRepo{})
 	if err != nil {
 		return err
 	}

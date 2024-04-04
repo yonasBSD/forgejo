@@ -14,7 +14,7 @@ func Test_FollowingRepoValidation(t *testing.T) {
 		RepoID:           12,
 		ExternalID:       "12",
 		FederationHostID: 1,
-		Uri:              "http://localhost:3000/api/v1/activitypub/repo-id/1",
+		URI:              "http://localhost:3000/api/v1/activitypub/repo-id/1",
 	}
 	if res, err := validation.IsValid(sut); !res {
 		t.Errorf("sut should be valid but was %q", err)
@@ -23,7 +23,7 @@ func Test_FollowingRepoValidation(t *testing.T) {
 	sut = FollowingRepo{
 		ExternalID:       "12",
 		FederationHostID: 1,
-		Uri:              "http://localhost:3000/api/v1/activitypub/repo-id/1",
+		URI:              "http://localhost:3000/api/v1/activitypub/repo-id/1",
 	}
 	if res, _ := validation.IsValid(sut); res {
 		t.Errorf("sut should be invalid")

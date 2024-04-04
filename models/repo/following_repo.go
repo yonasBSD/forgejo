@@ -14,7 +14,7 @@ type FollowingRepo struct {
 	RepoID           int64  `xorm:"NOT NULL"`
 	ExternalID       string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
-	Uri              string
+	URI              string
 }
 
 func NewFollowingRepo(repoID int64, externalID string, federationHostID int64, uri string) (FollowingRepo, error) {
@@ -22,7 +22,7 @@ func NewFollowingRepo(repoID int64, externalID string, federationHostID int64, u
 		RepoID:           repoID,
 		ExternalID:       externalID,
 		FederationHostID: federationHostID,
-		Uri:              uri,
+		URI:              uri,
 	}
 	if valid, err := validation.IsValid(result); !valid {
 		return FollowingRepo{}, err
@@ -35,6 +35,6 @@ func (user FollowingRepo) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(user.RepoID, "UserID")...)
 	result = append(result, validation.ValidateNotEmpty(user.ExternalID, "ExternalID")...)
 	result = append(result, validation.ValidateNotEmpty(user.FederationHostID, "FederationHostID")...)
-	result = append(result, validation.ValidateNotEmpty(user.Uri, "Uri")...)
+	result = append(result, validation.ValidateNotEmpty(user.URI, "Uri")...)
 	return result
 }
