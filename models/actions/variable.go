@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -84,7 +85,7 @@ func UpdateVariable(ctx context.Context, variable *ActionVariable) (bool, error)
 	return count != 0, err
 }
 
-func GetVariablesOfRun(ctx context.Context, run *ActionRun) (map[string]string, error) {
+func GetVariablesOfRun(ctx context.Context, repo *repo.Repository) (map[string]string, error) {
 	variables := map[string]string{}
 
 	// Global
@@ -95,16 +96,16 @@ func GetVariablesOfRun(ctx context.Context, run *ActionRun) (map[string]string, 
 	}
 
 	// Org / User level
-	ownerVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{OwnerID: run.Repo.OwnerID})
+	ownerVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{OwnerID: repo.OwnerID})
 	if err != nil {
-		log.Error("find variables of org: %d, error: %v", run.Repo.OwnerID, err)
+		log.Error("find variables of org: %d, error: %v", repo.OwnerID, err)
 		return nil, err
 	}
 
 	// Repo level
-	repoVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{RepoID: run.RepoID})
+	repoVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{RepoID: repo.ID})
 	if err != nil {
-		log.Error("find variables of repo: %d, error: %v", run.RepoID, err)
+		log.Error("find variables of repo: %d, error: %v", repo.ID, err)
 		return nil, err
 	}
 

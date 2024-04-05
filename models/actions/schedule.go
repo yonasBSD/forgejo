@@ -11,7 +11,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/timeutil"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 
@@ -119,38 +118,6 @@ func DeleteScheduleTaskByRepo(ctx context.Context, id int64) error {
 	}
 
 	return committer.Commit()
-}
-
-func GetVariablesOfSchedule(ctx context.Context, run *ActionSchedule) (map[string]string, error) {
-	variables := map[string]string{}
-
-	// Global
-	globalVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{})
-	if err != nil {
-		log.Error("find global variables: %v", err)
-		return nil, err
-	}
-
-	// Org / User level
-	ownerVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{OwnerID: run.Repo.OwnerID})
-	if err != nil {
-		log.Error("find variables of org: %d, error: %v", run.Repo.OwnerID, err)
-		return nil, err
-	}
-
-	// Repo level
-	repoVariables, err := db.Find[ActionVariable](ctx, FindVariablesOpts{RepoID: run.RepoID})
-	if err != nil {
-		log.Error("find variables of repo: %d, error: %v", run.RepoID, err)
-		return nil, err
-	}
-
-	// Level precedence: Repo > Org / User > Global
-	for _, v := range append(globalVariables, append(ownerVariables, repoVariables...)...) {
-		variables[v.Name] = v.Data
-	}
-
-	return variables, nil
 }
 
 func CleanRepoScheduleTasks(ctx context.Context, repo *repo_model.Repository) error {
