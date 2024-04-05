@@ -26,13 +26,25 @@ func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
 	return result
 }
 
-func TestSearchRepo(t *testing.T) {
+func TestSearchRepoIndexer(t *testing.T) {
+	testSearchRepo(t, true)
+}
+
+func TestSearchRepoNoIndexer(t *testing.T) {
+	testSearchRepo(t, false)
+}
+
+func testSearchRepo(t *testing.T, indexer bool) {
 	defer tests.PrepareTestEnv(t)()
 
 	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
 	assert.NoError(t, err)
 
-	code_indexer.UpdateRepoIndexer(repo)
+	setting.Indexer.RepoIndexerEnabled = indexer
+
+	if indexer {
+		code_indexer.UpdateRepoIndexer(repo)
+	}
 
 	testSearch(t, "/user2/repo1/search?q=Description&page=1", []string{"README.md"})
 
@@ -42,7 +54,9 @@ func TestSearchRepo(t *testing.T) {
 	repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "glob")
 	assert.NoError(t, err)
 
-	code_indexer.UpdateRepoIndexer(repo)
+	if indexer {
+		code_indexer.UpdateRepoIndexer(repo)
+	}
 
 	testSearch(t, "/user2/glob/search?q=loren&page=1", []string{"a.txt"})
 	testSearch(t, "/user2/glob/search?q=loren&page=1&t=match", []string{"a.txt"})
