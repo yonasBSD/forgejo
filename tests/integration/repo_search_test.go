@@ -11,6 +11,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	code_indexer "code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -36,11 +37,10 @@ func TestSearchRepoNoIndexer(t *testing.T) {
 
 func testSearchRepo(t *testing.T, indexer bool) {
 	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Indexer.RepoIndexerEnabled, indexer)()
 
 	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
 	assert.NoError(t, err)
-
-	setting.Indexer.RepoIndexerEnabled = indexer
 
 	if indexer {
 		code_indexer.UpdateRepoIndexer(repo)
@@ -48,8 +48,8 @@ func testSearchRepo(t *testing.T, indexer bool) {
 
 	testSearch(t, "/user2/repo1/search?q=Description&page=1", []string{"README.md"})
 
-	setting.Indexer.IncludePatterns = setting.IndexerGlobFromString("**.txt")
-	setting.Indexer.ExcludePatterns = setting.IndexerGlobFromString("**/y/**")
+	defer test.MockVariableValue(&setting.Indexer.IncludePatterns, setting.IndexerGlobFromString("**.txt"))()
+	defer test.MockVariableValue(&setting.Indexer.ExcludePatterns, setting.IndexerGlobFromString("**/y/**"))()
 
 	repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "glob")
 	assert.NoError(t, err)
