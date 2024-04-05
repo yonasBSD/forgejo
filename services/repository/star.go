@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/services/federation"
 )
 
+// ToDo: Consistent Naming, smth like StarLocalAndFollowingRepo
 func StarRepoAndFederate(ctx context.Context, doer user.User, repoID int64, star bool) error {
 	if err := repo.StarRepo(ctx, doer.ID, repoID, star); err != nil {
 		return err
