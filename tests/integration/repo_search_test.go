@@ -59,11 +59,25 @@ func testSearchRepo(t *testing.T, indexer bool) {
 	}
 
 	testSearch(t, "/user2/glob/search?q=loren&page=1", []string{"a.txt"})
-	testSearch(t, "/user2/glob/search?q=loren&page=1&t=match", []string{"a.txt"})
-	testSearch(t, "/user2/glob/search?q=file3&page=1", []string{"x/b.txt", "a.txt"})
-	testSearch(t, "/user2/glob/search?q=file3&page=1&t=match", []string{"x/b.txt", "a.txt"})
-	testSearch(t, "/user2/glob/search?q=file4&page=1&t=match", []string{"x/b.txt", "a.txt"})
-	testSearch(t, "/user2/glob/search?q=file5&page=1&t=match", []string{"x/b.txt", "a.txt"})
+	testSearch(t, "/user2/glob/search?q=loren&page=1&fuzzy=false", []string{"a.txt"})
+
+	if indexer {
+		// fuzzy search: matches both file3 (x/b.txt) and file1 (a.txt)
+		// when indexer is enabled
+		testSearch(t, "/user2/glob/search?q=file3&page=1", []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{"x/b.txt", "a.txt"})
+	} else {
+		// fuzzy search: OR of all the keywords
+		// when indexer is disabled
+		testSearch(t, "/user2/glob/search?q=file3+file1&page=1", []string{"a.txt", "x/b.txt"})
+		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{})
+		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{})
+	}
+
+	testSearch(t, "/user2/glob/search?q=file3&page=1&fuzzy=false", []string{"x/b.txt"})
+	testSearch(t, "/user2/glob/search?q=file4&page=1&fuzzy=false", []string{})
+	testSearch(t, "/user2/glob/search?q=file5&page=1&fuzzy=false", []string{})
 }
 
 func testSearch(t *testing.T, url string, expected []string) {
