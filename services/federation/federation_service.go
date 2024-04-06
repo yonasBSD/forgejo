@@ -252,6 +252,7 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 
 	likeActivityList := make([]forgefed.ForgeLike, 0)
 	for _, followingRepo := range followingRepos {
+		log.Info("Found following repo: %v", followingRepo)
 		target := followingRepo.URI
 		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {

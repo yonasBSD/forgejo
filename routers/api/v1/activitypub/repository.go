@@ -74,6 +74,9 @@ func RepositoryInbox(ctx *context.APIContext) {
 	form := web.GetForm(ctx)
 	httpStatus, title, err := federation.ProcessLikeActivity(ctx, form, repository.ID)
 	if err != nil {
+		log.Error("Status: %v", httpStatus)
+		log.Error("Title: %v", title)
+		log.Error("Error: %v", err)
 		ctx.Error(httpStatus, title, err)
 	}
 	ctx.Status(http.StatusNoContent)
