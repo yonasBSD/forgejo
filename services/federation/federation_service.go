@@ -264,7 +264,8 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 	if err != nil {
 		return err
 	}
-	for _, activity := range likeActivityList {
+	for i, activity := range likeActivityList {
+		activity.StartTime = activity.StartTime.Add(time.Duration(i) * time.Second)
 		json, err := activity.MarshalJSON()
 		if err != nil {
 			return err
