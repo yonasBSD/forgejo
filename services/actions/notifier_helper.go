@@ -336,7 +336,7 @@ func handleWorkflows(
 			continue
 		}
 
-		vars, err := actions_model.GetVariablesOfRun(ctx, run.Repo)
+		vars, err := actions_model.GetVariablesOfRun(ctx, run)
 		if err != nil {
 			log.Error("GetVariablesOfRun: %v", err)
 			continue

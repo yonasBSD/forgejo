@@ -36,7 +36,7 @@ func pickTask(ctx context.Context, runner *actions_model.ActionRunner) (*runnerv
 		return nil, false, fmt.Errorf("GetSecretsOfTask: %w", err)
 	}
 
-	vars, err := actions_model.GetVariablesOfRun(ctx, t.Job.Run.Repo)
+	vars, err := actions_model.GetVariablesOfRun(ctx, t.Job.Run)
 	if err != nil {
 		return nil, false, fmt.Errorf("GetVariablesOfRun: %w", err)
 	}
