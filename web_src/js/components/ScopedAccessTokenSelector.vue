@@ -2,26 +2,7 @@
 import {createApp} from 'vue';
 import {hideElem, showElem} from '../utils/dom.js';
 
-const sfc = {
-  props: {
-    isAdmin: {
-      type: Boolean,
-      required: true,
-    },
-    noAccessLabel: {
-      type: String,
-      required: true,
-    },
-    readLabel: {
-      type: String,
-      required: true,
-    },
-    writeLabel: {
-      type: String,
-      required: true,
-    },
-  },
-
+var sfc = {
   computed: {
     categories() {
       const categories = [
@@ -41,6 +22,22 @@ const sfc = {
       return categories;
     },
   },
+
+  props: (function() {
+    const newProps = {};
+    [
+      'isAdmin',
+      'noAccessLabel',
+      'readLabel',
+      'writeLabel',
+    ].forEach(propName => {
+      newProps[propName] = {
+        type: String,
+        required: true,
+      };
+    });
+    return newProps;
+  })(),
 
   mounted() {
     document.getElementById('scoped-access-submit').addEventListener('click', this.onClickSubmit);
@@ -72,6 +69,13 @@ const sfc = {
   },
 };
 
+sfc.computed.categories().forEach(propName => {
+  sfc.props[propName + "Label"] = {
+    type: String,
+    required: true,
+  };
+});
+
 export default sfc;
 
 /**
@@ -89,7 +93,7 @@ export function initScopedAccessTokenCategories() {
 <template>
   <div v-for="category in categories" :key="category" class="field tw-pl-1 tw-pb-1 access-token-category">
     <label class="category-label" :for="'access-token-scope-' + category">
-      {{ category }}
+      {{ this[category + 'Label'] }}
     </label>
     <div class="gitea-select">
       <select
