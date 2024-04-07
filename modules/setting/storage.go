@@ -242,7 +242,7 @@ func getStorageForLocal(targetSec, overrideSec ConfigSection, tp targetSecType, 
 		}
 	}
 
-	checkOverlappedPath("storage."+name+".PATH", storage.Path)
+	checkOverlappedPath("[storage."+name+"].PATH", storage.Path)
 
 	return &storage, nil
 }
