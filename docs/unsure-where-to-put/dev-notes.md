@@ -23,7 +23,6 @@ SCHEMA =
 SSL_MODE = disable
 LOG_SQL = false
 
-
 [federation]
 ENABLED = true
 ```
@@ -129,4 +128,3 @@ git push
 go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5 generate client -f './templates/swagger/v1_json.tmpl' -c "modules/activitypub2" --operation 'activitypubPerson' --skip-models --existing-models 'github.com/go-ap/activitypub' --skip-validation
 
 # Documentation for learn & reference
-
