@@ -12,7 +12,7 @@ import (
 type FollowingRepo struct {
 	ID               int64  `xorm:"pk autoincr"`
 	RepoID           int64  `xorm:"NOT NULL"`
-	ExternalID       string `xorm:"TEXT UNIQUE(federation_repo_mapping) NOT NULL"`
+	ExternalID       string `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
 	URI              string
 }
