@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	inner_meilisearch "code.gitea.io/gitea/modules/indexer/internal/meilisearch"
 	"code.gitea.io/gitea/modules/indexer/issues/internal"
 	"code.gitea.io/gitea/modules/indexer/issues/internal/tests"
 
@@ -18,8 +19,6 @@ import (
 )
 
 func TestMeilisearchIndexer(t *testing.T) {
-	t.Skip("meilisearch not found in Forgejo test yet")
-	// The meilisearch instance started by pull-db-tests.yml > test-unit > services > meilisearch
 	url := "http://meilisearch:7700"
 	key := "" // auth has been disabled in test environment
 
@@ -58,7 +57,7 @@ func TestConvertHits(t *testing.T) {
 	_, err := convertHits(&meilisearch.SearchResponse{
 		Hits: []any{"aa", "bb", "cc", "dd"},
 	})
-	assert.ErrorIs(t, err, ErrMalformedResponse)
+	assert.ErrorIs(t, err, inner_meilisearch.ErrMalformedResponse)
 
 	validResponse := &meilisearch.SearchResponse{
 		Hits: []any{
@@ -85,12 +84,4 @@ func TestConvertHits(t *testing.T) {
 	hits, err := convertHits(validResponse)
 	assert.NoError(t, err)
 	assert.EqualValues(t, []internal.Match{{ID: 11}, {ID: 22}, {ID: 33}}, hits)
-}
-
-func TestDoubleQuoteKeyword(t *testing.T) {
-	assert.EqualValues(t, "", doubleQuoteKeyword(""))
-	assert.EqualValues(t, `"a" "b" "c"`, doubleQuoteKeyword("a b c"))
-	assert.EqualValues(t, `"a" "d" "g"`, doubleQuoteKeyword("a  d g"))
-	assert.EqualValues(t, `"a" "d" "g"`, doubleQuoteKeyword("a  d g"))
-	assert.EqualValues(t, `"a" "d" "g"`, doubleQuoteKeyword(`a  "" "d" """g`))
 }

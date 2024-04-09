@@ -4,7 +4,9 @@
 package meilisearch
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"code.gitea.io/gitea/modules/log"
 )
@@ -35,4 +37,23 @@ func (i *Indexer) checkOldIndexes() {
 			log.Warn("Found older meilisearch index named %q, Gitea will keep the old NOT DELETED. You can delete the old version after the upgrade succeed.", indexName)
 		}
 	}
+}
+
+// TODO: Should be made configurable.
+const MaxTotalHits = 10000
+
+// ErrMalformedResponse is never expected as we initialize the indexer ourself and so define the types.
+var ErrMalformedResponse = errors.New("meilisearch returned unexpected malformed content")
+
+func DoubleQuoteKeyword(k string) string {
+	kp := strings.Split(k, " ")
+	parts := 0
+	for i := range kp {
+		part := strings.Trim(kp[i], "\"")
+		if part != "" {
+			kp[parts] = fmt.Sprintf(`"%s"`, part)
+			parts++
+		}
+	}
+	return strings.Join(kp[:parts], " ")
 }

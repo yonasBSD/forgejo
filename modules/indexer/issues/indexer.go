@@ -107,7 +107,7 @@ func InitIssueIndexer(syncReindex bool) {
 			issueIndexer = meilisearch.NewIndexer(setting.Indexer.IssueConnStr, setting.Indexer.IssueConnAuth, setting.Indexer.IssueIndexerName)
 			existed, err = issueIndexer.Init(ctx)
 			if err != nil {
-				log.Fatal("Unable to issueIndexer.Init with connection %s Error: %v", setting.Indexer.IssueConnStr, err)
+				log.Fatal("Unable to initalize Meilisearch issues indexer with connection %s Error: %v", setting.Indexer.IssueConnStr, err)
 			}
 		default:
 			log.Fatal("Unknown issue indexer type: %s", setting.Indexer.IssueType)

@@ -5,8 +5,6 @@ package meilisearch
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -17,15 +15,7 @@ import (
 	"github.com/meilisearch/meilisearch-go"
 )
 
-const (
-	issueIndexerLatestVersion = 3
-
-	// TODO: make this configurable if necessary
-	maxTotalHits = 10000
-)
-
-// ErrMalformedResponse is never expected as we initialize the indexer ourself and so define the types.
-var ErrMalformedResponse = errors.New("meilisearch returned unexpected malformed content")
+const issueIndexerLatestVersion = 3
 
 var _ internal.Indexer = &Indexer{}
 
@@ -82,7 +72,7 @@ func NewIndexer(url, apiKey, indexerName string) *Indexer {
 			"id",
 		},
 		Pagination: &meilisearch.Pagination{
-			MaxTotalHits: maxTotalHits,
+			MaxTotalHits: inner_meilisearch.MaxTotalHits,
 		},
 	}
 
@@ -216,7 +206,7 @@ func (b *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 		"id:desc",
 	}
 
-	skip, limit := indexer_internal.ParsePaginator(options.Paginator, maxTotalHits)
+	skip, limit := indexer_internal.ParsePaginator(options.Paginator, inner_meilisearch.MaxTotalHits)
 
 	counting := limit == 0
 	if counting {
@@ -230,7 +220,7 @@ func (b *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 	if !options.IsFuzzyKeyword {
 		// to make it non fuzzy ("typo tolerance" in meilisearch terms), we have to quote the keyword(s)
 		// https://www.meilisearch.com/docs/reference/api/search#phrase-search
-		keyword = doubleQuoteKeyword(keyword)
+		keyword = inner_meilisearch.DoubleQuoteKeyword(keyword)
 	}
 
 	searchRes, err := b.inner.Client.Index(b.inner.VersionedIndexName()).Search(keyword, &meilisearch.SearchRequest{
@@ -267,30 +257,17 @@ func parseSortBy(sortBy internal.SortBy) string {
 	return field + ":asc"
 }
 
-func doubleQuoteKeyword(k string) string {
-	kp := strings.Split(k, " ")
-	parts := 0
-	for i := range kp {
-		part := strings.Trim(kp[i], "\"")
-		if part != "" {
-			kp[parts] = fmt.Sprintf(`"%s"`, part)
-			parts++
-		}
-	}
-	return strings.Join(kp[:parts], " ")
-}
-
 func convertHits(searchRes *meilisearch.SearchResponse) ([]internal.Match, error) {
 	hits := make([]internal.Match, 0, len(searchRes.Hits))
 	for _, hit := range searchRes.Hits {
 		hit, ok := hit.(map[string]any)
 		if !ok {
-			return nil, ErrMalformedResponse
+			return nil, inner_meilisearch.ErrMalformedResponse
 		}
 
 		issueID, ok := hit["id"].(float64)
 		if !ok {
-			return nil, ErrMalformedResponse
+			return nil, inner_meilisearch.ErrMalformedResponse
 		}
 
 		hits = append(hits, internal.Match{

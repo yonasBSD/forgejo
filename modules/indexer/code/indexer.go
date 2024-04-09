@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/indexer/code/bleve"
 	"code.gitea.io/gitea/modules/indexer/code/elasticsearch"
 	"code.gitea.io/gitea/modules/indexer/code/internal"
+	"code.gitea.io/gitea/modules/indexer/code/meilisearch"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/queue"
@@ -117,7 +118,7 @@ func Init() {
 
 	// Create the Queue
 	switch setting.Indexer.RepoType {
-	case "bleve", "elasticsearch":
+	case "bleve", "elasticsearch", "meilisearch":
 		handler := func(items ...*internal.IndexerData) (unhandled []*internal.IndexerData) {
 			indexer := *globalIndexer.Load()
 			// make it a process to allow for cancellation (especially during integration tests where no global shutdown happens)
@@ -187,6 +188,23 @@ func Init() {
 				(*globalIndexer.Load()).Close()
 				close(waitChannel)
 				log.Fatal("PID: %d Unable to initialize the elasticsearch Repository Indexer connstr: %s Error: %v", os.Getpid(), setting.Indexer.RepoConnStr, err)
+			}
+		case "meilisearch":
+			log.Info("PID: %d Initializing Repository Indexer at: %s", os.Getpid(), setting.Indexer.RepoConnStr)
+			defer func() {
+				if err := recover(); err != nil {
+					log.Error("PANIC whilst initializing repository indexer: %v\nStacktrace: %s", err, log.Stack(2))
+					log.Error("The indexer files are likely corrupted and may need to be deleted")
+					log.Error("You can completely remove the \"%s\" index to make Gitea recreate the indexes", setting.Indexer.RepoConnStr)
+				}
+			}()
+			rIndexer = meilisearch.NewIndexer(setting.Indexer.RepoConnStr, setting.Indexer.RepoConnAuth, setting.Indexer.RepoIndexerName, false)
+			existed, err = rIndexer.Init(ctx)
+			if err != nil {
+				cancel()
+				(*globalIndexer.Load()).Close()
+				close(waitChannel)
+				log.Fatal("PID: %d Unable to initialize the Meilisearch repository indexer connstr: %s Error: %v", os.Getpid(), setting.Indexer.RepoConnStr, err)
 			}
 
 		default:

@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/indexer/code/bleve"
 	"code.gitea.io/gitea/modules/indexer/code/elasticsearch"
 	"code.gitea.io/gitea/modules/indexer/code/internal"
+	"code.gitea.io/gitea/modules/indexer/code/meilisearch"
 
 	_ "code.gitea.io/gitea/models"
 	_ "code.gitea.io/gitea/models/actions"
@@ -135,4 +136,26 @@ func TestESIndexAndSearch(t *testing.T) {
 	defer indexer.Close()
 
 	testIndexer("elastic_search", t, indexer)
+}
+
+func TestMeiliSearchIndexAndSearch(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+
+	u := os.Getenv("TEST_INDEXER_CODE_MEILISEARCH_URL")
+	if u == "" {
+		t.SkipNow()
+		return
+	}
+
+	indexer := meilisearch.NewIndexer(u, "", "gitea_codes", true)
+	if _, err := indexer.Init(context.Background()); err != nil {
+		if indexer != nil {
+			indexer.Close()
+		}
+		assert.FailNow(t, "Unable to init meilisearch indexer", "%v", err)
+	}
+
+	defer indexer.Close()
+
+	testIndexer("meili_search", t, indexer)
 }
