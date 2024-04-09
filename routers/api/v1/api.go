@@ -774,7 +774,7 @@ func Routes() *web.Route {
 				m.Group("/user-id/{user-id}", func() {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
-				}, context_service.UserIDAssignmentAPI())
+				}, context.UserIDAssignmentAPI())
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox",
@@ -782,7 +782,7 @@ func Routes() *web.Route {
 						bind(forgefed.ForgeLike{}),
 						// TODO: activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
-				}, context_service.RepositoryIDAssignmentAPI())
+				}, context.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
 
