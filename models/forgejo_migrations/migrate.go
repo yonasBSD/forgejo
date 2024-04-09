@@ -136,7 +136,6 @@ func Migrate(x *xorm.Engine) error {
 	}
 
 	v := currentVersion.Version
-	log.Info("Current version: %d", v)
 
 	// Downgrading Forgejo's database version not supported
 	if v > ExpectedVersion() {
@@ -175,6 +174,5 @@ func Migrate(x *xorm.Engine) error {
 		return fmt.Errorf("sync: %w", err)
 	}
 
-	//	panic("fn end")
 	return semver.SetVersionStringWithEngine(x, setting.ForgejoVersion)
 }

@@ -111,11 +111,6 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 			ctx.ServerError("SearchUsers", err)
 			return
 		}
-		//		users, count, err = user_model.SearchUsers(ctx, opts)
-		//		if err != nil {
-		//			ctx.ServerError("SearchUsers", err)
-		//			return
-		//		}
 	}
 
 	if len(opts.Keyword) == 0 || isKeywordValid(opts.Keyword) {
