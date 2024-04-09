@@ -8,8 +8,8 @@ import (
 
 	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/modules/activitypub"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/services/context"
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-ap/jsonld"

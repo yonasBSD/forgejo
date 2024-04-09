@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/federation"
 
 	ap "github.com/go-ap/activitypub"
