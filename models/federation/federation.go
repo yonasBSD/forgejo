@@ -10,7 +10,8 @@ import (
 )
 
 type FederatedHost struct {
-	ID        int64 `xorm:"pk autoincr"`
+	ID int64 `xorm:"pk autoincr"`
+	//nolint:unused
 	isBlocked bool
 	HostFqdn  string `xorm:"UNIQUE(s) INDEX"`
 }
@@ -59,7 +60,7 @@ func CreateFederatedUser(ctx context.Context, u *user.User, host *FederatedHost)
 	return err
 }
 
-func CreatUser(ctx context.Context, u *user.User) error {
+func CreateUser(ctx context.Context, u *user.User) error {
 	// set system defaults
 	u.Visibility = setting.Service.DefaultUserVisibilityMode
 	u.AllowCreateOrganization = setting.Service.DefaultAllowCreateOrganization && !setting.Admin.DisableRegularOrgCreation
@@ -93,7 +94,7 @@ func CreatUser(ctx context.Context, u *user.User) error {
 	if err != nil {
 		return err
 	} else if isExist {
-		return user.ErrUserAlreadyExist{u.Name}
+		return nil
 	}
 
 	isExist, err = user.IsEmailUsed(ctx, u.Email)
@@ -151,5 +152,4 @@ func CreatUser(ctx context.Context, u *user.User) error {
 	}
 
 	return committer.Commit()
-
 }

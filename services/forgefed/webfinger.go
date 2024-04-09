@@ -1,13 +1,13 @@
 package forgefed
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 )
 
@@ -57,9 +57,7 @@ type WebfingerLink struct {
 
 func GetHostnameFromResource(resource string) (string, error) {
 	r := resource
-	if strings.HasPrefix(resource, "@") {
-		resource, _ = strings.CutPrefix(resource, "@")
-	}
+	resource = strings.Trim(resource, "@")
 	actor, err := url.Parse(resource)
 	if err != nil {
 		return "", err
@@ -93,9 +91,7 @@ func GetHostnameFromResource(resource string) (string, error) {
 
 // Get Actor object by performing webfinger lookup
 func WebFingerLookup(q string) (*WebfingerJRD, error) {
-	if strings.HasPrefix(q, "@") {
-		q, _ = strings.CutPrefix(q, "@")
-	}
+	q = strings.Trim(q, "@")
 	actor, err := url.Parse(q)
 	if err != nil {
 		return nil, err
@@ -136,9 +132,7 @@ func WebFingerLookup(q string) (*WebfingerJRD, error) {
 }
 
 func IsFingerable(resource string) bool {
-	if strings.HasPrefix(resource, "@") {
-		resource, _ = strings.CutPrefix(resource, "@")
-	}
+	resource = strings.Trim(resource, "@")
 	actor, err := url.Parse(resource)
 	if err != nil {
 		return false

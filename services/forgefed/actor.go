@@ -2,13 +2,12 @@ package forgefed
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
 	"code.gitea.io/gitea/models/federation"
 	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/json"
 
 	ap "github.com/go-ap/activitypub"
 )
@@ -17,7 +16,7 @@ func GetActor(id string) (*ap.Actor, error) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", id, nil)
 	if err != nil {
-		//Handle Error
+		return nil, err
 	}
 
 	req.Header = http.Header{
@@ -41,9 +40,10 @@ func GetActor(id string) (*ap.Actor, error) {
 }
 
 func SavePerson(ctx context.Context, person *ap.Person) (*user.User, error) {
-
-	fmt.Println(person.ID.String())
 	hostname, err := GetHostnameFromResource(person.ID.String())
+	if err != nil {
+		return nil, err
+	}
 
 	exists, err := federation.FederatedHostExists(ctx, hostname)
 	if err != nil {
@@ -71,7 +71,6 @@ func SavePerson(ctx context.Context, person *ap.Person) (*user.User, error) {
 
 	u := new(user.User)
 	u.Name = "@" + person.PreferredUsername.String() + "@" + hostname
-	//panic(u.Name)
 	u.Email = person.PreferredUsername.String() + "@" + hostname
 	u.Website = person.URL.GetID().String()
 	u.KeepEmailPrivate = true
@@ -84,7 +83,7 @@ func SavePerson(ctx context.Context, person *ap.Person) (*user.User, error) {
 		return u, nil // TODO: must also check for federatedUser existence
 	}
 
-	if err = federation.CreatUser(ctx, u); err != nil {
+	if err = federation.CreateUser(ctx, u); err != nil {
 		return nil, err
 	}
 
