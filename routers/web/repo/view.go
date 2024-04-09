@@ -49,6 +49,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/feed"
 	issue_service "code.gitea.io/gitea/services/issue"
+	files_service "code.gitea.io/gitea/services/repository/files"
 
 	"github.com/nektos/act/pkg/model"
 
@@ -113,7 +114,7 @@ func findReadmeFileInEntries(ctx *context.Context, entries []*git.TreeEntry, try
 			log.Debug("Potential readme file: %s", entry.Name())
 			if readmeFiles[i] == nil || base.NaturalSortLess(readmeFiles[i].Name(), entry.Blob().Name()) {
 				if entry.IsLink() {
-					target, err := entry.FollowLinks()
+					target, _, err := entry.FollowLinks()
 					if err != nil && !git.IsErrBadLink(err) {
 						return "", nil, err
 					} else if target != nil && (target.IsExecutable() || target.IsRegular()) {
@@ -266,7 +267,7 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.TreeEntry) {
 	target := readmeFile
 	if readmeFile != nil && readmeFile.IsLink() {
-		target, _ = readmeFile.FollowLinks()
+		target, _, _ = readmeFile.FollowLinks()
 	}
 	if target == nil {
 		// if findReadmeFile() failed and/or gave us a broken symlink (which it shouldn't)
@@ -337,7 +338,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 			log.Error("Read readme content failed: %v", err)
 		}
 		contentEscaped := template.HTMLEscapeString(util.UnsafeBytesToString(content))
-		ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlHTML(template.HTML(contentEscaped), ctx.Locale)
+		ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlHTML(template.HTML(contentEscaped), ctx.Locale, charset.FileviewContext)
 	}
 
 	if !fInfo.isLFSFile && ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {
@@ -389,6 +390,15 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+
+	if entry.IsLink() {
+		_, link, err := entry.FollowLinks()
+		// Errors should be allowed, because this shouldn't
+		// block rendering invalid symlink files.
+		if err == nil {
+			ctx.Data["SymlinkURL"] = ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(link)
+		}
+	}
 
 	commit, err := ctx.Repo.Commit.GetCommitByPath(ctx.Repo.TreePath)
 	if err != nil {
@@ -557,31 +567,11 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			}
 			ctx.Data["NumLinesSet"] = true
 
-			language := ""
-
-			indexFilename, worktree, deleteTemporaryFile, err := ctx.Repo.GitRepo.ReadTreeToTemporaryIndex(ctx.Repo.CommitID)
-			if err == nil {
-				defer deleteTemporaryFile()
-
-				filename2attribute2info, err := ctx.Repo.GitRepo.CheckAttribute(git.CheckAttributeOpts{
-					CachedOnly: true,
-					Attributes: []string{"linguist-language", "gitlab-language"},
-					Filenames:  []string{ctx.Repo.TreePath},
-					IndexFile:  indexFilename,
-					WorkTree:   worktree,
-				})
-				if err != nil {
-					log.Error("Unable to load attributes for %-v:%s. Error: %v", ctx.Repo.Repository, ctx.Repo.TreePath, err)
-				}
-
-				language = filename2attribute2info[ctx.Repo.TreePath]["linguist-language"]
-				if language == "" || language == "unspecified" {
-					language = filename2attribute2info[ctx.Repo.TreePath]["gitlab-language"]
-				}
-				if language == "unspecified" {
-					language = ""
-				}
+			language, err := files_service.TryGetContentLanguage(ctx.Repo.GitRepo, ctx.Repo.CommitID, ctx.Repo.TreePath)
+			if err != nil {
+				log.Error("Unable to get file language for %-v:%s. Error: %v", ctx.Repo.Repository, ctx.Repo.TreePath, err)
 			}
+
 			fileContent, lexerName, err := highlight.File(blob.Name(), language, buf)
 			ctx.Data["LexerName"] = lexerName
 			if err != nil {
@@ -591,7 +581,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			status := &charset.EscapeStatus{}
 			statuses := make([]*charset.EscapeStatus, len(fileContent))
 			for i, line := range fileContent {
-				statuses[i], fileContent[i] = charset.EscapeControlHTML(line, ctx.Locale)
+				statuses[i], fileContent[i] = charset.EscapeControlHTML(line, ctx.Locale, charset.FileviewContext)
 				status = status.Or(statuses[i])
 			}
 			ctx.Data["EscapeStatus"] = status
@@ -697,7 +687,7 @@ func markupRender(ctx *context.Context, renderCtx *markup.RenderContext, input i
 	go func() {
 		sb := &strings.Builder{}
 		// We allow NBSP here this is rendered
-		escaped, _ = charset.EscapeControlReader(markupRd, sb, ctx.Locale, charset.RuneNBSP)
+		escaped, _ = charset.EscapeControlReader(markupRd, sb, ctx.Locale, charset.FileviewContext, charset.RuneNBSP)
 		output = template.HTML(sb.String())
 		close(done)
 	}()
@@ -762,7 +752,7 @@ func checkHomeCodeViewable(ctx *context.Context) {
 		}
 	}
 
-	ctx.NotFound("Home", fmt.Errorf(ctx.Tr("units.error.no_unit_allowed_repo")))
+	ctx.NotFound("Home", fmt.Errorf(ctx.Locale.TrString("units.error.no_unit_allowed_repo")))
 }
 
 func checkCitationFile(ctx *context.Context, entry *git.TreeEntry) {

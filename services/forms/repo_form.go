@@ -132,6 +132,24 @@ type RepoSettingForm struct {
 	EnablePrune            bool
 
 	// Advanced settings
+	IsArchived bool
+
+	// Signing Settings
+	TrustModel string
+
+	// Admin settings
+	EnableHealthCheck  bool
+	RequestReindexType string
+}
+
+// Validate validates the fields
+func (f *RepoSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+	ctx := context.GetValidateContext(req)
+	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
+}
+
+// RepoUnitSettingForm form for changing repository unit settings
+type RepoUnitSettingForm struct {
 	EnableCode                            bool
 	EnableWiki                            bool
 	GloballyWriteableWiki                 bool
@@ -154,6 +172,7 @@ type RepoSettingForm struct {
 	PullsAllowRebase                      bool
 	PullsAllowRebaseMerge                 bool
 	PullsAllowSquash                      bool
+	PullsAllowFastForwardOnly             bool
 	PullsAllowManualMerge                 bool
 	PullsDefaultMergeStyle                string
 	EnableAutodetectManualMerge           bool
@@ -163,18 +182,10 @@ type RepoSettingForm struct {
 	EnableTimetracker                     bool
 	AllowOnlyContributorsToTrackTime      bool
 	EnableIssueDependencies               bool
-	IsArchived                            bool
-
-	// Signing Settings
-	TrustModel string
-
-	// Admin settings
-	EnableHealthCheck  bool
-	RequestReindexType string
 }
 
 // Validate validates the fields
-func (f *RepoSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+func (f *RepoUnitSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
 	ctx := context.GetValidateContext(req)
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
@@ -316,7 +327,7 @@ func (f *NewSlackHookForm) Validate(req *http.Request, errs binding.Errors) bind
 		errs = append(errs, binding.Error{
 			FieldNames:     []string{"Channel"},
 			Classification: "",
-			Message:        ctx.Tr("repo.settings.add_webhook.invalid_channel_name"),
+			Message:        ctx.Locale.TrString("repo.settings.add_webhook.invalid_channel_name"),
 		})
 	}
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
@@ -601,8 +612,8 @@ func (f *InitializeLabelsForm) Validate(req *http.Request, errs binding.Errors) 
 // swagger:model MergePullRequestOption
 type MergePullRequestForm struct {
 	// required: true
-	// enum: merge,rebase,rebase-merge,squash,manually-merged
-	Do                     string `binding:"Required;In(merge,rebase,rebase-merge,squash,manually-merged)"`
+	// enum: merge,rebase,rebase-merge,squash,fast-forward-only,manually-merged
+	Do                     string `binding:"Required;In(merge,rebase,rebase-merge,squash,fast-forward-only,manually-merged)"`
 	MergeTitleField        string
 	MergeMessageField      string
 	MergeCommitID          string // only used for manually-merged
@@ -628,6 +639,7 @@ type CodeCommentForm struct {
 	SingleReview   bool   `form:"single_review"`
 	Reply          int64  `form:"reply"`
 	LatestCommitID string
+	Files          []string
 }
 
 // Validate validates the fields
@@ -798,6 +810,7 @@ type CherryPickForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	LastCommit    string
+	CommitMailID  int64 `binding:"Required"`
 	Revert        bool
 	Signoff       bool
 }
@@ -824,6 +837,7 @@ type UploadRepoFileForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	Files         []string
+	CommitMailID  int64 `binding:"Required"`
 	Signoff       bool
 }
 
@@ -858,6 +872,7 @@ type DeleteRepoFileForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	LastCommit    string
+	CommitMailID  int64 `binding:"Required"`
 	Signoff       bool
 }
 

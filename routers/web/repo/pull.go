@@ -1,5 +1,6 @@
-// Copyright 2018 The Gitea Authors.
-// Copyright 2014 The Gogs Authors.
+// Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // All rights reserved.
 // SPDX-License-Identifier: MIT
 
@@ -28,10 +29,12 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/emoji"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	issue_template "code.gitea.io/gitea/modules/issue/template"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/upload"
@@ -115,21 +118,21 @@ func getRepository(ctx *context.Context, repoID int64) *repo_model.Repository {
 	return repo
 }
 
-func getForkRepository(ctx *context.Context) *repo_model.Repository {
-	forkRepo := getRepository(ctx, ctx.ParamsInt64(":repoid"))
-	if ctx.Written() {
-		return nil
+func updateForkRepositoryInContext(ctx *context.Context, forkRepo *repo_model.Repository) bool {
+	if forkRepo == nil {
+		ctx.NotFound("No repository in context", nil)
+		return false
 	}
 
 	if forkRepo.IsEmpty {
 		log.Trace("Empty repository %-v", forkRepo)
-		ctx.NotFound("getForkRepository", nil)
-		return nil
+		ctx.NotFound("updateForkRepositoryInContext", nil)
+		return false
 	}
 
 	if err := forkRepo.LoadOwner(ctx); err != nil {
 		ctx.ServerError("LoadOwner", err)
-		return nil
+		return false
 	}
 
 	ctx.Data["repo_name"] = forkRepo.Name
@@ -142,7 +145,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 	ownedOrgs, err := organization.GetOrgsCanCreateRepoByUserID(ctx, ctx.Doer.ID)
 	if err != nil {
 		ctx.ServerError("GetOrgsCanCreateRepoByUserID", err)
-		return nil
+		return false
 	}
 	var orgs []*organization.Organization
 	for _, org := range ownedOrgs {
@@ -170,7 +173,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 		traverseParentRepo, err = repo_model.GetRepositoryByID(ctx, traverseParentRepo.ForkID)
 		if err != nil {
 			ctx.ServerError("GetRepositoryByID", err)
-			return nil
+			return false
 		}
 	}
 
@@ -184,7 +187,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 	} else {
 		ctx.Data["CanForkRepo"] = false
 		ctx.Flash.Error(ctx.Tr("repo.fork_no_valid_owners"), true)
-		return nil
+		return false
 	}
 
 	branches, err := git_model.FindBranchNames(ctx, git_model.FindBranchOptions{
@@ -192,20 +195,25 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 		ListOptions: db.ListOptions{
 			ListAll: true,
 		},
-		IsDeletedBranch: util.OptionalBoolFalse,
+		IsDeletedBranch: optional.Some(false),
 		// Add it as the first option
 		ExcludeBranchNames: []string{ctx.Repo.Repository.DefaultBranch},
 	})
 	if err != nil {
 		ctx.ServerError("FindBranchNames", err)
-		return nil
+		return false
 	}
 	ctx.Data["Branches"] = append([]string{ctx.Repo.Repository.DefaultBranch}, branches...)
 
-	return forkRepo
+	return true
 }
 
-// Fork render repository fork page
+// ForkByID redirects (with 301 Moved Permanently) to the repository's `/fork` page
+func ForkByID(ctx *context.Context) {
+	ctx.Redirect(ctx.Repo.Repository.Link()+"/fork", http.StatusMovedPermanently)
+}
+
+// Fork renders the repository fork page
 func Fork(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("new_fork")
 
@@ -217,8 +225,7 @@ func Fork(ctx *context.Context) {
 		ctx.Flash.Error(msg, true)
 	}
 
-	getForkRepository(ctx)
-	if ctx.Written() {
+	if !updateForkRepositoryInContext(ctx, ctx.Repo.Repository) {
 		return
 	}
 
@@ -236,8 +243,8 @@ func ForkPost(ctx *context.Context) {
 		return
 	}
 
-	forkRepo := getForkRepository(ctx)
-	if ctx.Written() {
+	forkRepo := ctx.Repo.Repository
+	if !updateForkRepositoryInContext(ctx, forkRepo) {
 		return
 	}
 
@@ -340,7 +347,7 @@ func getPullInfo(ctx *context.Context) (issue *issues_model.Issue, ok bool) {
 		ctx.ServerError("LoadRepo", err)
 		return nil, false
 	}
-	ctx.Data["Title"] = fmt.Sprintf("#%d - %s", issue.Index, issue.Title)
+	ctx.Data["Title"] = fmt.Sprintf("#%d - %s", issue.Index, emoji.ReplaceAliases(issue.Title))
 	ctx.Data["Issue"] = issue
 
 	if !issue.IsPull {
@@ -377,6 +384,11 @@ func setMergeTarget(ctx *context.Context, pull *issues_model.PullRequest) {
 	} else {
 		ctx.Data["HeadTarget"] = pull.MustHeadUserName(ctx) + "/" + pull.HeadRepo.Name + ":" + pull.HeadBranch
 	}
+
+	if pull.Flow == issues_model.PullRequestFlowAGit {
+		ctx.Data["MadeUsingAGit"] = true
+	}
+
 	ctx.Data["BaseTarget"] = pull.BaseBranch
 	ctx.Data["HeadBranchLink"] = pull.GetHeadBranchLink(ctx)
 	ctx.Data["BaseBranchLink"] = pull.GetBaseBranchLink(ctx)
@@ -658,6 +670,24 @@ func PrepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *git.C
 	}
 
 	if pb != nil && pb.EnableStatusCheck {
+
+		var missingRequiredChecks []string
+		for _, requiredContext := range pb.StatusCheckContexts {
+			contextFound := false
+			matchesRequiredContext := createRequiredContextMatcher(requiredContext)
+			for _, presentStatus := range commitStatuses {
+				if matchesRequiredContext(presentStatus.Context) {
+					contextFound = true
+					break
+				}
+			}
+
+			if !contextFound {
+				missingRequiredChecks = append(missingRequiredChecks, requiredContext)
+			}
+		}
+		ctx.Data["MissingRequiredChecks"] = missingRequiredChecks
+
 		ctx.Data["is_context_required"] = func(context string) bool {
 			for _, c := range pb.StatusCheckContexts {
 				if c == context {
@@ -726,10 +756,22 @@ func PrepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *git.C
 	return compareInfo
 }
 
+func createRequiredContextMatcher(requiredContext string) func(string) bool {
+	if gp, err := glob.Compile(requiredContext); err == nil {
+		return func(contextToCheck string) bool {
+			return gp.Match(contextToCheck)
+		}
+	}
+
+	return func(contextToCheck string) bool {
+		return requiredContext == contextToCheck
+	}
+}
+
 type pullCommitList struct {
 	Commits             []pull_service.CommitInfo `json:"commits"`
 	LastReviewCommitSha string                    `json:"last_review_commit_sha"`
-	Locale              map[string]string         `json:"locale"`
+	Locale              map[string]any            `json:"locale"`
 }
 
 // GetPullCommits get all commits for given pull request
@@ -747,7 +789,7 @@ func GetPullCommits(ctx *context.Context) {
 	}
 
 	// Get the needed locale
-	resp.Locale = map[string]string{
+	resp.Locale = map[string]any{
 		"lang":                                ctx.Locale.Language(),
 		"show_all_commits":                    ctx.Tr("repo.pulls.show_all_commits"),
 		"stats_num_commits":                   ctx.TrN(len(commits), "repo.activity.git_stats_commit_1", "repo.activity.git_stats_commit_n", len(commits)),
@@ -942,6 +984,21 @@ func viewPullFiles(ctx *context.Context, specifiedStartCommit, specifiedEndCommi
 	if err = diff.LoadComments(ctx, issue, ctx.Doer, ctx.Data["ShowOutdatedComments"].(bool)); err != nil {
 		ctx.ServerError("LoadComments", err)
 		return
+	}
+
+	for _, file := range diff.Files {
+		for _, section := range file.Sections {
+			for _, line := range section.Lines {
+				for _, comments := range line.Conversations {
+					for _, comment := range comments {
+						if err := comment.LoadAttachments(ctx); err != nil {
+							ctx.ServerError("LoadAttachments", err)
+							return
+						}
+					}
+				}
+			}
+		}
 	}
 
 	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pull.BaseRepoID, pull.BaseBranch)
@@ -1271,19 +1328,19 @@ func MergePullRequest(ctx *context.Context) {
 				return
 			}
 			ctx.Flash.Error(flashError)
-			ctx.Redirect(issue.Link())
+			ctx.JSONRedirect(issue.Link())
 		} else if models.IsErrMergeUnrelatedHistories(err) {
 			log.Debug("MergeUnrelatedHistories error: %v", err)
 			ctx.Flash.Error(ctx.Tr("repo.pulls.unrelated_histories"))
-			ctx.Redirect(issue.Link())
+			ctx.JSONRedirect(issue.Link())
 		} else if git.IsErrPushOutOfDate(err) {
 			log.Debug("MergePushOutOfDate error: %v", err)
 			ctx.Flash.Error(ctx.Tr("repo.pulls.merge_out_of_date"))
-			ctx.Redirect(issue.Link())
+			ctx.JSONRedirect(issue.Link())
 		} else if models.IsErrSHADoesNotMatch(err) {
 			log.Debug("MergeHeadOutOfDate error: %v", err)
 			ctx.Flash.Error(ctx.Tr("repo.pulls.head_out_of_date"))
-			ctx.Redirect(issue.Link())
+			ctx.JSONRedirect(issue.Link())
 		} else if git.IsErrPushRejected(err) {
 			log.Debug("MergePushRejected error: %v", err)
 			pushrejErr := err.(*git.ErrPushRejected)

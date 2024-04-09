@@ -7,8 +7,8 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"runtime"
-	"sort"
 	"time"
 
 	activities_model "code.gitea.io/gitea/models/activities"
@@ -16,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/graceful"
-	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/updatechecker"
@@ -28,13 +27,14 @@ import (
 )
 
 const (
-	tplDashboard   base.TplName = "admin/dashboard"
-	tplSelfCheck   base.TplName = "admin/self_check"
-	tplCron        base.TplName = "admin/cron"
-	tplQueue       base.TplName = "admin/queue"
-	tplStacktrace  base.TplName = "admin/stacktrace"
-	tplQueueManage base.TplName = "admin/queue_manage"
-	tplStats       base.TplName = "admin/stats"
+	tplDashboard    base.TplName = "admin/dashboard"
+	tplSystemStatus base.TplName = "admin/system_status"
+	tplSelfCheck    base.TplName = "admin/self_check"
+	tplCron         base.TplName = "admin/cron"
+	tplQueue        base.TplName = "admin/queue"
+	tplStacktrace   base.TplName = "admin/stacktrace"
+	tplQueueManage  base.TplName = "admin/queue_manage"
+	tplStats        base.TplName = "admin/stats"
 )
 
 var sysStatus struct {
@@ -72,7 +72,7 @@ var sysStatus struct {
 
 	// Garbage collector statistics.
 	NextGC       string // next run in HeapAlloc time (bytes)
-	LastGC       string // last run in absolute time (ns)
+	LastGCTime   string // last run time
 	PauseTotalNs string
 	PauseNs      string // circular buffer of recent GC pause times, most recent at [(NumGC+255)%256]
 	NumGC        uint32
@@ -110,7 +110,7 @@ func updateSystemStatus() {
 	sysStatus.OtherSys = base.FileSize(int64(m.OtherSys))
 
 	sysStatus.NextGC = base.FileSize(int64(m.NextGC))
-	sysStatus.LastGC = fmt.Sprintf("%.1fs", float64(time.Now().UnixNano()-int64(m.LastGC))/1000/1000/1000)
+	sysStatus.LastGCTime = time.Unix(0, int64(m.LastGC)).Format(time.RFC3339)
 	sysStatus.PauseTotalNs = fmt.Sprintf("%.1fs", float64(m.PauseTotalNs)/1000/1000/1000)
 	sysStatus.PauseNs = fmt.Sprintf("%.3fs", float64(m.PauseNs[(m.NumGC+255)%256])/1000/1000/1000)
 	sysStatus.NumGC = m.NumGC
@@ -132,12 +132,17 @@ func Dashboard(ctx *context.Context) {
 	ctx.Data["PageIsAdminDashboard"] = true
 	ctx.Data["NeedUpdate"] = updatechecker.GetNeedUpdate(ctx)
 	ctx.Data["RemoteVersion"] = updatechecker.GetRemoteVersion(ctx)
-	// FIXME: update periodically
 	updateSystemStatus()
 	ctx.Data["SysStatus"] = sysStatus
 	ctx.Data["SSH"] = setting.SSH
 	prepareDeprecatedWarningsAlert(ctx)
 	ctx.HTML(http.StatusOK, tplDashboard)
+}
+
+func SystemStatus(ctx *context.Context) {
+	updateSystemStatus()
+	ctx.Data["SysStatus"] = sysStatus
+	ctx.HTML(http.StatusOK, tplSystemStatus)
 }
 
 // DashboardPost run an admin operation
@@ -219,26 +224,22 @@ func CronTasks(ctx *context.Context) {
 func MonitorStats(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.monitor.stats")
 	ctx.Data["PageIsAdminMonitorStats"] = true
-	bs, err := json.Marshal(activities_model.GetStatistic(ctx).Counter)
-	if err != nil {
-		ctx.ServerError("MonitorStats", err)
-		return
-	}
-	statsCounter := map[string]any{}
-	err = json.Unmarshal(bs, &statsCounter)
-	if err != nil {
-		ctx.ServerError("MonitorStats", err)
-		return
-	}
-	statsKeys := make([]string, 0, len(statsCounter))
-	for k := range statsCounter {
-		if statsCounter[k] == nil {
+	modelStats := activities_model.GetStatistic(ctx).Counter
+	stats := map[string]any{}
+
+	// To avoid manually converting the values of the stats struct to an map,
+	// and to avoid using JSON to do this for us (JSON encoder converts numbers to
+	// scientific notation). Use reflect to convert the struct to an map.
+	rv := reflect.ValueOf(modelStats)
+	for i := 0; i < rv.NumField(); i++ {
+		field := rv.Field(i)
+		// Preserve old behavior, do not show arrays that are empty.
+		if field.Kind() == reflect.Slice && field.Len() == 0 {
 			continue
 		}
-		statsKeys = append(statsKeys, k)
+		stats[rv.Type().Field(i).Name] = field.Interface()
 	}
-	sort.Strings(statsKeys)
-	ctx.Data["StatsKeys"] = statsKeys
-	ctx.Data["StatsCounter"] = statsCounter
+
+	ctx.Data["Stats"] = stats
 	ctx.HTML(http.StatusOK, tplStats)
 }

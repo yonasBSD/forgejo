@@ -49,7 +49,8 @@ var (
 		DownloadOrCloneMethods                  []string
 		PrefixArchiveFiles                      bool
 		DisableMigrations                       bool
-		DisableStars                            bool `ini:"DISABLE_STARS"`
+		DisableStars                            bool
+		DisableForks                            bool
 		DefaultBranch                           string
 		AllowAdoptionOfUnadoptedRepositories    bool
 		AllowDeleteOfUnadoptedRepositories      bool
@@ -172,6 +173,7 @@ var (
 		PrefixArchiveFiles:                      true,
 		DisableMigrations:                       false,
 		DisableStars:                            false,
+		DisableForks:                            false,
 		DefaultBranch:                           "main",
 		AllowForkWithoutMaximumLimit:            true,
 

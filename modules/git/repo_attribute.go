@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 )
 
 // CheckAttributeOpts represents the possible options to CheckAttribute
@@ -133,7 +134,13 @@ func (c *CheckAttributeReader) Init(ctx context.Context) error {
 		c.env = append(c.env, "GIT_WORK_TREE="+c.WorkTree)
 	}
 
-	c.env = append(c.env, "GIT_FLUSH=1")
+	// Version 2.43.1 has a bug where the behavior of `GIT_FLUSH` is flipped.
+	// Ref: https://lore.kernel.org/git/CABn0oJvg3M_kBW-u=j3QhKnO=6QOzk-YFTgonYw_UvFS1NTX4g@mail.gmail.com
+	if InvertedGitFlushEnv {
+		c.env = append(c.env, "GIT_FLUSH=0")
+	} else {
+		c.env = append(c.env, "GIT_FLUSH=1")
+	}
 
 	c.cmd.AddDynamicArguments(c.Attributes...)
 
@@ -315,4 +322,17 @@ func (repo *Repository) CheckAttributeReader(commitID string) (*CheckAttributeRe
 	}
 
 	return checker, deferable
+}
+
+// true if "set"/"true", false if "unset"/"false", none otherwise
+func attributeToBool(attr map[string]string, name string) optional.Option[bool] {
+	if value, has := attr[name]; has && value != "unspecified" {
+		switch value {
+		case "set", "true":
+			return optional.Some(true)
+		case "unset", "false":
+			return optional.Some(false)
+		}
+	}
+	return optional.None[bool]()
 }

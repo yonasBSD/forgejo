@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package actions
@@ -35,13 +36,19 @@ func View(ctx *context_module.Context) {
 	ctx.Data["PageIsActions"] = true
 	runIndex := ctx.ParamsInt64("run")
 	jobIndex := ctx.ParamsInt64("job")
+
+	job, _ := getRunJobs(ctx, runIndex, jobIndex)
+	if ctx.Written() {
+		return
+	}
+
+	workflowName := job.Run.WorkflowID
+
 	ctx.Data["RunIndex"] = runIndex
 	ctx.Data["JobIndex"] = jobIndex
 	ctx.Data["ActionsURL"] = ctx.Repo.RepoLink + "/actions"
-
-	if getRunJobs(ctx, runIndex, jobIndex); ctx.Written() {
-		return
-	}
+	ctx.Data["WorkflowName"] = workflowName
+	ctx.Data["WorkflowURL"] = ctx.Repo.RepoLink + "/actions?workflow=" + workflowName
 
 	ctx.HTML(http.StatusOK, tplViewActions)
 }
@@ -52,6 +59,33 @@ func ViewLatest(ctx *context_module.Context) {
 		ctx.NotFound("GetLatestRun", err)
 		return
 	}
+	err = run.LoadAttributes(ctx)
+	if err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	ctx.Redirect(run.HTMLURL(), http.StatusTemporaryRedirect)
+}
+
+func ViewLatestWorkflowRun(ctx *context_module.Context) {
+	branch := ctx.FormString("branch")
+	if branch == "" {
+		branch = ctx.Repo.Repository.DefaultBranch
+	}
+	branch = fmt.Sprintf("refs/heads/%s", branch)
+	event := ctx.FormString("event")
+
+	workflowFile := ctx.Params("workflow_name")
+	run, err := actions_model.GetLatestRunForBranchAndWorkflow(ctx, ctx.Repo.Repository.ID, branch, workflowFile, event)
+	if err != nil {
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.NotFound("GetLatestRunForBranchAndWorkflow", err)
+		} else {
+			ctx.ServerError("GetLatestRunForBranchAndWorkflow", err)
+		}
+		return
+	}
+
 	err = run.LoadAttributes(ctx)
 	if err != nil {
 		ctx.ServerError("LoadAttributes", err)
@@ -71,15 +105,16 @@ type ViewRequest struct {
 type ViewResponse struct {
 	State struct {
 		Run struct {
-			Link       string     `json:"link"`
-			Title      string     `json:"title"`
-			Status     string     `json:"status"`
-			CanCancel  bool       `json:"canCancel"`
-			CanApprove bool       `json:"canApprove"` // the run needs an approval and the doer has permission to approve
-			CanRerun   bool       `json:"canRerun"`
-			Done       bool       `json:"done"`
-			Jobs       []*ViewJob `json:"jobs"`
-			Commit     ViewCommit `json:"commit"`
+			Link              string     `json:"link"`
+			Title             string     `json:"title"`
+			Status            string     `json:"status"`
+			CanCancel         bool       `json:"canCancel"`
+			CanApprove        bool       `json:"canApprove"` // the run needs an approval and the doer has permission to approve
+			CanRerun          bool       `json:"canRerun"`
+			CanDeleteArtifact bool       `json:"canDeleteArtifact"`
+			Done              bool       `json:"done"`
+			Jobs              []*ViewJob `json:"jobs"`
+			Commit            ViewCommit `json:"commit"`
 		} `json:"run"`
 		CurrentJob struct {
 			Title  string         `json:"title"`
@@ -103,6 +138,7 @@ type ViewJob struct {
 type ViewCommit struct {
 	LocaleCommit   string     `json:"localeCommit"`
 	LocalePushedBy string     `json:"localePushedBy"`
+	LocaleWorkflow string     `json:"localeWorkflow"`
 	ShortSha       string     `json:"shortSHA"`
 	Link           string     `json:"link"`
 	Pusher         ViewUser   `json:"pusher"`
@@ -160,6 +196,7 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.Run.CanCancel = !run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.CanApprove = run.NeedApproval && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.CanRerun = run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
+	resp.State.Run.CanDeleteArtifact = run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
 	resp.State.Run.Done = run.Status.IsDone()
 	resp.State.Run.Jobs = make([]*ViewJob, 0, len(jobs)) // marshal to '[]' instead fo 'null' in json
 	resp.State.Run.Status = run.Status.String()
@@ -182,8 +219,9 @@ func ViewPost(ctx *context_module.Context) {
 		Link: run.RefLink(),
 	}
 	resp.State.Run.Commit = ViewCommit{
-		LocaleCommit:   ctx.Tr("actions.runs.commit"),
-		LocalePushedBy: ctx.Tr("actions.runs.pushed_by"),
+		LocaleCommit:   ctx.Locale.TrString("actions.runs.commit"),
+		LocalePushedBy: ctx.Locale.TrString("actions.runs.pushed_by"),
+		LocaleWorkflow: ctx.Locale.TrString("actions.runs.workflow"),
 		ShortSha:       base.ShortSha(run.CommitSHA),
 		Link:           fmt.Sprintf("%s/commit/%s", run.Repo.Link(), run.CommitSHA),
 		Pusher:         pusher,
@@ -208,7 +246,7 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.CurrentJob.Title = current.Name
 	resp.State.CurrentJob.Detail = current.Status.LocaleString(ctx.Locale)
 	if run.NeedApproval {
-		resp.State.CurrentJob.Detail = ctx.Locale.Tr("actions.need_approval_desc")
+		resp.State.CurrentJob.Detail = ctx.Locale.TrString("actions.need_approval_desc")
 	}
 	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0) // marshal to '[]' instead fo 'null' in json
 	resp.Logs.StepsLog = make([]*ViewStepLog, 0)          // marshal to '[]' instead fo 'null' in json
@@ -549,6 +587,24 @@ func ArtifactsView(ctx *context_module.Context) {
 	ctx.JSON(http.StatusOK, artifactsResponse)
 }
 
+func ArtifactsDeleteView(ctx *context_module.Context) {
+	runIndex := ctx.ParamsInt64("run")
+	artifactName := ctx.Params("artifact_name")
+
+	run, err := actions_model.GetRunByIndex(ctx, ctx.Repo.Repository.ID, runIndex)
+	if err != nil {
+		ctx.NotFoundOrServerError("GetRunByIndex", func(err error) bool {
+			return errors.Is(err, util.ErrNotExist)
+		}, err)
+		return
+	}
+	if err = actions_model.SetArtifactNeedDelete(ctx, run.ID, artifactName); err != nil {
+		ctx.Error(http.StatusInternalServerError, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, struct{}{})
+}
+
 func ArtifactsDownloadView(ctx *context_module.Context) {
 	runIndex := ctx.ParamsInt64("run")
 	artifactName := ctx.Params("artifact_name")
@@ -574,6 +630,14 @@ func ArtifactsDownloadView(ctx *context_module.Context) {
 	if len(artifacts) == 0 {
 		ctx.Error(http.StatusNotFound, "artifact not found")
 		return
+	}
+
+	// if artifacts status is not uploaded-confirmed, treat it as not found
+	for _, art := range artifacts {
+		if art.Status != int64(actions_model.ArtifactStatusUploadConfirmed) {
+			ctx.Error(http.StatusNotFound, "artifact not found")
+			return
+		}
 	}
 
 	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip; filename*=UTF-8''%s.zip", url.PathEscape(artifactName), artifactName))

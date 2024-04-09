@@ -5,7 +5,7 @@ import {createApp} from 'vue';
 import {toggleElem} from '../utils/dom.js';
 import {getCurrentLocale} from '../utils.js';
 import {renderAnsi} from '../render/ansi.js';
-import {POST} from '../modules/fetch.js';
+import {POST, DELETE} from '../modules/fetch.js';
 
 const sfc = {
   name: 'RepoActionView',
@@ -17,6 +17,8 @@ const sfc = {
     runIndex: String,
     jobIndex: String,
     actionsURL: String,
+    workflowName: String,
+    workflowURL: String,
     locale: Object,
   },
 
@@ -56,6 +58,7 @@ const sfc = {
         commit: {
           localeCommit: '',
           localePushedBy: '',
+          localeWorkflow: '',
           shortSHA: '',
           link: '',
           pusher: {
@@ -200,6 +203,12 @@ const sfc = {
       return await resp.json();
     },
 
+    async deleteArtifact(name) {
+      if (!window.confirm(this.locale.confirmDeleteArtifact.replace('%s', name))) return;
+      await DELETE(`${this.run.link}/artifacts/${name}`);
+      await this.loadJob();
+    },
+
     async fetchJob() {
       const logCursors = this.currentJobStepsStates.map((it, idx) => {
         // cursor is used to indicate the last position of the logs
@@ -324,11 +333,15 @@ export function initRepositoryActionView() {
     runIndex: el.getAttribute('data-run-index'),
     jobIndex: el.getAttribute('data-job-index'),
     actionsURL: el.getAttribute('data-actions-url'),
+    workflowName: el.getAttribute('data-workflow-name'),
+    workflowURL: el.getAttribute('data-workflow-url'),
     locale: {
       approve: el.getAttribute('data-locale-approve'),
       cancel: el.getAttribute('data-locale-cancel'),
       rerun: el.getAttribute('data-locale-rerun'),
       artifactsTitle: el.getAttribute('data-locale-artifacts-title'),
+      areYouSure: el.getAttribute('data-locale-are-you-sure'),
+      confirmDeleteArtifact: el.getAttribute('data-locale-confirm-delete-artifact'),
       rerun_all: el.getAttribute('data-locale-rerun-all'),
       showTimeStamps: el.getAttribute('data-locale-show-timestamps'),
       showLogSeconds: el.getAttribute('data-locale-show-log-seconds'),
@@ -369,7 +382,7 @@ export function initRepositoryActionView() {
           {{ locale.rerun_all }}
         </button>
       </div>
-      <div class="action-commit-summary">
+      <div class="action-summary">
         {{ run.commit.localeCommit }}
         <a class="muted" :href="run.commit.link">{{ run.commit.shortSHA }}</a>
         {{ run.commit.localePushedBy }}
@@ -377,6 +390,10 @@ export function initRepositoryActionView() {
         <span class="ui label" v-if="run.commit.shortSHA">
           <a :href="run.commit.branch.link">{{ run.commit.branch.name }}</a>
         </span>
+      </div>
+      <div class="action-summary">
+        {{ run.commit.localeWorkflow }}
+        <a class="muted" :href="workflowURL">{{ workflowName }}</a>
       </div>
     </div>
     <div class="action-view-body">
@@ -403,6 +420,9 @@ export function initRepositoryActionView() {
             <li class="job-artifacts-item" v-for="artifact in artifacts" :key="artifact.name">
               <a class="job-artifacts-link" target="_blank" :href="run.link+'/artifacts/'+artifact.name">
                 <SvgIcon name="octicon-file" class="ui text black job-artifacts-icon"/>{{ artifact.name }}
+              </a>
+              <a v-if="run.canDeleteArtifact" @click="deleteArtifact(artifact.name)" class="job-artifacts-delete">
+                <SvgIcon name="octicon-trash" class="ui text black job-artifacts-icon"/>
               </a>
             </li>
           </ul>
@@ -500,7 +520,7 @@ export function initRepositoryActionView() {
   flex: 1;
 }
 
-.action-commit-summary {
+.action-summary {
   display: flex;
   gap: 5px;
   margin: 0 0 0 28px;
@@ -528,6 +548,8 @@ export function initRepositoryActionView() {
 .job-artifacts-item {
   margin: 5px 0;
   padding: 6px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .job-artifacts-list {
@@ -747,7 +769,7 @@ export function initRepositoryActionView() {
 
 @keyframes job-status-rotate-keyframes {
   100% {
-    transform: rotate(360deg);
+    transform: rotate(-360deg);
   }
 }
 

@@ -152,7 +152,7 @@ func verifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.Cont
 			if ctx.Doer.MustChangePassword {
 				if ctx.Req.URL.Path != "/user/settings/change_password" {
 					if strings.HasPrefix(ctx.Req.UserAgent(), "git") {
-						ctx.Error(http.StatusUnauthorized, ctx.Tr("auth.must_change_password"))
+						ctx.Error(http.StatusUnauthorized, ctx.Locale.TrString("auth.must_change_password"))
 						return
 					}
 					ctx.Data["Title"] = ctx.Tr("auth.must_change_password")
@@ -681,6 +681,7 @@ func registerRoutes(m *web.Route) {
 	// ***** START: Admin *****
 	m.Group("/admin", func() {
 		m.Get("", admin.Dashboard)
+		m.Get("/system_status", admin.SystemStatus)
 		m.Post("", web.Bind(forms.AdminDashboardForm{}), admin.DashboardPost)
 
 		if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
@@ -967,10 +968,9 @@ func registerRoutes(m *web.Route) {
 		m.Post("/create", web.Bind(forms.CreateRepoForm{}), repo.CreatePost)
 		m.Get("/migrate", repo.Migrate)
 		m.Post("/migrate", web.Bind(forms.MigrateRepoForm{}), repo.MigratePost)
-		m.Group("/fork", func() {
-			m.Combo("/{repoid}").Get(repo.Fork).
-				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
-		}, context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader)
+		if !setting.Repository.DisableForks {
+			m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
+		}
 		m.Get("/search", repo.SearchRepo)
 	}, reqSignIn)
 
@@ -1037,6 +1037,8 @@ func registerRoutes(m *web.Route) {
 				m.Combo("").Get(repo_setting.Settings).
 					Post(web.Bind(forms.RepoSettingForm{}), repo_setting.SettingsPost)
 			}, repo_setting.SettingsCtxData)
+			m.Combo("/units").Get(repo_setting.Units).
+				Post(web.Bind(forms.RepoUnitSettingForm{}), repo_setting.UnitsPost)
 			m.Post("/avatar", web.Bind(forms.AvatarForm{}), repo_setting.SettingsAvatar)
 			m.Post("/avatar/delete", repo_setting.SettingsDeleteAvatar)
 
@@ -1122,7 +1124,16 @@ func registerRoutes(m *web.Route) {
 		}, ctxDataSet("PageIsRepoSettings", true, "LFSStartServer", setting.LFS.StartServer))
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes(), reqRepoAdmin, context.RepoRef())
 
-	m.Post("/{username}/{reponame}/action/{action}", reqSignIn, context.RepoAssignment, context.UnitTypes(), repo.Action)
+	m.Group("/{username}/{reponame}/action", func() {
+		m.Post("/watch", repo.ActionWatch(true))
+		m.Post("/unwatch", repo.ActionWatch(false))
+		m.Post("/accept_transfer", repo.ActionTransfer(true))
+		m.Post("/reject_transfer", repo.ActionTransfer(false))
+		if !setting.Repository.DisableStars {
+			m.Post("/star", repo.ActionStar(true))
+			m.Post("/unstar", repo.ActionStar(false))
+		}
+	}, reqSignIn, context.RepoAssignment, context.UnitTypes())
 
 	// Grouping for those endpoints not requiring authentication (but should respect ignSignIn)
 	m.Group("/{username}/{reponame}", func() {
@@ -1148,6 +1159,10 @@ func registerRoutes(m *web.Route) {
 
 	// Grouping for those endpoints that do require authentication
 	m.Group("/{username}/{reponame}", func() {
+		if !setting.Repository.DisableForks {
+			m.Combo("/fork", reqRepoCodeReader).Get(repo.Fork).
+				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
+		}
 		m.Group("/issues", func() {
 			m.Group("/new", func() {
 				m.Combo("").Get(context.RepoRef(), repo.NewIssue).
@@ -1250,7 +1265,7 @@ func registerRoutes(m *web.Route) {
 					Post(web.Bind(forms.EditRepoFileForm{}), repo.NewDiffPatchPost)
 				m.Combo("/_cherrypick/{sha:([a-f0-9]{4,64})}/*").Get(repo.CherryPick).
 					Post(web.Bind(forms.CherryPickForm{}), repo.CherryPickPost)
-			}, repo.MustBeEditable)
+			}, repo.MustBeEditable, repo.CommonEditorData)
 			m.Group("", func() {
 				m.Post("/upload-file", repo.UploadFileToServer)
 				m.Post("/upload-remove", web.Bind(forms.RemoveUploadFileForm{}), repo.RemoveUploadFileFromServer)
@@ -1346,7 +1361,9 @@ func registerRoutes(m *web.Route) {
 					m.Get("/open.svg", badges.GetOpenPullsBadge)
 					m.Get("/closed.svg", badges.GetClosedPullsBadge)
 				})
-				m.Get("/stars.svg", badges.GetStarsBadge)
+				if !setting.Repository.DisableStars {
+					m.Get("/stars.svg", badges.GetStarsBadge)
+				}
 				m.Get("/release.svg", badges.GetLatestReleaseBadge)
 			})
 		}
@@ -1399,11 +1416,15 @@ func registerRoutes(m *web.Route) {
 					m.Post("/approve", reqRepoActionsWriter, actions.Approve)
 					m.Post("/artifacts", actions.ArtifactsView)
 					m.Get("/artifacts/{artifact_name}", actions.ArtifactsDownloadView)
+					m.Delete("/artifacts/{artifact_name}", reqRepoActionsWriter, actions.ArtifactsDeleteView)
 					m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
 				})
 			})
 
-			m.Get("/workflows/{workflow_name}/badge.svg", badges.GetWorkflowBadge)
+			m.Group("/workflows/{workflow_name}", func() {
+				m.Get("/badge.svg", badges.GetWorkflowBadge)
+				m.Get("/runs/latest", actions.ViewLatestWorkflowRun)
+			})
 		}, reqRepoActionsReader, actions.MustEnableActions)
 
 		m.Group("/wiki", func() {
@@ -1427,6 +1448,18 @@ func registerRoutes(m *web.Route) {
 		m.Group("/activity", func() {
 			m.Get("", repo.Activity)
 			m.Get("/{period}", repo.Activity)
+			m.Group("/contributors", func() {
+				m.Get("", repo.Contributors)
+				m.Get("/data", repo.ContributorsData)
+			})
+			m.Group("/code-frequency", func() {
+				m.Get("", repo.CodeFrequency)
+				m.Get("/data", repo.CodeFrequencyData)
+			})
+			m.Group("/recent-commits", func() {
+				m.Get("", repo.RecentCommits)
+				m.Get("/data", repo.RecentCommitsData)
+			})
 		}, context.RepoRef(), repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases))
 
 		m.Group("/activity_author_data", func() {
@@ -1550,16 +1583,20 @@ func registerRoutes(m *web.Route) {
 			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.Home)
 		}, repo.SetEditorconfigIfExists)
 
-		m.Group("", func() {
-			m.Get("/forks", repo.Forks)
-		}, context.RepoRef(), reqRepoCodeReader)
+		if !setting.Repository.DisableForks {
+			m.Group("", func() {
+				m.Get("/forks", repo.Forks)
+			}, context.RepoRef(), reqRepoCodeReader)
+		}
 		m.Get("/commit/{sha:([a-f0-9]{4,64})}.{ext:patch|diff}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RawDiff)
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
 
 	m.Post("/{username}/{reponame}/lastcommit/*", ignSignInAndCsrf, context.RepoAssignment, context.UnitTypes(), context.RepoRefByType(context.RepoRefCommit), reqRepoCodeReader, repo.LastCommit)
 
 	m.Group("/{username}/{reponame}", func() {
-		m.Get("/stars", repo.Stars)
+		if !setting.Repository.DisableStars {
+			m.Get("/stars", repo.Stars)
+		}
 		m.Get("/watchers", repo.Watchers)
 		m.Get("/search", reqRepoCodeReader, repo.Search)
 	}, ignSignIn, context.RepoAssignment, context.RepoRef(), context.UnitTypes())

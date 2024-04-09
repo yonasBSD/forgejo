@@ -68,7 +68,7 @@ func SettingsProtectedBranch(c *context.Context) {
 	}
 
 	c.Data["PageIsSettingsBranches"] = true
-	c.Data["Title"] = c.Tr("repo.settings.protected_branch") + " - " + rule.RuleName
+	c.Data["Title"] = c.Locale.TrString("repo.settings.protected_branch") + " - " + rule.RuleName
 
 	users, err := access_model.GetRepoReaders(c, c.Repo.Repository)
 	if err != nil {
@@ -132,12 +132,15 @@ func SettingsProtectedBranchPost(ctx *context.Context) {
 			}
 		}
 	} else {
-		// FIXME: If a new ProtectBranch has a duplicate RuleName, an error should be returned.
-		// Currently, if a new ProtectBranch with a duplicate RuleName is created, the existing ProtectBranch will be updated.
-		// But we cannot modify this logic now because many unit tests rely on it.
+		// Check if a rule already exists with this rulename, if so redirect to it.
 		protectBranch, err = git_model.GetProtectedBranchRuleByName(ctx, ctx.Repo.Repository.ID, f.RuleName)
 		if err != nil {
-			ctx.ServerError("GetProtectBranchOfRepoByName", err)
+			ctx.ServerError("GetProtectedBranchRuleByName", err)
+			return
+		}
+		if protectBranch != nil {
+			ctx.Flash.Error(ctx.Tr("repo.settings.protected_branch_duplicate_rule_name"))
+			ctx.Redirect(fmt.Sprintf("%s/settings/branches/edit?rule_name=%s", ctx.Repo.RepoLink, protectBranch.RuleName))
 			return
 		}
 	}

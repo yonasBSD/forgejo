@@ -5,6 +5,7 @@ package integration
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -22,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRepoLangStats(t *testing.T) {
+func TestLinguistSupport(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		/******************
 		 ** Preparations **
@@ -218,6 +219,50 @@ func TestRepoLangStats(t *testing.T) {
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Empty(t, langs)
+		})
+
+		// 9. Overriding the language
+		t.Run("linguist-language", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			repo, _, f := prep(t, "foo.c linguist-language=sh\n")
+			defer f()
+
+			assertFileLanguage := func(t *testing.T, uri, expectedLanguage string) {
+				t.Helper()
+
+				req := NewRequest(t, "GET", repo.Link()+uri)
+				resp := MakeRequest(t, req, http.StatusOK)
+				htmlDoc := NewHTMLParser(t, resp.Body)
+
+				language := strings.TrimSpace(htmlDoc.Find(".file-info .file-info-entry:nth-child(3)").Text())
+				assert.Equal(t, expectedLanguage, language)
+			}
+
+			t.Run("file source view", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				assertFileLanguage(t, "/src/branch/main/foo.c?display=source", "Bash")
+			})
+
+			t.Run("file blame view", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				assertFileLanguage(t, "/blame/branch/main/foo.c", "Bash")
+			})
+		})
+
+		// 10. Marking a file as non-documentation
+		t.Run("linguist-documentation=false", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			repo, sha, f := prep(t, "README.md linguist-documentation=false\n")
+			defer f()
+
+			langs := getFreshLanguageStats(t, repo, sha)
+			assert.Len(t, langs, 2)
+			assert.Equal(t, "Markdown", langs[0].Language)
+			assert.Equal(t, "C", langs[1].Language)
 		})
 	})
 }

@@ -9,7 +9,7 @@
 //
 //	Schemes: https, http
 //	BasePath: /api/v1
-//	Version: {{AppVer | JSEscape | Safe}}
+//	Version: {{AppVer | JSEscape}}
 //	License: MIT http://opensource.org/licenses/MIT
 //
 //	Consumes:
@@ -974,7 +974,9 @@ func Routes() *web.Route {
 					m.Get("/{target}", user.CheckFollowing)
 				})
 
-				m.Get("/starred", user.GetStarredRepos)
+				if !setting.Repository.DisableStars {
+					m.Get("/starred", user.GetStarredRepos)
+				}
 
 				m.Get("/subscriptions", user.GetWatchedRepos)
 			}, context_service.UserAssignmentAPI())
@@ -1049,14 +1051,16 @@ func Routes() *web.Route {
 				Post(bind(api.CreateRepoOption{}), repo.Create)
 
 			// (repo scope)
-			m.Group("/starred", func() {
-				m.Get("", user.GetMyStarredRepos)
-				m.Group("/{username}/{reponame}", func() {
-					m.Get("", user.IsStarring)
-					m.Put("", user.Star)
-					m.Delete("", user.Unstar)
-				}, repoAssignment())
-			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+			if !setting.Repository.DisableStars {
+				m.Group("/starred", func() {
+					m.Get("", user.GetMyStarredRepos)
+					m.Group("/{username}/{reponame}", func() {
+						m.Get("", user.IsStarring)
+						m.Put("", user.Star)
+						m.Delete("", user.Unstar)
+					}, repoAssignment())
+				}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+			}
 			m.Get("/times", repo.ListMyTrackedTimes)
 			m.Get("/stopwatches", repo.GetStopwatches)
 			m.Get("/subscriptions", user.GetMyWatchedRepos)
@@ -1174,8 +1178,10 @@ func Routes() *web.Route {
 				m.Get("/raw/*", context.ReferencesGitRepo(), context.RepoRefForAPI, reqRepoReader(unit.TypeCode), repo.GetRawFile)
 				m.Get("/media/*", context.ReferencesGitRepo(), context.RepoRefForAPI, reqRepoReader(unit.TypeCode), repo.GetRawFileOrLFS)
 				m.Get("/archive/*", reqRepoReader(unit.TypeCode), repo.GetArchive)
-				m.Combo("/forks").Get(repo.ListForks).
-					Post(reqToken(), reqRepoReader(unit.TypeCode), bind(api.CreateForkOption{}), repo.CreateFork)
+				if !setting.Repository.DisableForks {
+					m.Combo("/forks").Get(repo.ListForks).
+						Post(reqToken(), reqRepoReader(unit.TypeCode), bind(api.CreateForkOption{}), repo.CreateFork)
+				}
 				m.Group("/branches", func() {
 					m.Get("", repo.ListBranches)
 					m.Get("/*", repo.GetBranch)
@@ -1219,7 +1225,9 @@ func Routes() *web.Route {
 				m.Post("/markup", reqToken(), bind(api.MarkupOption{}), misc.Markup)
 				m.Post("/markdown", reqToken(), bind(api.MarkdownOption{}), misc.Markdown)
 				m.Post("/markdown/raw", reqToken(), misc.MarkdownRaw)
-				m.Get("/stargazers", repo.ListStargazers)
+				if !setting.Repository.DisableStars {
+					m.Get("/stargazers", repo.ListStargazers)
+				}
 				m.Get("/subscribers", repo.ListSubscribers)
 				m.Group("/subscription", func() {
 					m.Get("", user.IsWatching)
@@ -1300,6 +1308,7 @@ func Routes() *web.Route {
 							Delete(bind(api.PullReviewRequestOptions{}), repo.DeleteReviewRequests).
 							Post(bind(api.PullReviewRequestOptions{}), repo.CreateReviewRequests)
 					})
+					m.Get("/{base}/*", repo.GetPullRequestByBaseHead)
 				}, mustAllowPulls, reqRepoReader(unit.TypeCode), context.ReferencesGitRepo())
 				m.Group("/statuses", func() {
 					m.Combo("/{sha}").Get(repo.GetCommitStatuses).
@@ -1310,6 +1319,7 @@ func Routes() *web.Route {
 					m.Group("/{ref}", func() {
 						m.Get("/status", repo.GetCombinedCommitStatusByRef)
 						m.Get("/statuses", repo.GetCommitStatusesByRef)
+						m.Get("/pull", repo.GetCommitPullRequest)
 					}, context.ReferencesGitRepo())
 				}, reqRepoReader(unit.TypeCode))
 				m.Group("/git", func() {

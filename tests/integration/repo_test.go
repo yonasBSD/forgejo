@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"testing"
@@ -15,13 +16,18 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/translation"
 	repo_service "code.gitea.io/gitea/services/repository"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestViewRepo(t *testing.T) {
@@ -447,17 +453,61 @@ func TestBlameFileInRepo(t *testing.T) {
 
 	session := loginUser(t, "user2")
 
-	req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
-	resp := session.MakeRequest(t, req, http.StatusOK)
+	t.Run("Assert", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	description := htmlDoc.doc.Find("#repo-desc")
-	repoTopics := htmlDoc.doc.Find("#repo-topics")
-	repoSummary := htmlDoc.doc.Find(".repository-summary")
+		req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+		resp := session.MakeRequest(t, req, http.StatusOK)
 
-	assert.EqualValues(t, 0, description.Length())
-	assert.EqualValues(t, 0, repoTopics.Length())
-	assert.EqualValues(t, 0, repoSummary.Length())
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		description := htmlDoc.doc.Find("#repo-desc")
+		repoTopics := htmlDoc.doc.Find("#repo-topics")
+		repoSummary := htmlDoc.doc.Find(".repository-summary")
+
+		assert.EqualValues(t, 0, description.Length())
+		assert.EqualValues(t, 0, repoTopics.Length())
+		assert.EqualValues(t, 0, repoSummary.Length())
+	})
+
+	t.Run("File size", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		gitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		commit, err := gitRepo.GetCommit("HEAD")
+		require.NoError(t, err)
+
+		blob, err := commit.GetBlobByPath("README.md")
+		require.NoError(t, err)
+
+		fileSize := blob.Size()
+		require.NotZero(t, fileSize)
+
+		t.Run("Above maximum", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize)()
+
+			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			assert.Contains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+		})
+
+		t.Run("Under maximum", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize+1)()
+
+			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			assert.NotContains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+		})
+	})
 }
 
 // TestViewRepoDirectory repo description, topics and summary should not be displayed when within a directory
@@ -850,5 +900,115 @@ func TestRepoHomeViewRedirect(t *testing.T) {
 		doc := NewHTMLParser(t, resp.Body)
 		txt := strings.TrimSpace(doc.Find(`a[href="https://example.com"]`).Text())
 		assert.Equal(t, "Wiki", txt)
+	})
+}
+
+func TestRepoFilesList(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeCode}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "zEta",
+					ContentReader: strings.NewReader("zeta"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "licensa",
+					ContentReader: strings.NewReader("licensa"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "licensz",
+					ContentReader: strings.NewReader("licensz"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "delta",
+					ContentReader: strings.NewReader("delta"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "Charlie/aa.txt",
+					ContentReader: strings.NewReader("charlie"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "Beta",
+					ContentReader: strings.NewReader("beta"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "alpha",
+					ContentReader: strings.NewReader("alpha"),
+				},
+			},
+		)
+		defer f()
+
+		req := NewRequest(t, "GET", "/"+repo.FullName())
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		filesList := htmlDoc.Find("#repo-files-table tbody tr").Map(func(_ int, s *goquery.Selection) string {
+			return s.AttrOr("data-entryname", "")
+		})
+
+		assert.EqualValues(t, []string{"Charlie", "alpha", "Beta", "delta", "licensa", "LICENSE", "licensz", "README.md", "zEta"}, filesList)
+	})
+}
+
+func TestRepoFollowSymlink(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	session := loginUser(t, "user2")
+
+	assertCase := func(t *testing.T, url, expectedSymlinkURL string, shouldExist bool) {
+		t.Helper()
+
+		req := NewRequest(t, "GET", url)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		symlinkURL, ok := htmlDoc.Find(".file-actions .button[data-kind='follow-symlink']").Attr("href")
+		if shouldExist {
+			assert.True(t, ok)
+			assert.EqualValues(t, expectedSymlinkURL, symlinkURL)
+		} else {
+			assert.False(t, ok)
+		}
+	}
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/README.md?display=source", "/user2/readme-test/src/branch/symlink/some/other/path/awefulcake.txt", true)
+	})
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/some/README.txt", "/user2/readme-test/src/branch/symlink/some/other/path/awefulcake.txt", true)
+	})
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/up/back/down/down/README.md", "/user2/readme-test/src/branch/symlink/down/side/../left/right/../reelmein", true)
+	})
+
+	t.Run("Broken symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/fallbacks-broken-symlinks/docs/README", "", false)
+	})
+
+	t.Run("Loop symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink-loop/README.md", "", false)
+	})
+
+	t.Run("Not a symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/master/README.md", "", false)
 	})
 }

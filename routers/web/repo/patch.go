@@ -79,12 +79,17 @@ func NewDiffPatchPost(ctx *context.Context) {
 	// `message` will be both the summary and message combined
 	message := strings.TrimSpace(form.CommitSummary)
 	if len(message) == 0 {
-		message = ctx.Tr("repo.editor.patch")
+		message = ctx.Locale.TrString("repo.editor.patch")
 	}
 
 	form.CommitMessage = strings.TrimSpace(form.CommitMessage)
 	if len(form.CommitMessage) > 0 {
 		message += "\n\n" + form.CommitMessage
+	}
+
+	gitIdenitity := getGitIdentity(ctx, form.CommitMailID, tplPatchFile, &form)
+	if ctx.Written() {
+		return
 	}
 
 	fileResponse, err := files.ApplyDiffPatch(ctx, ctx.Repo.Repository, ctx.Doer, &files.ApplyDiffPatchOptions{
@@ -93,6 +98,8 @@ func NewDiffPatchPost(ctx *context.Context) {
 		NewBranch:    branchName,
 		Message:      message,
 		Content:      strings.ReplaceAll(form.Content, "\r", ""),
+		Author:       gitIdenitity,
+		Committer:    gitIdenitity,
 	})
 	if err != nil {
 		if git_model.IsErrBranchAlreadyExists(err) {

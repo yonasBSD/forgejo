@@ -4,15 +4,16 @@ import {optimize} from 'svgo';
 import {parse} from 'node:path';
 import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import {exit} from 'node:process';
 
 const glob = (pattern) => fastGlob.sync(pattern, {
   cwd: fileURLToPath(new URL('..', import.meta.url)),
   absolute: true,
 });
 
-function exit(err) {
+function doExit(err) {
   if (err) console.error(err);
-  process.exit(err ? 1 : 0);
+  exit(err ? 1 : 0);
 }
 
 async function processFile(file, {prefix, fullName} = {}) {
@@ -59,8 +60,11 @@ async function main() {
   await Promise.all([
     ...processFiles('node_modules/@primer/octicons/build/svg/*-16.svg', {prefix: 'octicon'}),
     ...processFiles('web_src/svg/*.svg'),
-    ...processFiles('public/assets/img/gitea.svg', {fullName: 'gitea-gitea'}),
   ]);
 }
 
-main().then(exit).catch(exit);
+try {
+  doExit(await main());
+} catch (err) {
+  doExit(err);
+}

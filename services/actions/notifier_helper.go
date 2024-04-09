@@ -133,12 +133,15 @@ func notify(ctx context.Context, input *notifyInput) error {
 	defer gitRepo.Close()
 
 	ref := input.Ref
-	if input.Event == webhook_module.HookEventDelete {
-		// The event is deleting a reference, so it will fail to get the commit for a deleted reference.
-		// Set ref to empty string to fall back to the default branch.
-		ref = ""
+	if ref != input.Repo.DefaultBranch && actions_module.IsDefaultBranchWorkflow(input.Event) {
+		if ref != "" {
+			log.Warn("Event %q should only trigger workflows on the default branch, but its ref is %q. Will fall back to the default branch",
+				input.Event, ref)
+		}
+		ref = input.Repo.DefaultBranch
 	}
 	if ref == "" {
+		log.Warn("Ref of event %q is empty, will fall back to the default branch", input.Event)
 		ref = input.Repo.DefaultBranch
 	}
 
@@ -149,6 +152,11 @@ func notify(ctx context.Context, input *notifyInput) error {
 	}
 
 	if skipWorkflowsForCommit(input, commit) {
+		return nil
+	}
+
+	if SkipPullRequestEvent(ctx, input.Event, input.Repo.ID, commit.ID.String()) {
+		log.Trace("repo %s with commit %s skip event %v", input.Repo.RepoPath(), commit.ID, input.Event)
 		return nil
 	}
 
@@ -201,6 +209,24 @@ func notify(ctx context.Context, input *notifyInput) error {
 	}
 
 	return handleWorkflows(ctx, detectedWorkflows, commit, input, ref)
+}
+
+func SkipPullRequestEvent(ctx context.Context, event webhook_module.HookEventType, repoID int64, commitSHA string) bool {
+	if event != webhook_module.HookEventPullRequestSync {
+		return false
+	}
+
+	run := actions_model.ActionRun{
+		Event:     webhook_module.HookEventPullRequest,
+		RepoID:    repoID,
+		CommitSHA: commitSHA,
+	}
+	exist, err := db.GetEngine(ctx).Exist(&run)
+	if err != nil {
+		log.Error("Exist ActionRun %v: %v", run, err)
+		return false
+	}
+	return exist
 }
 
 func skipWorkflowsForCommit(input *notifyInput, commit *git.Commit) bool {

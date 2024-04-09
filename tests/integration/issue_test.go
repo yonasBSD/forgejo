@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -457,7 +458,7 @@ func TestSearchIssues(t *testing.T) {
 
 	session := loginUser(t, "user2")
 
-	expectedIssueCount := 18 // from the fixtures
+	expectedIssueCount := 20 // from the fixtures
 	if expectedIssueCount > setting.UI.IssuePagingNum {
 		expectedIssueCount = setting.UI.IssuePagingNum
 	}
@@ -494,7 +495,7 @@ func TestSearchIssues(t *testing.T) {
 	req = NewRequest(t, "GET", link.String())
 	resp = session.MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &apiIssues)
-	assert.EqualValues(t, "20", resp.Header().Get("X-Total-Count"))
+	assert.EqualValues(t, "22", resp.Header().Get("X-Total-Count"))
 	assert.Len(t, apiIssues, 20)
 
 	query.Add("limit", "5")
@@ -502,7 +503,7 @@ func TestSearchIssues(t *testing.T) {
 	req = NewRequest(t, "GET", link.String())
 	resp = session.MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &apiIssues)
-	assert.EqualValues(t, "20", resp.Header().Get("X-Total-Count"))
+	assert.EqualValues(t, "22", resp.Header().Get("X-Total-Count"))
 	assert.Len(t, apiIssues, 5)
 
 	query = url.Values{"assigned": {"true"}, "state": {"all"}}
@@ -551,7 +552,7 @@ func TestSearchIssues(t *testing.T) {
 func TestSearchIssuesWithLabels(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	expectedIssueCount := 18 // from the fixtures
+	expectedIssueCount := 20 // from the fixtures
 	if expectedIssueCount > setting.UI.IssuePagingNum {
 		expectedIssueCount = setting.UI.IssuePagingNum
 	}
@@ -795,5 +796,22 @@ func TestCommitRefComment(t *testing.T) {
 
 		event := htmlDoc.Find("#issuecomment-1001 .text").Text()
 		assert.Contains(t, event, "referenced this issue")
+	})
+}
+
+func TestIssueFilterNoFollow(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// Check that every link in the filter list has rel="nofollow".
+	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"/issues?q=\"]")
+	assert.True(t, filterLinks.Length() > 0)
+	filterLinks.Each(func(i int, link *goquery.Selection) {
+		rel, has := link.Attr("rel")
+		assert.True(t, has)
+		assert.Equal(t, "nofollow", rel)
 	})
 }

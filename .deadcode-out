@@ -14,6 +14,7 @@ package "code.gitea.io/gitea/models"
 	func (ErrUpdateTaskNotExist).Error
 	func (ErrUpdateTaskNotExist).Unwrap
 	func IsErrSHANotFound
+	func IsErrMergeDivergingFastForwardOnly
 	func GetYamlFixturesAccess
 
 package "code.gitea.io/gitea/models/actions"
@@ -289,12 +290,14 @@ package "code.gitea.io/gitea/modules/timeutil"
 
 package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).Language
+	func (MockLocale).TrString
 	func (MockLocale).Tr
 	func (MockLocale).TrN
 	func (MockLocale).PrettyNumber
 
 package "code.gitea.io/gitea/modules/util"
 	func UnsafeStringToBytes
+	func OptionalBoolFromGeneric
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader

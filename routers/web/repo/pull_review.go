@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/forms"
 	pull_service "code.gitea.io/gitea/services/pull"
@@ -49,6 +50,8 @@ func RenderNewCodeCommentForm(ctx *context.Context) {
 		return
 	}
 	ctx.Data["AfterCommitID"] = pullHeadCommitID
+	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
+	upload.AddUploadContext(ctx, "comment")
 	ctx.HTML(http.StatusOK, tplNewComment)
 }
 
@@ -74,6 +77,11 @@ func CreateCodeComment(ctx *context.Context) {
 		signedLine *= -1
 	}
 
+	var attachments []string
+	if setting.Attachment.Enabled {
+		attachments = form.Files
+	}
+
 	comment, err := pull_service.CreateCodeComment(ctx,
 		ctx.Doer,
 		ctx.Repo.GitRepo,
@@ -84,6 +92,7 @@ func CreateCodeComment(ctx *context.Context) {
 		!form.SingleReview,
 		form.Reply,
 		form.LatestCommitID,
+		attachments,
 	)
 	if err != nil {
 		ctx.ServerError("CreateCodeComment", err)
@@ -153,12 +162,23 @@ func UpdateResolveConversation(ctx *context.Context) {
 }
 
 func renderConversation(ctx *context.Context, comment *issues_model.Comment, origin string) {
-	comments, err := issues_model.FetchCodeCommentsByLine(ctx, comment.Issue, ctx.Doer, comment.TreePath, comment.Line, true)
+	comments, err := issues_model.FetchCodeConversation(ctx, comment, ctx.Doer)
 	if err != nil {
 		ctx.ServerError("FetchCodeCommentsByLine", err)
 		return
 	}
 	ctx.Data["PageIsPullFiles"] = (origin == "diff")
+
+	for _, c := range comments {
+		if err := c.LoadAttachments(ctx); err != nil {
+			ctx.ServerError("LoadAttachments", err)
+			return
+		}
+	}
+
+	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
+	upload.AddUploadContext(ctx, "comment")
+
 	ctx.Data["comments"] = comments
 	if ctx.Data["CanMarkConversation"], err = issues_model.CanMarkConversation(ctx, comment.Issue, ctx.Doer); err != nil {
 		ctx.ServerError("CanMarkConversation", err)
@@ -209,9 +229,9 @@ func SubmitReview(ctx *context.Context) {
 		if issue.IsPoster(ctx.Doer.ID) {
 			var translated string
 			if reviewType == issues_model.ReviewTypeApprove {
-				translated = ctx.Tr("repo.issues.review.self.approval")
+				translated = ctx.Locale.TrString("repo.issues.review.self.approval")
 			} else {
-				translated = ctx.Tr("repo.issues.review.self.rejection")
+				translated = ctx.Locale.TrString("repo.issues.review.self.rejection")
 			}
 
 			ctx.Flash.Error(translated)
