@@ -332,7 +332,8 @@ func ActionWatch(watch bool) func(ctx *context.Context) {
 
 func ActionStar(star bool) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
-		err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, star)
+		err := repo_service.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, star)
+
 		if err != nil {
 			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
 			return
