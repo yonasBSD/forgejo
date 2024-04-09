@@ -22,7 +22,6 @@ package "code.gitea.io/gitea/models/actions"
 	func (ScheduleList).GetRepoIDs
 	func (ScheduleList).LoadTriggerUser
 	func (ScheduleList).LoadRepos
-	func GetVariableByID
 
 package "code.gitea.io/gitea/models/asymkey"
 	func (ErrGPGKeyAccessDenied).Error
@@ -92,7 +91,6 @@ package "code.gitea.io/gitea/models/repo"
 	func (*releaseSorter).Swap
 	func SortReleases
 	func FindReposMapByIDs
-	func RepositoryListOfMap
 	func (SearchOrderBy).String
 	func IsErrTopicNotExist
 	func (ErrTopicNotExist).Error
@@ -163,9 +161,6 @@ package "code.gitea.io/gitea/modules/cache"
 package "code.gitea.io/gitea/modules/charset"
 	func (*BreakWriter).Write
 
-package "code.gitea.io/gitea/modules/context"
-	func GetPrivateContext
-
 package "code.gitea.io/gitea/modules/emoji"
 	func ReplaceCodes
 
@@ -182,6 +177,7 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
+	func GetObjectFormatOfRepo
 	func openRepositoryWithDefaultContext
 	func IsTagExist
 	func ToEntryMode
@@ -193,6 +189,7 @@ package "code.gitea.io/gitea/modules/gitgraph"
 
 package "code.gitea.io/gitea/modules/gitrepo"
 	func GetBranchCommitID
+	func GetWikiDefaultBranch
 
 package "code.gitea.io/gitea/modules/graceful"
 	func (*Manager).TerminateContext
@@ -225,7 +222,6 @@ package "code.gitea.io/gitea/modules/markup/markdown"
 	func IsSummary
 	func IsTaskCheckBoxListItem
 	func IsIcon
-	func IsColorPreview
 	func RenderRawString
 
 package "code.gitea.io/gitea/modules/markup/markdown/math"
@@ -275,13 +271,19 @@ package "code.gitea.io/gitea/modules/sync"
 
 package "code.gitea.io/gitea/modules/testlogger"
 	func (*testLoggerWriterCloser).pushT
-	func (*testLoggerWriterCloser).Write
+	func (*testLoggerWriterCloser).Log
+	func (*testLoggerWriterCloser).recordError
+	func (*testLoggerWriterCloser).printMsg
 	func (*testLoggerWriterCloser).popT
-	func (*testLoggerWriterCloser).Close
 	func (*testLoggerWriterCloser).Reset
 	func PrintCurrentTest
 	func Printf
 	func NewTestLoggerWriter
+	func (*TestLogEventWriter).Base
+	func (*TestLogEventWriter).GetLevel
+	func (*TestLogEventWriter).GetWriterName
+	func (*TestLogEventWriter).GetWriterType
+	func (*TestLogEventWriter).Run
 
 package "code.gitea.io/gitea/modules/timeutil"
 	func GetExecutableModTime
@@ -293,11 +295,8 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).TrString
 	func (MockLocale).Tr
 	func (MockLocale).TrN
+	func (MockLocale).TrSize
 	func (MockLocale).PrettyNumber
-
-package "code.gitea.io/gitea/modules/util"
-	func UnsafeStringToBytes
-	func OptionalBoolFromGeneric
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
@@ -324,6 +323,9 @@ package "code.gitea.io/gitea/routers/web/org"
 	func getActionIssues
 	func UpdateIssueProject
 
+package "code.gitea.io/gitea/services/context"
+	func GetPrivateContext
+
 package "code.gitea.io/gitea/services/convert"
 	func ToSecret
 
@@ -335,7 +337,6 @@ package "code.gitea.io/gitea/services/pull"
 
 package "code.gitea.io/gitea/services/repository"
 	func IsErrForkAlreadyExist
-	func UpdateRepositoryUnits
 
 package "code.gitea.io/gitea/services/repository/archiver"
 	func ArchiveRepository

@@ -21,7 +21,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
@@ -32,6 +32,7 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 	"code.gitea.io/gitea/services/automerge"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/gitdiff"
@@ -96,13 +97,17 @@ func ListPullRequests(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
+	labelIDs, err := base.StringsToInt64s(ctx.FormStrings("labels"))
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "PullRequests", err)
+		return
+	}
 	listOptions := utils.GetListOptions(ctx)
-
 	prs, maxResults, err := issues_model.PullRequests(ctx, ctx.Repo.Repository.ID, &issues_model.PullRequestsOptions{
 		ListOptions: listOptions,
 		State:       ctx.FormTrim("state"),
 		SortType:    ctx.FormTrim("sort"),
-		Labels:      ctx.FormStrings("labels"),
+		Labels:      labelIDs,
 		MilestoneID: ctx.FormInt64("milestone"),
 	})
 	if err != nil {
@@ -1065,6 +1070,8 @@ func parseCompareInfo(ctx *context.APIContext, form api.CreatePullRequestOption)
 			return nil, nil, nil, nil, "", ""
 		}
 		headBranch = headInfos[1]
+		// The head repository can also point to the same repo
+		isSameRepo = ctx.Repo.Owner.ID == headUser.ID
 
 	} else {
 		ctx.NotFound()

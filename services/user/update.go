@@ -22,6 +22,7 @@ type UpdateOptions struct {
 	Website                      optional.Option[string]
 	Location                     optional.Option[string]
 	Description                  optional.Option[string]
+	Pronouns                     optional.Option[string]
 	AllowGitHook                 optional.Option[bool]
 	AllowImportLocal             optional.Option[bool]
 	MaxRepoCreation              optional.Option[int]
@@ -37,6 +38,7 @@ type UpdateOptions struct {
 	EmailNotificationsPreference optional.Option[string]
 	SetLastLogin                 bool
 	RepoAdminChangeTeamAccess    optional.Option[bool]
+	EnableRepoUnitHints          optional.Option[bool]
 }
 
 func UpdateUser(ctx context.Context, u *user_model.User, opts *UpdateOptions) error {
@@ -52,6 +54,11 @@ func UpdateUser(ctx context.Context, u *user_model.User, opts *UpdateOptions) er
 		u.FullName = opts.FullName.Value()
 
 		cols = append(cols, "full_name")
+	}
+	if opts.Pronouns.Has() {
+		u.Pronouns = opts.Pronouns.Value()
+
+		cols = append(cols, "pronouns")
 	}
 	if opts.Website.Has() {
 		u.Website = opts.Website.Value()
@@ -82,6 +89,11 @@ func UpdateUser(ctx context.Context, u *user_model.User, opts *UpdateOptions) er
 		u.DiffViewStyle = opts.DiffViewStyle.Value()
 
 		cols = append(cols, "diff_view_style")
+	}
+	if opts.EnableRepoUnitHints.Has() {
+		u.EnableRepoUnitHints = opts.EnableRepoUnitHints.Value()
+
+		cols = append(cols, "enable_repo_unit_hints")
 	}
 
 	if opts.AllowGitHook.Has() {

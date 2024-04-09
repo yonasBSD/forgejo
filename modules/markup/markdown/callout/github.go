@@ -68,9 +68,11 @@ func (g *GitHubCalloutTransformer) Transform(node *ast.Document, reader text.Rea
 			}
 
 			// color the blockquote
-			v.SetAttributeString("class", []byte("gt-py-3 attention attention-"+attentionType))
+			v.SetAttributeString("class", []byte("attention-header attention-"+attentionType))
 
 			// create an emphasis to make it bold
+			attentionParagraph := ast.NewParagraph()
+			attentionParagraph.SetAttributeString("class", []byte("attention-title"))
 			emphasis := ast.NewEmphasis(2)
 			emphasis.SetAttributeString("class", []byte("attention-"+attentionType))
 			firstParagraph.InsertBefore(firstParagraph, firstTextNode, emphasis)
@@ -78,14 +80,11 @@ func (g *GitHubCalloutTransformer) Transform(node *ast.Document, reader text.Rea
 			// capitalize first letter
 			attentionText := ast.NewString([]byte(strings.ToUpper(string(attentionType[0])) + attentionType[1:]))
 
-			// replace the ![TYPE] with icon+Type
+			// replace the ![TYPE] with a dedicated paragraph of icon+Type
 			emphasis.AppendChild(emphasis, attentionText)
-			for i := 0; i < 2; i++ {
-				lineBreak := ast.NewText()
-				lineBreak.SetSoftLineBreak(true)
-				firstParagraph.InsertAfter(firstParagraph, emphasis, lineBreak)
-			}
-			firstParagraph.InsertBefore(firstParagraph, emphasis, NewAttention(attentionType))
+			attentionParagraph.AppendChild(attentionParagraph, NewAttention(attentionType))
+			attentionParagraph.AppendChild(attentionParagraph, emphasis)
+			firstParagraph.Parent().InsertBefore(firstParagraph.Parent(), firstParagraph, attentionParagraph)
 			firstParagraph.RemoveChild(firstParagraph, firstTextNode)
 			firstParagraph.RemoveChild(firstParagraph, secondTextNode)
 			firstParagraph.RemoveChild(firstParagraph, thirdTextNode)
@@ -106,27 +105,24 @@ func (r *GitHubCalloutHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncR
 // renderAttention renders a quote marked with i.e. "> **Note**" or "> **Warning**" with a corresponding svg
 func (r *GitHubCalloutHTMLRenderer) renderAttention(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
-		_, _ = w.WriteString(`<span class="gt-mr-2 gt-vm attention-`)
 		n := node.(*Attention)
-		_, _ = w.WriteString(strings.ToLower(n.AttentionType))
-		_, _ = w.WriteString(`">`)
 
-		var octiconType string
+		var octiconName string
 		switch n.AttentionType {
 		case "note":
-			octiconType = "info"
+			octiconName = "info"
 		case "tip":
-			octiconType = "light-bulb"
+			octiconName = "light-bulb"
 		case "important":
-			octiconType = "report"
+			octiconName = "report"
 		case "warning":
-			octiconType = "alert"
+			octiconName = "alert"
 		case "caution":
-			octiconType = "stop"
+			octiconName = "stop"
+		default:
+			octiconName = "info"
 		}
-		_, _ = w.WriteString(string(svg.RenderHTML("octicon-" + octiconType)))
-	} else {
-		_, _ = w.WriteString("</span>\n")
+		_, _ = w.WriteString(string(svg.RenderHTML("octicon-"+octiconName, 16, "attention-icon attention-"+n.AttentionType)))
 	}
 	return ast.WalkContinue, nil
 }

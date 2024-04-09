@@ -11,15 +11,15 @@ import (
 	actions_model "code.gitea.io/gitea/models/actions"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
-	context_module "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+	context_module "code.gitea.io/gitea/services/context"
 )
 
 func getBadgeURL(ctx *context_module.Context, label, text, color string) string {
 	sb := &strings.Builder{}
 	_ = setting.Badges.GeneratorURLTemplateTemplate.Execute(sb, map[string]string{
-		"label": url.PathEscape(label),
-		"text":  url.PathEscape(text),
+		"label": url.PathEscape(strings.ReplaceAll(label, "-", "--")),
+		"text":  url.PathEscape(strings.ReplaceAll(text, "-", "--")),
 		"color": url.PathEscape(color),
 	})
 

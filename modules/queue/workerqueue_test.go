@@ -4,15 +4,19 @@
 package queue
 
 import (
+	"bytes"
 	"context"
+	"runtime"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runWorkerPoolQueue[T any](q *WorkerPoolQueue[T]) func() {
@@ -175,11 +179,7 @@ func testWorkerPoolQueuePersistence(t *testing.T, queueSetting setting.QueueSett
 }
 
 func TestWorkerPoolQueueActiveWorkers(t *testing.T) {
-	oldWorkerIdleDuration := workerIdleDuration
-	workerIdleDuration = 300 * time.Millisecond
-	defer func() {
-		workerIdleDuration = oldWorkerIdleDuration
-	}()
+	defer test.MockVariableValue(&workerIdleDuration, 300*time.Millisecond)()
 
 	handler := func(items ...int) (unhandled []int) {
 		time.Sleep(100 * time.Millisecond)
@@ -249,4 +249,43 @@ func TestWorkerPoolQueueShutdown(t *testing.T) {
 	// no item was ever handled, so we still get all of them again
 	q, _ = newWorkerPoolQueueForTest("test-workpoolqueue", qs, handler, false)
 	assert.EqualValues(t, 20, q.GetQueueItemNumber())
+}
+
+func TestWorkerPoolQueueWorkerIdleReset(t *testing.T) {
+	defer test.MockVariableValue(&workerIdleDuration, 1*time.Millisecond)()
+
+	chGoroutineIDs := make(chan string)
+	handler := func(items ...int) (unhandled []int) {
+		time.Sleep(10 * workerIdleDuration)
+		chGoroutineIDs <- goroutineID() // hacky way to identify a worker
+		return nil
+	}
+
+	q, _ := newWorkerPoolQueueForTest("test-workpoolqueue", setting.QueueSettings{Type: "channel", BatchLength: 1, MaxWorkers: 2, Length: 100}, handler, false)
+	stop := runWorkerPoolQueue(q)
+
+	const workloadSize = 12
+	for i := 0; i < workloadSize; i++ {
+		assert.NoError(t, q.Push(i))
+	}
+
+	workerIDs := make(map[string]struct{})
+	for i := 0; i < workloadSize; i++ {
+		c := <-chGoroutineIDs
+		workerIDs[c] = struct{}{}
+		t.Logf("%d workers: overall=%d current=%d", i, len(workerIDs), q.GetWorkerNumber())
+
+		// ensure that no more than qs.MaxWorkers workers are created over the whole lifetime of the queue
+		// (otherwise it would mean that some workers got shut down while the queue was full)
+		require.LessOrEqual(t, len(workerIDs), q.GetWorkerMaxNumber())
+	}
+	close(chGoroutineIDs)
+
+	stop()
+}
+
+func goroutineID() string {
+	var buffer [31]byte
+	_ = runtime.Stack(buffer[:], false)
+	return string(bytes.Fields(buffer[10:])[0])
 }

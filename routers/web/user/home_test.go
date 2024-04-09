@@ -8,10 +8,13 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/modules/contexttest"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/templates"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/contexttest"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -112,4 +115,52 @@ func TestMilestonesForSpecificRepo(t *testing.T) {
 	assert.EqualValues(t, 1, ctx.Data["Total"])
 	assert.Len(t, ctx.Data["Milestones"], 1)
 	assert.Len(t, ctx.Data["Repos"], 2) // both repo 42 and 1 have milestones and both are owned by user 2
+}
+
+func TestDashboardPagination(t *testing.T) {
+	ctx, _ := contexttest.MockContext(t, "/", contexttest.MockContextOption{Render: templates.HTMLRenderer()})
+	page := context.NewPagination(10, 3, 1, 3)
+
+	setting.AppSubURL = "/SubPath"
+	out, err := ctx.RenderToHTML("base/paginate", map[string]any{"Link": setting.AppSubURL, "Page": page})
+	assert.NoError(t, err)
+	assert.Contains(t, out, `<a class=" item navigation" href="/SubPath/?page=2">`)
+
+	setting.AppSubURL = ""
+	out, err = ctx.RenderToHTML("base/paginate", map[string]any{"Link": setting.AppSubURL, "Page": page})
+	assert.NoError(t, err)
+	assert.Contains(t, out, `<a class=" item navigation" href="/?page=2">`)
+}
+
+func TestOrgLabels(t *testing.T) {
+	assert.NoError(t, unittest.LoadFixtures())
+
+	ctx, _ := contexttest.MockContext(t, "org/org3/issues")
+	contexttest.LoadUser(t, ctx, 2)
+	contexttest.LoadOrganization(t, ctx, 3)
+	Issues(ctx)
+	assert.EqualValues(t, http.StatusOK, ctx.Resp.Status())
+
+	assert.True(t, ctx.Data["PageIsOrgIssues"].(bool))
+
+	orgLabels := []struct {
+		ID    int64
+		OrgID int64
+		Name  string
+	}{
+		{3, 3, "orglabel3"},
+		{4, 3, "orglabel4"},
+	}
+
+	labels, ok := ctx.Data["Labels"].([]*issues_model.Label)
+
+	assert.True(t, ok)
+
+	if assert.Len(t, labels, len(orgLabels)) {
+		for i, label := range labels {
+			assert.EqualValues(t, orgLabels[i].OrgID, label.OrgID)
+			assert.EqualValues(t, orgLabels[i].ID, label.ID)
+			assert.EqualValues(t, orgLabels[i].Name, label.Name)
+		}
+	}
 }

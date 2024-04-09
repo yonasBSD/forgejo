@@ -8,23 +8,27 @@ import (
 	"sort"
 	"strings"
 
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 )
 
 const (
 	beginpgp = "\n-----BEGIN PGP SIGNATURE-----\n"
 	endpgp   = "\n-----END PGP SIGNATURE-----"
+	beginssh = "\n-----BEGIN SSH SIGNATURE-----\n"
+	endssh   = "\n-----END SSH SIGNATURE-----"
 )
 
 // Tag represents a Git tag.
 type Tag struct {
-	Name      string
-	ID        ObjectID
-	Object    ObjectID // The id of this commit object
-	Type      string
-	Tagger    *Signature
-	Message   string
-	Signature *CommitGPGSignature
+	Name                 string
+	ID                   ObjectID
+	Object               ObjectID // The id of this commit object
+	Type                 string
+	Tagger               *Signature
+	Message              string
+	Signature            *ObjectSignature
+	ArchiveDownloadCount *api.TagArchiveDownloadCount
 }
 
 // Commit return the commit of the tag reference
@@ -71,17 +75,36 @@ l:
 			break l
 		}
 	}
-	idx := strings.LastIndex(tag.Message, beginpgp)
-	if idx > 0 {
-		endSigIdx := strings.Index(tag.Message[idx:], endpgp)
-		if endSigIdx > 0 {
-			tag.Signature = &CommitGPGSignature{
-				Signature: tag.Message[idx+1 : idx+endSigIdx+len(endpgp)],
-				Payload:   string(data[:bytes.LastIndex(data, []byte(beginpgp))+1]),
-			}
-			tag.Message = tag.Message[:idx+1]
+
+	extractTagSignature := func(signatureBeginMark, signatureEndMark string) (bool, *ObjectSignature, string) {
+		idx := strings.LastIndex(tag.Message, signatureBeginMark)
+		if idx == -1 {
+			return false, nil, ""
 		}
+
+		endSigIdx := strings.Index(tag.Message[idx:], signatureEndMark)
+		if endSigIdx == -1 {
+			return false, nil, ""
+		}
+
+		return true, &ObjectSignature{
+			Signature: tag.Message[idx+1 : idx+endSigIdx+len(signatureEndMark)],
+			Payload:   string(data[:bytes.LastIndex(data, []byte(signatureBeginMark))+1]),
+		}, tag.Message[:idx+1]
 	}
+
+	// Try to find an OpenPGP signature
+	found, sig, message := extractTagSignature(beginpgp, endpgp)
+	if !found {
+		// If not found, try an SSH one
+		found, sig, message = extractTagSignature(beginssh, endssh)
+	}
+	// If either is found, update the tag Signature and Message
+	if found {
+		tag.Signature = sig
+		tag.Message = message
+	}
+
 	return tag, nil
 }
 

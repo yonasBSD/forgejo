@@ -73,7 +73,6 @@ import (
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	auth_model "code.gitea.io/gitea/models/auth"
-	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/forgefed"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/organization"
@@ -82,11 +81,11 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/routers/api/shared"
 	"code.gitea.io/gitea/routers/api/v1/activitypub"
 	"code.gitea.io/gitea/routers/api/v1/admin"
 	"code.gitea.io/gitea/routers/api/v1/misc"
@@ -96,15 +95,13 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/repo"
 	"code.gitea.io/gitea/routers/api/v1/settings"
 	"code.gitea.io/gitea/routers/api/v1/user"
-	"code.gitea.io/gitea/routers/common"
 	"code.gitea.io/gitea/services/auth"
-	context_service "code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/binding"
-	"github.com/go-chi/cors"
 )
 
 func sudo() func(ctx *context.APIContext) {
@@ -734,98 +731,6 @@ func bind[T any](_ T) any {
 	}
 }
 
-func buildAuthGroup() *auth.Group {
-	group := auth.NewGroup(
-		&auth.OAuth2{},
-		&auth.HTTPSign{},
-		&auth.Basic{}, // FIXME: this should be removed once we don't allow basic auth in API
-	)
-	if setting.Service.EnableReverseProxyAuthAPI {
-		group.Add(&auth.ReverseProxy{})
-	}
-
-	if setting.IsWindows && auth_model.IsSSPIEnabled(db.DefaultContext) {
-		group.Add(&auth.SSPI{}) // it MUST be the last, see the comment of SSPI
-	}
-
-	return group
-}
-
-func apiAuth(authMethod auth.Method) func(*context.APIContext) {
-	return func(ctx *context.APIContext) {
-		ar, err := common.AuthShared(ctx.Base, nil, authMethod)
-		if err != nil {
-			ctx.Error(http.StatusUnauthorized, "APIAuth", err)
-			return
-		}
-		ctx.Doer = ar.Doer
-		ctx.IsSigned = ar.Doer != nil
-		ctx.IsBasicAuth = ar.IsBasicAuth
-	}
-}
-
-// verifyAuthWithOptions checks authentication according to options
-func verifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIContext) {
-	return func(ctx *context.APIContext) {
-		// Check prohibit login users.
-		if ctx.IsSigned {
-			if !ctx.Doer.IsActive && setting.Service.RegisterEmailConfirm {
-				ctx.Data["Title"] = ctx.Tr("auth.active_your_account")
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "This account is not activated.",
-				})
-				return
-			}
-			if !ctx.Doer.IsActive || ctx.Doer.ProhibitLogin {
-				log.Info("Failed authentication attempt for %s from %s", ctx.Doer.Name, ctx.RemoteAddr())
-				ctx.Data["Title"] = ctx.Tr("auth.prohibit_login")
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "This account is prohibited from signing in, please contact your site administrator.",
-				})
-				return
-			}
-
-			if ctx.Doer.MustChangePassword {
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "You must change your password. Change it at: " + setting.AppURL + "/user/change_password",
-				})
-				return
-			}
-		}
-
-		// Redirect to dashboard if user tries to visit any non-login page.
-		if options.SignOutRequired && ctx.IsSigned && ctx.Req.URL.RequestURI() != "/" {
-			ctx.Redirect(setting.AppSubURL + "/")
-			return
-		}
-
-		if options.SignInRequired {
-			if !ctx.IsSigned {
-				// Restrict API calls with error message.
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "Only signed in user is allowed to call APIs.",
-				})
-				return
-			} else if !ctx.Doer.IsActive && setting.Service.RegisterEmailConfirm {
-				ctx.Data["Title"] = ctx.Tr("auth.active_your_account")
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "This account is not activated.",
-				})
-				return
-			}
-		}
-
-		if options.AdminRequired {
-			if !ctx.Doer.IsAdmin {
-				ctx.JSON(http.StatusForbidden, map[string]string{
-					"message": "You have no permission to request for this.",
-				})
-				return
-			}
-		}
-	}
-}
-
 func individualPermsChecker(ctx *context.APIContext) {
 	// org permissions have been checked in context.OrgAssignment(), but individual permissions haven't been checked.
 	if ctx.ContextUser.IsIndividual() {
@@ -844,37 +749,11 @@ func individualPermsChecker(ctx *context.APIContext) {
 	}
 }
 
-// check for and warn against deprecated authentication options
-func checkDeprecatedAuthMethods(ctx *context.APIContext) {
-	if ctx.FormString("token") != "" || ctx.FormString("access_token") != "" {
-		ctx.Resp.Header().Set("Warning", "token and access_token API authentication is deprecated and will be removed in gitea 1.23. Please use AuthorizationHeaderToken instead. Existing queries will continue to work but without authorization.")
-	}
-}
-
 // Routes registers all v1 APIs routes to web application.
 func Routes() *web.Route {
 	m := web.NewRoute()
 
-	m.Use(securityHeaders())
-	if setting.CORSConfig.Enabled {
-		m.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   setting.CORSConfig.AllowDomain,
-			AllowedMethods:   setting.CORSConfig.Methods,
-			AllowCredentials: setting.CORSConfig.AllowCredentials,
-			AllowedHeaders:   append([]string{"Authorization", "X-Gitea-OTP", "X-Forgejo-OTP"}, setting.CORSConfig.Headers...),
-			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
-		}))
-	}
-	m.Use(context.APIContexter())
-
-	m.Use(checkDeprecatedAuthMethods)
-
-	// Get user from session if logged in.
-	m.Use(apiAuth(buildAuthGroup()))
-
-	m.Use(verifyAuthWithOptions(&common.VerifyOptions{
-		SignInRequired: setting.Service.RequireSignInView,
-	}))
+	m.Use(shared.Middlewares()...)
 
 	m.Group("", func() {
 		// Miscellaneous (no scope required)
@@ -891,7 +770,7 @@ func Routes() *web.Route {
 				m.Group("/user/{username}", func() {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
-				}, context_service.UserAssignmentAPI())
+				}, context.UserAssignmentAPI())
 				m.Group("/user-id/{user-id}", func() {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
@@ -959,7 +838,7 @@ func Routes() *web.Route {
 				}, reqSelfOrAdmin(), reqBasicOrRevProxyAuth())
 
 				m.Get("/activities/feeds", user.ListUserActivityFeeds)
-			}, context_service.UserAssignmentAPI(), individualPermsChecker)
+			}, context.UserAssignmentAPI(), individualPermsChecker)
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser))
 
 		// Users (requires user scope)
@@ -979,7 +858,7 @@ func Routes() *web.Route {
 				}
 
 				m.Get("/subscriptions", user.GetWatchedRepos)
-			}, context_service.UserAssignmentAPI())
+			}, context.UserAssignmentAPI())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser), reqToken())
 
 		// Users (requires user scope)
@@ -1002,6 +881,15 @@ func Routes() *web.Route {
 						Delete(user.DeleteSecret)
 				})
 
+				m.Group("/variables", func() {
+					m.Get("", user.ListVariables)
+					m.Combo("/{variablename}").
+						Get(user.GetVariable).
+						Delete(user.DeleteVariable).
+						Post(bind(api.CreateVariableOption{}), user.CreateVariable).
+						Put(bind(api.UpdateVariableOption{}), user.UpdateVariable)
+				})
+
 				m.Group("/runners", func() {
 					m.Get("/registration-token", reqToken(), user.GetRegistrationToken)
 				})
@@ -1014,7 +902,7 @@ func Routes() *web.Route {
 					m.Get("", user.CheckMyFollowing)
 					m.Put("", user.Follow)
 					m.Delete("", user.Unfollow)
-				}, context_service.UserAssignmentAPI())
+				}, context.UserAssignmentAPI())
 			})
 
 			// (admin:public_key scope)
@@ -1078,7 +966,7 @@ func Routes() *web.Route {
 				m.Group("", func() {
 					m.Put("/block/{username}", user.BlockUser)
 					m.Put("/unblock/{username}", user.UnblockUser)
-				}, context_service.UserAssignmentAPI())
+				}, context.UserAssignmentAPI())
 			})
 
 			m.Group("/avatar", func() {
@@ -1122,6 +1010,15 @@ func Routes() *web.Route {
 						m.Combo("/{secretname}").
 							Put(reqToken(), reqOwner(), bind(api.CreateOrUpdateSecretOption{}), repo.CreateOrUpdateSecret).
 							Delete(reqToken(), reqOwner(), repo.DeleteSecret)
+					})
+
+					m.Group("/variables", func() {
+						m.Get("", reqToken(), reqOwner(), repo.ListVariables)
+						m.Combo("/{variablename}").
+							Get(reqToken(), reqOwner(), repo.GetVariable).
+							Delete(reqToken(), reqOwner(), repo.DeleteVariable).
+							Post(reqToken(), reqOwner(), bind(api.CreateVariableOption{}), repo.CreateVariable).
+							Put(reqToken(), reqOwner(), bind(api.UpdateVariableOption{}), repo.UpdateVariable)
 					})
 
 					m.Group("/runners", func() {
@@ -1498,14 +1395,14 @@ func Routes() *web.Route {
 				m.Get("/files", reqToken(), packages.ListPackageFiles)
 			})
 			m.Get("/", reqToken(), packages.ListPackages)
-		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryPackage), context_service.UserAssignmentAPI(), context.PackageAssignmentAPI(), reqPackageAccess(perm.AccessModeRead))
+		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryPackage), context.UserAssignmentAPI(), context.PackageAssignmentAPI(), reqPackageAccess(perm.AccessModeRead))
 
 		// Organizations
 		m.Get("/user/orgs", reqToken(), tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser, auth_model.AccessTokenScopeCategoryOrganization), org.ListMyOrgs)
 		m.Group("/users/{username}/orgs", func() {
 			m.Get("", reqToken(), org.ListUserOrgs)
 			m.Get("/{org}/permissions", reqToken(), org.GetUserOrgsPermissions)
-		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser, auth_model.AccessTokenScopeCategoryOrganization), context_service.UserAssignmentAPI())
+		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser, auth_model.AccessTokenScopeCategoryOrganization), context.UserAssignmentAPI())
 		m.Post("/orgs", tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), reqToken(), bind(api.CreateOrgOption{}), org.Create)
 		m.Get("/orgs", org.GetAll, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization))
 		m.Group("/orgs/{org}", func() {
@@ -1525,6 +1422,15 @@ func Routes() *web.Route {
 					m.Combo("/{secretname}").
 						Put(reqToken(), reqOrgOwnership(), bind(api.CreateOrUpdateSecretOption{}), org.CreateOrUpdateSecret).
 						Delete(reqToken(), reqOrgOwnership(), org.DeleteSecret)
+				})
+
+				m.Group("/variables", func() {
+					m.Get("", reqToken(), reqOrgOwnership(), org.ListVariables)
+					m.Combo("/{variablename}").
+						Get(reqToken(), reqOrgOwnership(), org.GetVariable).
+						Delete(reqToken(), reqOrgOwnership(), org.DeleteVariable).
+						Post(reqToken(), reqOrgOwnership(), bind(api.CreateVariableOption{}), org.CreateVariable).
+						Put(reqToken(), reqOrgOwnership(), bind(api.UpdateVariableOption{}), org.UpdateVariable)
 				})
 
 				m.Group("/runners", func() {
@@ -1567,7 +1473,7 @@ func Routes() *web.Route {
 				m.Group("", func() {
 					m.Put("/block/{username}", org.BlockUser)
 					m.Put("/unblock/{username}", org.UnblockUser)
-				}, context_service.UserAssignmentAPI())
+				}, context.UserAssignmentAPI())
 			}, reqToken(), reqOrgOwnership())
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), orgAssignment(true))
 		m.Group("/teams/{teamid}", func() {
@@ -1611,7 +1517,7 @@ func Routes() *web.Route {
 					m.Post("/orgs", bind(api.CreateOrgOption{}), admin.CreateOrg)
 					m.Post("/repos", bind(api.CreateRepoOption{}), admin.CreateRepo)
 					m.Post("/rename", bind(api.RenameUserOption{}), admin.RenameUser)
-				}, context_service.UserAssignmentAPI())
+				}, context.UserAssignmentAPI())
 			})
 			m.Group("/emails", func() {
 				m.Get("", admin.GetAllEmails)
@@ -1640,15 +1546,4 @@ func Routes() *web.Route {
 	}, sudo())
 
 	return m
-}
-
-func securityHeaders() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			// CORB: https://www.chromium.org/Home/chromium-security/corb-for-developers
-			// http://stackoverflow.com/a/3146618/244009
-			resp.Header().Set("x-content-type-options", "nosniff")
-			next.ServeHTTP(resp, req)
-		})
-	}
 }

@@ -17,13 +17,14 @@ import (
 	"code.gitea.io/gitea/models/db"
 	packages_model "code.gitea.io/gitea/models/packages"
 	nuget_model "code.gitea.io/gitea/models/packages/nuget"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 	packages_module "code.gitea.io/gitea/modules/packages"
 	nuget_module "code.gitea.io/gitea/modules/packages/nuget"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/api/packages/helper"
+	"code.gitea.io/gitea/services/context"
 	packages_service "code.gitea.io/gitea/services/packages"
 )
 
@@ -122,7 +123,7 @@ func SearchServiceV2(ctx *context.Context) {
 		Name: packages_model.SearchValue{
 			Value: getSearchTerm(ctx),
 		},
-		IsInternal: util.OptionalBoolFalse,
+		IsInternal: optional.Some(false),
 		Paginator:  paginator,
 	})
 	if err != nil {
@@ -172,7 +173,7 @@ func SearchServiceV2Count(ctx *context.Context) {
 		Name: packages_model.SearchValue{
 			Value: getSearchTerm(ctx),
 		},
-		IsInternal: util.OptionalBoolFalse,
+		IsInternal: optional.Some(false),
 	})
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
@@ -187,7 +188,7 @@ func SearchServiceV3(ctx *context.Context) {
 	pvs, count, err := nuget_model.SearchVersions(ctx, &packages_model.PackageSearchOptions{
 		OwnerID:    ctx.Package.Owner.ID,
 		Name:       packages_model.SearchValue{Value: ctx.FormTrim("q")},
-		IsInternal: util.OptionalBoolFalse,
+		IsInternal: optional.Some(false),
 		Paginator: db.NewAbsoluteListOptions(
 			ctx.FormInt("skip"),
 			ctx.FormInt("take"),
@@ -313,7 +314,7 @@ func EnumeratePackageVersionsV2(ctx *context.Context) {
 			ExactMatch: true,
 			Value:      packageName,
 		},
-		IsInternal: util.OptionalBoolFalse,
+		IsInternal: optional.Some(false),
 		Paginator:  paginator,
 	})
 	if err != nil {
@@ -358,7 +359,7 @@ func EnumeratePackageVersionsV2Count(ctx *context.Context) {
 			ExactMatch: true,
 			Value:      strings.Trim(ctx.FormTrim("id"), "'"),
 		},
-		IsInternal: util.OptionalBoolFalse,
+		IsInternal: optional.Some(false),
 	})
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
@@ -394,49 +395,28 @@ func DownloadPackageFile(ctx *context.Context) {
 	packageVersion := ctx.Params("version")
 	filename := ctx.Params("filename")
 
-	if filename == fmt.Sprintf("%s.nuspec", packageName) {
-		pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeNuGet, packageName, packageVersion)
-		if err != nil {
+	s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
+		ctx,
+		&packages_service.PackageInfo{
+			Owner:       ctx.Package.Owner,
+			PackageType: packages_model.TypeNuGet,
+			Name:        packageName,
+			Version:     packageVersion,
+		},
+		&packages_service.PackageFileInfo{
+			Filename: filename,
+		},
+	)
+	if err != nil {
+		if err == packages_model.ErrPackageNotExist || err == packages_model.ErrPackageFileNotExist {
 			apiError(ctx, http.StatusNotFound, err)
 			return
 		}
-
-		pd, err := packages_model.GetPackageDescriptor(ctx, pv)
-		if err != nil {
-			apiError(ctx, http.StatusInternalServerError, err)
-			return
-		}
-		pkg := &nuget_module.Package{
-			ID:       pd.Package.Name,
-			Version:  packageVersion,
-			Metadata: pd.Metadata.(*nuget_module.Metadata),
-		}
-
-		xmlResponse(ctx, http.StatusOK, nuget_module.GenerateNuspec(pkg))
-	} else {
-		s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
-			ctx,
-			&packages_service.PackageInfo{
-				Owner:       ctx.Package.Owner,
-				PackageType: packages_model.TypeNuGet,
-				Name:        packageName,
-				Version:     packageVersion,
-			},
-			&packages_service.PackageFileInfo{
-				Filename: filename,
-			},
-		)
-		if err != nil {
-			if err == packages_model.ErrPackageNotExist || err == packages_model.ErrPackageFileNotExist {
-				apiError(ctx, http.StatusNotFound, err)
-				return
-			}
-			apiError(ctx, http.StatusInternalServerError, err)
-			return
-		}
-
-		helper.ServePackageFile(ctx, s, u, pf)
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
 	}
+
+	helper.ServePackageFile(ctx, s, u, pf)
 }
 
 // UploadPackage creates a new package with the metadata contained in the uploaded nupgk file
@@ -452,7 +432,7 @@ func UploadPackage(ctx *context.Context) {
 		return
 	}
 
-	_, _, err := packages_service.CreatePackageAndAddFile(
+	pv, _, err := packages_service.CreatePackageAndAddFile(
 		ctx,
 		&packages_service.PackageCreationInfo{
 			PackageInfo: packages_service.PackageInfo{
@@ -478,6 +458,33 @@ func UploadPackage(ctx *context.Context) {
 		switch err {
 		case packages_model.ErrDuplicatePackageVersion:
 			apiError(ctx, http.StatusConflict, err)
+		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
+			apiError(ctx, http.StatusForbidden, err)
+		default:
+			apiError(ctx, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	nuspecBuf, err := packages_module.CreateHashedBufferFromReaderWithSize(np.NuspecContent, np.NuspecContent.Len())
+	if err != nil {
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	defer nuspecBuf.Close()
+
+	_, err = packages_service.AddFileToPackageVersionInternal(
+		ctx,
+		pv,
+		&packages_service.PackageFileCreationInfo{
+			PackageFileInfo: packages_service.PackageFileInfo{
+				Filename: strings.ToLower(fmt.Sprintf("%s.nuspec", np.ID)),
+			},
+			Data: nuspecBuf,
+		},
+	)
+	if err != nil {
+		switch err {
 		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
 			apiError(ctx, http.StatusForbidden, err)
 		default:

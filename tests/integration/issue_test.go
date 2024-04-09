@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/indexer/issues"
@@ -25,6 +26,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -807,11 +809,60 @@ func TestIssueFilterNoFollow(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 
 	// Check that every link in the filter list has rel="nofollow".
-	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"/issues?q=\"]")
+	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"?q=\"]")
 	assert.True(t, filterLinks.Length() > 0)
 	filterLinks.Each(func(i int, link *goquery.Selection) {
 		rel, has := link.Attr("rel")
 		assert.True(t, has)
 		assert.Equal(t, "nofollow", rel)
+	})
+}
+
+func TestIssueForm(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		session := loginUser(t, user2.Name)
+		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeCode, unit_model.TypeIssues}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation: "create",
+					TreePath:  ".forgejo/issue_template/test.yaml",
+					ContentReader: strings.NewReader(`name: Test
+about: Hello World
+body:
+  - type: checkboxes
+    id: test
+    attributes:
+      label: Test
+      options:
+        - label: This is a label
+`),
+				},
+			},
+		)
+		defer f()
+
+		t.Run("Choose list", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/issues/new/choose")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, "a[href$='/issues/new?template=.forgejo%2fissue_template%2ftest.yaml']", true)
+		})
+
+		t.Run("Issue template", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/issues/new?template=.forgejo%2fissue_template%2ftest.yaml")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, "#new-issue .field .ui.checkbox input[name='form-field-test-0']", true)
+			checkboxLabel := htmlDoc.Find("#new-issue .field .ui.checkbox label").Text()
+			assert.Contains(t, checkboxLabel, "This is a label")
+		})
 	})
 }

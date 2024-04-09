@@ -318,6 +318,11 @@ func DeleteReleaseByID(ctx context.Context, repo *repo_model.Repository, rel *re
 			}
 		}
 
+		err = repo_model.DeleteArchiveDownloadCountForRelease(ctx, rel.ID)
+		if err != nil {
+			return err
+		}
+
 		if stdout, _, err := git.NewCommand(ctx, "tag", "-d").AddDashesAndList(rel.TagName).
 			SetDescription(fmt.Sprintf("DeleteReleaseByID (git tag -d): %d", rel.ID)).
 			RunStdString(&git.RunOpts{Dir: repo.RepoPath()}); err != nil && !strings.Contains(err.Error(), "not found") {
@@ -326,10 +331,7 @@ func DeleteReleaseByID(ctx context.Context, repo *repo_model.Repository, rel *re
 		}
 
 		refName := git.RefNameFromTag(rel.TagName)
-		objectFormat, err := git.GetObjectFormatOfRepo(ctx, repo.RepoPath())
-		if err != nil {
-			return err
-		}
+		objectFormat := git.ObjectFormatFromName(repo.ObjectFormatName)
 		notify_service.PushCommits(
 			ctx, doer, repo,
 			&repository.PushUpdateOptions{

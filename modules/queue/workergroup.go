@@ -60,6 +60,9 @@ func (q *WorkerPoolQueue[T]) doDispatchBatchToWorker(wg *workerGroup[T], flushCh
 		full = true
 	}
 
+	// TODO: the logic could be improved in the future, to avoid a data-race between "doStartNewWorker" and "workerNum"
+	// The root problem is that if we skip "doStartNewWorker" here, the "workerNum" might be decreased by other workers later
+	// So ideally, it should check whether there are enough workers by some approaches, and start new workers if necessary.
 	q.workerNumMu.Lock()
 	noWorker := q.workerNum == 0
 	if full || noWorker {
@@ -144,6 +147,8 @@ func (q *WorkerPoolQueue[T]) doStartNewWorker(wp *workerGroup[T]) {
 		defer log.Debug("Queue %q stops idle worker", q.GetName())
 
 		t := time.NewTicker(workerIdleDuration)
+		defer t.Stop()
+
 		keepWorking := true
 		stopWorking := func() {
 			q.workerNumMu.Lock()
@@ -158,13 +163,18 @@ func (q *WorkerPoolQueue[T]) doStartNewWorker(wp *workerGroup[T]) {
 			case batch, ok := <-q.batchChan:
 				if !ok {
 					stopWorking()
-				} else {
-					q.doWorkerHandle(batch)
-					t.Reset(workerIdleDuration)
+					continue
+				}
+				q.doWorkerHandle(batch)
+				// reset the idle ticker, and drain the tick after reset in case a tick is already triggered
+				t.Reset(workerIdleDuration)
+				select {
+				case <-t.C:
+				default:
 				}
 			case <-t.C:
 				q.workerNumMu.Lock()
-				keepWorking = q.workerNum <= 1
+				keepWorking = q.workerNum <= 1 // keep the last worker running
 				if !keepWorking {
 					q.workerNum--
 				}
@@ -324,7 +334,10 @@ func (q *WorkerPoolQueue[T]) doRun() {
 			// since we are already in a "flush" operation, so the dispatching function shouldn't read the flush chan.
 			q.doDispatchBatchToWorker(wg, skipFlushChan)
 			q.doFlush(wg, flush)
-		case err := <-wg.popItemErr:
+		case err, errOk := <-wg.popItemErr:
+			if !errOk {
+				return
+			}
 			if !q.isCtxRunCanceled() {
 				log.Error("Failed to pop item from queue %q (doRun): %v", q.GetName(), err)
 			}

@@ -22,7 +22,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/cache"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
@@ -32,10 +31,12 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/forms"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
+	commitstatus_service "code.gitea.io/gitea/services/repository/commitstatus"
 )
 
 const (
@@ -245,7 +246,7 @@ func CreatePost(ctx *context.Context) {
 	var repo *repo_model.Repository
 	var err error
 	if form.RepoTemplate > 0 {
-		opts := repo_module.GenerateRepoOptions{
+		opts := repo_service.GenerateRepoOptions{
 			Name:            form.RepoName,
 			Description:     form.Description,
 			Private:         form.Private,
@@ -456,7 +457,7 @@ func RedirectDownload(ctx *context.Context) {
 // Download an archive of a repository
 func Download(ctx *context.Context) {
 	uri := ctx.Params("*")
-	aReq, err := archiver_service.NewRequest(ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
+	aReq, err := archiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
 	if err != nil {
 		if errors.Is(err, archiver_service.ErrUnknownArchiveFormat{}) {
 			ctx.Error(http.StatusBadRequest, err.Error())
@@ -485,6 +486,14 @@ func download(ctx *context.Context, archiveName string, archiver *repo_model.Rep
 		// If we have a signed url (S3, object storage), redirect to this directly.
 		u, err := storage.RepoArchives.URL(rPath, downloadName)
 		if u != nil && err == nil {
+			if archiver.ReleaseID != 0 {
+				err = repo_model.CountArchiveDownload(ctx, ctx.Repo.Repository.ID, archiver.ReleaseID, archiver.Type)
+				if err != nil {
+					ctx.ServerError("CountArchiveDownload", err)
+					return
+				}
+			}
+
 			ctx.Redirect(u.String())
 			return
 		}
@@ -498,6 +507,14 @@ func download(ctx *context.Context, archiveName string, archiver *repo_model.Rep
 	}
 	defer fr.Close()
 
+	if archiver.ReleaseID != 0 {
+		err = repo_model.CountArchiveDownload(ctx, ctx.Repo.Repository.ID, archiver.ReleaseID, archiver.Type)
+		if err != nil {
+			ctx.ServerError("CountArchiveDownload", err)
+			return
+		}
+	}
+
 	ctx.ServeContent(fr, &context.ServeHeaderOptions{
 		Filename:     downloadName,
 		LastModified: archiver.CreatedUnix.AsLocalTime(),
@@ -509,7 +526,7 @@ func download(ctx *context.Context, archiveName string, archiver *repo_model.Rep
 // kind of drop it on the floor if this is the case.
 func InitiateDownload(ctx *context.Context) {
 	uri := ctx.Params("*")
-	aReq, err := archiver_service.NewRequest(ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
+	aReq, err := archiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
 	if err != nil {
 		ctx.ServerError("archiver_service.NewRequest", err)
 		return
@@ -543,9 +560,13 @@ func InitiateDownload(ctx *context.Context) {
 
 // SearchRepo repositories via options
 func SearchRepo(ctx *context.Context) {
+	page := ctx.FormInt("page")
+	if page <= 0 {
+		page = 1
+	}
 	opts := &repo_model.SearchRepoOptions{
 		ListOptions: db.ListOptions{
-			Page:     ctx.FormInt("page"),
+			Page:     page,
 			PageSize: convert.ToCorrectPageSize(ctx.FormInt("limit")),
 		},
 		Actor:              ctx.Doer,
@@ -554,33 +575,33 @@ func SearchRepo(ctx *context.Context) {
 		PriorityOwnerID:    ctx.FormInt64("priority_owner_id"),
 		TeamID:             ctx.FormInt64("team_id"),
 		TopicOnly:          ctx.FormBool("topic"),
-		Collaborate:        util.OptionalBoolNone,
+		Collaborate:        optional.None[bool](),
 		Private:            ctx.IsSigned && (ctx.FormString("private") == "" || ctx.FormBool("private")),
-		Template:           util.OptionalBoolNone,
+		Template:           optional.None[bool](),
 		StarredByID:        ctx.FormInt64("starredBy"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 	}
 
 	if ctx.FormString("template") != "" {
-		opts.Template = util.OptionalBoolOf(ctx.FormBool("template"))
+		opts.Template = optional.Some(ctx.FormBool("template"))
 	}
 
 	if ctx.FormBool("exclusive") {
-		opts.Collaborate = util.OptionalBoolFalse
+		opts.Collaborate = optional.Some(false)
 	}
 
 	mode := ctx.FormString("mode")
 	switch mode {
 	case "source":
-		opts.Fork = util.OptionalBoolFalse
-		opts.Mirror = util.OptionalBoolFalse
+		opts.Fork = optional.Some(false)
+		opts.Mirror = optional.Some(false)
 	case "fork":
-		opts.Fork = util.OptionalBoolTrue
+		opts.Fork = optional.Some(true)
 	case "mirror":
-		opts.Mirror = util.OptionalBoolTrue
+		opts.Mirror = optional.Some(true)
 	case "collaborative":
-		opts.Mirror = util.OptionalBoolFalse
-		opts.Collaborate = util.OptionalBoolTrue
+		opts.Mirror = optional.Some(false)
+		opts.Collaborate = optional.Some(true)
 	case "":
 	default:
 		ctx.Error(http.StatusUnprocessableEntity, fmt.Sprintf("Invalid search mode: \"%s\"", mode))
@@ -588,11 +609,11 @@ func SearchRepo(ctx *context.Context) {
 	}
 
 	if ctx.FormString("archived") != "" {
-		opts.Archived = util.OptionalBoolOf(ctx.FormBool("archived"))
+		opts.Archived = optional.Some(ctx.FormBool("archived"))
 	}
 
 	if ctx.FormString("is_private") != "" {
-		opts.IsPrivate = util.OptionalBoolOf(ctx.FormBool("is_private"))
+		opts.IsPrivate = optional.Some(ctx.FormBool("is_private"))
 	}
 
 	sortMode := ctx.FormString("sort")
@@ -614,47 +635,36 @@ func SearchRepo(ctx *context.Context) {
 		}
 	}
 
-	var err error
+	// To improve performance when only the count is requested
+	if ctx.FormBool("count_only") {
+		if count, err := repo_model.CountRepository(ctx, opts); err != nil {
+			log.Error("CountRepository: %v", err)
+			ctx.JSON(http.StatusInternalServerError, nil) // frontend JS doesn't handle error response (same as below)
+		} else {
+			ctx.SetTotalCountHeader(count)
+			ctx.JSONOK()
+		}
+		return
+	}
+
 	repos, count, err := repo_model.SearchRepository(ctx, opts)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, api.SearchError{
-			OK:    false,
-			Error: err.Error(),
-		})
+		log.Error("SearchRepository: %v", err)
+		ctx.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	ctx.SetTotalCountHeader(count)
 
-	// To improve performance when only the count is requested
-	if ctx.FormBool("count_only") {
-		return
-	}
-
-	// collect the latest commit of each repo
-	// at most there are dozens of repos (limited by MaxResponseItems), so it's not a big problem at the moment
-	repoBranchNames := make(map[int64]string, len(repos))
-	for _, repo := range repos {
-		repoBranchNames[repo.ID] = repo.DefaultBranch
-	}
-
-	repoIDsToLatestCommitSHAs, err := git_model.FindBranchesByRepoAndBranchName(ctx, repoBranchNames)
+	latestCommitStatuses, err := commitstatus_service.FindReposLastestCommitStatuses(ctx, repos)
 	if err != nil {
-		log.Error("FindBranchesByRepoAndBranchName: %v", err)
-		return
-	}
-
-	// call the database O(1) times to get the commit statuses for all repos
-	repoToItsLatestCommitStatuses, err := git_model.GetLatestCommitStatusForPairs(ctx, repoIDsToLatestCommitSHAs, db.ListOptionsAll)
-	if err != nil {
-		log.Error("GetLatestCommitStatusForPairs: %v", err)
+		log.Error("FindReposLastestCommitStatuses: %v", err)
+		ctx.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	results := make([]*repo_service.WebSearchRepository, len(repos))
 	for i, repo := range repos {
-		latestCommitStatus := git_model.CalcCommitStatus(repoToItsLatestCommitStatuses[repo.ID])
-
 		results[i] = &repo_service.WebSearchRepository{
 			Repository: &api.Repository{
 				ID:       repo.ID,
@@ -668,8 +678,11 @@ func SearchRepo(ctx *context.Context) {
 				Link:     repo.Link(),
 				Internal: !repo.IsPrivate && repo.Owner.Visibility == api.VisibleTypePrivate,
 			},
-			LatestCommitStatus:       latestCommitStatus,
-			LocaleLatestCommitStatus: latestCommitStatus.LocaleString(ctx.Locale),
+		}
+
+		if latestCommitStatuses[i] != nil {
+			results[i].LatestCommitStatus = latestCommitStatuses[i]
+			results[i].LocaleLatestCommitStatus = latestCommitStatuses[i].LocaleString(ctx.Locale)
 		}
 	}
 
@@ -688,9 +701,7 @@ func GetBranchesList(ctx *context.Context) {
 	branchOpts := git_model.FindBranchOptions{
 		RepoID:          ctx.Repo.Repository.ID,
 		IsDeletedBranch: optional.Some(false),
-		ListOptions: db.ListOptions{
-			ListAll: true,
-		},
+		ListOptions:     db.ListOptionsAll,
 	}
 	branches, err := git_model.FindBranchNames(ctx, branchOpts)
 	if err != nil {
@@ -723,9 +734,7 @@ func PrepareBranchList(ctx *context.Context) {
 	branchOpts := git_model.FindBranchOptions{
 		RepoID:          ctx.Repo.Repository.ID,
 		IsDeletedBranch: optional.Some(false),
-		ListOptions: db.ListOptions{
-			ListAll: true,
-		},
+		ListOptions:     db.ListOptionsAll,
 	}
 	brs, err := git_model.FindBranchNames(ctx, branchOpts)
 	if err != nil {

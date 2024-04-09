@@ -16,22 +16,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWebhook_GetSlackHook(t *testing.T) {
-	w := &webhook_model.Webhook{
-		Meta: `{"channel": "foo", "username": "username", "color": "blue"}`,
-	}
-	slackHook := GetSlackHook(w)
-	assert.Equal(t, *slackHook, SlackMeta{
-		Channel:  "foo",
-		Username: "username",
-		Color:    "blue",
-	})
+func activateWebhook(t *testing.T, hookID int64) {
+	t.Helper()
+	updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active").Update(webhook_model.Webhook{IsActive: true})
+	assert.Equal(t, int64(1), updated)
+	assert.NoError(t, err)
 }
 
 func TestPrepareWebhooks(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	activateWebhook(t, 1)
+
 	hookTasks := []*webhook_model.HookTask{
 		{HookID: 1, EventType: webhook_module.HookEventPush},
 	}
@@ -48,6 +45,8 @@ func TestPrepareWebhooksBranchFilterMatch(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+	activateWebhook(t, 4)
+
 	hookTasks := []*webhook_model.HookTask{
 		{HookID: 4, EventType: webhook_module.HookEventPush},
 	}
@@ -77,7 +76,3 @@ func TestPrepareWebhooksBranchFilterNoMatch(t *testing.T) {
 		unittest.AssertNotExistsBean(t, hookTask)
 	}
 }
-
-// TODO TestHookTask_deliver
-
-// TODO TestDeliverHooks

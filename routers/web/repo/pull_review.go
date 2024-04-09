@@ -11,12 +11,12 @@ import (
 	issues_model "code.gitea.io/gitea/models/issues"
 	pull_model "code.gitea.io/gitea/models/pull"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/forms"
 	pull_service "code.gitea.io/gitea/services/pull"
 )
@@ -169,11 +169,9 @@ func renderConversation(ctx *context.Context, comment *issues_model.Comment, ori
 	}
 	ctx.Data["PageIsPullFiles"] = (origin == "diff")
 
-	for _, c := range comments {
-		if err := c.LoadAttachments(ctx); err != nil {
-			ctx.ServerError("LoadAttachments", err)
-			return
-		}
+	if err := comments.LoadAttachments(ctx); err != nil {
+		ctx.ServerError("LoadAttachments", err)
+		return
 	}
 
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
@@ -263,6 +261,10 @@ func DismissReview(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.DismissReviewForm)
 	comm, err := pull_service.DismissReview(ctx, form.ReviewID, ctx.Repo.Repository.ID, form.Message, ctx.Doer, true, true)
 	if err != nil {
+		if pull_service.IsErrDismissRequestOnClosedPR(err) {
+			ctx.Status(http.StatusForbidden)
+			return
+		}
 		ctx.ServerError("pull_service.DismissReview", err)
 		return
 	}

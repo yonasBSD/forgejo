@@ -4,6 +4,117 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.10-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.10-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.8-0..v1.21.10-0
+```
+
+This stable release contains bug fixes and a **security fix**.
+
+Note that there is no `Forgejo v1.21.9-0` release. The release numbering of the `Forgejo v1.21` patch series follows the Gitea release numbering. However, the publication of `Gitea v1.21.9` and `Gitea v1.21.10` were a few days appart because of a regression that is not present on Forgejo and there was no need to publish `Forgejo v1.21.9-0`.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.10+0-gitea-1.21.10`
+
+* Built with Go 1.21.9 and `golang.org/x/net` v0.23.0
+
+  It [includes vulnerability fixes](https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M/m/khALNYGdAAAJ).
+
+  * [CVE-2023-45288](https://pkg.go.dev/vuln/GO-2024-2687) which permits an attacker to cause an HTTP/2 endpoint to read arbitrary amounts of header data, all associated with a request which is going to be rejected. These headers can include Huffman-encoded data which is significantly more expensive for the receiver to decode than for an attacker to send. A Forgejo instance is affected if it is configured to listen to HTTPS instead of doing this via a reverse proxy.
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix to not remove repository avatars when the doctor runs with --fix on the repository archives](https://codeberg.org/forgejo/forgejo/commit/e9932a404d4bb5b22a87797094dff615eb38171a).
+  * [Detect protected branch on branch rename](https://codeberg.org/forgejo/forgejo/commit/611610c3c4cba12f2a835b41438a7ed54da9bc23). If a branch cannot be renamed due to a protected branch rule, show this error in the UI instead of throwing an internal server error.
+  * [Don't delete inactive emails explicitly](https://codeberg.org/forgejo/forgejo/commit/fb4c42deb23a67379afb29870e430e47687ccc6c). This can cause issues as the associated user might not have been deleted. It would lead to a database inconsistency and internal server errors if the user tries to activate their account.
+  * [Fix user interface when a review is deleted without refreshing](https://codeberg.org/forgejo/forgejo/commit/456a33e8bb770a86341dc883edc6b62264b950a1).
+  * [Fix paths when finding files via the web interface that were not escaped](https://codeberg.org/forgejo/forgejo/commit/b22be0c03fa4814c1b8b892346de5d4547782ce7).
+  * [Respect `DEFAULT_ORG_MEMBER_VISIBLE` setting when adding creator to org](https://codeberg.org/forgejo/forgejo/commit/5e5574c7b328e2c500d497517047b8d1fd0ca478).
+  * [Fix duplicate migrated milestones](https://codeberg.org/forgejo/forgejo/commit/706ff7aa9fcfe4c43893dc12e27d064064e80635).
+  * [Fix inline math blocks can't be preceeded/followed by alphanumerical characters](https://codeberg.org/forgejo/forgejo/commit/0d3f446460b22a29c259e7d42ed89f90fd216ca7).
+
+## 1.21.8-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.8-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.7-0..v1.21.8-0
+```
+
+This stable release contains bug fixes.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.8+0-gitea-1.21.8`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix `/api/v1/{owner}/{repo}/issue_templates`](https://codeberg.org/forgejo/forgejo/commit/969d3f44101402afd9dd848e79dd5823d547a00d) which was always failing with a 500 error.
+  * [Prevent error 500 on /user/settings/security when SignedUser has a linked account from a deactivated authentication source](https://codeberg.org/forgejo/forgejo/commit/d9418651af8c8a3276ebc40a516109c0f33139b0).
+  * [Fix error 500 when pushing release to an empty repo](https://codeberg.org/forgejo/forgejo/commit/b76f370a3f8993638cad91547491b46631776f59).
+  * [Fix incorrect rendering csv file when file size is larger than UI.CSV.MaxFileSize](https://codeberg.org/forgejo/forgejo/commit/e151e0467341bd25a2465ca15e81ebc0c8fa3fc4).
+  * [Fix error 500 when deleting account with incorrect password or unsupported login type](https://codeberg.org/forgejo/forgejo/commit/66061d28286ee3adf69747c284d40121e2e4b280).
+  * [handle user-defined `name` anchors like `[Link](#link)` linking to `<a name="link"></a>Link`](https://codeberg.org/forgejo/forgejo/commit/03caefbb02854d5c98a26d889e0e30c910651395).
+  * [Use correct head commit for CODEOWNER](https://codeberg.org/forgejo/forgejo/commit/d1cebb0e884a88941e27e2280e117cc04d2665fe).
+  * [Fix manual merge button](https://codeberg.org/forgejo/forgejo/commit/c70719c59c410e5378c04926c66461d7b9f72884).
+  * [Make meilisearch do exact search for issues](https://codeberg.org/forgejo/forgejo/commit/a876ac2c7934fa0f8a66424e178b501e4a341e0f).
+  * [Fix PR creation via api between branches of same repo with head field namespaced](https://codeberg.org/forgejo/forgejo/commit/120a173e24fd359b0b57f2bd1021168645fab5a8).
+
+## 1.21.7-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.7-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.6-0..v1.21.7-0
+```
+
+This stable release contains bug fixes and a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.7+0-gitea-1.21.7`
+
+* Built with Go 1.21.8
+
+  It [includes vulnerability fixes](https://groups.google.com/g/golang-announce/c/5pwGVUPoMbg).
+
+  * [CVE-2023-45290](https://go.dev/issue/65383) which could lead to memory exhaustion when parsing a multipart form.
+  * [CVE-2023-45289](https://go.dev/issue/65065) which could allow incorrect forwarding of sensitive headers and cookies on HTTP redirect.
+
+* Security fix
+
+  * The google.golang.org/protobuf module was bumped to version v1.33.0 to fix a bug in the google.golang.org/protobuf/encoding/protojson package which could cause the Unmarshal function to enter an infinite loop when handling some invalid inputs. [Read more in the announcement](https://groups.google.com/g/golang-announce/c/ArQ6CDgtEjY).
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix tarball/zipball download bug](https://codeberg.org/forgejo/forgejo/commit/8e2c991b35de8c94899ad053e89339cea4538589).
+  * [Ensure `HasIssueContentHistory` takes into account `comment_id`](https://codeberg.org/forgejo/forgejo/commit/8fb027fea5e9525293802d977fd3ee0c374ba9ba).
+
 ## 1.21.6-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.6-0` release can be reviewed from the command line with:

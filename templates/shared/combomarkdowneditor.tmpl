@@ -14,8 +14,8 @@ Template Attributes:
 <div {{if .ContainerId}}id="{{.ContainerId}}"{{end}} class="combo-markdown-editor {{.ContainerClasses}}" data-dropzone-parent-container="{{.DropzoneParentContainer}}">
 	{{if .MarkdownPreviewUrl}}
 	<div class="ui top tabular menu">
-		<a class="active item" data-tab-for="markdown-writer">{{ctx.Locale.Tr "write"}}</a>
-		<a class="item" data-tab-for="markdown-previewer" data-preview-url="{{.MarkdownPreviewUrl}}" data-preview-context="{{.MarkdownPreviewContext}}">{{ctx.Locale.Tr "preview"}}</a>
+		<a href="#" class="active item" data-tab-for="markdown-writer">{{ctx.Locale.Tr "write"}}</a>
+		<a href="#" class="item" data-tab-for="markdown-previewer" data-preview-url="{{.MarkdownPreviewUrl}}" data-preview-context="{{.MarkdownPreviewContext}}">{{ctx.Locale.Tr "preview"}}</a>
 	</div>
 	{{end}}
 	<div class="ui tab active" data-tab-panel="markdown-writer">
@@ -49,7 +49,7 @@ Template Attributes:
 		</text-expander>
 		<script>
 			if (localStorage?.getItem('markdown-editor-monospace') === 'true') {
-				document.querySelector('.markdown-text-editor').classList.add('gt-mono');
+				document.querySelector('.markdown-text-editor').classList.add('tw-font-mono');
 			}
 		</script>
 	</div>

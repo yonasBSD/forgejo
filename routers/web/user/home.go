@@ -24,15 +24,14 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/container"
-	"code.gitea.io/gitea/modules/context"
 	issue_indexer "code.gitea.io/gitea/modules/indexer/issues"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/feed"
-	context_service "code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context"
 	issue_service "code.gitea.io/gitea/services/issue"
 	pull_service "code.gitea.io/gitea/services/pull"
 
@@ -162,8 +161,8 @@ func Milestones(ctx *context.Context) {
 		Private:       true,
 		AllPublic:     false, // Include also all public repositories of users and public organisations
 		AllLimited:    false, // Include also all public repositories of limited organisations
-		Archived:      util.OptionalBoolFalse,
-		HasMilestones: util.OptionalBoolTrue, // Just needs display repos has milestones
+		Archived:      optional.Some(false),
+		HasMilestones: optional.Some(true), // Just needs display repos has milestones
 	}
 
 	if ctxUser.IsOrganization() && ctx.Org.Team != nil {
@@ -215,7 +214,7 @@ func Milestones(ctx *context.Context) {
 	counts, err := issues_model.CountMilestonesMap(ctx, issues_model.FindMilestoneOptions{
 		RepoCond: userRepoCond,
 		Name:     keyword,
-		IsClosed: util.OptionalBoolOf(isShowClosed),
+		IsClosed: optional.Some(isShowClosed),
 	})
 	if err != nil {
 		ctx.ServerError("CountMilestonesByRepoIDs", err)
@@ -228,7 +227,7 @@ func Milestones(ctx *context.Context) {
 			PageSize: setting.UI.IssuePagingNum,
 		},
 		RepoCond: repoCond,
-		IsClosed: util.OptionalBoolOf(isShowClosed),
+		IsClosed: optional.Some(isShowClosed),
 		SortType: sortType,
 		Name:     keyword,
 	})
@@ -440,9 +439,9 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 
 	isPullList := unitType == unit.TypePullRequests
 	opts := &issues_model.IssuesOptions{
-		IsPull:     util.OptionalBoolOf(isPullList),
+		IsPull:     optional.Some(isPullList),
 		SortType:   sortType,
-		IsArchived: util.OptionalBoolFalse,
+		IsArchived: optional.Some(false),
 		Org:        org,
 		Team:       team,
 		User:       ctx.Doer,
@@ -466,9 +465,9 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 		Private:     true,
 		AllPublic:   false,
 		AllLimited:  false,
-		Collaborate: util.OptionalBoolNone,
+		Collaborate: optional.None[bool](),
 		UnitType:    unitType,
-		Archived:    util.OptionalBoolFalse,
+		Archived:    optional.Some(false),
 	}
 	if team != nil {
 		repoOpts.TeamID = team.ID
@@ -516,7 +515,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 
 	// Educated guess: Do or don't show closed issues.
 	isShowClosed := ctx.FormString("state") == "closed"
-	opts.IsClosed = util.OptionalBoolOf(isShowClosed)
+	opts.IsClosed = optional.Some(isShowClosed)
 
 	// Make sure page number is at least 1. Will be posted to ctx.Data.
 	page := ctx.FormInt("page")
@@ -530,17 +529,44 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 
 	// Get IDs for labels (a filter option for issues/pulls).
 	// Required for IssuesOptions.
-	var labelIDs []int64
 	selectedLabels := ctx.FormString("labels")
 	if len(selectedLabels) > 0 && selectedLabels != "0" {
 		var err error
-		labelIDs, err = base.StringsToInt64s(strings.Split(selectedLabels, ","))
+		opts.LabelIDs, err = base.StringsToInt64s(strings.Split(selectedLabels, ","))
 		if err != nil {
-			ctx.ServerError("StringsToInt64s", err)
-			return
+			ctx.Flash.Error(ctx.Tr("invalid_data", selectedLabels), true)
 		}
 	}
-	opts.LabelIDs = labelIDs
+
+	if org != nil {
+		// Get Org Labels
+		labels, err := issues_model.GetLabelsByOrgID(ctx, ctx.Org.Organization.ID, ctx.FormString("sort"), db.ListOptions{})
+		if err != nil {
+			ctx.ServerError("GetLabelsByOrgID", err)
+			return
+		}
+
+		// Get the exclusive scope for every label ID
+		labelExclusiveScopes := make([]string, 0, len(opts.LabelIDs))
+		for _, labelID := range opts.LabelIDs {
+			foundExclusiveScope := false
+			for _, label := range labels {
+				if label.ID == labelID || label.ID == -labelID {
+					labelExclusiveScopes = append(labelExclusiveScopes, label.ExclusiveScope())
+					foundExclusiveScope = true
+					break
+				}
+			}
+			if !foundExclusiveScope {
+				labelExclusiveScopes = append(labelExclusiveScopes, "")
+			}
+		}
+
+		for _, l := range labels {
+			l.LoadSelectedLabelsAfterClick(opts.LabelIDs, labelExclusiveScopes)
+		}
+		ctx.Data["Labels"] = labels
+	}
 
 	// ------------------------------
 	// Get issues as defined by opts.
@@ -625,6 +651,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	ctx.Data["SortType"] = sortType
 	ctx.Data["IsShowClosed"] = isShowClosed
 	ctx.Data["SelectLabels"] = selectedLabels
+	ctx.Data["PageIsOrgIssues"] = org != nil
 
 	if isShowClosed {
 		ctx.Data["State"] = "closed"
@@ -714,7 +741,7 @@ func UsernameSubRoute(ctx *context.Context) {
 	username := ctx.Params("username")
 	reloadParam := func(suffix string) (success bool) {
 		ctx.SetParams("username", strings.TrimSuffix(username, suffix))
-		context_service.UserAssignmentWeb()(ctx)
+		context.UserAssignmentWeb()(ctx)
 		if ctx.Written() {
 			return false
 		}
@@ -744,7 +771,6 @@ func UsernameSubRoute(ctx *context.Context) {
 			return
 		}
 		if reloadParam(".rss") {
-			context_service.UserAssignmentWeb()(ctx)
 			feed.ShowUserFeedRSS(ctx)
 		}
 	case strings.HasSuffix(username, ".atom"):
@@ -756,7 +782,7 @@ func UsernameSubRoute(ctx *context.Context) {
 			feed.ShowUserFeedAtom(ctx)
 		}
 	default:
-		context_service.UserAssignmentWeb()(ctx)
+		context.UserAssignmentWeb()(ctx)
 		if !ctx.Written() {
 			ctx.Data["EnableFeed"] = setting.Other.EnableFeed
 			OwnerProfile(ctx)
@@ -793,22 +819,22 @@ func getUserIssueStats(ctx *context.Context, ctxUser *user_model.User, filterMod
 		case issues_model.FilterModeYourRepositories:
 			openClosedOpts.AllPublic = false
 		case issues_model.FilterModeAssign:
-			openClosedOpts.AssigneeID = &doerID
+			openClosedOpts.AssigneeID = optional.Some(doerID)
 		case issues_model.FilterModeCreate:
-			openClosedOpts.PosterID = &doerID
+			openClosedOpts.PosterID = optional.Some(doerID)
 		case issues_model.FilterModeMention:
-			openClosedOpts.MentionID = &doerID
+			openClosedOpts.MentionID = optional.Some(doerID)
 		case issues_model.FilterModeReviewRequested:
-			openClosedOpts.ReviewRequestedID = &doerID
+			openClosedOpts.ReviewRequestedID = optional.Some(doerID)
 		case issues_model.FilterModeReviewed:
-			openClosedOpts.ReviewedID = &doerID
+			openClosedOpts.ReviewedID = optional.Some(doerID)
 		}
-		openClosedOpts.IsClosed = util.OptionalBoolFalse
+		openClosedOpts.IsClosed = optional.Some(false)
 		ret.OpenCount, err = issue_indexer.CountIssues(ctx, openClosedOpts)
 		if err != nil {
 			return nil, err
 		}
-		openClosedOpts.IsClosed = util.OptionalBoolTrue
+		openClosedOpts.IsClosed = optional.Some(true)
 		ret.ClosedCount, err = issue_indexer.CountIssues(ctx, openClosedOpts)
 		if err != nil {
 			return nil, err
@@ -819,23 +845,23 @@ func getUserIssueStats(ctx *context.Context, ctxUser *user_model.User, filterMod
 	if err != nil {
 		return nil, err
 	}
-	ret.AssignCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.AssigneeID = &doerID }))
+	ret.AssignCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.AssigneeID = optional.Some(doerID) }))
 	if err != nil {
 		return nil, err
 	}
-	ret.CreateCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.PosterID = &doerID }))
+	ret.CreateCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.PosterID = optional.Some(doerID) }))
 	if err != nil {
 		return nil, err
 	}
-	ret.MentionCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.MentionID = &doerID }))
+	ret.MentionCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.MentionID = optional.Some(doerID) }))
 	if err != nil {
 		return nil, err
 	}
-	ret.ReviewRequestedCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.ReviewRequestedID = &doerID }))
+	ret.ReviewRequestedCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.ReviewRequestedID = optional.Some(doerID) }))
 	if err != nil {
 		return nil, err
 	}
-	ret.ReviewedCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.ReviewedID = &doerID }))
+	ret.ReviewedCount, err = issue_indexer.CountIssues(ctx, opts.Copy(func(o *issue_indexer.SearchOptions) { o.ReviewedID = optional.Some(doerID) }))
 	if err != nil {
 		return nil, err
 	}

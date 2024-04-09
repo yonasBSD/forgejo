@@ -26,11 +26,14 @@ import (
 	"code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
+	"code.gitea.io/gitea/modules/hostmatcher"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/services/pull"
 	files_service "code.gitea.io/gitea/services/repository/files"
+	webhook_service "code.gitea.io/gitea/services/webhook"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -80,10 +83,35 @@ func testPullCleanUp(t *testing.T, session *TestSession, user, repo, pullnum str
 	return resp
 }
 
+// returns the hook tasks, order by ID desc.
+func retrieveHookTasks(t *testing.T, hookID int64, activateWebhook bool) []*webhook.HookTask {
+	t.Helper()
+	if activateWebhook {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		t.Cleanup(s.Close)
+		updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active", "url").Update(webhook.Webhook{
+			IsActive: true,
+			URL:      s.URL,
+		})
+
+		// allow webhook deliveries on localhost
+		t.Cleanup(test.MockVariableValue(&setting.Webhook.AllowedHostList, hostmatcher.MatchBuiltinLoopback))
+		webhook_service.Init()
+
+		assert.Equal(t, int64(1), updated)
+		assert.NoError(t, err)
+	}
+
+	hookTasks, err := webhook.HookTasks(db.DefaultContext, hookID, 1)
+	assert.NoError(t, err)
+	return hookTasks
+}
+
 func TestPullMerge(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -96,16 +124,14 @@ func TestPullMerge(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleMerge, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullRebase(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -118,16 +144,14 @@ func TestPullRebase(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleRebase, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullRebaseMerge(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -140,16 +164,14 @@ func TestPullRebaseMerge(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleRebaseMerge, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullSquash(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -163,8 +185,7 @@ func TestPullSquash(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleSquash, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
@@ -508,8 +529,8 @@ func TestConflictChecking(t *testing.T) {
 		assert.NoError(t, err)
 
 		issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{Title: "PR with conflict!"})
-		conflictingPR, err := issues_model.GetPullRequestByIssueID(db.DefaultContext, issue.ID)
-		assert.NoError(t, err)
+		assert.NoError(t, issue.LoadPullRequest(db.DefaultContext))
+		conflictingPR := issue.PullRequest
 
 		// Ensure conflictedFiles is populated.
 		assert.Len(t, conflictingPR.ConflictedFiles, 1)

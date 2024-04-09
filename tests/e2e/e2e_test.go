@@ -59,8 +59,10 @@ func TestMain(m *testing.M) {
 
 	exitVal := m.Run()
 
-	testlogger.WriterCloser.Reset()
-
+	if err := testlogger.WriterCloser.Reset(); err != nil {
+		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
+		os.Exit(1)
+	}
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)
 		os.Exit(1)
@@ -75,7 +77,7 @@ func TestMain(m *testing.M) {
 
 // TestE2e should be the only test e2e necessary. It will collect all "*.test.e2e.js" files in this directory and build a test for each.
 func TestE2e(t *testing.T) {
-	// Find the paths of all e2e test files in test test directory.
+	// Find the paths of all e2e test files in test directory.
 	searchGlob := filepath.Join(filepath.Dir(setting.AppPath), "tests", "e2e", "*.test.e2e.js")
 	paths, err := filepath.Glob(searchGlob)
 	if err != nil {

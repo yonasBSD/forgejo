@@ -90,7 +90,7 @@ func fetchCodeCommentsByReview(ctx context.Context, issue *Issue, doer *user_mod
 	return pathToLineToComment, nil
 }
 
-func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issue, doer *user_model.User, review *Review, showOutdatedComments bool) ([]*Comment, error) {
+func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issue, doer *user_model.User, review *Review, showOutdatedComments bool) (CommentList, error) {
 	var comments CommentList
 	if review == nil {
 		review = &Review{ID: 0}
@@ -114,6 +114,10 @@ func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issu
 	}
 
 	if err := comments.LoadPosters(ctx); err != nil {
+		return nil, err
+	}
+
+	if err := comments.LoadAttachments(ctx); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +169,7 @@ func findCodeComments(ctx context.Context, opts FindCommentsOptions, issue *Issu
 }
 
 // FetchCodeConversation fetches the code conversation of a given comment (same review, treePath and line number)
-func FetchCodeConversation(ctx context.Context, comment *Comment, doer *user_model.User) ([]*Comment, error) {
+func FetchCodeConversation(ctx context.Context, comment *Comment, doer *user_model.User) (CommentList, error) {
 	opts := FindCommentsOptions{
 		Type:     CommentTypeCode,
 		IssueID:  comment.IssueID,

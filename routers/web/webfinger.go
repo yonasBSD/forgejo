@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/services/context"
 )
 
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
@@ -64,6 +64,63 @@ func WebfingerQuery(ctx *context.Context) {
 		if u != nil && u.KeepEmailPrivate {
 			err = user_model.ErrUserNotExist{}
 		}
+	case "https", "http":
+		if resource.Host != appURL.Host {
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+
+		p := strings.Trim(resource.Path, "/")
+		if len(p) == 0 {
+			ctx.Error(http.StatusNotFound)
+			return
+		}
+
+		parts := strings.Split(p, "/")
+
+		switch len(parts) {
+		case 1: // user
+			u, err = user_model.GetUserByName(ctx, parts[0])
+		case 2: // repository
+			ctx.Error(http.StatusNotFound)
+			return
+
+		case 3:
+			switch parts[2] {
+			case "issues":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			case "pulls":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			case "projects":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			default:
+				ctx.Error(http.StatusNotFound)
+				return
+
+			}
+		case 4:
+			//nolint:gocritic
+			if parts[3] == "teams" {
+				ctx.Error(http.StatusNotFound)
+				return
+
+			} else {
+				ctx.Error(http.StatusNotFound)
+				return
+			}
+
+		default:
+			ctx.Error(http.StatusNotFound)
+			return
+
+		}
+
 	default:
 		ctx.Error(http.StatusBadRequest)
 		return
@@ -118,4 +175,5 @@ func WebfingerQuery(ctx *context.Context) {
 		Aliases: aliases,
 		Links:   links,
 	})
+	ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 }

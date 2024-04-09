@@ -7,6 +7,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/url"
 	"sort"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/container"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -63,28 +65,29 @@ func (err ErrReleaseNotExist) Unwrap() error {
 
 // Release represents a release of repository.
 type Release struct {
-	ID               int64            `xorm:"pk autoincr"`
-	RepoID           int64            `xorm:"INDEX UNIQUE(n)"`
-	Repo             *Repository      `xorm:"-"`
-	PublisherID      int64            `xorm:"INDEX"`
-	Publisher        *user_model.User `xorm:"-"`
-	TagName          string           `xorm:"INDEX UNIQUE(n)"`
-	OriginalAuthor   string
-	OriginalAuthorID int64 `xorm:"index"`
-	LowerTagName     string
-	Target           string
-	TargetBehind     string `xorm:"-"` // to handle non-existing or empty target
-	Title            string
-	Sha1             string `xorm:"VARCHAR(64)"`
-	NumCommits       int64
-	NumCommitsBehind int64              `xorm:"-"`
-	Note             string             `xorm:"TEXT"`
-	RenderedNote     string             `xorm:"-"`
-	IsDraft          bool               `xorm:"NOT NULL DEFAULT false"`
-	IsPrerelease     bool               `xorm:"NOT NULL DEFAULT false"`
-	IsTag            bool               `xorm:"NOT NULL DEFAULT false"` // will be true only if the record is a tag and has no related releases
-	Attachments      []*Attachment      `xorm:"-"`
-	CreatedUnix      timeutil.TimeStamp `xorm:"INDEX"`
+	ID                   int64            `xorm:"pk autoincr"`
+	RepoID               int64            `xorm:"INDEX UNIQUE(n)"`
+	Repo                 *Repository      `xorm:"-"`
+	PublisherID          int64            `xorm:"INDEX"`
+	Publisher            *user_model.User `xorm:"-"`
+	TagName              string           `xorm:"INDEX UNIQUE(n)"`
+	OriginalAuthor       string
+	OriginalAuthorID     int64 `xorm:"index"`
+	LowerTagName         string
+	Target               string
+	TargetBehind         string `xorm:"-"` // to handle non-existing or empty target
+	Title                string
+	Sha1                 string `xorm:"VARCHAR(64)"`
+	NumCommits           int64
+	NumCommitsBehind     int64                            `xorm:"-"`
+	Note                 string                           `xorm:"TEXT"`
+	RenderedNote         template.HTML                    `xorm:"-"`
+	IsDraft              bool                             `xorm:"NOT NULL DEFAULT false"`
+	IsPrerelease         bool                             `xorm:"NOT NULL DEFAULT false"`
+	IsTag                bool                             `xorm:"NOT NULL DEFAULT false"` // will be true only if the record is a tag and has no related releases
+	Attachments          []*Attachment                    `xorm:"-"`
+	CreatedUnix          timeutil.TimeStamp               `xorm:"INDEX"`
+	ArchiveDownloadCount *structs.TagArchiveDownloadCount `xorm:"-"`
 }
 
 func init() {
@@ -110,7 +113,20 @@ func (r *Release) LoadAttributes(ctx context.Context) error {
 			}
 		}
 	}
+
+	err = r.LoadArchiveDownloadCount(ctx)
+	if err != nil {
+		return err
+	}
+
 	return GetReleaseAttachments(ctx, r)
+}
+
+// LoadArchiveDownloadCount loads the download count for the source archives
+func (r *Release) LoadArchiveDownloadCount(ctx context.Context) error {
+	var err error
+	r.ArchiveDownloadCount, err = GetArchiveDownloadCount(ctx, r.RepoID, r.ID)
+	return err
 }
 
 // APIURL the api url for a release. release must have attributes loaded
@@ -228,10 +244,10 @@ type FindReleasesOptions struct {
 	RepoID        int64
 	IncludeDrafts bool
 	IncludeTags   bool
-	IsPreRelease  util.OptionalBool
-	IsDraft       util.OptionalBool
+	IsPreRelease  optional.Option[bool]
+	IsDraft       optional.Option[bool]
 	TagNames      []string
-	HasSha1       util.OptionalBool // useful to find draft releases which are created with existing tags
+	HasSha1       optional.Option[bool] // useful to find draft releases which are created with existing tags
 }
 
 func (opts FindReleasesOptions) ToConds() builder.Cond {
@@ -246,14 +262,14 @@ func (opts FindReleasesOptions) ToConds() builder.Cond {
 	if len(opts.TagNames) > 0 {
 		cond = cond.And(builder.In("tag_name", opts.TagNames))
 	}
-	if !opts.IsPreRelease.IsNone() {
-		cond = cond.And(builder.Eq{"is_prerelease": opts.IsPreRelease.IsTrue()})
+	if opts.IsPreRelease.Has() {
+		cond = cond.And(builder.Eq{"is_prerelease": opts.IsPreRelease.Value()})
 	}
-	if !opts.IsDraft.IsNone() {
-		cond = cond.And(builder.Eq{"is_draft": opts.IsDraft.IsTrue()})
+	if opts.IsDraft.Has() {
+		cond = cond.And(builder.Eq{"is_draft": opts.IsDraft.Value()})
 	}
-	if !opts.HasSha1.IsNone() {
-		if opts.HasSha1.IsTrue() {
+	if opts.HasSha1.Has() {
+		if opts.HasSha1.Value() {
 			cond = cond.And(builder.Neq{"sha1": ""})
 		} else {
 			cond = cond.And(builder.Eq{"sha1": ""})
@@ -275,7 +291,7 @@ func GetTagNamesByRepoID(ctx context.Context, repoID int64) ([]string, error) {
 		ListOptions:   listOptions,
 		IncludeDrafts: true,
 		IncludeTags:   true,
-		HasSha1:       util.OptionalBoolTrue,
+		HasSha1:       optional.Some(true),
 		RepoID:        repoID,
 	}
 
@@ -443,6 +459,18 @@ func PushUpdateDeleteTagsContext(ctx context.Context, repo *Repository, tags []s
 	lowerTags := make([]string, 0, len(tags))
 	for _, tag := range tags {
 		lowerTags = append(lowerTags, strings.ToLower(tag))
+	}
+
+	for _, tag := range tags {
+		release, err := GetRelease(ctx, repo.ID, tag)
+		if err != nil {
+			return fmt.Errorf("GetRelease: %w", err)
+		}
+
+		err = DeleteArchiveDownloadCountForRelease(ctx, release.ID)
+		if err != nil {
+			return fmt.Errorf("DeleteTagArchiveDownloadCount: %w", err)
+		}
 	}
 
 	if _, err := db.GetEngine(ctx).

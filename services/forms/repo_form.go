@@ -12,11 +12,11 @@ import (
 	"code.gitea.io/gitea/models"
 	issues_model "code.gitea.io/gitea/models/issues"
 	project_model "code.gitea.io/gitea/models/project"
-	"code.gitea.io/gitea/modules/context"
+	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web/middleware"
-	"code.gitea.io/gitea/services/webhook"
+	"code.gitea.io/gitea/services/context"
 
 	"gitea.com/go-chi/binding"
 )
@@ -222,6 +222,7 @@ type ProtectBranchForm struct {
 	RequireSignedCommits          bool
 	ProtectedFilePatterns         string
 	UnprotectedFilePatterns       string
+	ApplyToAdmins                 bool
 }
 
 // Validate validates the fields
@@ -237,8 +238,8 @@ func (f *ProtectBranchForm) Validate(req *http.Request, errs binding.Errors) bin
 //   \__/\  /  \___  >___  /___|  /\____/ \____/|__|_ \
 //        \/       \/    \/     \/                   \/
 
-// WebhookForm form for changing web hook
-type WebhookForm struct {
+// WebhookCoreForm form for changing web hook (common to all webhook types)
+type WebhookCoreForm struct {
 	Events                   string
 	Create                   bool
 	Delete                   bool
@@ -267,174 +268,28 @@ type WebhookForm struct {
 }
 
 // PushOnly if the hook will be triggered when push
-func (f WebhookForm) PushOnly() bool {
+func (f WebhookCoreForm) PushOnly() bool {
 	return f.Events == "push_only"
 }
 
 // SendEverything if the hook will be triggered any event
-func (f WebhookForm) SendEverything() bool {
+func (f WebhookCoreForm) SendEverything() bool {
 	return f.Events == "send_everything"
 }
 
 // ChooseEvents if the hook will be triggered choose events
-func (f WebhookForm) ChooseEvents() bool {
+func (f WebhookCoreForm) ChooseEvents() bool {
 	return f.Events == "choose_events"
 }
 
-// NewWebhookForm form for creating web hook
-type NewWebhookForm struct {
-	PayloadURL  string `binding:"Required;ValidUrl"`
-	HTTPMethod  string `binding:"Required;In(POST,GET)"`
-	ContentType int    `binding:"Required"`
+// WebhookForm form for changing web hook (specific handling depending on the webhook type)
+type WebhookForm struct {
+	WebhookCoreForm
+	URL         string
+	ContentType webhook_model.HookContentType
 	Secret      string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewWebhookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewGogshookForm form for creating gogs hook
-type NewGogshookForm struct {
-	PayloadURL  string `binding:"Required;ValidUrl"`
-	ContentType int    `binding:"Required"`
-	Secret      string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewGogshookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewSlackHookForm form for creating slack hook
-type NewSlackHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	Channel    string `binding:"Required"`
-	Username   string
-	IconURL    string
-	Color      string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewSlackHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	if !webhook.IsValidSlackChannel(strings.TrimSpace(f.Channel)) {
-		errs = append(errs, binding.Error{
-			FieldNames:     []string{"Channel"},
-			Classification: "",
-			Message:        ctx.Locale.TrString("repo.settings.add_webhook.invalid_channel_name"),
-		})
-	}
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewDiscordHookForm form for creating discord hook
-type NewDiscordHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	Username   string
-	IconURL    string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewDiscordHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewDingtalkHookForm form for creating dingtalk hook
-type NewDingtalkHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewDingtalkHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewTelegramHookForm form for creating telegram hook
-type NewTelegramHookForm struct {
-	BotToken string `binding:"Required"`
-	ChatID   string `binding:"Required"`
-	ThreadID string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewTelegramHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewMatrixHookForm form for creating Matrix hook
-type NewMatrixHookForm struct {
-	HomeserverURL string `binding:"Required;ValidUrl"`
-	RoomID        string `binding:"Required"`
-	MessageType   int
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewMatrixHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewMSTeamsHookForm form for creating MS Teams hook
-type NewMSTeamsHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewMSTeamsHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewFeishuHookForm form for creating feishu hook
-type NewFeishuHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewFeishuHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewWechatWorkHookForm form for creating wechatwork hook
-type NewWechatWorkHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewWechatWorkHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
-// NewPackagistHookForm form for creating packagist hook
-type NewPackagistHookForm struct {
-	Username   string `binding:"Required"`
-	APIToken   string `binding:"Required"`
-	PackageURL string `binding:"Required;ValidUrl"`
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewPackagistHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
+	HTTPMethod  string
+	Metadata    any
 }
 
 // .___

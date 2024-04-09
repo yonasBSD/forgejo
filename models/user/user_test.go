@@ -16,10 +16,11 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/auth/password/hash"
+	"code.gitea.io/gitea/modules/container"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -112,29 +113,29 @@ func TestSearchUsers(t *testing.T) {
 	testUserSuccess(&user_model.SearchUserOptions{OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}},
 		[]int64{1, 2, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40})
 
-	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsActive: util.OptionalBoolFalse},
+	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(false)},
 		[]int64{9})
 
-	testUserSuccess(&user_model.SearchUserOptions{OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(true)},
 		[]int64{1, 2, 4, 5, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40})
 
-	testUserSuccess(&user_model.SearchUserOptions{Keyword: "user1", OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{Keyword: "user1", OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(true)},
 		[]int64{1, 10, 11, 12, 13, 14, 15, 16, 18})
 
 	// order by name asc default
-	testUserSuccess(&user_model.SearchUserOptions{Keyword: "user1", ListOptions: db.ListOptions{Page: 1}, IsActive: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{Keyword: "user1", ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(true)},
 		[]int64{1, 10, 11, 12, 13, 14, 15, 16, 18})
 
-	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsAdmin: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsAdmin: optional.Some(true)},
 		[]int64{1})
 
-	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsRestricted: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsRestricted: optional.Some(true)},
 		[]int64{29})
 
-	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsProhibitLogin: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsProhibitLogin: optional.Some(true)},
 		[]int64{37})
 
-	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsTwoFactorEnabled: util.OptionalBoolTrue},
+	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsTwoFactorEnabled: optional.Some(true)},
 		[]int64{24})
 }
 
@@ -549,5 +550,39 @@ func Test_NormalizeUserFromEmail(t *testing.T) {
 		} else {
 			assert.Error(t, user_model.IsUsableUsername(normalizedName))
 		}
+	}
+}
+
+func TestDisabledUserFeatures(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	testValues := container.SetOf(setting.UserFeatureDeletion,
+		setting.UserFeatureManageSSHKeys,
+		setting.UserFeatureManageGPGKeys)
+
+	oldSetting := setting.Admin.ExternalUserDisableFeatures
+	defer func() {
+		setting.Admin.ExternalUserDisableFeatures = oldSetting
+	}()
+	setting.Admin.ExternalUserDisableFeatures = testValues
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	assert.Len(t, setting.Admin.UserDisabledFeatures.Values(), 0)
+
+	// no features should be disabled with a plain login type
+	assert.LessOrEqual(t, user.LoginType, auth.Plain)
+	assert.Len(t, user_model.DisabledFeaturesWithLoginType(user).Values(), 0)
+	for _, f := range testValues.Values() {
+		assert.False(t, user_model.IsFeatureDisabledWithLoginType(user, f))
+	}
+
+	// check disabled features with external login type
+	user.LoginType = auth.OAuth2
+
+	// all features should be disabled
+	assert.NotEmpty(t, user_model.DisabledFeaturesWithLoginType(user).Values())
+	for _, f := range testValues.Values() {
+		assert.True(t, user_model.IsFeatureDisabledWithLoginType(user, f))
 	}
 }

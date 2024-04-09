@@ -9,11 +9,20 @@
 
 .issue-list-toolbar-left {
   display: flex;
+  align-items: center;
 }
 
 .issue-list-toolbar-right .filter.menu {
   flex-direction: row;
   flex-wrap: wrap;
+}
+
+.issue-list-new.button {
+  margin-right: 0;
+}
+
+.list-header-issues {
+  min-height: var(--repo-header-issue-min-height);
 }
 
 @media (max-width: 767.98px) {

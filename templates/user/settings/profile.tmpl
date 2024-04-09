@@ -9,8 +9,8 @@
 				{{.CsrfTokenHtml}}
 				<div class="required field {{if .Err_Name}}error{{end}}">
 					<label for="username">{{ctx.Locale.Tr "username"}}
-						<span class="text red gt-hidden" id="name-change-prompt"> {{ctx.Locale.Tr "settings.change_username_prompt"}}</span>
-						<span class="text red gt-hidden" id="name-change-redirect-prompt"> {{ctx.Locale.Tr "settings.change_username_redirect_prompt"}}</span>
+						<span class="text red tw-hidden" id="name-change-prompt"> {{ctx.Locale.Tr "settings.change_username_prompt"}}</span>
+						<span class="text red tw-hidden" id="name-change-redirect-prompt"> {{ctx.Locale.Tr "settings.change_username_redirect_prompt"}}</span>
 					</label>
 					<input id="username" name="name" value="{{.SignedUser.Name}}" data-name="{{.SignedUser.Name}}" autofocus required {{if or (not .SignedUser.IsLocal) .IsReverseProxy}}disabled{{end}} maxlength="40">
 					{{if or (not .SignedUser.IsLocal) .IsReverseProxy}}
@@ -20,6 +20,36 @@
 				<div class="field {{if .Err_FullName}}error{{end}}">
 					<label for="full_name">{{ctx.Locale.Tr "settings.full_name"}}</label>
 					<input id="full_name" name="full_name" value="{{.SignedUser.FullName}}" maxlength="100">
+				</div>
+				<div class="inline field">
+					<span class="inline field"><label for="pronouns">{{ctx.Locale.Tr "settings.pronouns"}}</label></span>
+					<div id="pronouns-dropdown" style="display: none" class="ui selection dropdown">
+						<input type="hidden" value="{{.SignedUser.Pronouns}}">
+						<div class="text">
+							{{if .PronounsAreCustom}}
+								{{ctx.Locale.Tr "settings.pronouns_custom"}}
+							{{else if eq "" .SignedUser.Pronouns}}
+								{{ctx.Locale.Tr "settings.pronouns_unspecified"}}
+							{{else}}
+								{{.SignedUser.Pronouns}}
+							{{end}}
+						</div>
+						{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+						<div class="menu">
+							<div class="item{{if eq "" .SignedUser.Pronouns}} active selected{{end}}" data-value=""><i>{{ctx.Locale.Tr "settings.pronouns_unspecified"}}</i></div>
+							<div class="item{{if eq "he/him" .SignedUser.Pronouns}} active selected{{end}}" data-value="he/him">he/him</div>
+							<div class="item{{if eq "she/her" .SignedUser.Pronouns}} active selected{{end}}" data-value="she/her">she/her</div>
+							<div class="item{{if eq "they/them" .SignedUser.Pronouns}} active selected{{end}}" data-value="they/them">they/them</div>
+							<div class="item{{if eq "it/its" .SignedUser.Pronouns}} active selected{{end}}" data-value="it/its">it/its</div>
+							<div class="item{{if eq "any pronouns" .SignedUser.Pronouns}} active selected{{end}}" data-value="any pronouns">any pronouns</div>
+							{{if .PronounsAreCustom}}
+								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}"><i>{{ctx.Locale.Tr "settings.pronouns_custom"}}</i></div>
+							{{else}}
+								<div class="item" data-value="!"><i>{{ctx.Locale.Tr "settings.pronouns_custom"}}</i></div>
+							{{end}}
+						</div>
+					</div>
+					<input id="pronouns-custom" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
 				</div>
 				<div class="field {{if .Err_Email}}error{{end}}">
 					<label>{{ctx.Locale.Tr "email"}}</label>
@@ -106,7 +136,7 @@
 						<label>{{ctx.Locale.Tr "settings.lookup_avatar_by_mail"}}</label>
 					</div>
 				</div>
-				<div class="field gt-pl-4 {{if .Err_Gravatar}}error{{end}}">
+				<div class="field tw-pl-4 {{if .Err_Gravatar}}error{{end}}">
 					<label for="gravatar">Avatar {{ctx.Locale.Tr "email"}}</label>
 					<input id="gravatar" name="gravatar" value="{{.SignedUser.AvatarEmail}}">
 				</div>
@@ -119,7 +149,7 @@
 					</div>
 				</div>
 
-				<div class="inline field gt-pl-4">
+				<div class="inline field tw-pl-4">
 					<label for="new-avatar">{{ctx.Locale.Tr "settings.choose_new_avatar"}}</label>
 					<input id="new-avatar" name="avatar" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
 				</div>

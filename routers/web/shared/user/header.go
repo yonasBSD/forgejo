@@ -13,12 +13,14 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/services/context"
 )
 
 // prepareContextForCommonProfile store some common data into context data for user's profile related pages (including the nav menu)
@@ -35,9 +37,11 @@ func PrepareContextForProfileBigAvatar(ctx *context.Context) {
 	prepareContextForCommonProfile(ctx)
 
 	ctx.Data["IsBlocked"] = ctx.Doer != nil && user_model.IsBlocked(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+	ctx.Data["IsFollowing"] = ctx.Doer != nil && user_model.IsFollowing(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	ctx.Data["ShowUserEmail"] = setting.UI.ShowUserEmail && ctx.ContextUser.Email != "" && ctx.IsSigned && !ctx.ContextUser.KeepEmailPrivate
-	ctx.Data["ContextUserLocationMapURL"] = setting.Service.UserLocationMapURL + url.QueryEscape(ctx.ContextUser.Location)
-
+	if setting.Service.UserLocationMapURL != "" {
+		ctx.Data["ContextUserLocationMapURL"] = setting.Service.UserLocationMapURL + url.QueryEscape(ctx.ContextUser.Location)
+	}
 	// Show OpenID URIs
 	openIDs, err := user_model.GetUserOpenIDs(ctx, ctx.ContextUser.ID)
 	if err != nil {
@@ -45,6 +49,17 @@ func PrepareContextForProfileBigAvatar(ctx *context.Context) {
 		return
 	}
 	ctx.Data["OpenIDs"] = openIDs
+	if len(ctx.ContextUser.Description) != 0 {
+		content, err := markdown.RenderString(&markup.RenderContext{
+			Metas: map[string]string{"mode": "document"},
+			Ctx:   ctx,
+		}, ctx.ContextUser.Description)
+		if err != nil {
+			ctx.ServerError("RenderString", err)
+			return
+		}
+		ctx.Data["RenderedDescription"] = content
+	}
 
 	showPrivate := ctx.IsSigned && (ctx.Doer.IsAdmin || ctx.Doer.ID == ctx.ContextUser.ID)
 	orgs, err := db.Find[organization.Organization](ctx, organization.FindOrgOptions{
@@ -114,7 +129,7 @@ func LoadHeaderCount(ctx *context.Context) error {
 		Actor:              ctx.Doer,
 		OwnerID:            ctx.ContextUser.ID,
 		Private:            ctx.IsSigned,
-		Collaborate:        util.OptionalBoolFalse,
+		Collaborate:        optional.Some(false),
 		IncludeDescription: setting.UI.SearchRepoDescription,
 	})
 	if err != nil {
@@ -130,7 +145,7 @@ func LoadHeaderCount(ctx *context.Context) error {
 	}
 	projectCount, err := db.Count[project_model.Project](ctx, project_model.SearchOptions{
 		OwnerID:  ctx.ContextUser.ID,
-		IsClosed: util.OptionalBoolOf(false),
+		IsClosed: optional.Some(false),
 		Type:     projectType,
 	})
 	if err != nil {

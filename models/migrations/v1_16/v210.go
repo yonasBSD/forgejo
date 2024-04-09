@@ -4,17 +4,42 @@
 package v1_16 //nolint
 
 import (
+	"crypto/ecdh"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"strings"
 
-	"code.gitea.io/gitea/models/migrations/base"
 	"code.gitea.io/gitea/modules/timeutil"
 
-	"github.com/tstranex/u2f"
 	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
 )
+
+func parseU2FRegistration(raw []byte) (pubKey *ecdh.PublicKey, keyHandle []byte, err error) {
+	if len(raw) < 69 {
+		return nil, nil, errors.New("data is too short")
+	}
+	if raw[0] != 0x05 {
+		return nil, nil, errors.New("invalid reserved byte")
+	}
+	raw = raw[1:]
+
+	pubKey, err = ecdh.P256().NewPublicKey(raw[:65])
+	if err != nil {
+		return nil, nil, err
+	}
+	raw = raw[65:]
+
+	khLen := int(raw[0])
+	if len(raw) < khLen {
+		return nil, nil, errors.New("invalid key handle")
+	}
+	raw = raw[1:]
+	keyHandle = raw[:khLen]
+
+	return pubKey, keyHandle, nil
+}
 
 // v208 migration was completely broken
 func RemigrateU2FCredentials(x *xorm.Engine) error {
@@ -46,26 +71,6 @@ func RemigrateU2FCredentials(x *xorm.Engine) error {
 	case schemas.ORACLE:
 		_, err := x.Exec("ALTER TABLE webauthn_credential MODIFY credential_id VARCHAR(410)")
 		if err != nil {
-			return err
-		}
-	case schemas.MSSQL:
-		// This column has an index on it. I could write all of the code to attempt to change the index OR
-		// I could just use recreate table.
-		sess := x.NewSession()
-		if err := sess.Begin(); err != nil {
-			_ = sess.Close()
-			return err
-		}
-
-		if err := base.RecreateTable(sess, new(webauthnCredential)); err != nil {
-			_ = sess.Close()
-			return err
-		}
-		if err := sess.Commit(); err != nil {
-			_ = sess.Close()
-			return err
-		}
-		if err := sess.Close(); err != nil {
 			return err
 		}
 	case schemas.POSTGRES:
@@ -111,18 +116,8 @@ func RemigrateU2FCredentials(x *xorm.Engine) error {
 			if err := sess.Begin(); err != nil {
 				return fmt.Errorf("unable to allow start session. Error: %w", err)
 			}
-			if x.Dialect().URI().DBType == schemas.MSSQL {
-				if _, err := sess.Exec("SET IDENTITY_INSERT `webauthn_credential` ON"); err != nil {
-					return fmt.Errorf("unable to allow identity insert on webauthn_credential. Error: %w", err)
-				}
-			}
 			for _, reg := range regs {
-				parsed := new(u2f.Registration)
-				err = parsed.UnmarshalBinary(reg.Raw)
-				if err != nil {
-					continue
-				}
-				pubKey, err := parsed.PubKey.ECDH()
+				pubKey, keyHandle, err := parseU2FRegistration(reg.Raw)
 				if err != nil {
 					continue
 				}
@@ -131,7 +126,7 @@ func RemigrateU2FCredentials(x *xorm.Engine) error {
 					Name:            reg.Name,
 					LowerName:       strings.ToLower(reg.Name),
 					UserID:          reg.UserID,
-					CredentialID:    base32.HexEncoding.EncodeToString(parsed.KeyHandle),
+					CredentialID:    base32.HexEncoding.EncodeToString(keyHandle),
 					PublicKey:       pubKey.Bytes(),
 					AttestationType: "fido-u2f",
 					AAGUID:          []byte{},

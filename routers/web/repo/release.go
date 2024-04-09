@@ -11,22 +11,25 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/upload"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/web/feed"
+	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/context/upload"
 	"code.gitea.io/gitea/services/forms"
 	releaseservice "code.gitea.io/gitea/services/release"
 )
@@ -112,7 +115,7 @@ func getReleaseInfos(ctx *context.Context, opts *repo_model.FindReleasesOptions)
 			cacheUsers[r.PublisherID] = r.Publisher
 		}
 
-		r.Note, err = markdown.RenderString(&markup.RenderContext{
+		r.RenderedNote, err = markdown.RenderString(&markup.RenderContext{
 			Links: markup.Links{
 				Base: ctx.Repo.RepoLink,
 			},
@@ -120,6 +123,11 @@ func getReleaseInfos(ctx *context.Context, opts *repo_model.FindReleasesOptions)
 			GitRepo: ctx.Repo.GitRepo,
 			Ctx:     ctx,
 		}, r.Note)
+		if err != nil {
+			return nil, err
+		}
+
+		err = r.LoadArchiveDownloadCount(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +143,7 @@ func getReleaseInfos(ctx *context.Context, opts *repo_model.FindReleasesOptions)
 		}
 
 		if canReadActions {
-			statuses, _, err := git_model.GetLatestCommitStatus(ctx, r.Repo.ID, r.Sha1, db.ListOptions{ListAll: true})
+			statuses, _, err := git_model.GetLatestCommitStatus(ctx, r.Repo.ID, r.Sha1, db.ListOptionsAll)
 			if err != nil {
 				return nil, err
 			}
@@ -191,6 +199,7 @@ func Releases(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numReleases := ctx.Data["NumReleases"].(int64)
 	pager := context.NewPagination(int(numReleases), listOptions.PageSize, listOptions.Page, 5)
@@ -198,6 +207,44 @@ func Releases(ctx *context.Context) {
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplReleasesList)
+}
+
+func verifyTagSignature(ctx *context.Context, r *repo_model.Release) (*asymkey.ObjectVerification, error) {
+	if err := r.LoadAttributes(ctx); err != nil {
+		return nil, err
+	}
+	gitRepo, err := gitrepo.OpenRepository(ctx, r.Repo)
+	if err != nil {
+		return nil, err
+	}
+	defer gitRepo.Close()
+
+	tag, err := gitRepo.GetTag(r.TagName)
+	if err != nil {
+		return nil, err
+	}
+	if tag.Signature == nil {
+		return nil, nil
+	}
+
+	verification := asymkey.ParseTagWithSignature(ctx, gitRepo, tag)
+	return verification, nil
+}
+
+func addVerifyTagToContext(ctx *context.Context) {
+	ctx.Data["VerifyTag"] = func(r *repo_model.Release) *asymkey.ObjectVerification {
+		v, err := verifyTagSignature(ctx, r)
+		if err != nil {
+			return nil
+		}
+		return v
+	}
+	ctx.Data["HasSignature"] = func(verification *asymkey.ObjectVerification) bool {
+		if verification == nil {
+			return false
+		}
+		return verification.Reason != "gpg.error.not_signed_commit"
+	}
 }
 
 // TagsList render tags list page
@@ -228,7 +275,7 @@ func TagsList(ctx *context.Context) {
 		// the drafts should also be included because a real tag might be used as a draft.
 		IncludeDrafts: true,
 		IncludeTags:   true,
-		HasSha1:       util.OptionalBoolTrue,
+		HasSha1:       optional.Some(true),
 		RepoID:        ctx.Repo.Repository.ID,
 	}
 
@@ -239,6 +286,7 @@ func TagsList(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numTags := ctx.Data["NumTags"].(int64)
 	pager := context.NewPagination(int(numTags), opts.PageSize, opts.Page, 5)
@@ -303,12 +351,19 @@ func SingleRelease(ctx *context.Context) {
 	if release.IsTag && release.Title == "" {
 		release.Title = release.TagName
 	}
+	addVerifyTagToContext(ctx)
 
 	ctx.Data["PageIsSingleTag"] = release.IsTag
 	if release.IsTag {
 		ctx.Data["Title"] = release.TagName
 	} else {
 		ctx.Data["Title"] = release.Title
+	}
+
+	err = release.LoadArchiveDownloadCount(ctx)
+	if err != nil {
+		ctx.ServerError("LoadArchiveDownloadCount", err)
+		return
 	}
 
 	ctx.Data["Releases"] = releases

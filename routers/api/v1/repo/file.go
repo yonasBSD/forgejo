@@ -19,7 +19,6 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/httpcache"
@@ -30,6 +29,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/common"
+	"code.gitea.io/gitea/services/context"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
 	files_service "code.gitea.io/gitea/services/repository/files"
 )
@@ -150,7 +150,7 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 		return
 	}
 
-	// OK, now the blob is known to have at most 1024 bytes we can simply read this in in one go (This saves reading it twice)
+	// OK, now the blob is known to have at most 1024 bytes we can simply read this in one go (This saves reading it twice)
 	dataRc, err := blob.DataAsync()
 	if err != nil {
 		ctx.ServerError("DataAsync", err)
@@ -302,7 +302,7 @@ func GetArchive(ctx *context.APIContext) {
 
 func archiveDownload(ctx *context.APIContext) {
 	uri := ctx.Params("*")
-	aReq, err := archiver_service.NewRequest(ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
+	aReq, err := archiver_service.NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, uri)
 	if err != nil {
 		if errors.Is(err, archiver_service.ErrUnknownArchiveFormat{}) {
 			ctx.Error(http.StatusBadRequest, "unknown archive format", err)
@@ -672,6 +672,7 @@ func UpdateFile(ctx *context.APIContext) {
 	apiOpts := web.GetForm(ctx).(*api.UpdateFileOptions)
 	if ctx.Repo.Repository.IsEmpty {
 		ctx.Error(http.StatusUnprocessableEntity, "RepoIsEmpty", fmt.Errorf("repo is empty"))
+		return
 	}
 
 	if apiOpts.BranchName == "" {

@@ -139,11 +139,10 @@ func (d *delayWriter) WriteString(s string) (n int, err error) {
 }
 
 func (d *delayWriter) Close() error {
-	if d == nil {
-		return nil
+	if d.timer.Stop() {
+		d.buf = nil
 	}
-	stopped := d.timer.Stop()
-	if stopped || d.buf == nil {
+	if d.buf == nil {
 		return nil
 	}
 	_, err := d.internal.Write(d.buf.Bytes())
@@ -293,9 +292,36 @@ Forgejo or set your environment appropriately.`, "")
 	return nil
 }
 
+// runHookUpdate process the update hook: https://git-scm.com/docs/githooks#update
 func runHookUpdate(c *cli.Context) error {
-	// Update is empty and is kept only for backwards compatibility
-	return nil
+	// Now if we're an internal don't do anything else
+	if isInternal, _ := strconv.ParseBool(os.Getenv(repo_module.EnvIsInternal)); isInternal {
+		return nil
+	}
+
+	ctx, cancel := installSignals()
+	defer cancel()
+
+	if c.NArg() != 3 {
+		return nil
+	}
+	args := c.Args().Slice()
+
+	// The arguments given to the hook are in order: reference name, old commit ID and new commit ID.
+	refFullName := git.RefName(args[0])
+	newCommitID := args[2]
+
+	// Only process pull references.
+	if !refFullName.IsPull() {
+		return nil
+	}
+
+	// Deletion of the ref means that the new commit ID is only composed of '0'.
+	if strings.ContainsFunc(newCommitID, func(e rune) bool { return e != '0' }) {
+		return nil
+	}
+
+	return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
 }
 
 func runHookPostReceive(c *cli.Context) error {
@@ -324,11 +350,10 @@ Forgejo or set your environment appropriately.`, "")
 	}
 
 	var out io.Writer
-	var dWriter *delayWriter
 	out = &nilWriter{}
 	if setting.Git.VerbosePush {
 		if setting.Git.VerbosePushDelay > 0 {
-			dWriter = newDelayWriter(os.Stdout, setting.Git.VerbosePushDelay)
+			dWriter := newDelayWriter(os.Stdout, setting.Git.VerbosePushDelay)
 			defer dWriter.Close()
 			out = dWriter
 		} else {
@@ -391,7 +416,6 @@ Forgejo or set your environment appropriately.`, "")
 			hookOptions.RefFullNames = refFullNames
 			resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 			if extra.HasError() {
-				_ = dWriter.Close()
 				hookPrintResults(results)
 				return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 			}
@@ -411,7 +435,6 @@ Forgejo or set your environment appropriately.`, "")
 		}
 		fmt.Fprintf(out, "Processed %d references in total\n", total)
 
-		_ = dWriter.Close()
 		hookPrintResults(results)
 		return nil
 	}
@@ -424,7 +447,6 @@ Forgejo or set your environment appropriately.`, "")
 
 	resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 	if resp == nil {
-		_ = dWriter.Close()
 		hookPrintResults(results)
 		return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 	}
@@ -440,9 +462,8 @@ Forgejo or set your environment appropriately.`, "")
 			return fail(ctx, extra.UserMsg, "SetDefaultBranch failed: %v", extra.Error)
 		}
 	}
-	_ = dWriter.Close()
-	hookPrintResults(results)
 
+	hookPrintResults(results)
 	return nil
 }
 
@@ -470,10 +491,11 @@ func pushOptions() map[string]string {
 	if pushCount, err := strconv.Atoi(os.Getenv(private.GitPushOptionCount)); err == nil {
 		for idx := 0; idx < pushCount; idx++ {
 			opt := os.Getenv(fmt.Sprintf("GIT_PUSH_OPTION_%d", idx))
-			kv := strings.SplitN(opt, "=", 2)
-			if len(kv) == 2 {
-				opts[kv[0]] = kv[1]
+			key, value, found := strings.Cut(opt, "=")
+			if !found {
+				value = "true"
 			}
+			opts[key] = value
 		}
 	}
 	return opts
@@ -583,7 +605,7 @@ Forgejo or set your environment appropriately.`, "")
 
 	for {
 		// note: pktLineTypeUnknow means pktLineTypeFlush and pktLineTypeData all allowed
-		rs, err = readPktLine(ctx, reader, pktLineTypeUnknow)
+		rs, err = readPktLine(ctx, reader, pktLineTypeUnknown)
 		if err != nil {
 			return err
 		}
@@ -604,7 +626,7 @@ Forgejo or set your environment appropriately.`, "")
 
 	if hasPushOptions {
 		for {
-			rs, err = readPktLine(ctx, reader, pktLineTypeUnknow)
+			rs, err = readPktLine(ctx, reader, pktLineTypeUnknown)
 			if err != nil {
 				return err
 			}
@@ -613,10 +635,11 @@ Forgejo or set your environment appropriately.`, "")
 				break
 			}
 
-			kv := strings.SplitN(string(rs.Data), "=", 2)
-			if len(kv) == 2 {
-				hookOptions.GitPushOptions[kv[0]] = kv[1]
+			key, value, found := strings.Cut(string(rs.Data), "=")
+			if !found {
+				value = "true"
 			}
+			hookOptions.GitPushOptions[key] = value
 		}
 	}
 
@@ -699,8 +722,8 @@ Forgejo or set your environment appropriately.`, "")
 type pktLineType int64
 
 const (
-	// UnKnow type
-	pktLineTypeUnknow pktLineType = 0
+	// Unknown type
+	pktLineTypeUnknown pktLineType = 0
 	// flush-pkt "0000"
 	pktLineTypeFlush pktLineType = iota
 	// data line
@@ -714,22 +737,16 @@ type gitPktLine struct {
 	Data   []byte
 }
 
+// Reads an Pkt-Line from `in`. If requestType is not unknown, it will a
 func readPktLine(ctx context.Context, in *bufio.Reader, requestType pktLineType) (*gitPktLine, error) {
-	var (
-		err error
-		r   *gitPktLine
-	)
-
-	// read prefix
+	// Read length prefix
 	lengthBytes := make([]byte, 4)
-	for i := 0; i < 4; i++ {
-		lengthBytes[i], err = in.ReadByte()
-		if err != nil {
-			return nil, fail(ctx, "Protocol: stdin error", "Pkt-Line: read stdin failed : %v", err)
-		}
+	if n, err := in.Read(lengthBytes); n != 4 || err != nil {
+		return nil, fail(ctx, "Protocol: stdin error", "Pkt-Line: read stdin failed : %v", err)
 	}
 
-	r = new(gitPktLine)
+	var err error
+	r := &gitPktLine{}
 	r.Length, err = strconv.ParseUint(string(lengthBytes), 16, 32)
 	if err != nil {
 		return nil, fail(ctx, "Protocol: format parse error", "Pkt-Line format is wrong :%v", err)
@@ -748,11 +765,8 @@ func readPktLine(ctx context.Context, in *bufio.Reader, requestType pktLineType)
 	}
 
 	r.Data = make([]byte, r.Length-4)
-	for i := range r.Data {
-		r.Data[i], err = in.ReadByte()
-		if err != nil {
-			return nil, fail(ctx, "Protocol: data error", "Pkt-Line: read stdin failed : %v", err)
-		}
+	if n, err := io.ReadFull(in, r.Data); uint64(n) != r.Length-4 || err != nil {
+		return nil, fail(ctx, "Protocol: stdin error", "Pkt-Line: read stdin failed : %v", err)
 	}
 
 	r.Type = pktLineTypeData
@@ -768,20 +782,23 @@ func writeFlushPktLine(ctx context.Context, out io.Writer) error {
 	return nil
 }
 
+// Write an Pkt-Line based on `data` to `out` according to the specifcation.
+// https://git-scm.com/docs/protocol-common
 func writeDataPktLine(ctx context.Context, out io.Writer, data []byte) error {
-	hexchar := []byte("0123456789abcdef")
-	hex := func(n uint64) byte {
-		return hexchar[(n)&15]
+	// Implementations SHOULD NOT send an empty pkt-line ("0004").
+	if len(data) == 0 {
+		return fail(ctx, "Protocol: write error", "Not allowed to write empty Pkt-Line")
 	}
 
 	length := uint64(len(data) + 4)
-	tmp := make([]byte, 4)
-	tmp[0] = hex(length >> 12)
-	tmp[1] = hex(length >> 8)
-	tmp[2] = hex(length >> 4)
-	tmp[3] = hex(length)
 
-	lr, err := out.Write(tmp)
+	// The maximum length of a pkt-line’s data component is 65516 bytes.
+	// Implementations MUST NOT send pkt-line whose length exceeds 65520 (65516 bytes of payload + 4 bytes of length data).
+	if length > 65520 {
+		return fail(ctx, "Protocol: write error", "Pkt-Line exceeds maximum of 65520 bytes")
+	}
+
+	lr, err := fmt.Fprintf(out, "%04x", length)
 	if err != nil || lr != 4 {
 		return fail(ctx, "Protocol: write error", "Pkt-Line response failed: %v", err)
 	}
