@@ -1,3 +1,6 @@
+// Copyright 2024 The Forgejo Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package forgefed
 
 import (
@@ -10,8 +13,6 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 )
-
-// https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
 
 type WebfingerJRD struct {
 	Subject    string           `json:"subject,omitempty"`

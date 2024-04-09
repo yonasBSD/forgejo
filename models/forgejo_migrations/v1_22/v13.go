@@ -1,5 +1,5 @@
 // Copyright 2024 The Forgejo Authors
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 package v1_22 //nolint
 

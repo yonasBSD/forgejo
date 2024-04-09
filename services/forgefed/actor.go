@@ -1,3 +1,6 @@
+// Copyright 2024 The Forgejo Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package forgefed
 
 import (
