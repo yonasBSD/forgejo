@@ -137,7 +137,7 @@ type Repository struct {
 	OriginalURL         string             `xorm:"VARCHAR(2048)"`
 	DefaultBranch       string
 	WikiBranch          string
-	// TODO: Create own table out of this field
+	// TODO: Do we still need this here?
 	FederationRepos string `xorm:"TEXT"`
 
 	NumWatches          int
