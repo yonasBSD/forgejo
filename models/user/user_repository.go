@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/validation"
 )
 
@@ -21,8 +21,8 @@ func CreateFederatedUser(ctx context.Context, user *User, federatedUser *Federat
 		return fmt.Errorf("User is not valid: %v", err)
 	}
 	overwrite := CreateUserOverwriteOptions{
-		IsActive:     util.OptionalBoolFalse,
-		IsRestricted: util.OptionalBoolFalse,
+		IsActive:     optional.Some(false),
+		IsRestricted: optional.Some(false),
 	}
 
 	// Begin transaction
