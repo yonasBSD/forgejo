@@ -23,7 +23,7 @@ type TestCollationTbl struct {
 	Txt string `xorm:"VARCHAR(10) UNIQUE"`
 }
 
-func TestDatabaseCollationSelfCheckUI(t *testing.T) {
+func TestSelfCheckUI(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	assertSelfCheckExists := func(exists bool) {
@@ -39,11 +39,7 @@ func TestDatabaseCollationSelfCheckUI(t *testing.T) {
 		htmlDoc.AssertElement(t, "a.item[href*='/admin/self_check']", exists)
 	}
 
-	if setting.Database.Type.IsMySQL() {
-		assertSelfCheckExists(true)
-	} else {
-		assertSelfCheckExists(false)
-	}
+	assertSelfCheckExists(true)
 }
 
 func TestDatabaseCollation(t *testing.T) {
