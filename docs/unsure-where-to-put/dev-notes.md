@@ -29,7 +29,13 @@ ENABLED = true
 
 # build
 
+```bash
+TAGS="sqlite" make build
 ```
+
+If you need to regenerate the api:
+
+```bash
 TAGS="sqlite" make build generate-swagger
 ```
 
