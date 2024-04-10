@@ -60,6 +60,8 @@ var migrations = []*Migration{
 	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
 	// v11 -> v12
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
+	// v12 -> v13
+	NewMigration("Add `hide_archive_links` column to `release` table", forgejo_v1_22.AddHideArchiveLinksToRelease),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

@@ -97,6 +97,12 @@
 						</div>
 					</div>
 					<span class="help">{{ctx.Locale.Tr "repo.release.prerelease_helper"}}</span>
+					<div class="field">
+						<div class="ui checkbox">
+							<input type="checkbox" name="hide_archive_links" {{if .hide_archive_links}}checked{{end}}>
+							<label><strong>{{ctx.Locale.Tr "repo.release.hide_archive_links"}}</strong></label>
+						</div>
+					</div>
 					<div class="divider tw-mt-0"></div>
 					<div class="tw-flex tw-justify-end">
 						{{if .PageIsEditRelease}}
