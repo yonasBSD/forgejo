@@ -322,13 +322,13 @@ func TestReleaseHideArchiveLinksUI(t *testing.T) {
 	session := loginUser(t, release.Repo.OwnerName)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
 
-	zipUrl := fmt.Sprintf("%s/archive/%s.zip", release.Repo.Link(), release.TagName)
-	tarGzUrl := fmt.Sprintf("%s/archive/%s.tar.gz", release.Repo.Link(), release.TagName)
+	zipURL := fmt.Sprintf("%s/archive/%s.zip", release.Repo.Link(), release.TagName)
+	tarGzURL := fmt.Sprintf("%s/archive/%s.tar.gz", release.Repo.Link(), release.TagName)
 
 	resp := session.MakeRequest(t, NewRequest(t, "GET", release.HTMLURL()), http.StatusOK)
 	body := resp.Body.String()
-	assert.Contains(t, body, zipUrl)
-	assert.Contains(t, body, tarGzUrl)
+	assert.Contains(t, body, zipURL)
+	assert.Contains(t, body, tarGzURL)
 
 	hideArchiveLinks := true
 
@@ -339,6 +339,6 @@ func TestReleaseHideArchiveLinksUI(t *testing.T) {
 
 	resp = session.MakeRequest(t, NewRequest(t, "GET", release.HTMLURL()), http.StatusOK)
 	body = resp.Body.String()
-	assert.NotContains(t, body, zipUrl)
-	assert.NotContains(t, body, tarGzUrl)
+	assert.NotContains(t, body, zipURL)
+	assert.NotContains(t, body, tarGzURL)
 }
