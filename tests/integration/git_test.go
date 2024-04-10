@@ -1076,7 +1076,6 @@ func TestDataAsync_Issue29101(t *testing.T) {
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		assert.NoError(t, err)
-		defer gitRepo.Close()
 
 		commit, err := gitRepo.GetCommit(sha)
 		assert.NoError(t, err)
