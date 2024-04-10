@@ -441,6 +441,20 @@ func NewRelease(ctx *context.Context) {
 	}
 	ctx.Data["Tags"] = tags
 
+	// We set the value of the hide_archive_link textbox depending on the latest release
+	latestRelease, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID)
+	if err != nil {
+		if repo_model.IsErrReleaseNotExist(err) {
+			ctx.Data["hide_archive_links"] = false
+		} else {
+			ctx.ServerError("GetLatestReleaseByRepoID", err)
+			return
+		}
+	}
+	if latestRelease != nil {
+		ctx.Data["hide_archive_links"] = latestRelease.HideArchiveLinks
+	}
+
 	ctx.HTML(http.StatusOK, tplReleaseNew)
 }
 
