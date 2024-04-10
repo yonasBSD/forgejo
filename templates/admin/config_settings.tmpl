@@ -39,4 +39,162 @@
 		</div>
 	</form>
 </div>
+
+<h4 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron_config"}}
+</h4>
+<h5 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron.enable_archive_cleanup"}}
+</h5>
+<div class="ui attached table segment">
+	<dl class="admin-dl-horizontal">
+		<dt>{{ctx.Locale.Tr "enabled"}}</dt>
+		<dd>
+			<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "enabled"}}">
+				<input type="checkbox" data-config-dyn-key="picture.disable_gravatar" {{if .SystemConfig.Picture.DisableGravatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}</dt>
+		<dd>
+			<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}">
+				<input type="checkbox" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.schedule"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+			<div class="divider"></div>
+    	<dt>{{ctx.Locale.Tr "admin.config.cron.older_than"}}</dt>
+    	<dd>
+    		<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.older_than"}}">
+    			<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+    		</div>
+    	</dd>
+	</dl>
+</div>
+
+<h5 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron.update_mirrors"}}
+</h5>
+<div class="ui attached table segment">
+	<dl class="admin-dl-horizontal">
+		<dt>{{ctx.Locale.Tr "admin.config.cron.schedule"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.pull_push_limit"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input type="number" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+			<div class="divider"></div>
+    	<dt>{{ctx.Locale.Tr "admin.config.cron.pull_push_limit"}}</dt>
+    	<dd>
+    		<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.pull_push_limit"}}">
+    			<input type="number" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+    		</div>
+    </dd>
+	</dl>
+</div>
+
+<h5 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron.repo_health_check"}}
+</h5>
+<div class="ui attached table segment">
+	<dl class="admin-dl-horizontal">
+		<dt>{{ctx.Locale.Tr "admin.config.cron.schedule"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.timeout"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input type="number" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.repo_health_check.args"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.repo_health_check.args"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+	</dl>
+</div>
+
+<h5 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron.check_repo_stat"}}
+</h5>
+<div class="ui attached table segment">
+	<dl class="admin-dl-horizontal">
+		<dt>{{ctx.Locale.Tr "admin.config.cron.schedule"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}</dt>
+		<dd>
+			<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}">
+				<input type="checkbox" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+	</dl>
+</div>
+
+<h5 class="ui top attached header">
+	{{ctx.Locale.Tr "admin.config.cron.cleanup_packagess"}}
+</h5>
+<div class="ui attached table segment">
+	<dl class="admin-dl-horizontal">
+		<dt>{{ctx.Locale.Tr "enabled"}}</dt>
+		<dd>
+			<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "enabled"}}">
+				<input type="checkbox" data-config-dyn-key="picture.disable_gravatar" {{if .SystemConfig.Picture.DisableGravatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}</dt>
+		<dd>
+			<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.enable_start_up"}}">
+				<input type="checkbox" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.notice_on_success"}}</dt>
+		<dd>
+				<div class="ui toggle checkbox" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.notice_on_success"}}">
+				<input type="checkbox" data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.schedule"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.schedule"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+		<div class="divider"></div>
+		<dt>{{ctx.Locale.Tr "admin.config.cron.cleanup_packages.older_than"}}</dt>
+		<dd>
+			<div class="ui inline field" data-tooltip-content="{{ctx.Locale.Tr "admin.config.cron.cleanup_packages.older_than"}}">
+				<input data-config-dyn-key="picture.enable_federated_avatar" {{if .SystemConfig.Picture.EnableFederatedAvatar.Value ctx}}checked{{end}}>
+			</div>
+		</dd>
+	</dl>
+</div>
+
 {{template "admin/layout_footer" .}}
