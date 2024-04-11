@@ -62,6 +62,8 @@ var migrations = []*Migration{
 	NewMigration("Add the `created` column to the `issue` table", forgejo_v1_22.AddCreatedToIssue),
 	// v12 -> v13
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
+	// v13 -> v14 intentionally redundant see https://codeberg.org/forgejo/forgejo/pulls/2932#issuecomment-1750852
+	NewMigration("Add the `created` column to the `issue` table (noop)", forgejo_v1_22.AddCreatedToIssue),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
