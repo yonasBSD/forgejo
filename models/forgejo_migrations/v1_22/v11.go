@@ -3,17 +3,16 @@
 
 package v1_22 //nolint
 
-import (
-	"code.gitea.io/gitea/modules/timeutil"
+import "xorm.io/xorm"
 
-	"xorm.io/xorm"
-)
-
-func AddCreatedToIssue(x *xorm.Engine) error {
-	type Issue struct {
-		ID      int64 `xorm:"pk autoincr"`
-		Created timeutil.TimeStampNano
+func AddRepoArchiveDownloadCount(x *xorm.Engine) error {
+	type RepoArchiveDownloadCount struct {
+		ID        int64 `xorm:"pk autoincr"`
+		RepoID    int64 `xorm:"index unique(s)"`
+		ReleaseID int64 `xorm:"index unique(s)"`
+		Type      int   `xorm:"unique(s)"`
+		Count     int64
 	}
 
-	return x.Sync(&Issue{})
+	return x.Sync(&RepoArchiveDownloadCount{})
 }

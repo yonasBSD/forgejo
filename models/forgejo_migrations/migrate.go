@@ -35,6 +35,9 @@ func NewMigration(desc string, fn func(*xorm.Engine) error) *Migration {
 	return &Migration{desc, fn}
 }
 
+// Use noopMigration when there is a migration that has been no-oped
+var noopMigration = func(_ *xorm.Engine) error { return nil }
+
 // This is a sequence of additional Forgejo migrations.
 // Add new migrations to the bottom of the list.
 var migrations = []*Migration{
@@ -58,10 +61,18 @@ var migrations = []*Migration{
 	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
 	// v9 -> v10
 	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
+
+	// migrations which were introduced (or backported) in the v7.0 releases will increase the current version.
+	// There is no way to know if the instance upgrades from 7.0 or from some development version (which had the same number of migrations as 7.0)
+	// To try to prevent such breakings, insert a noop migration for every migration introduced in v7.0
+	// (and ensure that migrations are idempotent: applying them again should not be a problem)
+	NewMigration("(noop)", noopMigration), // forgejo_v1_22.AddCreatedToIssue
+
+	// new migrations, introduces after v7.0 was started
 	// v11 -> v12
-	NewMigration("Add the `created` column to the `issue` table", forgejo_v1_22.AddCreatedToIssue),
-	// v12 -> v13
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
+	// v12 -> v13
+	NewMigration("Add the `created` column to the `issue` table", forgejo_v1_22.AddCreatedToIssue),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
