@@ -86,17 +86,19 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	}
 
 	titleBuffer := new(bytes.Buffer)
-	err = html.Render(titleBuffer, createLink(urlFull, filePath, "muted"))
-	if err != nil {
-		log.Error("failed to render filepathLink: %v", err)
-	}
 
-	if ownerName != ctx.Metas["user"] || repoName != ctx.Metas["repo"] {
-		titleBuffer.WriteString(" &ndash; ")
-		err = html.Render(titleBuffer, createLink(node.Data[m[0]:m[3]], ownerName+"/"+repoName, "muted"))
+	isExternRef := ownerName != ctx.Metas["user"] || repoName != ctx.Metas["repo"]
+	if isExternRef {
+		err = html.Render(titleBuffer, createLink(node.Data[m[0]:m[3]], ownerName+"/"+repoName, ""))
 		if err != nil {
 			log.Error("failed to render repoLink: %v", err)
 		}
+		titleBuffer.WriteString(" &ndash; ")
+	}
+
+	err = html.Render(titleBuffer, createLink(urlFull, filePath, "muted"))
+	if err != nil {
+		log.Error("failed to render filepathLink: %v", err)
 	}
 
 	preview.title = template.HTML(titleBuffer.String())
@@ -104,7 +106,12 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	lineSpecs := strings.Split(hash, "-")
 
 	commitLinkBuffer := new(bytes.Buffer)
-	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
+	commitLinkText := commitSha[0:7]
+	if isExternRef {
+		commitLinkText = ownerName + "/" + repoName + "@" + commitLinkText
+	}
+
+	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitLinkText, "text black"))
 	if err != nil {
 		log.Error("failed to render commitLink: %v", err)
 	}
