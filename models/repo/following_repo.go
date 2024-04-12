@@ -8,10 +8,9 @@ import (
 )
 
 // FollowingRepo represents a federated Repository Actor connected with a local Repo
-// ToDo: We currently get database errors if different repos on the same server want to save the same federated repos in their list
 type FollowingRepo struct {
 	ID               int64  `xorm:"pk autoincr"`
-	RepoID           int64  `xorm:"NOT NULL"`
+	RepoID           int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
 	ExternalID       string `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
 	FederationHostID int64  `xorm:"UNIQUE(federation_repo_mapping) NOT NULL"`
 	URI              string
