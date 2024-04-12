@@ -14,7 +14,7 @@ func Test_FederationHostValidation(t *testing.T) {
 	sut := FederationHost{
 		HostFqdn: "host.do.main",
 		NodeInfo: NodeInfo{
-			Source: "forgejo",
+			SoftwareName: "forgejo",
 		},
 		LatestActivity: time.Now(),
 	}
@@ -34,7 +34,7 @@ func Test_FederationHostValidation(t *testing.T) {
 	sut = FederationHost{
 		HostFqdn: "host.do.main",
 		NodeInfo: NodeInfo{
-			Source: "forgejo",
+			SoftwareName: "forgejo",
 		},
 		LatestActivity: time.Now().Add(1 * time.Hour),
 	}
@@ -45,7 +45,7 @@ func Test_FederationHostValidation(t *testing.T) {
 	sut = FederationHost{
 		HostFqdn: "hOst.do.main",
 		NodeInfo: NodeInfo{
-			Source: "forgejo",
+			SoftwareName: "forgejo",
 		},
 		LatestActivity: time.Now(),
 	}

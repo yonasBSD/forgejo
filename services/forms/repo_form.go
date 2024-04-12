@@ -113,7 +113,7 @@ type RepoSettingForm struct {
 	RepoName    string `binding:"Required;AlphaDashDot;MaxSize(100)"`
 	Description string `binding:"MaxSize(2048)"`
 	Website     string `binding:"ValidUrl;MaxSize(1024)"`
-
+	// ToDo: Refactor in template and i18n labels to Following Repos
 	FederationRepos        string
 	Interval               string
 	MirrorAddress          string

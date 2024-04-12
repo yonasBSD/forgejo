@@ -157,7 +157,7 @@ func Star(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	err := repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
+	err := repository.StarRepoAndSendLikeActivities(ctx, *ctx.Doer, ctx.Repo.Repository.ID, true)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return
@@ -188,7 +188,7 @@ func Unstar(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	err := repository.StarRepoAndFederate(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
+	err := repository.StarRepoAndSendLikeActivities(ctx, *ctx.Doer, ctx.Repo.Repository.ID, false)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "StarRepo", err)
 		return

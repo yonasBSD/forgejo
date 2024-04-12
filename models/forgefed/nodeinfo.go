@@ -12,13 +12,14 @@ import (
 	"github.com/valyala/fastjson"
 )
 
+// ToDo: Search for full text SourceType and Source, also in .md files
 type (
-	SourceType string
+	SoftwareNameType string
 )
 
 const (
-	ForgejoSourceType SourceType = "forgejo"
-	GiteaSourceType   SourceType = "gitea"
+	ForgejoSourceType SoftwareNameType = "forgejo"
+	GiteaSourceType   SoftwareNameType = "gitea"
 )
 
 var KnownSourceTypes = []any{
@@ -97,7 +98,7 @@ func (id ActorID) AsWellKnownNodeInfoURI() string {
 // NodeInfo data type
 // swagger:model
 type NodeInfo struct {
-	Source SourceType
+	SoftwareName SoftwareNameType
 }
 
 func NodeInfoUnmarshalJSON(data []byte) (NodeInfo, error) {
@@ -108,7 +109,7 @@ func NodeInfoUnmarshalJSON(data []byte) (NodeInfo, error) {
 	}
 	source := string(val.GetStringBytes("software", "name"))
 	result := NodeInfo{}
-	result.Source = SourceType(source)
+	result.SoftwareName = SoftwareNameType(source)
 	return result, nil
 }
 
@@ -127,8 +128,8 @@ func NewNodeInfo(body []byte) (NodeInfo, error) {
 // Validate collects error strings in a slice and returns this
 func (node NodeInfo) Validate() []string {
 	var result []string
-	result = append(result, validation.ValidateNotEmpty(string(node.Source), "source")...)
-	result = append(result, validation.ValidateOneOf(node.Source, KnownSourceTypes)...)
+	result = append(result, validation.ValidateNotEmpty(string(node.SoftwareName), "source")...)
+	result = append(result, validation.ValidateOneOf(node.SoftwareName, KnownSourceTypes)...)
 
 	return result
 }

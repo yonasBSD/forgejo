@@ -391,7 +391,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Flash.Info(ctx.Tr("repo.settings.federation_not_enabled"))
 			return
 		}
-
+		// ToDo: Rename to followingRepos
 		federationRepos := strings.TrimSpace(form.FederationRepos)
 		federationRepos = strings.TrimSuffix(federationRepos, ";")
 

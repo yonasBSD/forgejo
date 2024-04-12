@@ -47,7 +47,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	if !activity.IsNewer(federationHost.LatestActivity) {
 		return http.StatusNotAcceptable, "Activity out of order.", fmt.Errorf("Activity already processed")
 	}
-	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.Source))
+	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.SoftwareName))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid PersonID", err
 	}
@@ -221,7 +221,7 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-		followingRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.Source))
+		followingRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName))
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}

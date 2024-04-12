@@ -21,7 +21,6 @@ type ForgeLike struct {
 func NewForgeLike(actorIRI, objectIRI string, startTime time.Time) (ForgeLike, error) {
 	result := ForgeLike{}
 	result.Type = ap.LikeType
-	// ToDo: Would validating the source by Actor.Type field make sense?
 	result.Actor = ap.IRI(actorIRI)   // Thats us, a User
 	result.Object = ap.IRI(objectIRI) // Thats them, a Repository
 	result.StartTime = startTime
