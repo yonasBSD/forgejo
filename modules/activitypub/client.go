@@ -1,4 +1,5 @@
-// Copyright 2022, 2023 The Forgejo & Gitea Authors. All rights reserved.
+// Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 // TODO: Think about whether this should be moved to services/activitypub (compare to exosy/services/activitypub/client.go)
