@@ -752,11 +752,11 @@ func TestRender_FilePreview(t *testing.T) {
 			`<div class="file-preview-box">`+
 			`<div class="header">`+
 			`<div>`+
+			`<a href="http://localhost:3000/gogits/gogs/" rel="nofollow">gogits/gogs</a> – `+
 			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
-			` – <a href="http://localhost:3000/gogits/gogs/" class="muted" rel="nofollow">gogits/gogs</a>`+
 			`</div>`+
 			`<span class="text small grey">`+
-			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">gogits/gogs@190d949</a>`+
 			`</span>`+
 			`</div>`+
 			`<div class="ui table">`+
