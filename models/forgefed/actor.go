@@ -195,7 +195,7 @@ func newActorID(uri string) (ActorID, error) {
 	result.Host = validatedURI.Hostname()
 	result.Path = pathWithoutActorID
 	result.Port = validatedURI.Port()
-	result.UnvalidatedInput = validatedURI.String() // ToDo: Whats happening here?
+	result.UnvalidatedInput = uri
 	return result, nil
 }
 
