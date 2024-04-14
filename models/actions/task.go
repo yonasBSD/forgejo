@@ -214,12 +214,14 @@ func GetRunningTaskByToken(ctx context.Context, token string) (*ActionTask, erro
 	return nil, errNotExist
 }
 
+// CreateTaskForRunner looks for a task matching the runner labels and returns a task if it was found and true
+// In case there was no task matching runner labels, it returns nil and false
 func CreateTaskForRunner(ctx context.Context, runner *ActionRunner) (*ActionTask, bool, error) {
-	ctx, commiter, err := db.TxContext(ctx)
+	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return nil, false, err
 	}
-	defer commiter.Close()
+	defer committer.Close()
 
 	e := db.GetEngine(ctx)
 
@@ -319,7 +321,7 @@ func CreateTaskForRunner(ctx context.Context, runner *ActionRunner) (*ActionTask
 
 	task.Job = job
 
-	if err := commiter.Commit(); err != nil {
+	if err := committer.Commit(); err != nil {
 		return nil, false, err
 	}
 

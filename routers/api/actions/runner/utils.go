@@ -6,6 +6,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"time"
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/db"
@@ -23,12 +24,24 @@ import (
 )
 
 func pickTask(ctx context.Context, runner *actions_model.ActionRunner) (*runnerv1.Task, bool, error) {
-	t, ok, err := actions_model.CreateTaskForRunner(ctx, runner)
-	if err != nil {
-		return nil, false, fmt.Errorf("CreateTaskForRunner: %w", err)
-	}
-	if !ok {
-		return nil, false, nil
+	var t *actions_model.ActionTask
+	var err error
+	var ok bool
+	for {
+		t, ok, err = actions_model.CreateTaskForRunner(ctx, runner)
+
+		if err != nil {
+			return nil, false, fmt.Errorf("CreateTaskForRunner: %w", err)
+		}
+		if ok {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return nil, false, nil
+		default:
+			time.Sleep(time.Second * 10)
+		}
 	}
 
 	secrets, err := secret_model.GetSecretsOfTask(ctx, t)
