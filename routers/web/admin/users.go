@@ -88,7 +88,7 @@ func Users(ctx *context.Context) {
 
 // NewUser render adding a new user page
 func NewUser(ctx *context.Context) {
-	ctx.Data["Title"] = ctx.Tr("admin.users.new_account")
+	ctx.Data["Title"] = ctx.Tr("admin.users.new_account.title")
 	ctx.Data["PageIsAdminUsers"] = true
 	ctx.Data["DefaultUserVisibilityMode"] = setting.Service.DefaultUserVisibilityMode
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
@@ -111,7 +111,7 @@ func NewUser(ctx *context.Context) {
 // NewUserPost response for adding a new user
 func NewUserPost(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.AdminCreateUserForm)
-	ctx.Data["Title"] = ctx.Tr("admin.users.new_account")
+	ctx.Data["Title"] = ctx.Tr("admin.users.new_account.title")
 	ctx.Data["PageIsAdminUsers"] = true
 	ctx.Data["DefaultUserVisibilityMode"] = setting.Service.DefaultUserVisibilityMode
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()

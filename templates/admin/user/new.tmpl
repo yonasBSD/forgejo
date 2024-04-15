@@ -1,7 +1,7 @@
 {{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin new user")}}
 	<div class="admin-setting-content">
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "admin.users.new_account"}}
+			{{ctx.Locale.Tr "admin.users.new_account.header"}}
 		</h4>
 		<div class="ui attached segment">
 			<form class="ui form" action="{{.Link}}" method="post">
@@ -82,7 +82,7 @@
 				{{end}}
 
 				<div class="field">
-					<button class="ui primary button">{{ctx.Locale.Tr "admin.users.new_account"}}</button>
+					<button class="ui primary button">{{ctx.Locale.Tr "admin.users.new_account.button"}}</button>
 				</div>
 			</form>
 		</div>
