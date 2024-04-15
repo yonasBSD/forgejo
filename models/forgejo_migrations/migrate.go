@@ -61,7 +61,7 @@ var migrations = []*Migration{
 	// v11 -> v12
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
 	// v12 -> v13
-	NewMigration("Add `hide_archive_links` column to `release` table", forgejo_v1_22.AddHideArchiveLinksToRelease),
+	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
