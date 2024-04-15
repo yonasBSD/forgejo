@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/modules/web/routing"
 	"code.gitea.io/gitea/routers/api/actions/ping"
 	"code.gitea.io/gitea/routers/api/actions/runner"
 )
@@ -18,7 +19,7 @@ func Routes(prefix string) *web.Route {
 	m.Post(path+"*", http.StripPrefix(prefix, handler).ServeHTTP)
 
 	path, handler = runner.NewRunnerServiceHandler()
-	m.Post(path+"*", http.StripPrefix(prefix, handler).ServeHTTP)
+	m.Post(path+"*", routing.MarkLongPolling, http.StripPrefix(prefix, handler).ServeHTTP)
 
 	return m
 }
