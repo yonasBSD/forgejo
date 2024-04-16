@@ -26,7 +26,7 @@
     },
     {
       "description": "Require dashboard approval for some deps",
-      "matchDepNames": ["github.com/go-ap/activitypub", "bitnami/minio"],
+      "matchDepNames": ["github.com/go-ap/activitypub", "bitnami/minio", "github.com/google/pprof"],
       "dependencyDashboardApproval": true
     },
     {
