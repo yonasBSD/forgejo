@@ -438,11 +438,11 @@ lint-md: node_modules
 	npx markdownlint docs *.md
 
 .PHONY: lint-spell
-lint-spell:
+lint-spell: lint-codespell
 	@go run $(MISSPELL_PACKAGE) -error $(SPELLCHECK_FILES)
 
 .PHONY: lint-spell-fix
-lint-spell-fix:
+lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
 
 .PHONY: lint-go
