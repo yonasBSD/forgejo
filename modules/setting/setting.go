@@ -16,16 +16,18 @@ import (
 	"code.gitea.io/gitea/modules/util"
 )
 
-var ForgejoVersion = "1.0.0"
-
 // settings
 var (
-	// AppVer is the version of the current build of Gitea. It is set in main.go from main.Version.
+	// AppVer is the version of the current build of Forgejo. It is set in main.go from main.Version.
 	AppVer string
 	// AppBuiltWith represents a human-readable version go runtime build version and build tags. (See main.go formatBuiltWith().)
 	AppBuiltWith string
 	// AppStartTime store time gitea has started
 	AppStartTime time.Time
+	// ForgejoVersion is the current full SemVer string of this Forgejo build.
+	ForgejoVersion string
+	// GiteaVersion is the version of Gitea's API that this Forgejo build is compatible with.
+	GiteaVersion string
 
 	// Other global setting objects
 

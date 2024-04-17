@@ -31,13 +31,14 @@ var (
 	MakeVersion = ""            // "make" program version if built with make
 
 	ReleaseVersion = ""
+	ForgejoVersion = "1.0.0"       // Forgejo SemVer version
+	GiteaVersion   = "development" // Gitea API version
 )
-
-var ForgejoVersion = "1.0.0"
 
 func init() {
 	setting.AppVer = Version
 	setting.ForgejoVersion = ForgejoVersion
+	setting.GiteaVersion = GiteaVersion
 	setting.AppBuiltWith = formatBuiltWith()
 	setting.AppStartTime = time.Now().UTC()
 }

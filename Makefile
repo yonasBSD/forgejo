@@ -83,6 +83,7 @@ STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
 GITEA_COMPATIBILITY ?= gitea-1.22.0
+GITEA_VERSION_API ?= 1.22.0-0
 
 STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
@@ -116,7 +117,7 @@ FORGEJO_VERSION_API ?= ${FORGEJO_VERSION}
 show-version-api:
 	@echo ${FORGEJO_VERSION_API}
 
-LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(FORGEJO_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION_API)"
+LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(FORGEJO_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION_API)" -X "main.GiteaVersion=$(GITEA_VERSION_API)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
