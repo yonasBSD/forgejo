@@ -9,7 +9,10 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+
+	"xorm.io/builder"
 )
 
 // WatchMode specifies what kind of watch the user has on a repository
@@ -24,20 +27,62 @@ const (
 	WatchModeDont // 2
 	// WatchModeAuto watch repository (from AutoWatchOnChanges)
 	WatchModeAuto // 3
+	// WatchModeCustom watch repository for custom events
+	WatchModeCustom // 4
+)
+
+func (mode WatchMode) IsWatchModeNone() bool {
+	return mode == WatchModeNone
+}
+
+func (mode WatchMode) IsWatchModeNormal() bool {
+	return mode == WatchModeNormal
+}
+
+func (mode WatchMode) IsWatchModeDont() bool {
+	return mode == WatchModeDont
+}
+
+func (mode WatchMode) IsWatchModeAuto() bool {
+	return mode == WatchModeAuto
+}
+
+func (mode WatchMode) IsWatchModeCustom() bool {
+	return mode == WatchModeCustom
+}
+
+// WatchEventType  specifies what kind of event is wanted
+type WatchEventType int8
+
+const (
+	// WatchEventTypeIssue watch issues
+	WatchEventTypeIssue WatchEventType = iota
+	// WatchEventTypeIssue watch pull requests
+	WatchEventTypePullRequest
+	// WatchEventTypeIssue watch releases
+	WatchEventTypeRelease
 )
 
 // Watch is connection request for receiving repository notification.
 type Watch struct {
-	ID          int64              `xorm:"pk autoincr"`
-	UserID      int64              `xorm:"UNIQUE(watch)"`
-	RepoID      int64              `xorm:"UNIQUE(watch)"`
-	Mode        WatchMode          `xorm:"SMALLINT NOT NULL DEFAULT 1"`
-	CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`
-	UpdatedUnix timeutil.TimeStamp `xorm:"INDEX updated"`
+	ID                 int64              `xorm:"pk autoincr"`
+	UserID             int64              `xorm:"UNIQUE(watch)"`
+	RepoID             int64              `xorm:"UNIQUE(watch)"`
+	Mode               WatchMode          `xorm:"SMALLINT NOT NULL DEFAULT 1"`
+	CustomIssues       bool               `xorm:"NOT NULL DEFAULT FALSE"`
+	CustomPullRequests bool               `xorm:"NOT NULL DEFAULT FALSE"`
+	CustomReleases     bool               `xorm:"NOT NULL DEFAULT FALSE"`
+	CreatedUnix        timeutil.TimeStamp `xorm:"INDEX created"`
+	UpdatedUnix        timeutil.TimeStamp `xorm:"INDEX updated"`
 }
 
 func init() {
 	db.RegisterModel(new(Watch))
+}
+
+// IsWatching checks if user has watched the Repo
+func (watch Watch) IsWatching() bool {
+	return IsWatchMode(watch.Mode)
 }
 
 // GetWatch gets what kind of subscription a user has on a given repository; returns dummy record if none found
@@ -65,7 +110,7 @@ func IsWatching(ctx context.Context, userID, repoID int64) bool {
 }
 
 func watchRepoMode(ctx context.Context, watch Watch, mode WatchMode) (err error) {
-	if watch.Mode == mode {
+	if watch.Mode == mode && mode != WatchModeCustom {
 		return nil
 	}
 	if mode == WatchModeAuto && (watch.Mode == WatchModeDont || IsWatchMode(watch.Mode)) {
@@ -85,6 +130,12 @@ func watchRepoMode(ctx context.Context, watch Watch, mode WatchMode) (err error)
 
 	watch.Mode = mode
 
+	if mode != WatchModeCustom {
+		watch.CustomIssues = false
+		watch.CustomPullRequests = false
+		watch.CustomReleases = false
+	}
+
 	if !hadrec && needsrec {
 		watch.Mode = mode
 		if err = db.Insert(ctx, watch); err != nil {
@@ -102,6 +153,20 @@ func watchRepoMode(ctx context.Context, watch Watch, mode WatchMode) (err error)
 		_, err = db.GetEngine(ctx).Exec("UPDATE `repository` SET num_watches = num_watches + ? WHERE id = ?", repodiff, watch.RepoID)
 	}
 	return err
+}
+
+// WtachRepoCustom watches a repo for the custom events
+func WatchRepoCustom(ctx context.Context, userID, repoID int64, watchTypes api.RepoCustomWatchOptions) error {
+	watch, err := GetWatch(ctx, userID, repoID)
+	if err != nil {
+		return err
+	}
+
+	watch.CustomIssues = watchTypes.Issues
+	watch.CustomPullRequests = watchTypes.PullRequests
+	watch.CustomReleases = watchTypes.Releases
+
+	return watchRepoMode(ctx, watch, WatchModeCustom)
 }
 
 // WatchRepoMode watch repository in specific mode.
@@ -166,6 +231,49 @@ func GetRepoWatchers(ctx context.Context, repoID int64, opts db.ListOptions) ([]
 
 	users := make([]*user_model.User, 0, 8)
 	return users, sess.Find(&users)
+}
+
+func getRepoWatchEventCond(event WatchEventType) builder.Cond {
+	cond := builder.NewCond()
+
+	switch event {
+	case WatchEventTypeIssue:
+		cond = cond.And(builder.Eq{"`watch`.mode": WatchModeCustom}, builder.Eq{"`watch`.custom_issues": true})
+	case WatchEventTypePullRequest:
+		cond = cond.And(builder.Eq{"`watch`.mode": WatchModeCustom}, builder.Eq{"`watch`.custom_pull_requests": true})
+	case WatchEventTypeRelease:
+		cond = cond.And(builder.Eq{"`watch`.mode": WatchModeCustom}, builder.Eq{"`watch`.custom_releases": true})
+	}
+
+	return builder.Or(builder.Eq{"`watch`.mode": WatchModeNormal}, builder.Eq{"`watch`.mode": WatchModeAuto}, cond)
+}
+
+// GetRepoWatchers returns range of users watching the given event in the given repository.
+func GetRepoWatchersEvent(repoID int64, event WatchEventType, opts db.ListOptions) ([]*user_model.User, error) {
+	sess := db.GetEngine(db.DefaultContext).Where("watch.repo_id=?", repoID).
+		Join("LEFT", "watch", "`user`.id=`watch`.user_id").
+		And(getRepoWatchEventCond(event))
+	if opts.Page > 0 {
+		sess = db.SetSessionPagination(sess, &opts)
+		users := make([]*user_model.User, 0, opts.PageSize)
+
+		return users, sess.Find(&users)
+	}
+
+	users := make([]*user_model.User, 0, 8)
+	return users, sess.Find(&users)
+}
+
+// GetRepoWatchersIDs returns IDs of watchers for a given repo ID and the givene Event
+// but avoids joining with `user` for performance reasons
+// User permissions must be verified elsewhere if required
+func GetRepoWatchersEventIDs(ctx context.Context, repoID int64, event WatchEventType) ([]int64, error) {
+	ids := make([]int64, 0, 64)
+	return ids, db.GetEngine(ctx).Table("watch").
+		Where("watch.repo_id=?", repoID).
+		And(getRepoWatchEventCond(event)).
+		Select("user_id").
+		Find(&ids)
 }
 
 // WatchIfAuto subscribes to repo if AutoWatchOnChanges is set

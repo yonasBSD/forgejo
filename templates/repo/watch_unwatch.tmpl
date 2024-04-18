@@ -12,3 +12,42 @@
 		</a>
 	</div>
 </form>
+
+{{if $.IsSigned}}
+						<div class="ui dropdown type jump item gt-mx-0">
+							{{svg "octicon-triangle-down"}}
+							<div class="menu short">
+								<a class="ui item" href="{{$.RepoLink}}/watch_mode/none">{{if $.RepoWatchData.Mode.IsWatchModeNone}}✓&nbsp;{{end}}Participating</a>
+								<a class="ui item" href="{{$.RepoLink}}/watch_mode/normal">{{if or $.RepoWatchData.Mode.IsWatchModeNormal $.RepoWatchData.Mode.IsWatchModeAuto}}✓&nbsp;{{end}}All</a>
+								<a class="ui item" href="{{$.RepoLink}}/watch_mode/dont">{{if $.RepoWatchData.Mode.IsWatchModeDont}}✓&nbsp;{{end}}None</a>
+								<div id="repo-watch-custom-button" class="ui">
+									{{if $.RepoWatchData.Mode.IsWatchModeCustom}}✓&nbsp;{{end}}Custom<br>
+									<form method="post" action="{{$.RepoLink}}/watch_custom">
+										<input type="hidden" name="redirect_url" value="{{$.Link}}">
+										{{$.CsrfTokenHtml}}
+
+										<div class="ui checkbox">
+											<input name="issues" type="checkbox" {{if $.RepoWatchData.CustomIssues}}checked{{end}}>
+											<label>Issues</label>
+										</div>
+
+										<div class="ui checkbox">
+											<input name="pull_requests" type="checkbox" {{if $.RepoWatchData.CustomPullRequests}}checked{{end}}>
+											<label>Pull Requests</label>
+										</div>
+
+										<div class="ui checkbox">
+											<input name="releases" type="checkbox" {{if $.RepoWatchData.CustomReleases}}checked{{end}}>
+											<label>Releases</label>
+										</div>
+
+										<br>
+
+										<input type="submit" class="ui button" value="Submit">
+									</form>
+								</div>
+							</div>
+						</div>
+					{{end}}
+
+
