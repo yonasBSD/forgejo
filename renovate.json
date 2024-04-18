@@ -6,6 +6,7 @@
     ":maintainLockFilesWeekly",
     "group:postcss",
     "group:linters",
+    "group:citation-js",
     "schedule:daily",
     "schedule:automergeDaily"
   ],
