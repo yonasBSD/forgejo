@@ -25,6 +25,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     * `process-description` to `processDescription`
     This allows for those endpoints to be scraped by services requiring prometheus style labels such as grafana-agent.
   * [Remove deprecated query condition in ListReleases](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a).
+  * [Remove EasyMDE from various areas](https://codeberg.org/forgejo/forgejo/pulls/2916). The legacy markdown editor was removed from various places such as comments. It is left in release editor and wiki editor because it has convinient features here.
   * [Include public repos in doer's dashboard for issue search](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e).
   * [Use restricted sanitizer for repository description](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d).
   * [Require MySQL 8.0, PostgreSQL 12, MSSQL 2012](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5).
@@ -1467,7 +1468,7 @@ This stable release contains security fixes.
 
 * Security fixes
 
-  * [An additional verification](https://codeberg.org/forgejo/forgejo/commit/a259a928a) was implemented to prevent [open redirects](https://en.wikipedia.org/wiki/Open_redirect). 
+  * [An additional verification](https://codeberg.org/forgejo/forgejo/commit/a259a928a) was implemented to prevent [open redirects](https://en.wikipedia.org/wiki/Open_redirect).
 
 * Bug fixes
 
