@@ -2,7 +2,6 @@ package actions
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/url"
 	"strconv"
 
@@ -11,6 +10,7 @@ import (
 	"code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/webhook"
 	context_module "code.gitea.io/gitea/services/context"
