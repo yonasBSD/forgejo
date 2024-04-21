@@ -569,7 +569,7 @@ func TestSignUpViaOAuthWithMissingNickname(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-(t, authSourcePayloadGitLabCustom(gitlabName))
+	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 
 	// The Goth User returned by the oauth2 integration is missing
