@@ -23,7 +23,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     * `graceful-lifecycle` to `gracefulLifecycle`
     * `process-type` to `processType`
     * `process-description` to `processDescription`
-    This allows for those endpoints to be scraped by services requiring prometheus style labels such as grafana-agent.
+    This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
   * [Remove deprecated query condition in ListReleases](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a).
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
   * [Include public repos in doer's dashboard for issue search](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e).
