@@ -569,7 +569,7 @@ func TestSignUpViaOAuthWithMissingNickname(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
@@ -613,7 +613,7 @@ func TestSignUpViaOAuthWithMissingUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
@@ -655,7 +655,7 @@ func TestSignUpViaOAuthWithNicknameAsUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
@@ -701,7 +701,7 @@ func TestSignUpViaOAuthWithUserIdAsUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
@@ -747,7 +747,7 @@ func TestSignUpViaOAuthWithEmailAsUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
@@ -793,7 +793,7 @@ func TestSignUpViaOAuthWithPreferredUsernameAsUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 	userGitLab := &user_model.User{
 		Name:        "gitlabuser",
