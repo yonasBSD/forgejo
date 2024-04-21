@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
