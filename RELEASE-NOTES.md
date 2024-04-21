@@ -36,7 +36,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     [I] Migration[286]: Add support for SHA256 git repositories
     [W] [Slow SQL Query] ALTER TABLE `commit_status` MODIFY COLUMN `context_hash` VARCHAR(64) [] - 3m41.647738396s
     [W] [Slow SQL Query] ALTER TABLE `comment` MODIFY COLUMN `commit_sha` VARCHAR(64) [] - 1m5.500234133s
-    [W] [Slow SQL Query] ALTER TABLE `release` MODIFY COLUMN `sha1` VARCHAR(64) [] - 22.06241145
+    [W] [Slow SQL Query] ALTER TABLE `release` MODIFY COLUMN `sha1` VARCHAR(64) [] - 22.06241145s
     ```
 * **Features and enhancements**
   * Repository administrators can [allow anyone to edit the wiki](https://forgejo.org/docs/v7.0/user/wiki/#activation-and-permissions) in the repository Settings. ([#2001](https://codeberg.org/forgejo/forgejo/pulls/2001))
