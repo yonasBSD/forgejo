@@ -36,7 +36,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
   * [The list of all repositories and the `New Issue` button are no longer available in the user dashboard](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e) for issues and pull requests.
 * **Migration warning**
-  * Large instances such as https://codeberg.org may experience slow migrations when the database is upgraded to support SHA-256 git repositories. It may show in the logs as follows:
+  * Large instances may experience slow migrations when the database is upgraded to support SHA-256 git repositories. For instance, here are the logs from a test migration of the https://codeberg.org production database:
     ```
     [I] Migration[286]: Add support for SHA256 git repositories
     [W] [Slow SQL Query] ALTER TABLE `commit_status` MODIFY COLUMN `context_hash` VARCHAR(64) [] - 3m41.647738396s
