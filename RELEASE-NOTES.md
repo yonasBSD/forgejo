@@ -26,7 +26,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
   * [Remove deprecated query condition in ListReleases](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a).
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
-  * [Include public repos in doer's dashboard for issue search](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e).
+  * [The New Issue button is no longer available in the user dashboard](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e).
   * [Use restricted sanitizer for repository description](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d).
   * [Require MySQL 8.0, PostgreSQL 12, MSSQL 2012](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5).
   * [Fix push mirror, wrong timestamp format](https://codeberg.org/forgejo/forgejo/commit/0ee7cbf725f45650136be45f8e0f74d395f73b5c).
