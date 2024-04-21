@@ -12,7 +12,7 @@ The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/bran
 $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/forgejo
 ```
-* **Breaking requiring manual updates:**
+* **Breaking changes requiring manual intervention:**
   * Labels used [by pprof endpoint](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#server-server) have been changed:
     * `graceful-lifecycle` to `gracefulLifecycle`
     * `process-type` to `processType`
@@ -22,7 +22,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * The repository description [imposes additional restrictions on what it contains](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d) to prevent abuse. You may use [the v7.0 test instance](https://v7.next.forgejo.org/) to check how it will be modified.
   * The `per_page` parameter is [no longer a synomym for `limit`](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a) in the [/repos/{owner}/{repo}/releases](https://code.forgejo.org/api/swagger/#/repository/repoListReleases) API endpoint.
   * The date format of the `created` and `last_update` fields of the [`/repos/{owner}/{repo}/push_mirrors`](https://code.forgejo.org/api/swagger/#/repository/repoListPushMirrors) and [/repos/{owner}/{repo}/push_mirrors](https://code.forgejo.org/api/swagger/#/repository/repoAddPushMirror) API endpoint changed [to be timestamps instead of numbers](https://codeberg.org/forgejo/forgejo/commit/0ee7cbf725f45650136be45f8e0f74d395f73b5c).
-* **Breaking UX or UI:**
+* **Breaking changes in the user interface:**
   Note that the modifications related to CSS, templates or assets (images, fonts, etc.) are not documented here.
   Although they can be extracted and modified, Forgejo does not provide any guarantee that such changes
   will be portable from one version to another (even a patch version). See also
