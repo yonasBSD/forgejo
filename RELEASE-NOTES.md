@@ -12,23 +12,24 @@ The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/bran
 $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/forgejo
 ```
-* **Breaking:**
+* **Breaking requiring manual updates:**
+  * Labels used [by pprof endpoint](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#server-server) have been changed:
+    * `graceful-lifecycle` to `gracefulLifecycle`
+    * `process-type` to `processType`
+    * `process-description` to `processDescription`
+    This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
+  * [Require MySQL 8.0 or PostgreSQL 12](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5).
+  * The repository description [imposes additional restrictions on what it contains](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d) to prevent abuse. You may use [the v7.0 test instance](https://v7.next.forgejo.org/) to check how it will be modified.
+* **Breaking UX or UI:**
   Note that the modifications related to CSS, templates or assets (images, fonts, etc.) are not documented here.
   Although they can be extracted and modified, Forgejo does not provide any guarantee that such changes
   will be portable from one version to another (even a patch version). See also
   [the developer documentation about interface customization](https://forgejo.org/docs/v1.21/developer/customization/).
   * [Update checker setting might change](https://codeberg.org/forgejo/forgejo/pulls/2925). The documentation was listing it as enabled by default, however, for a while it was disabled unless it was explicitly specified in the config or on the installation page. Instances migrated from Gitea also had it disabled due to different default value. Since then Forgejo got a privacy-friendly DNS-based update checking mechanism which is now being enabled by default unless explicitly specified [in the config](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#cron---check-for-new-forgejo-versions-cronupdate_checker).
   * Language statistics for repositories that use `linguist` attributes in `.gitattributes` *may* show different statistics than previously, because Forgejo recognizes more [linguist attributes](https://forgejo.org/docs/v7.0/user/language-detection/) now.
-  * Labels used [by pprof endpoint](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#server-server) have been changed:
-    * `graceful-lifecycle` to `gracefulLifecycle`
-    * `process-type` to `processType`
-    * `process-description` to `processDescription`
-    This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
   * [Remove deprecated query condition in ListReleases](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a).
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
   * [The New Issue button is no longer available in the user dashboard](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e).
-  * [Use restricted sanitizer for repository description](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d).
-  * [Require MySQL 8.0, PostgreSQL 12, MSSQL 2012](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5).
   * [Fix push mirror, wrong timestamp format](https://codeberg.org/forgejo/forgejo/commit/0ee7cbf725f45650136be45f8e0f74d395f73b5c).
 * **Migration warning**
   * Large instances such as https://codeberg.org may experience slow migrations when the database is upgraded to support SHA-256 git repositories. It may show in the logs as follows:
