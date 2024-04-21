@@ -389,7 +389,7 @@ func getUserName(gothUser *goth.User) (string, error) {
 	switch setting.OAuth2Client.Username {
 	case setting.OAuth2UsernamePreferredUsername:
 		username := gothUser.RawData["preferred_username"].(string)
-		if strings.containsAny(username, "@") {
+		if strings.Contains(username, "@") {
 			return user_model.NormalizeUserName(strings.Split(username, "@")[0])
 		}
 		return user_model.NormalizeUserName(username)
