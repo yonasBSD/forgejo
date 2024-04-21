@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
@@ -743,7 +744,7 @@ func TestSignUpViaOAuthWithPreferredUsernameAsUsername(t *testing.T) {
 
 	// OAuth2 authentication source GitLab
 	gitlabName := "gitlab"
-	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 	userGitLabUserID := "5678"
 
 	// The Goth User contains the nickname that'll be used as the Forgejo user's username
