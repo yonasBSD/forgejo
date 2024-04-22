@@ -15,7 +15,9 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/tests"
 
@@ -77,6 +79,19 @@ func TestAPIIssuesReactions(t *testing.T) {
 		assert.Equal(t, expectResponse[i].Created.Unix(), r.Created.Unix())
 		assert.Equal(t, expectResponse[i].User.ID, r.User.ID)
 	}
+
+	t.Run("paging", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.API.DefaultPagingNum, 1)()
+
+		req := NewRequest(t, "GET", urlStr).
+			AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var apiReactions []*api.Reaction
+		DecodeJSON(t, resp, &apiReactions)
+
+		assert.Len(t, apiReactions, 1)
+	})
 }
 
 func TestAPICommentReactions(t *testing.T) {
