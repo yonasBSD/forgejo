@@ -50,8 +50,8 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * Instance administrators can [assign custom flags to repositories](https://codeberg.org/forgejo/forgejo/pulls/2079). This is disabled by default, and currently requires custom templates to do anything useful with the flags. ([#2079](https://codeberg.org/forgejo/forgejo/pulls/2079) & [#2097](https://codeberg.org/forgejo/forgejo/pulls/2097))
   * Fallback for [basic repo search using git-grep](https://forgejo.org/docs/v7.0/user/code-search/)  when code indexer is disabled ([gitea#29998](https://github.com/go-gitea/gitea/pull/29998))
   * Repository administrators can disable forking instance-wide by setting the new `[repository].DISABLE_FORKS` setting. ([#2445](https://codeberg.org/forgejo/forgejo/pulls/2445))
-  * Render permalinks to files with a line range by a inline preview in all places where markup is allowed ([#2669](https://codeberg.org/forgejo/forgejo/pulls/2669))
-  * A user can now optionally set their preffered pronouns ([#1518](https://codeberg.org/forgejo/forgejo/pulls/1518)).
+  * Render permalinks to files with a line range by an inline preview in all places where markup is allowed ([#2669](https://codeberg.org/forgejo/forgejo/pulls/2669))
+  * A user can now optionally set their preferred pronouns ([#1518](https://codeberg.org/forgejo/forgejo/pulls/1518)).
   * [Always enable caches](https://codeberg.org/forgejo/forgejo/commit/e7cb8da2a8310ac167b6f613b283caa3316a7154).
   * Forgejo now recognizes more [linguist attributes](https://forgejo.org/docs/v7.0/user/language-detection/), making it possible to include documentation in the repository language statistics, for example. ([#2088](https://codeberg.org/forgejo/forgejo/pulls/2088))
   * When displaying the message to open a pull request from a recently pushed branch, the recently pushed branch now links to the appropriate branch. ([#2141](https://codeberg.org/forgejo/forgejo/pulls/2141))
@@ -143,7 +143,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Update allowed attachment types](https://codeberg.org/forgejo/forgejo/commit/04b79bb48b490644c46e58da46af4b62a40e5e03).
   * [Completely style the webkit autofill](https://codeberg.org/forgejo/forgejo/commit/9916f3ed64a715fb9a31a0fcad6452276e275615).
   * [Set user's 24h preference from their current OS locale](https://codeberg.org/forgejo/forgejo/commit/427ab550a6a35e7369bc1b33a188bb3030c32ec0).
-  * [Make wiki default branch name changable](https://codeberg.org/forgejo/forgejo/commit/7ea8993a0e342e7a30cb2da03216697b4819935a).
+  * [Make wiki default branch name changeable](https://codeberg.org/forgejo/forgejo/commit/7ea8993a0e342e7a30cb2da03216697b4819935a).
   * [Make admin pages wider because of left sidebar added and some tables become too narrow](https://codeberg.org/forgejo/forgejo/commit/145bebc829c03cbb078e518d7364d27bcf60d96c).
   * [Make PR form use toast to show error message](https://codeberg.org/forgejo/forgejo/commit/221a28436a080447f429fa2089d264e56f4980e2).
   * [Rename Action.GetDisplayName to GetActDisplayName](https://codeberg.org/forgejo/forgejo/commit/be9189eddc84e942710b16b1c8c54c10aad01b63).
@@ -263,7 +263,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [[I18N] Fix milestone sorting translation keys](https://codeberg.org/forgejo/forgejo/pulls/2644)
   * [[I18N] Use correct translation on closed milestones](https://codeberg.org/forgejo/forgejo/pulls/2957)
   * [[I18N] Use new translation key](https://codeberg.org/forgejo/forgejo/pulls/2760)
-  * [[PACKAGES] Delete redundant snap packaging receipe](https://codeberg.org/forgejo/forgejo/pulls/2693)
+  * [[PACKAGES] Delete redundant snap packaging recipe](https://codeberg.org/forgejo/forgejo/pulls/2693)
   * [[PACKAGES] Fix Alpine Registry packages with noarch not being found](https://codeberg.org/forgejo/forgejo/pulls/2285)
   * [[PACKAGES] Generate install if condition for Alpine](https://codeberg.org/forgejo/forgejo/pulls/2176)
   * [[PACKAGES] Packagist webhook: support all events](https://codeberg.org/forgejo/forgejo/pulls/2646)
@@ -385,7 +385,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Fix the wrong HTTP response status code for duplicate packages](https://codeberg.org/forgejo/forgejo/commit/5b6258a0b94737ec3db1ce418d0c933512a71f78).
   * [Don't run push mirrors for archived repos](https://codeberg.org/forgejo/forgejo/commit/f3ba3e922dde7d12999a90d6cee15805a56cc7ff).
   * [Support for grouping RPMs using paths](https://codeberg.org/forgejo/forgejo/commit/ba4d0b8ffbd78473273800f586ae8bde55cda6c5).
-  * [Fixes #27605: inline math blocks can't be preceeded/followed by alphanumerical characters](https://codeberg.org/forgejo/forgejo/commit/2adc3a45fbd60126c0eab66b9cdd177a63bd4704).
+  * [Fixes #27605: inline math blocks can't be preceded/followed by alphanumerical characters](https://codeberg.org/forgejo/forgejo/commit/2adc3a45fbd60126c0eab66b9cdd177a63bd4704).
   * [Fix GPG subkey verify](https://codeberg.org/forgejo/forgejo/commit/5a674dd02ed3ea2853afa02dc15dcdadba069a6e).
   * [Include encoding in signature payload](https://codeberg.org/forgejo/forgejo/commit/6925c0eee43980133896f9e4ee7e48e5751e9417).
   * [Fix milestoneID filter bug in issue list](https://codeberg.org/forgejo/forgejo/commit/0da787f23737d252e6c80aa1a1f665e09dba0ea9).
@@ -393,10 +393,10 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Fix incorrect locale Tr for gpg command](https://codeberg.org/forgejo/forgejo/commit/071d871dcf8dd8097dc0af6d4baf304a2fbbe4e2).
   * [Improve a11y document and dropdown item](https://codeberg.org/forgejo/forgejo/commit/1d4bf7e211db0866774fa3f6f563e15ffadac1f6).
   * [Determine fuzziness of bleve indexer by keyword length](https://codeberg.org/forgejo/forgejo/commit/ab5f0b7558229b3ab5c3946a51e58b4caae775b0).
-  * [Fix elipsis button not working if the last commit loading is deferred](https://codeberg.org/forgejo/forgejo/commit/1e29bccddbeb29eec3ceb507612851021ab4d60d).
+  * [Fix ellipsis button not working if the last commit loading is deferred](https://codeberg.org/forgejo/forgejo/commit/1e29bccddbeb29eec3ceb507612851021ab4d60d).
   * [Fix incorrect diff expander for deletion of last lines in a file](https://codeberg.org/forgejo/forgejo/commit/85bf170ff0d54471fe88903009a3fec4ef3e6e8c).
   * [Do not exceed display for the PR page buttons on smaller screens](https://codeberg.org/forgejo/forgejo/commit/e7297d423f566a383c8861c4aaee028606591038).
-  * [Move citiation button to proper place](https://codeberg.org/forgejo/forgejo/commit/eb4061babacfee2b72f4a33412530eb9f0de3b25).
+  * [Move citation button to proper place](https://codeberg.org/forgejo/forgejo/commit/eb4061babacfee2b72f4a33412530eb9f0de3b25).
   * [Expire artifacts before deleting them physically](https://codeberg.org/forgejo/forgejo/commit/7f64e4d2a3f20b7d7de6542de5e0856c643e821f).
   * [Fix can not select team reviewers when reviewers is empty](https://codeberg.org/forgejo/forgejo/commit/df439b6a983865ba559e517e5e93f5f1a53a97a0).
   * [Fix default avatar image size in PR diff page](https://codeberg.org/forgejo/forgejo/commit/3aed8ae03475a430c0dc8e33f42fa9269a4844bd).
@@ -409,7 +409,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Fix incorrect action duration time when rerun the job before executed once](https://codeberg.org/forgejo/forgejo/commit/07ba4d9f87cf21b7ce87158ae5651cae3bb35604).
   * [Fix missing mail reply address](https://codeberg.org/forgejo/forgejo/commit/3081e7e1536356346f73fb4a0d00101863b2cf05).
   * [Filter inactive auth sources](https://codeberg.org/forgejo/forgejo/commit/e378545f3083990eb36ff5d72477662d9787280d).
-  * [Refactor Find Sources and fix bug when view a user who belongs to an unactive auth source](https://codeberg.org/forgejo/forgejo/commit/1bf5527eac6b947010c8faf408f6747de2a2384f).
+  * [Refactor Find Sources and fix bug when view a user who belongs to an inactive auth source](https://codeberg.org/forgejo/forgejo/commit/1bf5527eac6b947010c8faf408f6747de2a2384f).
   * [Fix issue not showing on default board and add test](https://codeberg.org/forgejo/forgejo/commit/1eae2aadae0583ab092d6ed857bb727829aa52b7).
   * [Improve file history UI and fix URL escaping bug](https://codeberg.org/forgejo/forgejo/commit/d1527dac3d1e68caf5a6f54c08144e28256e5c47).
   * [Fix ldap admin privileges update bug](https://codeberg.org/forgejo/forgejo/commit/7ad31567cdc8206e0080b851a9b880729266b084).
@@ -427,8 +427,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Refactor dropzone](https://codeberg.org/forgejo/forgejo/commit/c1ac3e5891a49bedc5e54ed5811cb2c0e058c43c).
   * [When the title in the issue has a value, set the text cursor at the end of the text.](https://codeberg.org/forgejo/forgejo/commit/8c2559a72603e07fe682efddd698e1fc190b2728).
   * [Load citation JS only when needed](https://codeberg.org/forgejo/forgejo/commit/f2fc2dcfc9305a42242421c718ee3673bd1c851c).
-  * [Refactor markdown attention render](https://codeberg.org/forgejo/forgejo/commit/af0bb6e68a0812bf5bde980445d2d1870a5d47d0
-ec2201a3da5f18e55bfc0a54114ac935804f4ef8).
+  * [Refactor markdown attention render](https://codeberg.org/forgejo/forgejo/commit/ec2201a3da5f18e55bfc0a54114ac935804f4ef8).
   * [Light theme color enhancements](https://codeberg.org/forgejo/forgejo/commit/23e2ace77d1612cda09bc0d08690314e7321cca3).
   * [Dark theme color enhancements](https://codeberg.org/forgejo/forgejo/commit/704a59e59584041f95939e3d90260173906f946a).
   * [Refactor markup/csv: don't read all to memory](https://codeberg.org/forgejo/forgejo/commit/d413a8fcacc81b6f7039371408034c9c2fc6c15f).
