@@ -267,6 +267,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [[PACKAGES] Fix Alpine Registry packages with noarch not being found](https://codeberg.org/forgejo/forgejo/pulls/2285)
   * [[PACKAGES] Generate install if condition for Alpine](https://codeberg.org/forgejo/forgejo/pulls/2176)
   * [[PACKAGES] Packagist webhook: support all events](https://codeberg.org/forgejo/forgejo/pulls/2646)
+  * [[PACKAGES] Fix for PyPi Registry PEP 503 Compliance](https://codeberg.org/forgejo/forgejo/pulls/3197)
   * [[UI] Adjust the signed tag verification line](https://codeberg.org/forgejo/forgejo/pulls/2966)
   * [[UI] Better color for labels/counters](https://codeberg.org/forgejo/forgejo/pulls/2935)
   * [[UI] Better number for UserCards pagination](https://codeberg.org/forgejo/forgejo/pulls/2584)
