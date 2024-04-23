@@ -82,9 +82,9 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [[I18N] Improve English locale for admin settings](https://codeberg.org/forgejo/forgejo/pulls/2583)
   * [I18N] Add plural support: [1](https://codeberg.org/forgejo/forgejo/pulls/2614), [2](https://codeberg.org/forgejo/forgejo/pulls/2695), [3](https://codeberg.org/forgejo/forgejo/pulls/2954), [4](https://codeberg.org/forgejo/forgejo/pulls/3031)
   * [I18N] General improvements to English locale: [1](https://codeberg.org/forgejo/forgejo/pulls/2307), [2](https://codeberg.org/forgejo/forgejo/pulls/2437), [3](https://codeberg.org/forgejo/forgejo/pulls/2492), [4](https://codeberg.org/forgejo/forgejo/pulls/2610), [5](https://codeberg.org/forgejo/forgejo/pulls/2703), [6](https://codeberg.org/forgejo/forgejo/pulls/2941).
+  * [[I18N] Allow custom repo size format](https://codeberg.org/forgejo/forgejo/pulls/2974)
   * [[PACKAGES] nuget basic manifest download](https://codeberg.org/forgejo/forgejo/pulls/2222)
   * [[UI] Add label filters in organization issues dashboard](https://codeberg.org/forgejo/forgejo/pulls/2944)
-  * [[UI] Allow custom repo size format](https://codeberg.org/forgejo/forgejo/pulls/2974)
   * [[UI] Allow users to hide all "Add more units..." hints](https://codeberg.org/forgejo/forgejo/pulls/2533)
   * [[UI] Display tag name as title for a tag with no release [gitea]](https://codeberg.org/forgejo/forgejo/pulls/2547)
   * [[UI] Enable ambiguous character detection in configured contexts](https://codeberg.org/forgejo/forgejo/pulls/2427)
@@ -108,7 +108,6 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Log SQL queries when the database return error](https://codeberg.org/forgejo/forgejo/pulls/2140)
   * [New doctor check: fix-push-mirrors-without-git-remote](https://codeberg.org/forgejo/forgejo/pulls/1853)
   * [New route to view latest run of specific workflows](https://codeberg.org/forgejo/forgejo/pulls/2304)
-  * [Optionally allow anyone to edit Wikis](https://codeberg.org/forgejo/forgejo/pulls/2001)
   * [Check for Commit in opengraph](https://codeberg.org/forgejo/forgejo/pulls/2094)
   * [Check if commit is already present in target branch](https://codeberg.org/forgejo/forgejo/pulls/2450)
   * [Configure if protected branch rule should apply to admins](https://codeberg.org/forgejo/forgejo/pulls/2867)
