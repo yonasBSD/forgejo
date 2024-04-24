@@ -893,7 +893,7 @@ func issueIndexPatternProcessor(ctx *RenderContext, node *html.Node) {
 		} else {
 			// Path determines the type of link that will be rendered. It's unknown at this point whether
 			// the linked item is actually a PR or an issue. Luckily it's of no real consequence because
-			// Gitea will redirect on click as appropriate.
+			// Forgejo will redirect on click as appropriate.
 			path := "issues"
 			if ref.IsPull {
 				path = "pulls"
@@ -1056,44 +1056,52 @@ func comparePatternProcessor(ctx *RenderContext, node *html.Node) {
 }
 
 func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
-	if ctx.Metas == nil {
+	if ctx.Metas == nil || ctx.Metas["user"] == "" || ctx.Metas["repo"] == "" {
 		return
 	}
 	if DefaultProcessorHelper.GetRepoFileBlob == nil {
 		return
 	}
 
+	locale := translation.NewLocale("en-US")
+	if ctx.Ctx != nil {
+		ctxLocale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
+		if ok {
+			locale = ctxLocale
+		}
+	}
+
 	next := node.NextSibling
 	for node != nil && node != next {
-		locale := translation.NewLocale("en-US")
-		if ctx.Ctx != nil {
-			ctxLocale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
-			if ok {
-				locale = ctxLocale
+		previews := NewFilePreviews(ctx, node, locale)
+		if previews == nil {
+			node = node.NextSibling
+			continue
+		}
+
+		offset := 0
+		for _, preview := range previews {
+			previewNode := preview.CreateHTML(locale)
+
+			// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
+			before := node.Data[:(preview.start - offset)]
+			after := node.Data[(preview.end - offset):]
+			afterPrefix := "<p>"
+			offset = preview.end - len(afterPrefix)
+			node.Data = before
+			nextSibling := node.NextSibling
+			node.Parent.InsertBefore(&html.Node{
+				Type: html.RawNode,
+				Data: "</p>",
+			}, nextSibling)
+			node.Parent.InsertBefore(previewNode, nextSibling)
+			afterNode := &html.Node{
+				Type: html.RawNode,
+				Data: afterPrefix + after,
 			}
+			node.Parent.InsertBefore(afterNode, nextSibling)
+			node = afterNode
 		}
-
-		preview := NewFilePreview(ctx, node, locale)
-		if preview == nil {
-			return
-		}
-
-		previewNode := preview.CreateHTML(locale)
-
-		// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
-		before := node.Data[:preview.start]
-		after := node.Data[preview.end:]
-		node.Data = before
-		nextSibling := node.NextSibling
-		node.Parent.InsertBefore(&html.Node{
-			Type: html.RawNode,
-			Data: "</p>",
-		}, nextSibling)
-		node.Parent.InsertBefore(previewNode, nextSibling)
-		node.Parent.InsertBefore(&html.Node{
-			Type: html.RawNode,
-			Data: "<p>" + after,
-		}, nextSibling)
 
 		node = node.NextSibling
 	}

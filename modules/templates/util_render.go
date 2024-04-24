@@ -135,16 +135,9 @@ func RenderIssueTitle(ctx context.Context, text string, metas map[string]string)
 func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_model.Label) template.HTML {
 	var (
 		archivedCSSClass string
-		textColor        = "#111"
+		textColor        = util.ContrastColor(label.Color)
 		labelScope       = label.ExclusiveScope()
 	)
-	r, g, b := util.HexToRBGColor(label.Color)
-
-	// Determine if label text should be light or dark to be readable on background color
-	// this doesn't account for saturation or transparency
-	if util.UseLightTextOnBackground(r, g, b) {
-		textColor = "#eee"
-	}
 
 	description := emoji.ReplaceAliases(template.HTMLEscapeString(label.Description))
 
@@ -168,7 +161,7 @@ func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_m
 
 	// Make scope and item background colors slightly darker and lighter respectively.
 	// More contrast needed with higher luminance, empirically tweaked.
-	luminance := util.GetLuminance(r, g, b)
+	luminance := util.GetRelativeLuminance(label.Color)
 	contrast := 0.01 + luminance*0.03
 	// Ensure we add the same amount of contrast also near 0 and 1.
 	darken := contrast + math.Max(luminance+contrast-1.0, 0.0)
@@ -178,6 +171,7 @@ func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_m
 	lightenFactor := math.Min(luminance+lighten, 1.0) / math.Max(luminance, 1.0/255.0)
 
 	opacity := GetLabelOpacityByte(label.IsArchived())
+	r, g, b := util.HexToRBGColor(label.Color)
 	scopeBytes := []byte{
 		uint8(math.Min(math.Round(r*darkenFactor), 255)),
 		uint8(math.Min(math.Round(g*darkenFactor), 255)),
@@ -239,15 +233,20 @@ func RenderMarkdownToHtml(ctx context.Context, input string) template.HTML { //n
 	return output
 }
 
-func RenderLabels(ctx context.Context, locale translation.Locale, labels []*issues_model.Label, repoLink string) template.HTML {
+func RenderLabels(ctx context.Context, locale translation.Locale, labels []*issues_model.Label, repoLink string, isPull bool) template.HTML {
 	htmlCode := `<span class="labels-list">`
 	for _, label := range labels {
 		// Protect against nil value in labels - shouldn't happen but would cause a panic if so
 		if label == nil {
 			continue
 		}
-		htmlCode += fmt.Sprintf("<a href='%s/issues?labels=%d'>%s</a> ",
-			repoLink, label.ID, RenderLabel(ctx, locale, label))
+
+		issuesOrPull := "issues"
+		if isPull {
+			issuesOrPull = "pulls"
+		}
+		htmlCode += fmt.Sprintf("<a href='%s/%s?labels=%d'>%s</a> ",
+			repoLink, issuesOrPull, label.ID, RenderLabel(ctx, locale, label))
 	}
 	htmlCode += "</span>"
 	return template.HTML(htmlCode)

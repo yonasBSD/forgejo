@@ -15,23 +15,41 @@
     "helpers:pinGitHubActionDigests"
   ],
   "semanticCommits": "disabled",
+  "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "prConcurrentLimit": 5,
+  "internalChecksFilter": "strict",
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
-      "matchDepNames": ["go", "python", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "matchDepNames": [
+        "go",
+        "python",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
       "matchUpdateTypes": ["minor"],
       "dependencyDashboardApproval": true
     },
     {
       "description": "Require dashboard approval for some deps",
-      "matchDepNames": ["github.com/go-ap/activitypub"],
+      "matchDepNames": ["github.com/go-ap/activitypub", "bitnami/minio"],
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Schedule some deps less frequently",
+      "matchDepNames": ["github.com/google/pprof"],
+      "extends": ["schedule:quarterly"]
+    },
+    {
       "description": "Group golang packages",
-      "matchDepNames": ["go", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "matchDepNames": [
+        "go",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
       "groupName": "golang packages"
     },
     {
@@ -57,6 +75,16 @@
       "matchDepNames": ["actions/cascading-pr"],
       "matchManagers": ["github-actions"],
       "enabled": false
+    },
+    {
+      "description": "Automerge some packages when ci succeeds",
+      "extends": ["packages:linters"],
+      "matchDepNames": ["vitest"],
+      "automerge": true
+    }, {
+      "description": "Hold back on some package updates for a few days",
+      "matchDepNames": ["monaco-editor"],
+      "minimumReleaseAge": "30 days"
     }
   ],
   "customManagers": [
@@ -76,6 +104,14 @@
       "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
       "depNameTemplate": "node",
       "datasourceTemplate": "node-version"
+    },
+    {
+      "description": "Update deps inside Makefile",
+      "customType": "regex",
+      "fileMatch": ["^Makefile$"],
+      "matchStrings": [
+        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)\\s"
+      ]
     }
   ]
 }

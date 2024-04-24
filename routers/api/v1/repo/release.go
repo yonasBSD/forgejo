@@ -269,7 +269,7 @@ func CreateRelease(ctx *context.APIContext) {
 		rel.Publisher = ctx.Doer
 		rel.Target = form.Target
 
-		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, true); err != nil {
 			ctx.Error(http.StatusInternalServerError, "UpdateRelease", err)
 			return
 		}
@@ -346,7 +346,7 @@ func EditRelease(ctx *context.APIContext) {
 	if form.HideArchiveLinks != nil {
 		rel.HideArchiveLinks = *form.HideArchiveLinks
 	}
-	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, false); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateRelease", err)
 		return
 	}

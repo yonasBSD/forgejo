@@ -80,6 +80,11 @@ func newNotifyInput(repo *repo_model.Repository, doer *user_model.User, event we
 	}
 }
 
+func newNotifyInputForSchedules(repo *repo_model.Repository) *notifyInput {
+	// the doer here will be ignored as we force using action user when handling schedules
+	return newNotifyInput(repo, user_model.NewActionsUser(), webhook_module.HookEventSchedule)
+}
+
 func (input *notifyInput) WithDoer(doer *user_model.User) *notifyInput {
 	input.Doer = doer
 	return input
@@ -520,7 +525,7 @@ func handleSchedules(
 			RepoID:        input.Repo.ID,
 			OwnerID:       input.Repo.OwnerID,
 			WorkflowID:    dwf.EntryName,
-			TriggerUserID: input.Doer.ID,
+			TriggerUserID: user_model.ActionsUserID,
 			Ref:           input.Repo.DefaultBranch,
 			CommitSHA:     commit.ID.String(),
 			Event:         input.Event,
@@ -560,12 +565,9 @@ func DetectAndHandleSchedules(ctx context.Context, repo *repo_model.Repository) 
 	}
 
 	// We need a notifyInput to call handleSchedules
-	// Here we use the commit author as the Doer of the notifyInput
-	commitUser, err := user_model.GetUserByEmail(ctx, commit.Author.Email)
-	if err != nil {
-		return fmt.Errorf("get user by email: %w", err)
-	}
-	notifyInput := newNotifyInput(repo, commitUser, webhook_module.HookEventSchedule)
+	// if repo is a mirror, commit author maybe an external user,
+	// so we use action user as the Doer of the notifyInput
+	notifyInput := newNotifyInputForSchedules(repo)
 
 	return handleSchedules(ctx, scheduleWorkflows, commit, notifyInput, repo.DefaultBranch)
 }

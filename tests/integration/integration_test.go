@@ -184,8 +184,7 @@ func TestMain(m *testing.M) {
 	exitCode := m.Run()
 
 	if err := testlogger.WriterCloser.Reset(); err != nil {
-		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("testlogger.WriterCloser.Reset: error ignored: %v\n", err)
 	}
 
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
@@ -622,7 +621,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	schema, err := jsonschema.Compile(schemaFilePath)
 	assert.NoError(t, err)
 
-	var data interface{}
+	var data any
 	err = json.Unmarshal(resp.Body.Bytes(), &data)
 	assert.NoError(t, err)
 
