@@ -62,7 +62,7 @@ var migrations = []*Migration{
 	NewMigration("Add the `created` column to the `issue` table", forgejo_v1_22.AddCreatedToIssue),
 	// v12 -> v13
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
-	// v12 -> v13
+	// v13 -> v14
 	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
 }
 
