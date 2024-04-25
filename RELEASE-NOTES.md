@@ -10,6 +10,9 @@ This is a major release. It contains breaking changes that may require manual in
 
 * **Breaking changes:**
 
+* **Bug fixes:**
+  * Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use. ([#3430](https://codeberg.org/forgejo/forgejo/pulls/3430))
+
 In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v8.0.0...v7.0.0) included in this release.
 
 If you have any feedback or suggestions for Forgejo do not hold back, it is also your project.
@@ -26,7 +29,6 @@ In addition to the following notable bug fixes, you can browse the [full list of
 
 * **Bug fixes:**
   * The regression in the [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [is fixed](https://codeberg.org/forgejo/forgejo/issues/3399) and it is backward compatible.
-  * Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use. ([#3430](https://codeberg.org/forgejo/forgejo/pulls/3430))
   * Fixed an error 500 when visiting [the LFS settings]() at `/{owner}/{repo}/settings/lfs/find?oid=...`.
 
 ## 7.0.0
