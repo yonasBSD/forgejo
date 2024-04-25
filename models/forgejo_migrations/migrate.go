@@ -65,9 +65,7 @@ var migrations = []*Migration{
 	// v13 -> v14
 	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
 	// v14 -> v15
-	NewMigration("create federated_host table", forgejo_v1_22.AddFederatedHost),
-	// v15 -> v16
-	NewMigration("create federated_user table", forgejo_v1_22.AddFederatedUser),
+	NewMigration("Add federated_host and federated_user table", forgejo_v1_22.AddFederatedHostAndUser),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
