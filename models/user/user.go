@@ -132,6 +132,9 @@ type User struct {
 	AvatarEmail     string `xorm:"NOT NULL"`
 	UseCustomAvatar bool
 
+	// For federation
+	NormalizedFederatedUri string
+
 	// Counters
 	NumFollowers int
 	NumFollowing int `xorm:"NOT NULL DEFAULT 0"`
