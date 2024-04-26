@@ -45,7 +45,11 @@ type SearchUserOptions struct {
 
 func (opts *SearchUserOptions) toSearchQueryBase(ctx context.Context) *xorm.Session {
 	var cond builder.Cond
-	cond = builder.Eq{"type": opts.Type}
+	if opts.Type == UserTypeIndividual {
+		cond = builder.In("type", UserTypeIndividual, UserTypeRemoteUser)
+	} else {
+		cond = builder.Eq{"type": opts.Type}
+	}
 	if opts.IncludeReserved {
 		if opts.Type == UserTypeIndividual {
 			cond = cond.Or(builder.Eq{"type": UserTypeUserReserved}).Or(
@@ -140,7 +144,7 @@ func SearchUsers(ctx context.Context, opts *SearchUserOptions) (users []*User, _
 
 	sessQuery := opts.toSearchQueryBase(ctx).OrderBy(opts.OrderBy.String())
 	defer sessQuery.Close()
-	if opts.Page != 0 {
+	if opts.PageSize > 0 {
 		sessQuery = db.SetSessionPagination(sessQuery, opts)
 	}
 

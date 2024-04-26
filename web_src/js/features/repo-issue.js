@@ -449,12 +449,10 @@ export function initRepoPullRequestReview() {
           offset += $('.diff-detail-box').outerHeight() + $(diffHeader).outerHeight();
         }
 
-        document.getElementById(`show-outdated-${id}`).classList.add('tw-hidden');
-        document.getElementById(`code-comments-${id}`).classList.remove('tw-hidden');
-        document.getElementById(`code-preview-${id}`).classList.remove('tw-hidden');
-        document.getElementById(`hide-outdated-${id}`).classList.remove('tw-hidden');
+        hideElem(`#show-outdated-${id}`);
+        showElem(`#code-comments-${id}, #code-preview-${id}, #hide-outdated-${id}`);
         // if the comment box is folded, expand it
-        if (ancestorDiffBox.getAttribute('data-folded') === 'true') {
+        if (ancestorDiffBox?.getAttribute('data-folded') === 'true') {
           setFileFolding(ancestorDiffBox, ancestorDiffBox.querySelector('.fold-file'), false);
         }
 
@@ -585,12 +583,13 @@ export function initRepoIssueWipToggle() {
     e.preventDefault();
     const toggleWip = e.currentTarget.closest('.toggle-wip');
     const title = toggleWip.getAttribute('data-title');
-    const wipPrefix = toggleWip.getAttribute('data-wip-prefix');
+    const wipPrefixes = JSON.parse(toggleWip.getAttribute('data-wip-prefixes'));
     const updateUrl = toggleWip.getAttribute('data-update-url');
+    const prefix = wipPrefixes.find((prefix) => title.startsWith(prefix));
 
     try {
       const params = new URLSearchParams();
-      params.append('title', title?.startsWith(wipPrefix) ? title.slice(wipPrefix.length).trim() : `${wipPrefix.trim()} ${title}`);
+      params.append('title', prefix !== undefined ? title.slice(prefix.length).trim() : `${wipPrefixes[0].trim()} ${title}`);
 
       const response = await POST(updateUrl, {data: params});
       if (!response.ok) {

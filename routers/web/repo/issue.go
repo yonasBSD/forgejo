@@ -2174,7 +2174,7 @@ func GetIssueInfo(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToIssue(ctx, issue))
+	ctx.JSON(http.StatusOK, convert.ToIssue(ctx, ctx.Doer, issue))
 }
 
 // UpdateIssueTitle change issue's title
@@ -2708,7 +2708,7 @@ func SearchIssues(ctx *context.Context) {
 	}
 
 	ctx.SetTotalCountHeader(total)
-	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, issues))
+	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, ctx.Doer, issues))
 }
 
 func getUserIDForFilter(ctx *context.Context, queryName string) int64 {
@@ -2878,7 +2878,7 @@ func ListIssues(ctx *context.Context) {
 	}
 
 	ctx.SetTotalCountHeader(total)
-	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, issues))
+	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, ctx.Doer, issues))
 }
 
 func BatchDeleteIssues(ctx *context.Context) {
@@ -3160,12 +3160,6 @@ func UpdateCommentContent(ctx *context.Context) {
 
 	oldContent := comment.Content
 	comment.Content = ctx.FormString("content")
-	if len(comment.Content) == 0 {
-		ctx.JSON(http.StatusOK, map[string]any{
-			"content": "",
-		})
-		return
-	}
 	if err = issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
 		ctx.ServerError("UpdateComment", err)
 		return

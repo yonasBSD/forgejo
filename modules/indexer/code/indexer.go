@@ -120,9 +120,12 @@ func Init() {
 	case "bleve", "elasticsearch":
 		handler := func(items ...*internal.IndexerData) (unhandled []*internal.IndexerData) {
 			indexer := *globalIndexer.Load()
+			// make it a process to allow for cancellation (especially during integration tests where no global shutdown happens)
+			batchCtx, _, finished := process.GetManager().AddContext(ctx, "CodeIndexer batch")
+			defer finished()
 			for _, indexerData := range items {
 				log.Trace("IndexerData Process Repo: %d", indexerData.RepoID)
-				if err := index(ctx, indexer, indexerData.RepoID); err != nil {
+				if err := index(batchCtx, indexer, indexerData.RepoID); err != nil {
 					unhandled = append(unhandled, indexerData)
 					if !setting.IsInTesting {
 						log.Error("Codes indexer handler: index error for repo %v: %v", indexerData.RepoID, err)
@@ -155,7 +158,7 @@ func Init() {
 				if err := recover(); err != nil {
 					log.Error("PANIC whilst initializing repository indexer: %v\nStacktrace: %s", err, log.Stack(2))
 					log.Error("The indexer files are likely corrupted and may need to be deleted")
-					log.Error("You can completely remove the \"%s\" directory to make Gitea recreate the indexes", setting.Indexer.RepoPath)
+					log.Error("You can completely remove the \"%s\" directory to make Forgejo recreate the indexes", setting.Indexer.RepoPath)
 				}
 			}()
 
@@ -173,17 +176,11 @@ func Init() {
 				if err := recover(); err != nil {
 					log.Error("PANIC whilst initializing repository indexer: %v\nStacktrace: %s", err, log.Stack(2))
 					log.Error("The indexer files are likely corrupted and may need to be deleted")
-					log.Error("You can completely remove the \"%s\" index to make Gitea recreate the indexes", setting.Indexer.RepoConnStr)
+					log.Error("You can completely remove the \"%s\" index to make Forgejo recreate the indexes", setting.Indexer.RepoConnStr)
 				}
 			}()
 
 			rIndexer = elasticsearch.NewIndexer(setting.Indexer.RepoConnStr, setting.Indexer.RepoIndexerName)
-			if err != nil {
-				cancel()
-				(*globalIndexer.Load()).Close()
-				close(waitChannel)
-				log.Fatal("PID: %d Unable to create the elasticsearch Repository Indexer connstr: %s Error: %v", os.Getpid(), setting.Indexer.RepoConnStr, err)
-			}
 			existed, err = rIndexer.Init(ctx)
 			if err != nil {
 				cancel()

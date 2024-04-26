@@ -231,17 +231,18 @@ func CreateRelease(ctx *context.APIContext) {
 			form.Target = ctx.Repo.Repository.DefaultBranch
 		}
 		rel = &repo_model.Release{
-			RepoID:       ctx.Repo.Repository.ID,
-			PublisherID:  ctx.Doer.ID,
-			Publisher:    ctx.Doer,
-			TagName:      form.TagName,
-			Target:       form.Target,
-			Title:        form.Title,
-			Note:         form.Note,
-			IsDraft:      form.IsDraft,
-			IsPrerelease: form.IsPrerelease,
-			IsTag:        false,
-			Repo:         ctx.Repo.Repository,
+			RepoID:           ctx.Repo.Repository.ID,
+			PublisherID:      ctx.Doer.ID,
+			Publisher:        ctx.Doer,
+			TagName:          form.TagName,
+			Target:           form.Target,
+			Title:            form.Title,
+			Note:             form.Note,
+			IsDraft:          form.IsDraft,
+			IsPrerelease:     form.IsPrerelease,
+			HideArchiveLinks: form.HideArchiveLinks,
+			IsTag:            false,
+			Repo:             ctx.Repo.Repository,
 		}
 		if err := release_service.CreateRelease(ctx.Repo.GitRepo, rel, nil, ""); err != nil {
 			if repo_model.IsErrReleaseAlreadyExist(err) {
@@ -261,13 +262,14 @@ func CreateRelease(ctx *context.APIContext) {
 		rel.Note = form.Note
 		rel.IsDraft = form.IsDraft
 		rel.IsPrerelease = form.IsPrerelease
+		rel.HideArchiveLinks = form.HideArchiveLinks
 		rel.PublisherID = ctx.Doer.ID
 		rel.IsTag = false
 		rel.Repo = ctx.Repo.Repository
 		rel.Publisher = ctx.Doer
 		rel.Target = form.Target
 
-		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+		if err = release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, true); err != nil {
 			ctx.Error(http.StatusInternalServerError, "UpdateRelease", err)
 			return
 		}
@@ -341,7 +343,10 @@ func EditRelease(ctx *context.APIContext) {
 	if form.IsPrerelease != nil {
 		rel.IsPrerelease = *form.IsPrerelease
 	}
-	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil); err != nil {
+	if form.HideArchiveLinks != nil {
+		rel.HideArchiveLinks = *form.HideArchiveLinks
+	}
+	if err := release_service.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, nil, nil, nil, false); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateRelease", err)
 		return
 	}

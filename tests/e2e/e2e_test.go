@@ -60,8 +60,7 @@ func TestMain(m *testing.M) {
 	exitVal := m.Run()
 
 	if err := testlogger.WriterCloser.Reset(); err != nil {
-		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("testlogger.WriterCloser.Reset: error ignored: %v\n", err)
 	}
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)
@@ -91,6 +90,9 @@ func TestE2e(t *testing.T) {
 	// To update snapshot outputs
 	if _, set := os.LookupEnv("ACCEPT_VISUAL"); set {
 		runArgs = append(runArgs, "--update-snapshots")
+	}
+	if project := os.Getenv("PLAYWRIGHT_PROJECT"); project != "" {
+		runArgs = append(runArgs, "--project="+project)
 	}
 
 	// Create new test for each input file
