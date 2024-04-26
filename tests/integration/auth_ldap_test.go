@@ -220,6 +220,21 @@ func TestLDAPAuthChange(t *testing.T) {
 	assert.Equal(t, host, getLDAPServerHost())
 	binddn, _ = doc.Find(`input[name="bind_dn"]`).Attr("value")
 	assert.Equal(t, "uid=gitea,ou=service,dc=planetexpress,dc=com", binddn)
+	domainname, _ := doc.Find(`input[name="default_domain_name"]`).Attr("value")
+	assert.Equal(t, "", domainname)
+
+	req = NewRequestWithValues(t, "POST", href, buildAuthSourceLDAPPayload(csrf, "", "", "test.org", "", "", "off"))
+	session.MakeRequest(t, req, http.StatusSeeOther)
+
+	req = NewRequest(t, "GET", href)
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	doc = NewHTMLParser(t, resp.Body)
+	host, _ = doc.Find(`input[name="host"]`).Attr("value")
+	assert.Equal(t, host, getLDAPServerHost())
+	binddn, _ = doc.Find(`input[name="bind_dn"]`).Attr("value")
+	assert.Equal(t, "uid=gitea,ou=service,dc=planetexpress,dc=com", binddn)
+	domainname, _ = doc.Find(`input[name="default_domain_name"]`).Attr("value")
+	assert.Equal(t, "test.org", domainname)
 }
 
 func TestLDAPUserSync(t *testing.T) {
