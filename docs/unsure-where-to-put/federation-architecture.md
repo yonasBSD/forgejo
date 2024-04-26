@@ -81,16 +81,17 @@ classDiagram
   namespace user {
     class User {
       <<Aggregate Root>>
-      ID        int64
-      LowerName string
-      Name      string
-      Email     string
-      Passwd    string
-      LoginName   string
-      Type        UserType
-      IsActive bool
-      IsAdmin bool
-      Validate() []string
+      ID                     int64
+      LowerName              string
+      Name                   string
+      Email                  string
+      Passwd                 string
+      LoginName              string
+      Type                   UserType
+      IsActive               bool
+      IsAdmin                bool
+      NormalizedFederatedUri string
+      Validate()             []string
     }
 
     class FederatedUser {
