@@ -112,11 +112,15 @@ func getLDAPServerPort() string {
 	return port
 }
 
-func buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, groupFilter, groupTeamMap, groupTeamMapRemoval string) map[string]string {
+func buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, mailKeyAttribute, defaultDomainName, groupFilter, groupTeamMap, groupTeamMapRemoval string) map[string]string {
 	// Modify user filter to test group filter explicitly
 	userFilter := "(&(objectClass=inetOrgPerson)(memberOf=cn=git,ou=people,dc=planetexpress,dc=com)(uid=%s))"
 	if groupFilter != "" {
 		userFilter = "(&(objectClass=inetOrgPerson)(uid=%s))"
+	}
+
+	if len(mailKeyAttribute) == 0 {
+		mailKeyAttribute = "mail"
 	}
 
 	return map[string]string{
@@ -134,8 +138,9 @@ func buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, groupFilter, groupTeamMap
 		"attribute_username":       "uid",
 		"attribute_name":           "givenName",
 		"attribute_surname":        "sn",
-		"attribute_mail":           "mail",
+		"attribute_mail":           mailKeyAttribute,
 		"attribute_ssh_public_key": sshKeyAttribute,
+		"default_domain_name":      defaultDomainName,
 		"is_sync_enabled":          "on",
 		"is_active":                "on",
 		"groups_enabled":           "on",
@@ -148,7 +153,7 @@ func buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, groupFilter, groupTeamMap
 	}
 }
 
-func addAuthSourceLDAP(t *testing.T, sshKeyAttribute, groupFilter string, groupMapParams ...string) {
+func addAuthSourceLDAP(t *testing.T, sshKeyAttribute, mailKeyAttribute, defaultDomainName, groupFilter string, groupMapParams ...string) {
 	groupTeamMapRemoval := "off"
 	groupTeamMap := ""
 	if len(groupMapParams) == 2 {
@@ -157,7 +162,7 @@ func addAuthSourceLDAP(t *testing.T, sshKeyAttribute, groupFilter string, groupM
 	}
 	session := loginUser(t, "user1")
 	csrf := GetCSRF(t, session, "/admin/auths/new")
-	req := NewRequestWithValues(t, "POST", "/admin/auths/new", buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, groupFilter, groupTeamMap, groupTeamMapRemoval))
+	req := NewRequestWithValues(t, "POST", "/admin/auths/new", buildAuthSourceLDAPPayload(csrf, sshKeyAttribute, mailKeyAttribute, defaultDomainName, groupFilter, groupTeamMap, groupTeamMapRemoval))
 	session.MakeRequest(t, req, http.StatusSeeOther)
 }
 
@@ -167,7 +172,7 @@ func TestLDAPUserSignin(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "")
+	addAuthSourceLDAP(t, "", "", "", "")
 
 	u := gitLDAPUsers[0]
 
@@ -184,7 +189,7 @@ func TestLDAPUserSignin(t *testing.T) {
 
 func TestLDAPAuthChange(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "")
+	addAuthSourceLDAP(t, "", "", "", "")
 
 	session := loginUser(t, "user1")
 	req := NewRequest(t, "GET", "/admin/auths")
@@ -205,7 +210,7 @@ func TestLDAPAuthChange(t *testing.T) {
 	binddn, _ := doc.Find(`input[name="bind_dn"]`).Attr("value")
 	assert.Equal(t, "uid=gitea,ou=service,dc=planetexpress,dc=com", binddn)
 
-	req = NewRequestWithValues(t, "POST", href, buildAuthSourceLDAPPayload(csrf, "", "", "", "off"))
+	req = NewRequestWithValues(t, "POST", href, buildAuthSourceLDAPPayload(csrf, "", "", "", "", "", "off"))
 	session.MakeRequest(t, req, http.StatusSeeOther)
 
 	req = NewRequest(t, "GET", href)
@@ -223,7 +228,7 @@ func TestLDAPUserSync(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "")
+	addAuthSourceLDAP(t, "", "", "", "")
 	auth.SyncExternalUsers(context.Background(), true)
 
 	// Check if users exists
@@ -252,7 +257,7 @@ func TestLDAPUserSyncWithEmptyUsernameAttribute(t *testing.T) {
 
 	session := loginUser(t, "user1")
 	csrf := GetCSRF(t, session, "/admin/auths/new")
-	payload := buildAuthSourceLDAPPayload(csrf, "", "", "", "")
+	payload := buildAuthSourceLDAPPayload(csrf, "", "", "", "", "", "")
 	payload["attribute_username"] = ""
 	req := NewRequestWithValues(t, "POST", "/admin/auths/new", payload)
 	session.MakeRequest(t, req, http.StatusSeeOther)
@@ -300,7 +305,7 @@ func TestLDAPUserSyncWithGroupFilter(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "(cn=git)")
+	addAuthSourceLDAP(t, "", "", "", "(cn=git)")
 
 	// Assert a user not a member of the LDAP group "cn=git" cannot login
 	// This test may look like TestLDAPUserSigninFailed but it is not.
@@ -359,7 +364,7 @@ func TestLDAPUserSigninFailed(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "")
+	addAuthSourceLDAP(t, "", "", "", "")
 
 	u := otherLDAPUsers[0]
 	testLoginFailed(t, u.UserName, u.Password, translation.NewLocale("en-US").TrString("form.username_password_incorrect"))
@@ -371,7 +376,7 @@ func TestLDAPUserSSHKeySync(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "sshPublicKey", "")
+	addAuthSourceLDAP(t, "sshPublicKey", "", "", "")
 
 	auth.SyncExternalUsers(context.Background(), true)
 
@@ -404,7 +409,7 @@ func TestLDAPGroupTeamSyncAddMember(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "", "on", `{"cn=ship_crew,ou=people,dc=planetexpress,dc=com":{"org26": ["team11"]},"cn=admin_staff,ou=people,dc=planetexpress,dc=com": {"non-existent": ["non-existent"]}}`)
+	addAuthSourceLDAP(t, "", "", "", "", "on", `{"cn=ship_crew,ou=people,dc=planetexpress,dc=com":{"org26": ["team11"]},"cn=admin_staff,ou=people,dc=planetexpress,dc=com": {"non-existent": ["non-existent"]}}`)
 	org, err := organization.GetOrgByName(db.DefaultContext, "org26")
 	assert.NoError(t, err)
 	team, err := organization.GetTeam(db.DefaultContext, org.ID, "team11")
@@ -449,7 +454,7 @@ func TestLDAPGroupTeamSyncRemoveMember(t *testing.T) {
 		return
 	}
 	defer tests.PrepareTestEnv(t)()
-	addAuthSourceLDAP(t, "", "", "on", `{"cn=dispatch,ou=people,dc=planetexpress,dc=com": {"org26": ["team11"]}}`)
+	addAuthSourceLDAP(t, "", "", "", "", "on", `{"cn=dispatch,ou=people,dc=planetexpress,dc=com": {"org26": ["team11"]}}`)
 	org, err := organization.GetOrgByName(db.DefaultContext, "org26")
 	assert.NoError(t, err)
 	team, err := organization.GetTeam(db.DefaultContext, org.ID, "team11")
@@ -487,6 +492,58 @@ func TestLDAPPreventInvalidGroupTeamMap(t *testing.T) {
 
 	session := loginUser(t, "user1")
 	csrf := GetCSRF(t, session, "/admin/auths/new")
-	req := NewRequestWithValues(t, "POST", "/admin/auths/new", buildAuthSourceLDAPPayload(csrf, "", "", `{"NOT_A_VALID_JSON"["MISSING_DOUBLE_POINT"]}`, "off"))
+	req := NewRequestWithValues(t, "POST", "/admin/auths/new", buildAuthSourceLDAPPayload(csrf, "", "", "", "", `{"NOT_A_VALID_JSON"["MISSING_DOUBLE_POINT"]}`, "off"))
 	session.MakeRequest(t, req, http.StatusOK) // StatusOK = failed, StatusSeeOther = ok
+}
+
+func TestLDAPUserSyncInvalidMail(t *testing.T) {
+	if skipLDAPTests() {
+		t.Skip()
+		return
+	}
+	defer tests.PrepareTestEnv(t)()
+	addAuthSourceLDAP(t, "", "nonexisting", "", "")
+	auth.SyncExternalUsers(context.Background(), true)
+
+	// Check if users exists
+	for _, gitLDAPUser := range gitLDAPUsers {
+		dbUser, err := user_model.GetUserByName(db.DefaultContext, gitLDAPUser.UserName)
+		assert.NoError(t, err)
+		assert.Equal(t, gitLDAPUser.UserName, dbUser.Name)
+		assert.Equal(t, gitLDAPUser.UserName+"@localhost.local", dbUser.Email)
+		assert.Equal(t, gitLDAPUser.IsAdmin, dbUser.IsAdmin)
+		assert.Equal(t, gitLDAPUser.IsRestricted, dbUser.IsRestricted)
+	}
+
+	// Check if no users exist
+	for _, otherLDAPUser := range otherLDAPUsers {
+		_, err := user_model.GetUserByName(db.DefaultContext, otherLDAPUser.UserName)
+		assert.True(t, user_model.IsErrUserNotExist(err))
+	}
+}
+
+func TestLDAPUserSyncInvalidMailDefaultDomain(t *testing.T) {
+	if skipLDAPTests() {
+		t.Skip()
+		return
+	}
+	defer tests.PrepareTestEnv(t)()
+	addAuthSourceLDAP(t, "", "nonexisting", "test.org", "")
+	auth.SyncExternalUsers(context.Background(), true)
+
+	// Check if users exists
+	for _, gitLDAPUser := range gitLDAPUsers {
+		dbUser, err := user_model.GetUserByName(db.DefaultContext, gitLDAPUser.UserName)
+		assert.NoError(t, err)
+		assert.Equal(t, gitLDAPUser.UserName, dbUser.Name)
+		assert.Equal(t, gitLDAPUser.UserName+"@test.org", dbUser.Email)
+		assert.Equal(t, gitLDAPUser.IsAdmin, dbUser.IsAdmin)
+		assert.Equal(t, gitLDAPUser.IsRestricted, dbUser.IsRestricted)
+	}
+
+	// Check if no users exist
+	for _, otherLDAPUser := range otherLDAPUsers {
+		_, err := user_model.GetUserByName(db.DefaultContext, otherLDAPUser.UserName)
+		assert.True(t, user_model.IsErrUserNotExist(err))
+	}
 }
