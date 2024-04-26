@@ -9,6 +9,8 @@ While implementing federation in forgejo we introduced some conncepts from Domai
 
 Objects in forgefed package reflect Objects from ap or f3 lib but add some Forgejo specific enhancements like more specific validation.
 
+## Federation Model
+
 
 ```mermaid
 classDiagram
@@ -126,3 +128,20 @@ classDiagram
   Repository "1" *-- "n" FollowingRepository: FollowingRepository.RepositoryID
   FollowingRepository -- FederationHost
 ```
+
+## Normalized URI used as ID
+
+In order to use URIs as ID we've to normalize URIs.
+
+A normalized user URI looks like: `https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1`
+
+In order to normalize URIs we care:
+
+1. Case (all to lower case): `https://federated-REPO.prod.meissa.de/api/v1/activitypub/user-id/1`
+2. No relative path: `https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/../user-id/1`
+3. No parameters: `https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1?some-parameters=1`
+4. No Webfinger: `https://user1@federated-repo.prod.meissa.de` (with following redirects)
+5. No default api: `https://federated-repo.prod.meissa.de/api/activitypub/user-id/1`
+6. No autorization: `https://user:password@federated-repo.prod.meissa.de/api/v1/activitypub/user-id/1`
+7. No default ports: `https://federated-repo.prod.meissa.de:443/api/v1/activitypub/user-id/1`
+8. Accept non default ports: `http://localhost:3000/api/v1/activitypub/user-id/1`
