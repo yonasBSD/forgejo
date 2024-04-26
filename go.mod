@@ -93,6 +93,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ulikunitz/xz v0.5.11
 	github.com/urfave/cli/v2 v2.27.1
+	github.com/valyala/fastjson v1.6.4
 	github.com/xanzy/go-gitlab v0.96.0
 	github.com/yohcop/openid-go v1.0.1
 	github.com/yuin/goldmark v1.6.0
