@@ -773,6 +773,24 @@ func GetRepositoryByName(ctx context.Context, ownerID int64, name string) (*Repo
 	return repo, err
 }
 
+// GetFirstRepositoryByNames returns the repository first-matched given names under user if exists.
+func GetFirstRepositoryByNames(ctx context.Context, ownerID int64, names ...string) (*Repository, error) {
+	for _, name := range names {
+		repo, err := GetRepositoryByName(ctx, ownerID, name)
+		if err != nil {
+			if IsErrRepoNotExist(err) {
+				continue
+			}
+
+			return nil, err
+		}
+
+		return repo, nil
+	}
+
+	return nil, ErrRepoNotExist{0, ownerID, "", strings.Join(names, "|")}
+}
+
 // getRepositoryURLPathSegments returns segments (owner, reponame) extracted from a url
 func getRepositoryURLPathSegments(repoURL string) []string {
 	if strings.HasPrefix(repoURL, setting.AppURL) {

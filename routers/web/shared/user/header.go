@@ -90,7 +90,16 @@ func PrepareContextForProfileBigAvatar(ctx *context.Context) {
 }
 
 func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profileDbRepo *repo_model.Repository, profileGitRepo *git.Repository, profileReadmeBlob *git.Blob, profileClose func()) {
-	profileDbRepo, err := repo_model.GetRepositoryByName(ctx, ctx.ContextUser.ID, ".profile")
+	var repoNames []string
+
+	// GitHub compatibility
+	if ctx.ContextUser.IsOrganization() {
+		repoNames = []string{".profile", ".forgejo", ".github"}
+	} else {
+		repoNames = []string{".profile", ctx.ContextUser.Name}
+	}
+
+	profileDbRepo, err := repo_model.GetFirstRepositoryByNames(ctx, ctx.ContextUser.ID, repoNames...)
 	if err == nil {
 		perm, err := access_model.GetUserRepoPermission(ctx, profileDbRepo, doer)
 		if err == nil && !profileDbRepo.IsEmpty && perm.CanRead(unit.TypeCode) {
@@ -107,6 +116,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 	} else if !repo_model.IsErrRepoNotExist(err) {
 		log.Error("FindUserProfileReadme failed to GetRepositoryByName: %v", err)
 	}
+
 	return profileDbRepo, profileGitRepo, profileReadmeBlob, func() {
 		if profileGitRepo != nil {
 			_ = profileGitRepo.Close()
