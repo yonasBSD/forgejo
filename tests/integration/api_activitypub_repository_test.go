@@ -35,7 +35,22 @@ func TestActivityPubRepository(t *testing.T) {
 		err := repository.UnmarshalJSON(body)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "", repository.Name)
-		assert.Equal(t, fmt.Sprintf("activitypub/repository-id/%v$", repository.GetID().String()), repository.ID)
+		assert.Regexp(t, fmt.Sprintf("activitypub/repository-id/%v$", repositoryID), repository.GetID().String())
+	})
+}
+
+func TestActivityPubMissingRepository(t *testing.T) {
+	setting.Federation.Enabled = true
+	testWebRoutes = routers.NormalRoutes()
+	defer func() {
+		setting.Federation.Enabled = false
+		testWebRoutes = routers.NormalRoutes()
+	}()
+
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		repositoryID := 9999999
+		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/activitypub/repository-id/%v", repositoryID))
+		resp := MakeRequest(t, req, http.StatusNotFound)
+		assert.Contains(t, resp.Body.String(), "repository does not exist")
 	})
 }

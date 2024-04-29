@@ -778,7 +778,6 @@ func Routes() *web.Route {
 				m.Group("/repository-id/{repository-id}", func() {
 					m.Get("", activitypub.Repository)
 					m.Post("/inbox",
-						// TODO: bind ativities here
 						bind(forgefed.ForgeLike{}),
 						// TODO: activitypub.ReqHTTPSignature(),
 						activitypub.RepositoryInbox)
