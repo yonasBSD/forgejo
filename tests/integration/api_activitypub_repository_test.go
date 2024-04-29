@@ -6,10 +6,14 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"code.gitea.io/gitea/models/db"
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers"
 
@@ -52,5 +56,44 @@ func TestActivityPubMissingRepository(t *testing.T) {
 		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/activitypub/repository-id/%v", repositoryID))
 		resp := MakeRequest(t, req, http.StatusNotFound)
 		assert.Contains(t, resp.Body.String(), "repository does not exist")
+	})
+}
+
+func TestActivityPubRepositoryInbox(t *testing.T) {
+	setting.Federation.Enabled = true
+	testWebRoutes = routers.NormalRoutes()
+	defer func() {
+		setting.Federation.Enabled = false
+		testWebRoutes = routers.NormalRoutes()
+	}()
+
+	srv := httptest.NewServer(testWebRoutes)
+	defer srv.Close()
+
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		appURL := setting.AppURL
+		setting.AppURL = srv.URL + "/"
+		defer func() {
+			setting.Database.LogSQL = false
+			setting.AppURL = appURL
+		}()
+		actionsUser := user.NewActionsUser()
+		repositoryID := 2
+		c, err := activitypub.NewClient(db.DefaultContext, actionsUser, "not used")
+		assert.NoError(t, err)
+		repoInboxUrl := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
+			srv.URL, repositoryID)
+
+		// valid activity request succeeds
+		activity := []byte(fmt.Sprintf(`{"type":"Like","startTime":"2024-03-27T00:00:00Z","actor":"%s/api/v1/activitypub/user-id/2","object":"%s/api/v1/activitypub/repository-id/%v"}`,
+			srv.URL, srv.URL, repositoryID))
+		resp, err := c.Post(activity, repoInboxUrl)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+		// invalid activity request succeeds
+		activity = []byte(fmt.Sprintf(`{"type":"Wrong"}`))
+		resp, err = c.Post(activity, repoInboxUrl)
+		assert.Error(t, err)
 	})
 }
