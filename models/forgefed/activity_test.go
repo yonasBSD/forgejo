@@ -4,6 +4,7 @@
 package forgefed
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -37,7 +38,7 @@ func Test_NewForgeLike(t *testing.T) {
 	}
 }
 
-func Test_StarMarshalJSON(t *testing.T) {
+func Test_LikeMarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    ForgeLike
 		want    []byte
@@ -75,7 +76,7 @@ func Test_StarMarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_StarUnmarshalJSON(t *testing.T) {
+func Test_LikeUnmarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    []byte
 		want    *ForgeLike
@@ -93,6 +94,10 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 				},
 			},
 		},
+		"wrong": {
+			item:    []byte(`{"type":"Wrong","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
+			wantErr: fmt.Errorf("an other error"),
+		},
 	}
 
 	for name, tt := range tests {
@@ -104,7 +109,7 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UnmarshalJSON() got = %q, want %q", got, tt.want)
+				t.Errorf("UnmarshalJSON() got = %q, want %q, err %q", got, tt.want, err.Error())
 			}
 		})
 	}
