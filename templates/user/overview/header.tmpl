@@ -47,6 +47,30 @@
 				{{svg "octicon-eye"}} {{ctx.Locale.Tr "user.watched"}}
 			</a>
 			{{end}}
+		{{else}}
+			{{if .NumMembers}}
+				<a class="{{if .PageIsOrgMembers}}active {{end}}item" href="{{.OrgLink}}/members">
+					{{svg "octicon-person"}} {{ctx.Locale.Tr "org.members"}}
+					<div class="ui small label">{{.NumMembers}}</div>
+				</a>
+			{{end}}
+			<span hidden test-name="member-count">{{.NumMembers}}</span>
+			{{if .IsOrganizationMember}}
+				<a class="{{if .PageIsOrgTeams}}active {{end}}item" href="{{.OrgLink}}/teams">
+					{{svg "octicon-people"}} {{ctx.Locale.Tr "org.teams"}}
+					{{if .NumTeams}}
+						<div class="ui small label">{{.NumTeams}}</div>
+					{{end}}
+				</a>
+			{{end}}
+			<span hidden test-name="team-count">{{.NumTeams}}</span>
+			{{if .IsOrganizationOwner}}
+				<div class="right menu">
+					<a id="settings-btn" class="{{if .PageIsOrgSettings}}active {{end}}right item" href="{{.OrgLink}}/settings">
+					{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
+					</a>
+				</div>
+			{{end}}
 		{{end}}
 	</div>
 </overflow-menu>
