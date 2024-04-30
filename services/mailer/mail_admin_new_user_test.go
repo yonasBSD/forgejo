@@ -47,7 +47,7 @@ func cleanUpUsers(ctx context.Context, users []*user_model.User) {
 func TestAdminNotificationMail_test(t *testing.T) {
 	translation.InitLocales(context.Background())
 	locale := translation.NewLocale("")
-	key := "mail.admin.new_user.user_info"
+	key := "email.admin.new_user.user_info"
 	translatedKey := locale.Tr(key)
 	require.NotEqualValues(t, key, translatedKey)
 
@@ -80,7 +80,7 @@ func TestAdminNotificationMail_test(t *testing.T) {
 		assert.Contains(t, msgs[0].Body, users[1].HTMLURL())
 		assert.Contains(t, msgs[0].Body, translatedKey, "the .Locale translates to nothing")
 		assert.Contains(t, msgs[0].Body, users[1].Name, "user name of the newly created user")
-		for _, untranslated := range []string{"mail.admin", "admin.users"} {
+		for _, untranslated := range []string{"email.admin", "admin.users"} {
 			assert.NotContains(t, msgs[0].Body, untranslated, "this is an untranslated placeholder prefix")
 		}
 		called = true

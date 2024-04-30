@@ -88,26 +88,26 @@ func sendUserMail(language string, u *user_model.User, tpl base.TplName, code, s
 	SendAsync(msg)
 }
 
-// SendActivateAccountMail sends an activation mail to the user (new user registration)
+// SendActivateAccountMail sends an activation email to the user when they register an account
 func SendActivateAccountMail(locale translation.Locale, u *user_model.User) {
 	if setting.MailService == nil {
 		// No mail service configured
 		return
 	}
-	sendUserMail(locale.Language(), u, mailAuthActivate, u.GenerateEmailActivateCode(u.Email), locale.TrString("mail.activate_account"), "activate account")
+	sendUserMail(locale.Language(), u, mailAuthActivate, u.GenerateEmailActivateCode(u.Email), locale.TrString("email.activate_account.subject"), "activate account")
 }
 
-// SendResetPasswordMail sends a password reset mail to the user
+// SendResetPasswordMail sends an email to the user when password reset is requested
 func SendResetPasswordMail(u *user_model.User) {
 	if setting.MailService == nil {
 		// No mail service configured
 		return
 	}
 	locale := translation.NewLocale(u.Language)
-	sendUserMail(u.Language, u, mailAuthResetPassword, u.GenerateEmailActivateCode(u.Email), locale.TrString("mail.reset_password"), "recover account")
+	sendUserMail(u.Language, u, mailAuthResetPassword, u.GenerateEmailActivateCode(u.Email), locale.TrString("email.reset_password.subject"), "recover account")
 }
 
-// SendActivateEmailMail sends confirmation email to confirm new email address
+// SendActivateEmailMail sends an activation email to the user when a new email address is added
 func SendActivateEmailMail(u *user_model.User, email string) {
 	if setting.MailService == nil {
 		// No mail service configured
@@ -130,13 +130,13 @@ func SendActivateEmailMail(u *user_model.User, email string) {
 		return
 	}
 
-	msg := NewMessage(email, locale.TrString("mail.activate_email"), content.String())
+	msg := NewMessage(email, locale.TrString("email.activate_email.subject"), content.String())
 	msg.Info = fmt.Sprintf("UID: %d, activate email", u.ID)
 
 	SendAsync(msg)
 }
 
-// SendRegisterNotifyMail triggers a notify e-mail by admin created a account.
+// SendRegisterNotifyMail sends a notification email to the user when their account was created created by an admin
 func SendRegisterNotifyMail(u *user_model.User) {
 	if setting.MailService == nil || !u.IsActive {
 		// No mail service configured OR user is inactive
@@ -158,13 +158,13 @@ func SendRegisterNotifyMail(u *user_model.User) {
 		return
 	}
 
-	msg := NewMessage(u.Email, locale.TrString("mail.register_notify"), content.String())
+	msg := NewMessage(u.Email, locale.TrString("email.register_notify.subject", setting.AppName), content.String())
 	msg.Info = fmt.Sprintf("UID: %d, registration notify", u.ID)
 
 	SendAsync(msg)
 }
 
-// SendCollaboratorMail sends mail notification to new collaborator.
+// SendCollaboratorMail sends a email notification to the user who was added as a collaborator
 func SendCollaboratorMail(u, doer *user_model.User, repo *repo_model.Repository) {
 	if setting.MailService == nil || !u.IsActive {
 		// No mail service configured OR the user is inactive
@@ -173,7 +173,7 @@ func SendCollaboratorMail(u, doer *user_model.User, repo *repo_model.Repository)
 	locale := translation.NewLocale(u.Language)
 	repoName := repo.FullName()
 
-	subject := locale.TrString("mail.repo.collaborator.added.subject", doer.DisplayName(), repoName)
+	subject := locale.TrString("email.repo.collaborator.added.subject", doer.DisplayName(), repoName)
 	data := map[string]any{
 		"locale":   locale,
 		"Subject":  subject,
