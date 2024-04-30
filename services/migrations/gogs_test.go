@@ -11,7 +11,6 @@ import (
 	"time"
 
 	base "code.gitea.io/gitea/modules/migration"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -136,4 +135,88 @@ func TestGogsDownloadRepo(t *testing.T) {
 	// downloader.GetPullRequests()
 	_, _, err = downloader.GetPullRequests(1, 3)
 	assert.Error(t, err)
+}
+
+func TestGogsDownloaderFactory_New(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      base.MigrateOptions
+		baseURL   string
+		repoOwner string
+		repoName  string
+		wantErr   bool
+	}{
+		{
+			name: "Gogs_at_root",
+			args: base.MigrateOptions{
+				CloneAddr:    "https://git.example.com/user/repo.git",
+				AuthUsername: "username",
+				AuthPassword: "password",
+				AuthToken:    "authtoken",
+			},
+			baseURL:   "https://git.example.com/",
+			repoOwner: "user",
+			repoName:  "repo",
+			wantErr:   false,
+		},
+		{
+			name: "Gogs_at_sub_path",
+			args: base.MigrateOptions{
+				CloneAddr:    "https://git.example.com/subpath/user/repo.git",
+				AuthUsername: "username",
+				AuthPassword: "password",
+				AuthToken:    "authtoken",
+			},
+			baseURL:   "https://git.example.com/subpath",
+			repoOwner: "user",
+			repoName:  "repo",
+			wantErr:   false,
+		},
+		{
+			name: "Gogs_at_2nd_sub_path",
+			args: base.MigrateOptions{
+				CloneAddr:    "https://git.example.com/sub1/sub2/user/repo.git",
+				AuthUsername: "username",
+				AuthPassword: "password",
+				AuthToken:    "authtoken",
+			},
+			baseURL:   "https://git.example.com/sub1/sub2",
+			repoOwner: "user",
+			repoName:  "repo",
+			wantErr:   false,
+		},
+		{
+			name: "Gogs_URL_too_short",
+			args: base.MigrateOptions{
+				CloneAddr:    "https://git.example.com/repo.git",
+				AuthUsername: "username",
+				AuthPassword: "password",
+				AuthToken:    "authtoken",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &GogsDownloaderFactory{}
+			opts := base.MigrateOptions{
+				CloneAddr:    tt.args.CloneAddr,
+				AuthUsername: tt.args.AuthUsername,
+				AuthPassword: tt.args.AuthPassword,
+				AuthToken:    tt.args.AuthToken,
+			}
+			got, err := f.New(context.Background(), opts)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GogsDownloaderFactory.New() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			} else if err != nil {
+				return
+			}
+
+			assert.IsType(t, &GogsDownloader{}, got)
+			assert.EqualValues(t, tt.baseURL, got.(*GogsDownloader).baseURL)
+			assert.EqualValues(t, tt.repoOwner, got.(*GogsDownloader).repoOwner)
+			assert.EqualValues(t, tt.repoName, got.(*GogsDownloader).repoName)
+		})
+	}
 }
