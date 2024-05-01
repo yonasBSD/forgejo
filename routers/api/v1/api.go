@@ -1,5 +1,6 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
 // Copyright 2016 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 // Package v1 Gitea API
@@ -72,6 +73,7 @@ import (
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/forgefed"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/perm"
@@ -773,6 +775,13 @@ func Routes() *web.Route {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
 				}, context.UserIDAssignmentAPI())
+				m.Group("/repository-id/{repository-id}", func() {
+					m.Get("", activitypub.Repository)
+					m.Post("/inbox",
+						bind(forgefed.ForgeLike{}),
+						// TODO: activitypub.ReqHTTPSignature(),
+						activitypub.RepositoryInbox)
+				}, context.RepositoryIDAssignmentAPI())
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
 
@@ -973,7 +982,10 @@ func Routes() *web.Route {
 			repo.CreateOrgRepoDeprecated)
 
 		// requires repo scope
-		m.Combo("/repositories/{id}", reqToken(), tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository)).Get(repo.GetByID)
+		m.Combo("/repositories/{id}",
+			reqToken(),
+			tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository),
+		).Get(repo.GetByID)
 
 		// Repos (requires repo scope)
 		m.Group("/repos", func() {

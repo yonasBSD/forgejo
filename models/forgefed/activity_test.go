@@ -4,7 +4,9 @@
 package forgefed
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,7 +39,7 @@ func Test_NewForgeLike(t *testing.T) {
 	}
 }
 
-func Test_StarMarshalJSON(t *testing.T) {
+func Test_LikeMarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    ForgeLike
 		want    []byte
@@ -75,7 +77,7 @@ func Test_StarMarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_StarUnmarshalJSON(t *testing.T) {
+func Test_LikeUnmarshalJSON(t *testing.T) {
 	type testPair struct {
 		item    []byte
 		want    *ForgeLike
@@ -92,19 +94,25 @@ func Test_StarUnmarshalJSON(t *testing.T) {
 					Object: ap.IRI("https://codeberg.org/api/activitypub/repository-id/1"),
 				},
 			},
+			wantErr: nil,
+		},
+		"invalid": { // ToDo: Here we are testing if the json parser detects invalid json, we could keep this test in case we bould our own.
+			item:    []byte(`{"type":"Invalid","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"`),
+			want:    &ForgeLike{},
+			wantErr: fmt.Errorf("cannot parse JSON:"),
 		},
 	}
 
-	for name, tt := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := new(ForgeLike)
-			err := got.UnmarshalJSON(tt.item)
-			if (err != nil || tt.wantErr != nil) && tt.wantErr.Error() != err.Error() {
-				t.Errorf("UnmarshalJSON() error = \"%v\", wantErr \"%v\"", err, tt.wantErr)
+			err := got.UnmarshalJSON(test.item)
+			if (err != nil || test.wantErr != nil) && !strings.Contains(err.Error(), test.wantErr.Error()) {
+				t.Errorf("UnmarshalJSON() error = \"%v\", wantErr \"%v\"", err, test.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UnmarshalJSON() got = %q, want %q", got, tt.want)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("UnmarshalJSON() got = %q, want %q, err %q", got, test.want, err.Error())
 			}
 		})
 	}
@@ -123,7 +131,7 @@ func TestActivityValidation(t *testing.T) {
 	sut.UnmarshalJSON([]byte(`{"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	if sut.Validate()[0] != "Field type should not be empty" {
+	if sut.Validate()[0] != "type should not be empty" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 
@@ -141,5 +149,21 @@ func TestActivityValidation(t *testing.T) {
 	"startTime": "not a date"}`))
 	if sut.Validate()[0] != "StartTime was invalid." {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut.UnmarshalJSON([]byte(`{"type":"Wrong",
+		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "2014-12-31T23:00:00-08:00"}`))
+	if sut.Validate()[0] != "Value Wrong is not contained in allowed values [Like]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+}
+
+func TestActivityValidation_Attack(t *testing.T) {
+	sut := new(ForgeLike)
+	sut.UnmarshalJSON([]byte(`{rubbish}`))
+	if len(sut.Validate()) != 5 {
+		t.Errorf("5 validateion errors expected but was: %v\n", len(sut.Validate()))
 	}
 }
