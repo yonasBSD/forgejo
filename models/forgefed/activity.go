@@ -47,12 +47,12 @@ func (like ForgeLike) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(string(like.Type), "type")...)
 	result = append(result, validation.ValidateOneOf(string(like.Type), []any{"Like"}, "type")...)
 	if like.Actor == nil {
-		result = append(result, "Actor my not be nil.")
+		result = append(result, "Actor should not be nil.")
 	} else {
 		result = append(result, validation.ValidateNotEmpty(like.Actor.GetID().String(), "actor")...)
 	}
 	if like.Object == nil {
-		result = append(result, "Object my not be nil.")
+		result = append(result, "Object should not be nil.")
 	} else {
 		result = append(result, validation.ValidateNotEmpty(like.Object.GetID().String(), "object")...)
 	}

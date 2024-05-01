@@ -65,7 +65,3 @@ func ValidateOneOf(value any, allowed []any, name string) []string {
 	}
 	return []string{fmt.Sprintf("Value %v is not contained in allowed values %v", value, allowed)}
 }
-
-func ValidateSuffix(str, suffix string) bool {
-	return strings.HasSuffix(str, suffix)
-}

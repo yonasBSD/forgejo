@@ -66,7 +66,7 @@ func TestActorIdValidation(t *testing.T) {
 	sut.Host = "an.other.host"
 	sut.Port = ""
 	sut.UnvalidatedInput = "https://an.other.host/api/v1/activitypub/user-id/"
-	if sut.Validate()[0] != "Field userId should not be empty" {
+	if sut.Validate()[0] != "userId should not be empty" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
 	}
 
