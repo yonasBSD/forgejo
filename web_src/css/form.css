@@ -99,7 +99,7 @@ textarea:focus,
 }
 
 .ui.form .field > label {
-  margin: initial;
+  margin: unset;
   margin-bottom: 0.28571429rem;
 }
 
