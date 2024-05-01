@@ -108,7 +108,7 @@ func (id PersonID) HostSuffix() string {
 func (id PersonID) Validate() []string {
 	result := id.ActorID.Validate()
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
-	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"})...)
+	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"}, "Source")...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/user-id" && strings.ToLower(id.Path) != "api/activitypub/user-id" {
@@ -147,7 +147,7 @@ func NewRepositoryID(uri, source string) (RepositoryID, error) {
 func (id RepositoryID) Validate() []string {
 	result := id.ActorID.Validate()
 	result = append(result, validation.ValidateNotEmpty(id.Source, "source")...)
-	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"})...)
+	result = append(result, validation.ValidateOneOf(id.Source, []any{"forgejo", "gitea"}, "Source")...)
 	switch id.Source {
 	case "forgejo", "gitea":
 		if strings.ToLower(id.Path) != "api/v1/activitypub/repository-id" && strings.ToLower(id.Path) != "api/activitypub/repository-id" {
@@ -219,7 +219,7 @@ func (s *ForgePerson) UnmarshalJSON(data []byte) error {
 func (s ForgePerson) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(string(s.Type), "type")...)
-	result = append(result, validation.ValidateOneOf(string(s.Type), []any{string(ap.PersonType)})...)
+	result = append(result, validation.ValidateOneOf(string(s.Type), []any{string(ap.PersonType)}, "Type")...)
 	result = append(result, validation.ValidateNotEmpty(s.PreferredUsername.String(), "preferredUsername")...)
 
 	return result

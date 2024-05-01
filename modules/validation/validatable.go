@@ -57,7 +57,7 @@ func ValidateMaxLen(value string, maxLen int, name string) []string {
 	return []string{}
 }
 
-func ValidateOneOf(value any, allowed []any) []string {
+func ValidateOneOf(value any, allowed []any, name string) []string {
 	for _, allowedElem := range allowed {
 		if value == allowedElem {
 			return []string{}

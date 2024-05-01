@@ -73,7 +73,7 @@ func (node NodeInfoWellKnown) Validate() []string {
 		result = append(result, "Href has to be absolute")
 	}
 
-	result = append(result, validation.ValidateOneOf(parsedURL.Scheme, []any{"http", "https"})...)
+	result = append(result, validation.ValidateOneOf(parsedURL.Scheme, []any{"http", "https"}, "parsedURL.Scheme")...)
 
 	if parsedURL.RawQuery != "" {
 		result = append(result, "Href may not contain query")
@@ -129,7 +129,7 @@ func NewNodeInfo(body []byte) (NodeInfo, error) {
 func (node NodeInfo) Validate() []string {
 	var result []string
 	result = append(result, validation.ValidateNotEmpty(string(node.SoftwareName), "source")...)
-	result = append(result, validation.ValidateOneOf(node.SoftwareName, KnownSourceTypes)...)
+	result = append(result, validation.ValidateOneOf(node.SoftwareName, KnownSourceTypes, "node.SoftwareName")...)
 
 	return result
 }
