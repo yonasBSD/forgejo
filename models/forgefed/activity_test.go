@@ -128,7 +128,7 @@ func TestActivityValidation(t *testing.T) {
 	sut.UnmarshalJSON([]byte(`{"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	if sut.Validate()[0] != "Field type should not be empty" {
+	if sut.Validate()[0] != "type should not be empty" {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate()[0])
 	}
 
@@ -146,5 +146,21 @@ func TestActivityValidation(t *testing.T) {
 	"startTime": "not a date"}`))
 	if sut.Validate()[0] != "StartTime was invalid." {
 		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+
+	sut.UnmarshalJSON([]byte(`{"type":"Wrong",
+		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
+	"object":"https://codeberg.org/api/activitypub/repository-id/1",
+	"startTime": "2014-12-31T23:00:00-08:00"}`))
+	if sut.Validate()[0] != "Value Wrong is not contained in allowed values [Like]" {
+		t.Errorf("validation error expected but was: %v\n", sut.Validate())
+	}
+}
+
+func TestActivityValidation_Attack(t *testing.T) {
+	sut := new(ForgeLike)
+	sut.UnmarshalJSON([]byte(`{rubbish}`))
+	if len(sut.Validate()) != 5 {
+		t.Errorf("5 validateion errors expected but was: %v\n", len(sut.Validate()))
 	}
 }
