@@ -6,6 +6,7 @@ package forgefed
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -93,23 +94,25 @@ func Test_LikeUnmarshalJSON(t *testing.T) {
 					Object: ap.IRI("https://codeberg.org/api/activitypub/repository-id/1"),
 				},
 			},
+			wantErr: nil,
 		},
-		"wrong": {
-			item:    []byte(`{"type":"Wrong","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
-			wantErr: fmt.Errorf("an other error"),
+		"invalid": { // ToDo: Here we are testing if the json parser detects invalid json, we could keep this test in case we bould our own.
+			item:    []byte(`{"type":"Invalid","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"`),
+			want:    &ForgeLike{},
+			wantErr: fmt.Errorf("cannot parse JSON:"),
 		},
 	}
 
-	for name, tt := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := new(ForgeLike)
-			err := got.UnmarshalJSON(tt.item)
-			if (err != nil || tt.wantErr != nil) && tt.wantErr.Error() != err.Error() {
-				t.Errorf("UnmarshalJSON() error = \"%v\", wantErr \"%v\"", err, tt.wantErr)
+			err := got.UnmarshalJSON(test.item)
+			if (err != nil || test.wantErr != nil) && !strings.Contains(err.Error(), test.wantErr.Error()) {
+				t.Errorf("UnmarshalJSON() error = \"%v\", wantErr \"%v\"", err, test.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UnmarshalJSON() got = %q, want %q, err %q", got, tt.want, err.Error())
+			if !reflect.DeepEqual(got, test.want) {
+				t.Errorf("UnmarshalJSON() got = %q, want %q, err %q", got, test.want, err.Error())
 			}
 		})
 	}
