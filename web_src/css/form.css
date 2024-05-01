@@ -98,6 +98,11 @@ textarea:focus,
   color: var(--color-text);
 }
 
+.ui.form .field > label {
+  margin: initial;
+  margin-bottom: 0.28571429rem;
+}
+
 .ui.form .required.fields:not(.grouped) > .field > label::after,
 .ui.form .required.fields.grouped > label::after,
 .ui.form .required.field > label::after,
