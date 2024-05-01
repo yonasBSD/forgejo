@@ -128,7 +128,7 @@ func NewNodeInfo(body []byte) (NodeInfo, error) {
 // Validate collects error strings in a slice and returns this
 func (node NodeInfo) Validate() []string {
 	var result []string
-	result = append(result, validation.ValidateNotEmpty(string(node.SoftwareName), "source")...)
+	result = append(result, validation.ValidateNotEmpty(string(node.SoftwareName), "node.SoftwareName")...)
 	result = append(result, validation.ValidateOneOf(node.SoftwareName, KnownSourceTypes, "node.SoftwareName")...)
 
 	return result
