@@ -9,6 +9,29 @@ import (
 	"code.gitea.io/gitea/modules/timeutil"
 )
 
+type Sut struct {
+	valid bool
+}
+
+func (sut Sut) Validate() []string {
+	if sut.valid {
+		return []string{}
+	} else {
+		return []string{"invalid"}
+	}
+}
+
+func Test_IsValid(t *testing.T) {
+	sut := Sut{valid: true}
+	if res, _ := IsValid(sut); !res {
+		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
+	}
+	sut = Sut{valid: false}
+	if res, _ := IsValid(sut); res {
+		t.Errorf("sut expected to be invalid: %v\n", sut.Validate())
+	}
+}
+
 func Test_ValidateNotEmpty_ForString(t *testing.T) {
 	sut := ""
 	if len(ValidateNotEmpty(sut, "dummyField")) == 0 {

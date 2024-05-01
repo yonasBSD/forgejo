@@ -25,7 +25,7 @@ func IsValid(v Validateable) (bool, error) {
 	return true, nil
 }
 
-func ValidateNotEmpty(value any, fieldName string) []string {
+func ValidateNotEmpty(value any, name string) []string {
 	isValid := true
 	switch v := value.(type) {
 	case string:
@@ -47,12 +47,12 @@ func ValidateNotEmpty(value any, fieldName string) []string {
 	if isValid {
 		return []string{}
 	}
-	return []string{fmt.Sprintf("Field %v should not be empty", fieldName)}
+	return []string{fmt.Sprintf("%v should not be empty", name)}
 }
 
-func ValidateMaxLen(value string, maxLen int, fieldName string) []string {
+func ValidateMaxLen(value string, maxLen int, name string) []string {
 	if utf8.RuneCountInString(value) > maxLen {
-		return []string{fmt.Sprintf("Value in field %v was longer than %v", fieldName, maxLen)}
+		return []string{fmt.Sprintf("Value %v was longer than %v", name, maxLen)}
 	}
 	return []string{}
 }
