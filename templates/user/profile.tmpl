@@ -8,6 +8,9 @@
 			</div>
 			<div class="ui twelve wide column tw-mb-4">
 				{{template "user/overview/header" .}}
+
+				{{template "base/alert" .}}
+
 				{{if eq .TabName "activity"}}
 					{{if .ContextUser.KeepActivityPrivate}}
 						<div class="ui info message">
@@ -17,6 +20,9 @@
 					{{template "user/heatmap" .}}
 					{{template "user/dashboard/feeds" .}}
 				{{else if eq .TabName "stars"}}
+					{{if and .StarListsEnabled (or .StarLists (.ContextUser.IsSameUser .SignedUser))}}
+						{{template "user/starlist/list" .}}
+					{{end}}
 					<div class="stars">
 						{{template "shared/repo_search" .}}
 						{{template "explore/repo_list" .}}
@@ -54,3 +60,7 @@
 </div>
 
 {{template "base/footer" .}}
+
+{{if and .StarListsEnabled (.ContextUser.IsSameUser .SignedUser)}}
+	{{template "user/starlist/edit" .}}
+{{end}}

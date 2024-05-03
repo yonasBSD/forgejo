@@ -771,3 +771,8 @@ func (f *DeadlineForm) Validate(req *http.Request, errs binding.Errors) binding.
 	ctx := context.GetValidateContext(req)
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
+
+// Edit the star lits for a repo
+type StarListRepoEditForm struct {
+	StarListID []int64
+}

@@ -451,3 +451,13 @@ func (f *PackageSettingForm) Validate(req *http.Request, errs binding.Errors) bi
 	ctx := context.GetValidateContext(req)
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
+
+// EditStarListForm form for editing/creating star lists
+type EditStarListForm struct {
+	CurrentURL  string
+	Action      string
+	ID          int64
+	Name        string
+	Description string
+	Private     bool
+}

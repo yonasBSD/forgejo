@@ -161,3 +161,16 @@
 #pronouns-dropdown, #pronouns-custom {
   width: 140px;
 }
+
+.star-list-box {
+  margin-bottom: 10px;
+}
+
+.star-list-item {
+  width: 100%;
+  color: inherit;
+}
+
+.star-list-header-info {
+  flex-grow: 1;
+}

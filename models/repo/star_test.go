@@ -9,6 +9,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -68,4 +69,23 @@ func TestClearRepoStars(t *testing.T) {
 	gazers, err := repo_model.GetStargazers(db.DefaultContext, repo, db.ListOptions{Page: 0})
 	assert.NoError(t, err)
 	assert.Len(t, gazers, 0)
+}
+
+func TestUnstarRepo(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, user.ID, repo.ID, false))
+
+	assert.False(t, repo_model.IsStaring(db.DefaultContext, user.ID, repo.ID))
+
+	// Check if the repo is removed from the star list
+	starList, err := repo_model.GetStarListByID(db.DefaultContext, 1)
+	assert.NoError(t, err)
+
+	assert.NoError(t, starList.LoadRepoIDs(db.DefaultContext))
+
+	assert.False(t, starList.ContainsRepoID(repo.ID))
 }
