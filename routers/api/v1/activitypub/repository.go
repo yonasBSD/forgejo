@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	forgefed_model "code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
@@ -36,7 +36,7 @@ func Repository(ctx *context.APIContext) {
 	//     "$ref": "#/responses/ActivityPub"
 
 	link := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%d", strings.TrimSuffix(setting.AppURL, "/"), ctx.Repo.Repository.ID)
-	repo := forgefed_model.RepositoryNew(ap.IRI(link))
+	repo := forgefed.RepositoryNew(ap.IRI(link))
 
 	repo.Name = ap.NaturalLanguageValuesNew()
 	err := repo.Name.Set("en", ap.Content(ctx.Repo.Repository.Name))

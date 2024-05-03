@@ -4,11 +4,9 @@
 package forgefed
 
 import (
-	"fmt"
 	"net/url"
 
 	"code.gitea.io/gitea/modules/validation"
-
 	"github.com/valyala/fastjson"
 )
 
@@ -79,17 +77,6 @@ func (node NodeInfoWellKnown) Validate() []string {
 		result = append(result, "Href may not contain query")
 	}
 
-	return result
-}
-
-func (id ActorID) AsWellKnownNodeInfoURI() string {
-	wellKnownPath := ".well-known/nodeinfo"
-	var result string
-	if id.Port == "" {
-		result = fmt.Sprintf("%s://%s/%s", id.Schema, id.Host, wellKnownPath)
-	} else {
-		result = fmt.Sprintf("%s://%s:%s/%s", id.Schema, id.Host, id.Port, wellKnownPath)
-	}
 	return result
 }
 

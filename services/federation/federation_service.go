@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/auth/password"
+	fm "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
@@ -31,7 +32,7 @@ import (
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
 func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
-	activity := form.(*forgefed.ForgeLike)
+	activity := form.(*fm.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
 	}
@@ -47,14 +48,14 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	if !activity.IsNewer(federationHost.LatestActivity) {
 		return http.StatusNotAcceptable, "Activity out of order.", fmt.Errorf("Activity already processed")
 	}
-	actorID, err := forgefed.NewPersonID(actorURI, string(federationHost.NodeInfo.SoftwareName))
+	actorID, err := fm.NewPersonID(actorURI, string(federationHost.NodeInfo.SoftwareName))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid PersonID", err
 	}
 	log.Info("Actor accepted:%v", actorID)
 
 	// parse objectID (repository)
-	objectID, err := forgefed.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
+	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
@@ -96,7 +97,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	return 0, "", nil
 }
 
-func CreateFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (*forgefed.FederationHost, error) {
+func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*forgefed.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -132,7 +133,7 @@ func CreateFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (
 func GetFederationHostForURI(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
 	// parse actorID (person)
 	log.Info("Input was: %v", actorURI)
-	rawActorID, err := forgefed.NewActorID(actorURI)
+	rawActorID, err := fm.NewActorID(actorURI)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +151,7 @@ func GetFederationHostForURI(ctx context.Context, actorURI string) (*forgefed.Fe
 	return federationHost, nil
 }
 
-func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
+func CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -163,7 +164,7 @@ func CreateUserFromAP(ctx context.Context, personID forgefed.PersonID, federatio
 		return nil, nil, err
 	}
 
-	person := forgefed.ForgePerson{}
+	person := fm.ForgePerson{}
 	err = person.UnmarshalJSON(body)
 	if err != nil {
 		return nil, nil, err
@@ -222,7 +223,7 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-		followingRepoID, err := forgefed.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName))
+		followingRepoID, err := fm.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName))
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}
@@ -251,11 +252,11 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 		return err
 	}
 
-	likeActivityList := make([]forgefed.ForgeLike, 0)
+	likeActivityList := make([]fm.ForgeLike, 0)
 	for _, followingRepo := range followingRepos {
 		log.Info("Found following repo: %v", followingRepo)
 		target := followingRepo.URI
-		likeActivity, err := forgefed.NewForgeLike(doer.APAPIURL(), target, time.Now())
+		likeActivity, err := fm.NewForgeLike(doer.APAPIURL(), target, time.Now())
 		if err != nil {
 			return err
 		}
