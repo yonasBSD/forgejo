@@ -328,14 +328,14 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 		return
 	}
 
-	// Get posters.
-	for i := range issues {
-		// Check read status
-		if !ctx.IsSigned {
-			issues[i].IsRead = true
-		} else if err = issues[i].GetIsRead(ctx, ctx.Doer.ID); err != nil {
-			ctx.ServerError("GetIsRead", err)
+	if ctx.IsSigned {
+		if err := issues.LoadIsRead(ctx, ctx.Doer.ID); err != nil {
+			ctx.ServerError("LoadIsRead", err)
 			return
+		}
+	} else {
+		for i := range issues {
+			issues[i].IsRead = true
 		}
 	}
 
@@ -927,7 +927,6 @@ func setTemplateIfExists(ctx *context.Context, ctxDataKey string, possibleFiles 
 					}
 				}
 			}
-
 		}
 
 		if template.Ref != "" && !strings.HasPrefix(template.Ref, "refs/") { // Assume that the ref intended is always a branch - for tags users should use refs/tags/<ref>
@@ -1602,20 +1601,20 @@ func ViewIssue(ctx *context.Context) {
 
 	// Render comments and fetch participants.
 	participants[0] = issue.Poster
+
+	if err := issue.Comments.LoadAttachmentsByIssue(ctx); err != nil {
+		ctx.ServerError("LoadAttachmentsByIssue", err)
+		return
+	}
+	if err := issue.Comments.LoadPosters(ctx); err != nil {
+		ctx.ServerError("LoadPosters", err)
+		return
+	}
+
 	for _, comment = range issue.Comments {
 		comment.Issue = issue
 
-		if err := comment.LoadPoster(ctx); err != nil {
-			ctx.ServerError("LoadPoster", err)
-			return
-		}
-
 		if comment.Type == issues_model.CommentTypeComment || comment.Type == issues_model.CommentTypeReview {
-			if err := comment.LoadAttachments(ctx); err != nil {
-				ctx.ServerError("LoadAttachments", err)
-				return
-			}
-
 			comment.RenderedContent, err = markdown.RenderString(&markup.RenderContext{
 				Links: markup.Links{
 					Base: ctx.Repo.RepoLink,
@@ -1663,7 +1662,6 @@ func ViewIssue(ctx *context.Context) {
 				comment.Milestone = ghostMilestone
 			}
 		} else if comment.Type == issues_model.CommentTypeProject {
-
 			if err = comment.LoadProject(ctx); err != nil {
 				ctx.ServerError("LoadProject", err)
 				return
@@ -1681,7 +1679,6 @@ func ViewIssue(ctx *context.Context) {
 			if comment.ProjectID > 0 && comment.Project == nil {
 				comment.Project = ghostProject
 			}
-
 		} else if comment.Type == issues_model.CommentTypeAssignees || comment.Type == issues_model.CommentTypeReviewRequest {
 			if err = comment.LoadAssigneeUserAndTeam(ctx); err != nil {
 				ctx.ServerError("LoadAssigneeUserAndTeam", err)
@@ -1729,10 +1726,6 @@ func ViewIssue(ctx *context.Context) {
 			for _, codeComments := range comment.Review.CodeComments {
 				for _, lineComments := range codeComments {
 					for _, c := range lineComments {
-						if err := c.LoadAttachments(ctx); err != nil {
-							ctx.ServerError("LoadAttachments", err)
-							return
-						}
 						// Check tag.
 						role, ok = marked[c.PosterID]
 						if ok {
@@ -2179,7 +2172,7 @@ func GetIssueInfo(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, convert.ToIssue(ctx, issue))
+	ctx.JSON(http.StatusOK, convert.ToIssue(ctx, ctx.Doer, issue))
 }
 
 // UpdateIssueTitle change issue's title
@@ -2610,7 +2603,6 @@ func SearchIssues(ctx *context.Context) {
 
 	var includedAnyLabels []int64
 	{
-
 		labels := ctx.FormTrim("labels")
 		var includedLabelNames []string
 		if len(labels) > 0 {
@@ -2713,7 +2705,7 @@ func SearchIssues(ctx *context.Context) {
 	}
 
 	ctx.SetTotalCountHeader(total)
-	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, issues))
+	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, ctx.Doer, issues))
 }
 
 func getUserIDForFilter(ctx *context.Context, queryName string) int64 {
@@ -2883,7 +2875,7 @@ func ListIssues(ctx *context.Context) {
 	}
 
 	ctx.SetTotalCountHeader(total)
-	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, issues))
+	ctx.JSON(http.StatusOK, convert.ToIssueList(ctx, ctx.Doer, issues))
 }
 
 func BatchDeleteIssues(ctx *context.Context) {
@@ -2998,7 +2990,6 @@ func NewComment(ctx *context.Context) {
 		if (ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) || (ctx.IsSigned && issue.IsPoster(ctx.Doer.ID))) &&
 			(form.Status == "reopen" || form.Status == "close") &&
 			!(issue.IsPull && issue.PullRequest.HasMerged) {
-
 			// Duplication and conflict check should apply to reopen pull request.
 			var pr *issues_model.PullRequest
 
@@ -3165,12 +3156,6 @@ func UpdateCommentContent(ctx *context.Context) {
 
 	oldContent := comment.Content
 	comment.Content = ctx.FormString("content")
-	if len(comment.Content) == 0 {
-		ctx.JSON(http.StatusOK, map[string]any{
-			"content": "",
-		})
-		return
-	}
 	if err = issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
 		ctx.ServerError("UpdateComment", err)
 		return

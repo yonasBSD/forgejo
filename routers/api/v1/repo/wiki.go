@@ -193,7 +193,7 @@ func getWikiPage(ctx *context.APIContext, wikiName wiki_service.WebPath) *api.Wi
 	}
 
 	// get commit count - wiki revisions
-	commitsCount, _ := wikiRepo.FileCommitsCount("master", pageFilename)
+	commitsCount, _ := wikiRepo.FileCommitsCount(ctx.Repo.Repository.GetWikiBranchName(), pageFilename)
 
 	// Get last change information.
 	lastCommit, err := wikiRepo.GetCommitByPath(pageFilename)
@@ -432,7 +432,7 @@ func ListPageRevisions(ctx *context.APIContext) {
 	}
 
 	// get commit count - wiki revisions
-	commitsCount, _ := wikiRepo.FileCommitsCount("master", pageFilename)
+	commitsCount, _ := wikiRepo.FileCommitsCount(ctx.Repo.Repository.GetWikiBranchName(), pageFilename)
 
 	page := ctx.FormInt("page")
 	if page <= 1 {
@@ -442,7 +442,7 @@ func ListPageRevisions(ctx *context.APIContext) {
 	// get Commit Count
 	commitsHistory, err := wikiRepo.CommitsByFileAndRange(
 		git.CommitsByFileAndRangeOptions{
-			Revision: "master",
+			Revision: ctx.Repo.Repository.GetWikiBranchName(),
 			File:     pageFilename,
 			Page:     page,
 		})
@@ -478,7 +478,6 @@ func findEntryForFile(commit *git.Commit, target string) (*git.TreeEntry, error)
 func findWikiRepoCommit(ctx *context.APIContext) (*git.Repository, *git.Commit) {
 	wikiRepo, err := gitrepo.OpenWikiRepository(ctx, ctx.Repo.Repository)
 	if err != nil {
-
 		if git.IsErrNotExist(err) || err.Error() == "no such file or directory" {
 			ctx.NotFound(err)
 		} else {
@@ -487,7 +486,7 @@ func findWikiRepoCommit(ctx *context.APIContext) (*git.Repository, *git.Commit) 
 		return nil, nil
 	}
 
-	commit, err := wikiRepo.GetBranchCommit("master")
+	commit, err := wikiRepo.GetBranchCommit(ctx.Repo.Repository.GetWikiBranchName())
 	if err != nil {
 		if git.IsErrNotExist(err) {
 			ctx.NotFound(err)

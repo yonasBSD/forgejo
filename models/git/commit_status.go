@@ -84,34 +84,6 @@ func mysqlGetCommitStatusIndex(ctx context.Context, repoID int64, sha string) (i
 	return idx, nil
 }
 
-func mssqlGetCommitStatusIndex(ctx context.Context, repoID int64, sha string) (int64, error) {
-	if _, err := db.GetEngine(ctx).Exec(`
-MERGE INTO commit_status_index WITH (HOLDLOCK) AS target
-USING (SELECT ? AS repo_id, ? AS sha) AS source
-(repo_id, sha)
-ON target.repo_id = source.repo_id AND target.sha = source.sha
-WHEN MATCHED
-	THEN UPDATE
-			SET max_index = max_index + 1
-WHEN NOT MATCHED
-	THEN INSERT (repo_id, sha, max_index)
-			VALUES (?, ?, 1);
-`, repoID, sha, repoID, sha); err != nil {
-		return 0, err
-	}
-
-	var idx int64
-	_, err := db.GetEngine(ctx).SQL("SELECT max_index FROM `commit_status_index` WHERE repo_id = ? AND sha = ?",
-		repoID, sha).Get(&idx)
-	if err != nil {
-		return 0, err
-	}
-	if idx == 0 {
-		return 0, errors.New("cannot get the correct index")
-	}
-	return idx, nil
-}
-
 // GetNextCommitStatusIndex retried 3 times to generate a resource index
 func GetNextCommitStatusIndex(ctx context.Context, repoID int64, sha string) (int64, error) {
 	_, err := git.NewIDFromString(sha)
@@ -124,8 +96,6 @@ func GetNextCommitStatusIndex(ctx context.Context, repoID int64, sha string) (in
 		return postgresGetCommitStatusIndex(ctx, repoID, sha)
 	case setting.Database.Type.IsMySQL():
 		return mysqlGetCommitStatusIndex(ctx, repoID, sha)
-	case setting.Database.Type.IsMSSQL():
-		return mssqlGetCommitStatusIndex(ctx, repoID, sha)
 	}
 
 	e := db.GetEngine(ctx)
@@ -287,30 +257,27 @@ func GetLatestCommitStatus(ctx context.Context, repoID int64, sha string, listOp
 }
 
 // GetLatestCommitStatusForPairs returns all statuses with a unique context for a given list of repo-sha pairs
-func GetLatestCommitStatusForPairs(ctx context.Context, repoIDsToLatestCommitSHAs map[int64]string, listOptions db.ListOptions) (map[int64][]*CommitStatus, error) {
+func GetLatestCommitStatusForPairs(ctx context.Context, repoSHAs []RepoSHA) (map[int64][]*CommitStatus, error) {
 	type result struct {
 		Index  int64
 		RepoID int64
+		SHA    string
 	}
 
-	results := make([]result, 0, len(repoIDsToLatestCommitSHAs))
+	results := make([]result, 0, len(repoSHAs))
 
 	getBase := func() *xorm.Session {
 		return db.GetEngine(ctx).Table(&CommitStatus{})
 	}
 
 	// Create a disjunction of conditions for each repoID and SHA pair
-	conds := make([]builder.Cond, 0, len(repoIDsToLatestCommitSHAs))
-	for repoID, sha := range repoIDsToLatestCommitSHAs {
-		conds = append(conds, builder.Eq{"repo_id": repoID, "sha": sha})
+	conds := make([]builder.Cond, 0, len(repoSHAs))
+	for _, repoSHA := range repoSHAs {
+		conds = append(conds, builder.Eq{"repo_id": repoSHA.RepoID, "sha": repoSHA.SHA})
 	}
 	sess := getBase().Where(builder.Or(conds...)).
-		Select("max( `index` ) as `index`, repo_id").
-		GroupBy("context_hash, repo_id").OrderBy("max( `index` ) desc")
-
-	if !listOptions.IsListAll() {
-		sess = db.SetSessionPagination(sess, &listOptions)
-	}
+		Select("max( `index` ) as `index`, repo_id, sha").
+		GroupBy("context_hash, repo_id, sha").OrderBy("max( `index` ) desc")
 
 	err := sess.Find(&results)
 	if err != nil {
@@ -327,7 +294,7 @@ func GetLatestCommitStatusForPairs(ctx context.Context, repoIDsToLatestCommitSHA
 			cond := builder.Eq{
 				"`index`": result.Index,
 				"repo_id": result.RepoID,
-				"sha":     repoIDsToLatestCommitSHAs[result.RepoID],
+				"sha":     result.SHA,
 			}
 			conds = append(conds, cond)
 		}

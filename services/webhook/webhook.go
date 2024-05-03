@@ -25,6 +25,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/sourcehut"
 
 	"github.com/gobwas/glob"
 )
@@ -32,20 +33,11 @@ import (
 type Handler interface {
 	Type() webhook_module.HookType
 	Metadata(*webhook_model.Webhook) any
-	// FormFields provides a function to bind the request to the form.
+	// UnmarshalForm provides a function to bind the request to the form.
 	// If form implements the [binding.Validator] interface, the Validate method will be called
-	FormFields(bind func(form any)) FormFields
+	UnmarshalForm(bind func(form any)) forms.WebhookForm
 	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
 	Icon(size int) template.HTML
-}
-
-type FormFields struct {
-	forms.WebhookForm
-	URL         string
-	ContentType webhook_model.HookContentType
-	Secret      string
-	HTTPMethod  string
-	Metadata    any
 }
 
 var webhookHandlers = []Handler{
@@ -62,6 +54,7 @@ var webhookHandlers = []Handler{
 	matrixHandler{},
 	wechatworkHandler{},
 	packagistHandler{},
+	sourcehut.BuildsHandler{},
 }
 
 // GetWebhookHandler return the handler for a given webhook type (nil if not found)
@@ -89,19 +82,17 @@ var hookQueue *queue.WorkerPoolQueue[int64]
 
 // getPayloadBranch returns branch for hook event, if applicable.
 func getPayloadBranch(p api.Payloader) string {
+	var ref string
 	switch pp := p.(type) {
 	case *api.CreatePayload:
-		if pp.RefType == "branch" {
-			return pp.Ref
-		}
+		ref = pp.Ref
 	case *api.DeletePayload:
-		if pp.RefType == "branch" {
-			return pp.Ref
-		}
+		ref = pp.Ref
 	case *api.PushPayload:
-		if strings.HasPrefix(pp.Ref, git.BranchPrefix) {
-			return pp.Ref[len(git.BranchPrefix):]
-		}
+		ref = pp.Ref
+	}
+	if strings.HasPrefix(ref, git.BranchPrefix) {
+		return ref[len(git.BranchPrefix):]
 	}
 	return ""
 }
@@ -250,7 +241,7 @@ func PrepareWebhooks(ctx context.Context, source EventSource, event webhook_modu
 	}
 
 	// Add any admin-defined system webhooks
-	systemHooks, err := webhook_model.GetSystemWebhooks(ctx, optional.Some(true))
+	systemHooks, err := webhook_model.GetSystemWebhooks(ctx, true)
 	if err != nil {
 		return fmt.Errorf("GetSystemWebhooks: %w", err)
 	}

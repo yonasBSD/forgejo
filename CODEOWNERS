@@ -16,6 +16,8 @@ web_src/.* @caesar @crystal @gusted
 
 # HTML templates used by the backend.
 templates/.* @caesar @crystal @gusted
+## the issue sidebar was touched by fnetx
+templates/repo/issue/view_content/sidebar.* @fnetx
 
 # Files related to Go development.
 
@@ -30,3 +32,9 @@ models/.* @dachary @earl-warren @gusted
 # of how Forgejo comes together. It's tedious to write good integration testing
 # for code that lives in here.
 routers/.* @dachary @earl-warren @gusted
+
+# Let new strings be checked by the translation team.
+options/locale/locale_en-US.ini @0ko
+
+# Personal interest
+.*/webhook.* @oliverpool

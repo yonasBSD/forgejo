@@ -141,6 +141,7 @@
   /* other colors */
   --color-gold: #b1983b;
   --color-white: #ffffff;
+  --color-pure-black: #000000;
   --color-diff-removed-word-bg: #783030;
   --color-diff-added-word-bg: #255c39;
   --color-diff-removed-row-bg: #432121;
@@ -157,10 +158,10 @@
   --color-error-text: #fef2f2;
   --color-success-border: #1f6e3c;
   --color-success-bg: #1d462c;
-  --color-success-text: #f0fdf4;
+  --color-success-text: #aef0c2;
   --color-warning-border: #a67a1d;
   --color-warning-bg: #644821;
-  --color-warning-text: #fefce8;
+  --color-warning-text: #fff388;
   --color-info-border: #2e50b0;
   --color-info-bg: #2a396b;
   --color-info-text: var(--steel-100);
@@ -205,15 +206,15 @@
   --color-menu: var(--steel-700);
   --color-card: var(--steel-700);
   --color-markup-table-row: #ffffff06;
-  --color-markup-code-block: var(--steel-850);
+  --color-markup-code-block: var(--steel-800);
+  --color-markup-code-inline: var(--steel-850);
   --color-button: var(--steel-600);
   --color-code-bg: var(--steel-750);
-  --color-code-sidebar-bg: var(--steel-600);
   --color-shadow: #00000060;
   --color-secondary-bg: var(--steel-700);
   --color-text-focus: #fff;
   --color-expand-button: #3c404d;
-  --color-placeholder-text: var(--steel-450);
+  --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--steel-700);
   --color-project-board-bg: var(--color-secondary-light-3);
   --color-project-board-dark-label: var(--color-text-light-3);
@@ -226,12 +227,14 @@
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
   --color-label-text: #fff;
-  --color-label-bg: #cacaca5b;
-  --color-label-hover-bg: #cacacaa0;
-  --color-label-active-bg: #cacacaff;
+  --color-label-bg: var(--steel-600);
+  --color-label-hover-bg: var(--steel-550);
+  --color-label-active-bg: var(--steel-500);
+  --color-label-bg-alt: var(--steel-550);
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
-  --color-active-line: var(--color-primary-alpha-20);
+  --color-highlight-fg: var(--color-primary-light-4);
+  --color-highlight-bg: var(--color-primary-alpha-20);
   --color-overlay-backdrop: #080808c0;
   accent-color: var(--color-accent);
   color-scheme: dark;
@@ -269,9 +272,6 @@ i.grey.icon.icon.icon.icon {
   border-radius: 0.28571429rem !important;
   overflow: hidden;
 }
-.ui.secondary.vertical.menu > .item {
-  border-radius: 0 !important;
-}
 .ui.basic.primary.button.item {
   background-color: var(--color-active) !important;
   color: var(--color-text) !important;
@@ -305,5 +305,27 @@ i.grey.icon.icon.icon.icon {
 }
 ::selection {
   background: var(--steel-100) !important;
-  color: var(--color-white) !important;
+  color: var(--color-pure-black) !important;
+}
+strong.attention-important, svg.attention-important {
+  color: var(--color-violet-light);
+}
+strong.attention-note, svg.attention-note {
+  color: var(--color-blue-light);
+}
+strong.attention-caution, svg.attention-caution {
+  color: var(--color-red-light);
+}
+.ui.basic.red.button {
+  background-color: var(--color-red);
+  color: var(--color-white);
+}
+.ui.basic.red.button:hover,
+.ui.basic.red.button:focus {
+  background-color: var(--color-red-dark-1);
+  color: var(--color-white);
+}
+.ui.basic.red.button:active {
+  background-color: var(--color-red-dark-2);
+  color: var(--color-white);
 }

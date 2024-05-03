@@ -460,7 +460,6 @@ func TestColorPreview(t *testing.T) {
 		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
 		assert.Equal(t, template.HTML(test.expected), res, "Unexpected result in testcase %q", test.testcase)
-
 	}
 
 	negativeTests := []string{
@@ -506,8 +505,16 @@ func TestMathBlock(t *testing.T) {
 			`<p><code class="language-math is-loading">a</code> <code class="language-math is-loading">b</code></p>` + nl,
 		},
 		{
+			`$a$.`,
+			`<p><code class="language-math is-loading">a</code>.</p>` + nl,
+		},
+		{
+			`.$a$`,
+			`<p>.$a$</p>` + nl,
+		},
+		{
 			`$a a$b b$`,
-			`<p><code class="language-math is-loading">a a$b b</code></p>` + nl,
+			`<p>$a a$b b$</p>` + nl,
 		},
 		{
 			`a a$b b`,
@@ -515,7 +522,15 @@ func TestMathBlock(t *testing.T) {
 		},
 		{
 			`a$b $a a$b b$`,
-			`<p>a$b <code class="language-math is-loading">a a$b b</code></p>` + nl,
+			`<p>a$b $a a$b b$</p>` + nl,
+		},
+		{
+			"a$x$",
+			`<p>a$x$</p>` + nl,
+		},
+		{
+			"$x$a",
+			`<p>$x$a</p>` + nl,
 		},
 		{
 			"$$a$$",
@@ -539,7 +554,6 @@ func TestMathBlock(t *testing.T) {
 		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
 		assert.Equal(t, template.HTML(test.expected), res, "Unexpected result in testcase %q", test.testcase)
-
 	}
 }
 

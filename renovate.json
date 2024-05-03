@@ -3,8 +3,11 @@
   "extends": [
     "config:best-practices",
     ":approveMajorUpdates",
+    ":maintainLockFilesWeekly",
     "group:postcss",
-    "group:linters"
+    "group:linters",
+    "schedule:daily",
+    "schedule:automergeDaily"
   ],
   "ignorePresets": [
     ":semanticPrefixFixDepsChoreOthers",
@@ -12,25 +15,54 @@
     "helpers:pinGitHubActionDigests"
   ],
   "semanticCommits": "disabled",
+  "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
-  "platformAutomerge": false,
   "prConcurrentLimit": 5,
+  "internalChecksFilter": "strict",
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
-      "matchDepNames": ["go", "python", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "matchDepNames": [
+        "go",
+        "python",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
       "matchUpdateTypes": ["minor"],
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Require dashboard approval for some deps",
+      "matchDepNames": [
+        "bitnami/minio",
+        "github.com/go-ap/activitypub",
+        "github.com/nektos/act",
+        "gitea.com/gitea/act"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Schedule some deps less frequently",
+      "matchDepNames": ["github.com/google/pprof"],
+      "extends": ["schedule:quarterly"]
+    },
+    {
       "description": "Group golang packages",
-      "matchDepNames": ["go", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "matchDepNames": [
+        "go",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
       "groupName": "golang packages"
     },
     {
       "description": "Group nodejs packages",
       "matchDepNames": ["node", "docker.io/node", "docker.io/library/node"],
-      "groupName": "nodejs packages"
+      "groupName": "nodejs packages",
+      "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$",
+      "versioning": "node"
     },
     {
       "description": "Automerge renovate updates",
@@ -40,10 +72,20 @@
       "automerge": true
     },
     {
-      "description": "Update renovate only daily with higher prio to come through rate limit",
+      "description": "Split minor and patch updates",
+      "matchDepNames": ["vue", "github.com/urfave/cli/v2", "swagger-ui-dist"],
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Automerge patch updates",
+      "matchDepNames": ["vue", "github.com/urfave/cli/v2", "swagger-ui-dist"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Update renovate with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
-      "extends": ["schedule:daily"],
       "prPriority": 10
     },
     {
@@ -51,6 +93,17 @@
       "matchDepNames": ["actions/cascading-pr"],
       "matchManagers": ["github-actions"],
       "enabled": false
+    },
+    {
+      "description": "Automerge some packages when ci succeeds",
+      "extends": ["packages:linters"],
+      "matchDepNames": ["vitest"],
+      "automerge": true
+    },
+    {
+      "description": "Hold back on some package updates for a few days",
+      "matchDepNames": ["monaco-editor"],
+      "minimumReleaseAge": "30 days"
     }
   ],
   "customManagers": [
@@ -68,8 +121,15 @@
       "customType": "regex",
       "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
       "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
-      "depNameTemplate": "node",
-      "datasourceTemplate": "node-version"
+      "depNameTemplate": "node"
+    },
+    {
+      "description": "Update deps inside Makefile",
+      "customType": "regex",
+      "fileMatch": ["^Makefile$"],
+      "matchStrings": [
+        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)\\s"
+      ]
     }
   ]
 }

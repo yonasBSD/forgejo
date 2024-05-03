@@ -403,7 +403,6 @@ func EditUserPost(ctx *context.Context) {
 			ctx.Data["Err_Password"] = true
 			ctx.RenderWithErr(ctx.Tr("auth.password_pwned"), tplUserEdit, &form)
 		case password.IsErrIsPwnedRequest(err):
-			log.Error("%s", err.Error())
 			ctx.Data["Err_Password"] = true
 			ctx.RenderWithErr(ctx.Tr("auth.password_pwned_err"), tplUserEdit, &form)
 		default:
@@ -435,6 +434,7 @@ func EditUserPost(ctx *context.Context) {
 		FullName:                optional.Some(form.FullName),
 		Website:                 optional.Some(form.Website),
 		Location:                optional.Some(form.Location),
+		Pronouns:                optional.Some(form.Pronouns),
 		IsActive:                optional.Some(form.Active),
 		IsAdmin:                 optional.Some(form.Admin),
 		AllowGitHook:            optional.Some(form.AllowGitHook),

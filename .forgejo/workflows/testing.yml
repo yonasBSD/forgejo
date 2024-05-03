@@ -46,7 +46,7 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.3.30
         options: >-
           --hostname gitea.minio
         env:
@@ -136,10 +136,12 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.3.30
         env:
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
+      ldap:
+        image: docker.io/gitea/test-openldap:latest
       pgsql:
         image: 'docker.io/postgres:15'
         env:
@@ -176,6 +178,7 @@ jobs:
           TAGS: bindata
           RACE_ENABLED: true
           USE_REPO_TEST_DIR: 1
+          TEST_LDAP: 1
   test-sqlite:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker

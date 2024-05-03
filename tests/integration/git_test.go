@@ -5,9 +5,9 @@ package integration
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -1025,7 +1025,7 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 			t.Run("Succeeds", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push=true").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
 				assert.NoError(t, gitErr)
 
 				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
@@ -1076,6 +1076,7 @@ func TestDataAsync_Issue29101(t *testing.T) {
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		assert.NoError(t, err)
+		defer gitRepo.Close()
 
 		commit, err := gitRepo.GetCommit(sha)
 		assert.NoError(t, err)

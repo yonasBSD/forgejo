@@ -60,8 +60,7 @@ func TestMain(m *testing.M) {
 	exitVal := m.Run()
 
 	if err := testlogger.WriterCloser.Reset(); err != nil {
-		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("testlogger.WriterCloser.Reset: error ignored: %v\n", err)
 	}
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)
@@ -92,6 +91,9 @@ func TestE2e(t *testing.T) {
 	if _, set := os.LookupEnv("ACCEPT_VISUAL"); set {
 		runArgs = append(runArgs, "--update-snapshots")
 	}
+	if project := os.Getenv("PLAYWRIGHT_PROJECT"); project != "" {
+		runArgs = append(runArgs, "--project="+project)
+	}
 
 	// Create new test for each input file
 	for _, path := range paths {
@@ -104,18 +106,20 @@ func TestE2e(t *testing.T) {
 				cmd := exec.Command(runArgs[0], runArgs...)
 				cmd.Env = os.Environ()
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GITEA_URL=%s", setting.AppURL))
+
 				var stdout, stderr bytes.Buffer
 				cmd.Stdout = &stdout
 				cmd.Stderr = &stderr
+
 				err := cmd.Run()
 				if err != nil {
 					// Currently colored output is conflicting. Using Printf until that is resolved.
 					fmt.Printf("%v", stdout.String())
 					fmt.Printf("%v", stderr.String())
 					log.Fatal("Playwright Failed: %s", err)
-				} else {
-					fmt.Printf("%v", stdout.String())
 				}
+
+				fmt.Printf("%v", stdout.String())
 			})
 		})
 	}

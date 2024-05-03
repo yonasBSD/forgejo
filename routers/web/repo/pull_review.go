@@ -169,11 +169,9 @@ func renderConversation(ctx *context.Context, comment *issues_model.Comment, ori
 	}
 	ctx.Data["PageIsPullFiles"] = (origin == "diff")
 
-	for _, c := range comments {
-		if err := c.LoadAttachments(ctx); err != nil {
-			ctx.ServerError("LoadAttachments", err)
-			return
-		}
+	if err := comments.LoadAttachments(ctx); err != nil {
+		ctx.ServerError("LoadAttachments", err)
+		return
 	}
 
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
@@ -250,6 +248,8 @@ func SubmitReview(ctx *context.Context) {
 		if issues_model.IsContentEmptyErr(err) {
 			ctx.Flash.Error(ctx.Tr("repo.issues.review.content.empty"))
 			ctx.JSONRedirect(fmt.Sprintf("%s/pulls/%d/files", ctx.Repo.RepoLink, issue.Index))
+		} else if errors.Is(err, pull_service.ErrSubmitReviewOnClosedPR) {
+			ctx.Status(http.StatusUnprocessableEntity)
 		} else {
 			ctx.ServerError("SubmitReview", err)
 		}
@@ -304,7 +304,6 @@ func UpdateViewedFiles(ctx *context.Context) {
 
 	updatedFiles := make(map[string]pull_model.ViewedState, len(data.Files))
 	for file, viewed := range data.Files {
-
 		// Only unviewed and viewed are possible, has-changed can not be set from the outside
 		state := pull_model.Unviewed
 		if viewed {

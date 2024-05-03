@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -74,6 +75,13 @@ func BuiltinApplications() map[string]*BuiltinOAuth2Application {
 	return m
 }
 
+func BuiltinApplicationsClientIDs() (clientIDs []string) {
+	for clientID := range BuiltinApplications() {
+		clientIDs = append(clientIDs, clientID)
+	}
+	return clientIDs
+}
+
 func Init(ctx context.Context) error {
 	builtinApps := BuiltinApplications()
 	var builtinAllClientIDs []string
@@ -137,6 +145,11 @@ func (app *OAuth2Application) TableName() string {
 
 // ContainsRedirectURI checks if redirectURI is allowed for app
 func (app *OAuth2Application) ContainsRedirectURI(redirectURI string) bool {
+	// OAuth2 requires the redirect URI to be an exact match, no dynamic parts are allowed.
+	// https://stackoverflow.com/questions/55524480/should-dynamic-query-parameters-be-present-in-the-redirection-uri-for-an-oauth2
+	// https://www.rfc-editor.org/rfc/rfc6819#section-5.2.3.3
+	// https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+	// https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-12#section-3.1
 	contains := func(s string) bool {
 		s = strings.TrimSuffix(strings.ToLower(s), "/")
 		for _, u := range app.RedirectURIs {
@@ -289,7 +302,7 @@ func UpdateOAuth2Application(ctx context.Context, opts UpdateOAuth2ApplicationOp
 		return nil, err
 	}
 	if app.UID != opts.UserID {
-		return nil, fmt.Errorf("UID mismatch")
+		return nil, errors.New("UID mismatch")
 	}
 	builtinApps := BuiltinApplications()
 	if _, builtin := builtinApps[app.ClientID]; builtin {
@@ -636,4 +649,28 @@ func DeleteOAuth2RelictsByUserID(ctx context.Context, userID int64) error {
 	}
 
 	return nil
+}
+
+// CountOrphanedOAuth2Applications returns the amount of orphaned OAuth2 applications.
+func CountOrphanedOAuth2Applications(ctx context.Context) (int64, error) {
+	return db.GetEngine(ctx).
+		Table("`oauth2_application`").
+		Join("LEFT", "`user`", "`oauth2_application`.`uid` = `user`.`id`").
+		Where(builder.IsNull{"`user`.id"}).
+		Where(builder.NotIn("`oauth2_application`.`client_id`", BuiltinApplicationsClientIDs())).
+		Select("COUNT(`oauth2_application`.`id`)").
+		Count()
+}
+
+// DeleteOrphanedOAuth2Applications deletes orphaned OAuth2 applications.
+func DeleteOrphanedOAuth2Applications(ctx context.Context) (int64, error) {
+	subQuery := builder.Select("`oauth2_application`.id").
+		From("`oauth2_application`").
+		Join("LEFT", "`user`", "`oauth2_application`.`uid` = `user`.`id`").
+		Where(builder.IsNull{"`user`.id"}).
+		Where(builder.NotIn("`oauth2_application`.`client_id`", BuiltinApplicationsClientIDs()))
+
+	b := builder.Delete(builder.In("id", subQuery)).From("`oauth2_application`")
+	_, err := db.GetEngine(ctx).Exec(b)
+	return -1, err
 }

@@ -89,6 +89,7 @@ type Repository struct {
 	HasWiki                       bool             `json:"has_wiki"`
 	ExternalWiki                  *ExternalWiki    `json:"external_wiki,omitempty"`
 	WikiBranch                    string           `json:"wiki_branch,omitempty"`
+	GloballyEditableWiki          bool             `json:"globally_editable_wiki"`
 	HasPullRequests               bool             `json:"has_pull_requests"`
 	HasProjects                   bool             `json:"has_projects"`
 	HasReleases                   bool             `json:"has_releases"`
@@ -113,6 +114,16 @@ type Repository struct {
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
+}
+
+// GetName implements the gitrepo.Repository interface
+func (r Repository) GetName() string {
+	return r.Name
+}
+
+// GetOwnerName implements the gitrepo.Repository interface
+func (r Repository) GetOwnerName() string {
+	return r.Owner.UserName
 }
 
 // CreateRepoOption options when creating repository
@@ -175,6 +186,8 @@ type EditRepoOption struct {
 	HasWiki *bool `json:"has_wiki,omitempty"`
 	// set this structure to use external wiki instead of internal
 	ExternalWiki *ExternalWiki `json:"external_wiki,omitempty"`
+	// set the globally editable state of the wiki
+	GloballyEditableWiki *bool `json:"globally_editable_wiki,omitempty"`
 	// sets the default branch for this repository.
 	DefaultBranch *string `json:"default_branch,omitempty"`
 	// sets the branch used for this repository's wiki.

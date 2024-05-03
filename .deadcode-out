@@ -22,7 +22,6 @@ package "code.gitea.io/gitea/models/actions"
 	func (ScheduleList).GetRepoIDs
 	func (ScheduleList).LoadTriggerUser
 	func (ScheduleList).LoadRepos
-	func GetVariableByID
 
 package "code.gitea.io/gitea/models/asymkey"
 	func (ErrGPGKeyAccessDenied).Error
@@ -66,6 +65,7 @@ package "code.gitea.io/gitea/models/migrations/base"
 	func MainTest
 
 package "code.gitea.io/gitea/models/organization"
+	func GetTeamNamesByID
 	func UpdateTeamUnits
 	func (SearchMembersOptions).ToConds
 	func UsersInTeamsCount
@@ -131,6 +131,7 @@ package "code.gitea.io/gitea/models/user"
 	func GetUserAllSettings
 	func DeleteUserSetting
 	func GetUserEmailsByNames
+	func GetUserNamesByIDs
 
 package "code.gitea.io/gitea/modules/activitypub"
 	func CurrentTime

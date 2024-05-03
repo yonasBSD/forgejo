@@ -26,18 +26,18 @@ DIFF ?= diff --unified
 
 XGO_VERSION := go-1.21.x
 
-AIR_PACKAGE ?= github.com/cosmtrek/air@v1.49.0
-EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/cmd/editorconfig-checker@2.7.0
-GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0
-GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1
-GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11
-MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1
-SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786
-XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
-GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0
-GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3
-ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.26
-DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0
+AIR_PACKAGE ?= github.com/cosmtrek/air@v1.49.0 # renovate: datasource=go
+EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker@2.8.0 # renovate: datasource=go
+GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0 # renovate: datasource=go
+GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2 # renovate: datasource=go
+GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11 # renovate: datasource=go
+MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1 # renovate: datasource=go
+SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786 # renovate: datasource=go
+XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest # renovate: datasource=go
+GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
+GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
+ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
+DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -121,7 +121,6 @@ LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeV
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
 ifeq ($(HAS_GO), yes)
-	GO_PACKAGES ?= $(filter-out code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
 	GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
 endif
 
@@ -130,7 +129,7 @@ FOMANTIC_WORK_DIR := web_src/fomantic
 WEBPACK_SOURCES := $(shell find web_src/js web_src/css -type f)
 WEBPACK_CONFIGS := webpack.config.js tailwind.config.js
 WEBPACK_DEST := public/assets/js/index.js public/assets/css/index.css
-WEBPACK_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts public/assets/img/webpack
+WEBPACK_DEST_ENTRIES := public/assets/js public/assets/css public/assets/fonts
 
 BINDATA_DEST := modules/public/bindata.go modules/options/bindata.go modules/templates/bindata.go
 BINDATA_HASH := $(addsuffix .hash,$(BINDATA_DEST))
@@ -155,9 +154,9 @@ TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMAN
 GO_DIRS := build cmd models modules routers services tests
 WEB_DIRS := web_src/js web_src/css
 
-ESLINT_FILES := web_src/js tools *.config.js tests/e2e
+ESLINT_FILES := web_src/js tools *.js tests/e2e
 STYLELINT_FILES := web_src/css web_src/js/components/*.vue
-SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github
+SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github $(wildcard *.go *.js *.md *.yml *.yaml *.toml)
 
 GO_SOURCES := $(wildcard *.go)
 GO_SOURCES += $(shell find $(GO_DIRS) -type f -name "*.go" ! -path modules/options/bindata.go ! -path modules/public/bindata.go ! -path modules/templates/bindata.go)
@@ -196,10 +195,6 @@ TEST_PGSQL_DBNAME ?= testgitea
 TEST_PGSQL_USERNAME ?= postgres
 TEST_PGSQL_PASSWORD ?= postgres
 TEST_PGSQL_SCHEMA ?= gtestschema
-TEST_MSSQL_HOST ?= mssql:1433
-TEST_MSSQL_DBNAME ?= gitea
-TEST_MSSQL_USERNAME ?= sa
-TEST_MSSQL_PASSWORD ?= MwantsaSecurePassword1
 
 .PHONY: all
 all: build
@@ -249,7 +244,7 @@ help:
 	@echo " - show-version-major               show major release number only"
 	@echo " - test-frontend                    test frontend files"
 	@echo " - test-backend                     test backend files"
-	@echo " - test-e2e[\#TestSpecificName]     test end to end using playwright"
+	@echo " - test-e2e-sqlite[\#name.test.e2e] test end to end using playwright and sqlite"
 	@echo " - update                           update js and py dependencies"
 	@echo " - update-js                        update js dependencies"
 	@echo " - update-py                        update py dependencies"
@@ -309,14 +304,14 @@ clean:
 		e2e*.test \
 		tests/integration/gitea-integration-* \
 		tests/integration/indexers-* \
-		tests/mysql.ini tests/pgsql.ini tests/mssql.ini man/ \
+		tests/mysql.ini tests/pgsql.ini man/ \
 		tests/e2e/gitea-e2e-*/ \
 		tests/e2e/indexers-*/ \
 		tests/e2e/reports/ tests/e2e/test-artifacts/ tests/e2e/test-snapshots/
 
 .PHONY: fmt
 fmt:
-	GOFUMPT_PACKAGE=$(GOFUMPT_PACKAGE) $(GO) run build/code-batch-process.go gitea-fmt -w '{file-list}'
+	@GOFUMPT_PACKAGE=$(GOFUMPT_PACKAGE) $(GO) run build/code-batch-process.go gitea-fmt -w '{file-list}'
 	$(eval TEMPLATES := $(shell find templates -type f -name '*.tmpl'))
 	@# strip whitespace after '{{' or '(' and before '}}' or ')' unless there is only
 	@# whitespace before it
@@ -339,8 +334,8 @@ ifneq "$(TAGS)" "$(shell cat $(TAGS_EVIDENCE) 2>/dev/null)"
 TAGS_PREREQ := $(TAGS_EVIDENCE)
 endif
 
-OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
-KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
+OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4 # renovate: datasource=go
+KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0 # renovate: datasource=go
 FORGEJO_API_SERVER = routers/api/forgejo/v1/generated.go
 
 .PHONY: generate-forgejo-api
@@ -457,7 +452,7 @@ lint-go-windows:
 .PHONY: lint-go-vet
 lint-go-vet:
 	@echo "Running go vet..."
-	@$(GO) vet $(GO_PACKAGES)
+	@$(GO) vet ./...
 
 .PHONY: lint-editorconfig
 lint-editorconfig:
@@ -612,27 +607,6 @@ test-pgsql\#%: integrations.pgsql.test generate-ini-pgsql
 .PHONY: test-pgsql-migration
 test-pgsql-migration: migrations.pgsql.test migrations.individual.pgsql.test
 
-generate-ini-mssql:
-	sed -e 's|{{TEST_MSSQL_HOST}}|${TEST_MSSQL_HOST}|g' \
-		-e 's|{{TEST_MSSQL_DBNAME}}|${TEST_MSSQL_DBNAME}|g' \
-		-e 's|{{TEST_MSSQL_USERNAME}}|${TEST_MSSQL_USERNAME}|g' \
-		-e 's|{{TEST_MSSQL_PASSWORD}}|${TEST_MSSQL_PASSWORD}|g' \
-		-e 's|{{REPO_TEST_DIR}}|${REPO_TEST_DIR}|g' \
-		-e 's|{{TEST_LOGGER}}|$(or $(TEST_LOGGER),test$(COMMA)file)|g' \
-		-e 's|{{TEST_TYPE}}|$(or $(TEST_TYPE),integration)|g' \
-			tests/mssql.ini.tmpl > tests/mssql.ini
-
-.PHONY: test-mssql
-test-mssql: integrations.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./integrations.mssql.test
-
-.PHONY: test-mssql\#%
-test-mssql\#%: integrations.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./integrations.mssql.test -test.run $(subst .,/,$*)
-
-.PHONY: test-mssql-migration
-test-mssql-migration: migrations.mssql.test migrations.individual.mssql.test
-
 .PHONY: playwright
 playwright: deps-frontend
 	npx playwright install $(PLAYWRIGHT_FLAGS)
@@ -653,6 +627,10 @@ test-e2e-sqlite: playwright e2e.sqlite.test generate-ini-sqlite
 test-e2e-sqlite\#%: playwright e2e.sqlite.test generate-ini-sqlite
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./e2e.sqlite.test -test.run TestE2e/$*
 
+.PHONY: test-e2e-sqlite-firefox\#%
+test-e2e-sqlite-firefox\#%: playwright e2e.sqlite.test generate-ini-sqlite
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini PLAYWRIGHT_PROJECT=firefox ./e2e.sqlite.test -test.run TestE2e/$*
+
 .PHONY: test-e2e-mysql
 test-e2e-mysql: playwright e2e.mysql.test generate-ini-mysql
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mysql.ini ./e2e.mysql.test -test.run TestE2e
@@ -669,14 +647,6 @@ test-e2e-pgsql: playwright e2e.pgsql.test generate-ini-pgsql
 test-e2e-pgsql\#%: playwright e2e.pgsql.test generate-ini-pgsql
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/pgsql.ini ./e2e.pgsql.test -test.run TestE2e/$*
 
-.PHONY: test-e2e-mssql
-test-e2e-mssql: playwright e2e.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./e2e.mssql.test -test.run TestE2e
-
-.PHONY: test-e2e-mssql\#%
-test-e2e-mssql\#%: playwright e2e.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./e2e.mssql.test -test.run TestE2e/$*
-
 .PHONY: test-e2e-debugserver
 test-e2e-debugserver: e2e.sqlite.test generate-ini-sqlite
 	sed -i s/3003/3000/g tests/sqlite.ini
@@ -689,10 +659,6 @@ bench-sqlite: integrations.sqlite.test generate-ini-sqlite
 .PHONY: bench-mysql
 bench-mysql: integrations.mysql.test generate-ini-mysql
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mysql.ini ./integrations.mysql.test -test.cpuprofile=cpu.out -test.run DontRunTests -test.bench .
-
-.PHONY: bench-mssql
-bench-mssql: integrations.mssql.test generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./integrations.mssql.test -test.cpuprofile=cpu.out -test.run DontRunTests -test.bench .
 
 .PHONY: bench-pgsql
 bench-pgsql: integrations.pgsql.test generate-ini-pgsql
@@ -712,9 +678,6 @@ integrations.mysql.test: git-check $(GO_SOURCES)
 integrations.pgsql.test: git-check $(GO_SOURCES)
 	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/integration -o integrations.pgsql.test
 
-integrations.mssql.test: git-check $(GO_SOURCES)
-	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/integration -o integrations.mssql.test
-
 integrations.sqlite.test: git-check $(GO_SOURCES)
 	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/integration -o integrations.sqlite.test -tags '$(TEST_TAGS)'
 
@@ -733,11 +696,6 @@ migrations.mysql.test: $(GO_SOURCES) generate-ini-mysql
 migrations.pgsql.test: $(GO_SOURCES) generate-ini-pgsql
 	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/integration/migration-test -o migrations.pgsql.test
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/pgsql.ini ./migrations.pgsql.test
-
-.PHONY: migrations.mssql.test
-migrations.mssql.test: $(GO_SOURCES) generate-ini-mssql
-	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/integration/migration-test -o migrations.mssql.test
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini ./migrations.mssql.test
 
 .PHONY: migrations.sqlite.test
 migrations.sqlite.test: $(GO_SOURCES) generate-ini-sqlite
@@ -764,17 +722,6 @@ migrations.individual.pgsql.test: $(GO_SOURCES)
 migrations.individual.pgsql.test\#%: $(GO_SOURCES) generate-ini-pgsql
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/pgsql.ini $(GO) test $(GOTESTFLAGS) -tags '$(TEST_TAGS)' code.gitea.io/gitea/models/migrations/$*
 
-
-.PHONY: migrations.individual.mssql.test
-migrations.individual.mssql.test: $(GO_SOURCES) generate-ini-mssql
-	for pkg in $(MIGRATION_PACKAGES); do \
-		GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini $(GO) test $(GOTESTFLAGS) -tags '$(TEST_TAGS)' -test.failfast $$pkg || exit 1; \
-	done
-
-.PHONY: migrations.individual.mssql.test\#%
-migrations.individual.mssql.test\#%: $(GO_SOURCES) generate-ini-mssql
-	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/mssql.ini $(GO) test $(GOTESTFLAGS) -tags '$(TEST_TAGS)' code.gitea.io/gitea/models/migrations/$*
-
 .PHONY: migrations.individual.sqlite.test
 migrations.individual.sqlite.test: $(GO_SOURCES) generate-ini-sqlite
 	for pkg in $(MIGRATION_PACKAGES); do \
@@ -790,9 +737,6 @@ e2e.mysql.test: $(GO_SOURCES)
 
 e2e.pgsql.test: $(GO_SOURCES)
 	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/e2e -o e2e.pgsql.test
-
-e2e.mssql.test: $(GO_SOURCES)
-	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/e2e -o e2e.mssql.test
 
 e2e.sqlite.test: $(GO_SOURCES)
 	$(GO) test $(GOTESTFLAGS) -c code.gitea.io/gitea/tests/e2e -o e2e.sqlite.test -tags '$(TEST_TAGS)'
@@ -823,7 +767,7 @@ generate-backend: $(TAGS_PREREQ) generate-go
 .PHONY: generate-go
 generate-go: $(TAGS_PREREQ)
 	@echo "Running go generate..."
-	@CC= GOOS= GOARCH= $(GO) generate -tags '$(TAGS)' $(GO_PACKAGES)
+	@CC= GOOS= GOARCH= $(GO) generate -tags '$(TAGS)' ./...
 
 .PHONY: merge-locales
 merge-locales:
@@ -969,8 +913,9 @@ webpack: $(WEBPACK_DEST)
 
 $(WEBPACK_DEST): $(WEBPACK_SOURCES) $(WEBPACK_CONFIGS) package-lock.json
 	@$(MAKE) -s node-check node_modules
-	rm -rf $(WEBPACK_DEST_ENTRIES)
-	npx webpack
+	@rm -rf $(WEBPACK_DEST_ENTRIES)
+	@echo "Running webpack..."
+	@BROWSERSLIST_IGNORE_OLD_DATA=true npx webpack
 	@touch $(WEBPACK_DEST)
 
 .PHONY: svg

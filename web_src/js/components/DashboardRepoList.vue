@@ -350,10 +350,10 @@ export default sfc; // activate the IDE's Vue plugin
           <span class="ui grey label tw-ml-2">{{ reposTotalCount }}</span>
         </div>
       </h4>
-      <div class="ui top attached segment repos-search gt-rounded-top">
-        <div class="ui fluid action left icon input" :class="{loading: isLoading}">
+      <div class="ui top attached segment repos-search">
+        <div class="ui small fluid action left icon input">
           <input type="search" spellcheck="false" maxlength="255" @input="changeReposFilter(reposFilter)" v-model="searchQuery" ref="search" @keydown="reposFilterKeyControl" :placeholder="textSearchRepos">
-          <i class="icon"><svg-icon name="octicon-search" :size="16"/></i>
+          <i class="icon loading-icon-3px" :class="{'is-loading': isLoading}"><svg-icon name="octicon-search" :size="16"/></i>
           <div class="ui dropdown icon button" :title="textFilter">
             <svg-icon name="octicon-filter" :size="16"/>
             <div class="menu">
@@ -454,7 +454,7 @@ export default sfc; // activate the IDE's Vue plugin
       </div>
     </div>
     <div v-if="!isOrganization" v-show="tab === 'organizations'" class="ui tab active list dashboard-orgs">
-      <div v-if="organizations.length" class="ui attached table segment tw-rounded-b">
+      <div v-if="organizations.length" class="ui attached table segment tw-rounded">
         <ul class="repo-owner-name-list">
           <li class="tw-flex tw-items-center tw-py-2" v-for="org in organizations" :key="org.name">
             <a class="repo-list-link muted" :href="subUrl + '/' + encodeURIComponent(org.name)">

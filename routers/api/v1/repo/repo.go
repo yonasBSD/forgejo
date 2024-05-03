@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	actions_model "code.gitea.io/gitea/models/actions"
 	activities_model "code.gitea.io/gitea/models/activities"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/organization"
@@ -30,6 +31,7 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/utils"
+	actions_service "code.gitea.io/gitea/services/actions"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/issue"
@@ -843,6 +845,15 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		newHasWiki = *opts.HasWiki
 	}
 	if currHasWiki || newHasWiki {
+		wikiPermissions := repo.MustGetUnit(ctx, unit_model.TypeWiki).DefaultPermissions
+		if opts.GloballyEditableWiki != nil {
+			if *opts.GloballyEditableWiki {
+				wikiPermissions = repo_model.UnitAccessModeWrite
+			} else {
+				wikiPermissions = repo_model.UnitAccessModeRead
+			}
+		}
+
 		if newHasWiki && opts.ExternalWiki != nil && !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
 			// Check that values are valid
 			if !validation.IsValidExternalURL(opts.ExternalWiki.ExternalWikiURL) {
@@ -862,9 +873,10 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		} else if newHasWiki && opts.ExternalWiki == nil && !unit_model.TypeWiki.UnitGlobalDisabled() {
 			config := &repo_model.UnitConfig{}
 			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeWiki,
-				Config: config,
+				RepoID:             repo.ID,
+				Type:               unit_model.TypeWiki,
+				Config:             config,
+				DefaultPermissions: wikiPermissions,
 			})
 			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
 		} else if !newHasWiki {
@@ -874,6 +886,14 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 			if !unit_model.TypeWiki.UnitGlobalDisabled() {
 				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
 			}
+		} else if *opts.GloballyEditableWiki {
+			config := &repo_model.UnitConfig{}
+			units = append(units, repo_model.RepoUnit{
+				RepoID:             repo.ID,
+				Type:               unit_model.TypeWiki,
+				Config:             config,
+				DefaultPermissions: wikiPermissions,
+			})
 		}
 	}
 
@@ -1027,12 +1047,20 @@ func updateRepoArchivedState(ctx *context.APIContext, opts api.EditRepoOption) e
 				ctx.Error(http.StatusInternalServerError, "ArchiveRepoState", err)
 				return err
 			}
+			if err := actions_model.CleanRepoScheduleTasks(ctx, repo); err != nil {
+				log.Error("CleanRepoScheduleTasks for archived repo %s/%s: %v", ctx.Repo.Owner.Name, repo.Name, err)
+			}
 			log.Trace("Repository was archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		} else {
 			if err := repo_model.SetArchiveRepoState(ctx, repo, *opts.Archived); err != nil {
 				log.Error("Tried to un-archive a repo: %s", err)
 				ctx.Error(http.StatusInternalServerError, "ArchiveRepoState", err)
 				return err
+			}
+			if ctx.Repo.Repository.UnitEnabled(ctx, unit_model.TypeActions) {
+				if err := actions_service.DetectAndHandleSchedules(ctx, repo); err != nil {
+					log.Error("DetectAndHandleSchedules for un-archived repo %s/%s: %v", ctx.Repo.Owner.Name, repo.Name, err)
+				}
 			}
 			log.Trace("Repository was un-archived: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 		}
@@ -1066,7 +1094,6 @@ func updateMirror(ctx *context.APIContext, opts api.EditRepoOption) error {
 
 	// update MirrorInterval
 	if opts.MirrorInterval != nil {
-
 		// MirrorInterval should be a duration
 		interval, err := time.ParseDuration(*opts.MirrorInterval)
 		if err != nil {

@@ -6,13 +6,12 @@ package templates
 import (
 	"context"
 	"html/template"
-	"os"
 	"testing"
 
+	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/log"
-	"code.gitea.io/gitea/modules/markup"
+	"code.gitea.io/gitea/modules/translation"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -46,22 +45,14 @@ var testMetas = map[string]string{
 	"mode":     "comment",
 }
 
-func TestMain(m *testing.M) {
-	unittest.InitSettings()
-	if err := git.InitSimple(context.Background()); err != nil {
-		log.Fatal("git init failed, err: %v", err)
-	}
-	markup.Init(&markup.ProcessorHelper{
-		IsUsernameMentionable: func(ctx context.Context, username string) bool {
-			return username == "mention-user"
-		},
-	})
-	os.Exit(m.Run())
-}
-
 func TestApostrophesInMentions(t *testing.T) {
 	rendered := RenderMarkdownToHtml(context.Background(), "@mention-user's comment")
 	assert.EqualValues(t, template.HTML("<p><a href=\"/mention-user\" rel=\"nofollow\">@mention-user</a>&#39;s comment</p>\n"), rendered)
+}
+
+func TestNonExistantUserMention(t *testing.T) {
+	rendered := RenderMarkdownToHtml(context.Background(), "@ThisUserDoesNotExist @mention-user")
+	assert.EqualValues(t, template.HTML("<p>@ThisUserDoesNotExist <a href=\"/mention-user\" rel=\"nofollow\">@mention-user</a></p>\n"), rendered)
 }
 
 func TestRenderCommitBody(t *testing.T) {
@@ -189,4 +180,16 @@ com 88fc37a3c0a4dda553bdcfc80c178a58247f42fb mit
 space</p>
 `
 	assert.EqualValues(t, expected, RenderMarkdownToHtml(context.Background(), testInput))
+}
+
+func TestRenderLabels(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+
+	tr := &translation.MockLocale{}
+	label := unittest.AssertExistsAndLoadBean(t, &issues_model.Label{ID: 1})
+
+	assert.Contains(t, RenderLabels(db.DefaultContext, tr, []*issues_model.Label{label}, "user2/repo1", false),
+		"user2/repo1/issues?labels=1")
+	assert.Contains(t, RenderLabels(db.DefaultContext, tr, []*issues_model.Label{label}, "user2/repo1", true),
+		"user2/repo1/pulls?labels=1")
 }

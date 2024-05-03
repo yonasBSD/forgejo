@@ -258,7 +258,7 @@ func Routes() *web.Route {
 		routes.Get("/metrics", append(mid, Metrics)...)
 	}
 
-	routes.Get("/robots.txt", append(mid, misc.RobotsTxt)...)
+	routes.Methods("GET,HEAD", "/robots.txt", append(mid, misc.RobotsTxt)...)
 	routes.Get("/ssh_info", misc.SSHInfo)
 	routes.Get("/api/healthz", healthcheck.Check)
 
@@ -654,7 +654,7 @@ func registerRoutes(m *web.Route) {
 		m.Get("/system_status", admin.SystemStatus)
 		m.Post("", web.Bind(forms.AdminDashboardForm{}), admin.DashboardPost)
 
-		if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
+		if setting.Database.Type.IsMySQL() {
 			m.Get("/self_check", admin.SelfCheck)
 		}
 
@@ -1423,16 +1423,16 @@ func registerRoutes(m *web.Route) {
 			m.Group("/contributors", func() {
 				m.Get("", repo.Contributors)
 				m.Get("/data", repo.ContributorsData)
-			})
+			}, repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypeCode))
 			m.Group("/code-frequency", func() {
 				m.Get("", repo.CodeFrequency)
 				m.Get("/data", repo.CodeFrequencyData)
-			})
+			}, repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypeCode))
 			m.Group("/recent-commits", func() {
 				m.Get("", repo.RecentCommits)
 				m.Get("/data", repo.RecentCommitsData)
-			})
-		}, context.RepoRef(), repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases))
+			}, repo.MustBeNotEmpty, context.RequireRepoReaderOr(unit.TypeCode))
+		}, context.RepoRef(), context.RequireRepoReaderOr(unit.TypeCode, unit.TypePullRequests, unit.TypeIssues, unit.TypeReleases))
 
 		m.Group("/activity_author_data", func() {
 			m.Get("", repo.ActivityAuthors)

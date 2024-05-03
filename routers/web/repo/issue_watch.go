@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	tplWatching base.TplName = "repo/issue/view_content/watching"
+	tplWatching base.TplName = "repo/issue/view_content/sidebar/watching"
 )
 
 // IssueWatch sets issue watching
@@ -46,7 +46,7 @@ func IssueWatch(ctx *context.Context) {
 		return
 	}
 
-	watch, err := strconv.ParseBool(ctx.Req.PostForm.Get("watch"))
+	watch, err := strconv.ParseBool(ctx.Req.PostFormValue("watch"))
 	if err != nil {
 		ctx.ServerError("watch is not bool", err)
 		return

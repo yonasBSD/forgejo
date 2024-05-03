@@ -54,7 +54,7 @@ var (
 	shortLinkPattern = regexp.MustCompile(`\[\[(.*?)\]\](\w*)`)
 
 	// anySHA1Pattern splits url containing SHA into parts
-	anyHashPattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{40,64})(/[-+~_%.a-zA-Z0-9/]+)?(#[-+~_%.a-zA-Z0-9]+)?`)
+	anyHashPattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{40,64})(/[-+~_%.a-zA-Z0-9/]+)?(\?[-+~_%\.a-zA-Z0-9=&]+)?(#[-+~_%.a-zA-Z0-9]+)?`)
 
 	// comparePattern matches "http://domain/org/repo/compare/COMMIT1...COMMIT2#hash"
 	comparePattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{7,64})(\.\.\.?)([0-9a-f]{7,64})?(#[-+~_%.a-zA-Z0-9]+)?`)
@@ -623,10 +623,10 @@ func mentionProcessor(ctx *RenderContext, node *html.Node) {
 		if DefaultProcessorHelper.IsUsernameMentionable != nil && DefaultProcessorHelper.IsUsernameMentionable(ctx.Ctx, mentionedUsername) {
 			replaceContent(node, loc.Start, loc.End, createLink(util.URLJoin(ctx.Links.Prefix(), mentionedUsername), mention, "mention"))
 			node = node.NextSibling.NextSibling
+			start = 0
 		} else {
-			node = node.NextSibling
+			start = loc.End
 		}
-		start = 0
 	}
 }
 
@@ -893,7 +893,7 @@ func issueIndexPatternProcessor(ctx *RenderContext, node *html.Node) {
 		} else {
 			// Path determines the type of link that will be rendered. It's unknown at this point whether
 			// the linked item is actually a PR or an issue. Luckily it's of no real consequence because
-			// Gitea will redirect on click as appropriate.
+			// Forgejo will redirect on click as appropriate.
 			path := "issues"
 			if ref.IsPull {
 				path = "pulls"
@@ -969,10 +969,10 @@ func fullHashPatternProcessor(ctx *RenderContext, node *html.Node) {
 			subpath = node.Data[m[4]:m[5]]
 		}
 
-		// 4th capture group matches a optional url hash
+		// 5th capture group matches a optional url hash
 		hash := ""
-		if m[7] > 0 {
-			hash = node.Data[m[6]:m[7]][1:]
+		if m[9] > 0 {
+			hash = node.Data[m[8]:m[9]][1:]
 		}
 
 		start := m[0]
@@ -1056,41 +1056,52 @@ func comparePatternProcessor(ctx *RenderContext, node *html.Node) {
 }
 
 func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
-	if ctx.Metas == nil {
+	if ctx.Metas == nil || ctx.Metas["user"] == "" || ctx.Metas["repo"] == "" {
 		return
 	}
 	if DefaultProcessorHelper.GetRepoFileBlob == nil {
 		return
 	}
 
+	locale := translation.NewLocale("en-US")
+	if ctx.Ctx != nil {
+		ctxLocale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
+		if ok {
+			locale = ctxLocale
+		}
+	}
+
 	next := node.NextSibling
 	for node != nil && node != next {
-		locale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
-		if !ok {
-			locale = translation.NewLocale("en-US")
+		previews := NewFilePreviews(ctx, node, locale)
+		if previews == nil {
+			node = node.NextSibling
+			continue
 		}
 
-		preview := NewFilePreview(ctx, node, locale)
-		if preview == nil {
-			return
+		offset := 0
+		for _, preview := range previews {
+			previewNode := preview.CreateHTML(locale)
+
+			// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
+			before := node.Data[:(preview.start - offset)]
+			after := node.Data[(preview.end - offset):]
+			afterPrefix := "<p>"
+			offset = preview.end - len(afterPrefix)
+			node.Data = before
+			nextSibling := node.NextSibling
+			node.Parent.InsertBefore(&html.Node{
+				Type: html.RawNode,
+				Data: "</p>",
+			}, nextSibling)
+			node.Parent.InsertBefore(previewNode, nextSibling)
+			afterNode := &html.Node{
+				Type: html.RawNode,
+				Data: afterPrefix + after,
+			}
+			node.Parent.InsertBefore(afterNode, nextSibling)
+			node = afterNode
 		}
-
-		previewNode := preview.CreateHTML(locale)
-
-		// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
-		before := node.Data[:preview.start]
-		after := node.Data[preview.end:]
-		node.Data = before
-		nextSibling := node.NextSibling
-		node.Parent.InsertBefore(&html.Node{
-			Type: html.RawNode,
-			Data: "</p>",
-		}, nextSibling)
-		node.Parent.InsertBefore(previewNode, nextSibling)
-		node.Parent.InsertBefore(&html.Node{
-			Type: html.RawNode,
-			Data: "<p>" + after,
-		}, nextSibling)
 
 		node = node.NextSibling
 	}

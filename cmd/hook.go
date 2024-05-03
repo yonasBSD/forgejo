@@ -139,11 +139,10 @@ func (d *delayWriter) WriteString(s string) (n int, err error) {
 }
 
 func (d *delayWriter) Close() error {
-	if d == nil {
-		return nil
+	if d.timer.Stop() {
+		d.buf = nil
 	}
-	stopped := d.timer.Stop()
-	if stopped || d.buf == nil {
+	if d.buf == nil {
 		return nil
 	}
 	_, err := d.internal.Write(d.buf.Bytes())
@@ -303,8 +302,12 @@ func runHookUpdate(c *cli.Context) error {
 	ctx, cancel := installSignals()
 	defer cancel()
 
-	// The last three arguments given to the hook are in order: reference name, old commit ID and new commit ID.
-	args := os.Args[len(os.Args)-3:]
+	if c.NArg() != 3 {
+		return nil
+	}
+	args := c.Args().Slice()
+
+	// The arguments given to the hook are in order: reference name, old commit ID and new commit ID.
 	refFullName := git.RefName(args[0])
 	newCommitID := args[2]
 
@@ -479,7 +482,7 @@ func hookPrintResults(results []private.HookPostReceiveBranchResult) {
 			fmt.Fprintf(os.Stderr, "  %s\n", res.URL)
 		}
 		fmt.Fprintln(os.Stderr, "")
-		os.Stderr.Sync()
+		_ = os.Stderr.Sync()
 	}
 }
 
@@ -488,10 +491,11 @@ func pushOptions() map[string]string {
 	if pushCount, err := strconv.Atoi(os.Getenv(private.GitPushOptionCount)); err == nil {
 		for idx := 0; idx < pushCount; idx++ {
 			opt := os.Getenv(fmt.Sprintf("GIT_PUSH_OPTION_%d", idx))
-			kv := strings.SplitN(opt, "=", 2)
-			if len(kv) == 2 {
-				opts[kv[0]] = kv[1]
+			key, value, found := strings.Cut(opt, "=")
+			if !found {
+				value = "true"
 			}
+			opts[key] = value
 		}
 	}
 	return opts
@@ -631,10 +635,11 @@ Forgejo or set your environment appropriately.`, "")
 				break
 			}
 
-			kv := strings.SplitN(string(rs.Data), "=", 2)
-			if len(kv) == 2 {
-				hookOptions.GitPushOptions[kv[0]] = kv[1]
+			key, value, found := strings.Cut(string(rs.Data), "=")
+			if !found {
+				value = "true"
 			}
+			hookOptions.GitPushOptions[key] = value
 		}
 	}
 
@@ -777,7 +782,7 @@ func writeFlushPktLine(ctx context.Context, out io.Writer) error {
 	return nil
 }
 
-// Write an Pkt-Line based on `data` to `out` according to the specifcation.
+// Write an Pkt-Line based on `data` to `out` according to the specification.
 // https://git-scm.com/docs/protocol-common
 func writeDataPktLine(ctx context.Context, out io.Writer, data []byte) error {
 	// Implementations SHOULD NOT send an empty pkt-line ("0004").

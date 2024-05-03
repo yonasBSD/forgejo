@@ -15,16 +15,20 @@ import (
 	"testing"
 	"time"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/indexer/issues"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/references"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -191,6 +195,93 @@ func TestNewIssue(t *testing.T) {
 	testNewIssue(t, session, "user2", "repo1", "Title", "Description")
 }
 
+func TestIssueDependencies(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	repo, _, f := CreateDeclarativeRepoWithOptions(t, owner, DeclarativeRepoOptions{})
+	defer f()
+
+	createIssue := func(t *testing.T, title string) api.Issue {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues", owner.Name, repo.Name)
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateIssueOption{
+			Body:  "",
+			Title: title,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		return apiIssue
+	}
+	addDependency := func(t *testing.T, issue, dependency api.Issue) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/%s/%s/issues/%d/dependency/add", owner.Name, repo.Name, issue.Index)
+		req := NewRequestWithValues(t, "POST", urlStr, map[string]string{
+			"_csrf":         GetCSRF(t, session, fmt.Sprintf("/%s/%s/issues/%d", owner.Name, repo.Name, issue.Index)),
+			"newDependency": fmt.Sprintf("%d", dependency.Index),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+	}
+	removeDependency := func(t *testing.T, issue, dependency api.Issue) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/%s/%s/issues/%d/dependency/delete", owner.Name, repo.Name, issue.Index)
+		req := NewRequestWithValues(t, "POST", urlStr, map[string]string{
+			"_csrf":              GetCSRF(t, session, fmt.Sprintf("/%s/%s/issues/%d", owner.Name, repo.Name, issue.Index)),
+			"removeDependencyID": fmt.Sprintf("%d", dependency.Index),
+			"dependencyType":     "blockedBy",
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+	}
+
+	assertHasDependency := func(t *testing.T, issueID, dependencyID int64, hasDependency bool) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/dependencies", owner.Name, repo.Name, issueID)
+		req := NewRequest(t, "GET", urlStr)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		var issues []api.Issue
+		DecodeJSON(t, resp, &issues)
+
+		if hasDependency {
+			assert.NotEmpty(t, issues)
+			assert.EqualValues(t, issues[0].Index, dependencyID)
+		} else {
+			assert.Empty(t, issues)
+		}
+	}
+
+	t.Run("Add dependency", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		issue1 := createIssue(t, "issue #1")
+		issue2 := createIssue(t, "issue #2")
+		addDependency(t, issue1, issue2)
+
+		assertHasDependency(t, issue1.Index, issue2.Index, true)
+	})
+
+	t.Run("Remove dependency", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		issue1 := createIssue(t, "issue #1")
+		issue2 := createIssue(t, "issue #2")
+		addDependency(t, issue1, issue2)
+		removeDependency(t, issue1, issue2)
+
+		assertHasDependency(t, issue1.Index, issue2.Index, false)
+	})
+}
+
 func TestIssueCommentClose(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
@@ -305,6 +396,16 @@ func TestIssueCommentUpdate(t *testing.T) {
 
 	comment = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: commentID})
 	assert.Equal(t, modifiedContent, comment.Content)
+
+	// make the comment empty
+	req = NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/comments/%d", "user2", "repo1", commentID), map[string]string{
+		"_csrf":   GetCSRF(t, session, issueURL),
+		"content": "",
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+
+	comment = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: commentID})
+	assert.Equal(t, "", comment.Content)
 }
 
 func TestIssueReaction(t *testing.T) {
@@ -813,5 +914,74 @@ func TestIssueFilterNoFollow(t *testing.T) {
 		rel, has := link.Attr("rel")
 		assert.True(t, has)
 		assert.Equal(t, "nofollow", rel)
+	})
+}
+
+func TestIssueForm(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		session := loginUser(t, user2.Name)
+		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeCode, unit_model.TypeIssues}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation: "create",
+					TreePath:  ".forgejo/issue_template/test.yaml",
+					ContentReader: strings.NewReader(`name: Test
+about: Hello World
+body:
+  - type: checkboxes
+    id: test
+    attributes:
+      label: Test
+      options:
+        - label: This is a label
+`),
+				},
+			},
+		)
+		defer f()
+
+		t.Run("Choose list", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/issues/new/choose")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, "a[href$='/issues/new?template=.forgejo%2fissue_template%2ftest.yaml']", true)
+		})
+
+		t.Run("Issue template", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/issues/new?template=.forgejo%2fissue_template%2ftest.yaml")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, "#new-issue .field .ui.checkbox input[name='form-field-test-0']", true)
+			checkboxLabel := htmlDoc.Find("#new-issue .field .ui.checkbox label").Text()
+			assert.Contains(t, checkboxLabel, "This is a label")
+		})
+	})
+}
+
+func TestIssueUnsubscription(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		defer tests.PrepareTestEnv(t)()
+
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+		repo, _, f := CreateDeclarativeRepoWithOptions(t, user, DeclarativeRepoOptions{
+			AutoInit: optional.Some(false),
+		})
+		defer f()
+		session := loginUser(t, user.Name)
+
+		issueURL := testNewIssue(t, session, user.Name, repo.Name, "Issue title", "Description")
+		req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/watch", issueURL), map[string]string{
+			"_csrf": GetCSRF(t, session, issueURL),
+			"watch": "0",
+		})
+		session.MakeRequest(t, req, http.StatusOK)
 	})
 }

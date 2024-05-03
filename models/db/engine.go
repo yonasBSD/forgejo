@@ -22,9 +22,8 @@ import (
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
 
-	_ "github.com/denisenkom/go-mssqldb" // Needed for the MSSQL driver
-	_ "github.com/go-sql-driver/mysql"   // Needed for the MySQL driver
-	_ "github.com/lib/pq"                // Needed for the Postgresql driver
+	_ "github.com/go-sql-driver/mysql" // Needed for the MySQL driver
+	_ "github.com/lib/pq"              // Needed for the Postgresql driver
 )
 
 var (
@@ -114,10 +113,8 @@ func newXORMEngine() (*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	if setting.Database.Type == "mysql" {
+	if setting.Database.Type.IsMySQL() {
 		engine.Dialect().SetParams(map[string]string{"rowFormat": "DYNAMIC"})
-	} else if setting.Database.Type == "mssql" {
-		engine.Dialect().SetParams(map[string]string{"DEFAULT_VARCHAR": "nvarchar"})
 	}
 	engine.SetSchema(setting.Database.Schema)
 	return engine, nil
@@ -239,7 +236,6 @@ func NamesToBean(names ...string) ([]any, error) {
 	// Need to map provided names to beans...
 	beanMap := make(map[string]any)
 	for _, bean := range tables {
-
 		beanMap[strings.ToLower(reflect.Indirect(reflect.ValueOf(bean)).Type().Name())] = bean
 		beanMap[strings.ToLower(x.TableName(bean))] = bean
 		beanMap[strings.ToLower(x.TableName(bean, true))] = bean
@@ -296,8 +292,8 @@ func MaxBatchInsertSize(bean any) int {
 }
 
 // IsTableNotEmpty returns true if table has at least one record
-func IsTableNotEmpty(tableName string) (bool, error) {
-	return x.Table(tableName).Exist()
+func IsTableNotEmpty(beanOrTableName any) (bool, error) {
+	return x.Table(beanOrTableName).Exist()
 }
 
 // DeleteAllRecords will delete all the records of this table

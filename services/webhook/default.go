@@ -5,22 +5,20 @@ package webhook
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
+	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/svg"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 var _ Handler = defaultHandler{}
@@ -39,16 +37,16 @@ func (dh defaultHandler) Type() webhook_module.HookType {
 func (dh defaultHandler) Icon(size int) template.HTML {
 	if dh.forgejo {
 		// forgejo.svg is not in web_src/svg/, so svg.RenderHTML does not work
-		return imgIcon("forgejo.svg", size)
+		return shared.ImgIcon("forgejo.svg", size)
 	}
 	return svg.RenderHTML("gitea-gitea", size, "img")
 }
 
 func (defaultHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
-func (defaultHandler) FormFields(bind func(any)) FormFields {
+func (defaultHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL  string `binding:"Required;ValidUrl"`
 		HTTPMethod  string `binding:"Required;In(POST,GET)"`
 		ContentType int    `binding:"Required"`
@@ -60,17 +58,29 @@ func (defaultHandler) FormFields(bind func(any)) FormFields {
 	if webhook_model.HookContentType(form.ContentType) == webhook_model.ContentTypeForm {
 		contentType = webhook_model.ContentTypeForm
 	}
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		HTTPMethod:  form.HTTPMethod,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     contentType,
+		Secret:          form.Secret,
+		HTTPMethod:      form.HTTPMethod,
+		Metadata:        nil,
 	}
 }
 
 func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (req *http.Request, body []byte, err error) {
+	payloadContent := t.PayloadContent
+	if w.Type == webhook_module.GITEA &&
+		(t.EventType == webhook_module.HookEventCreate || t.EventType == webhook_module.HookEventDelete) {
+		// Woodpecker expects the ref to be short on tag creation only
+		// https://github.com/woodpecker-ci/woodpecker/blob/00ccec078cdced80cf309cd4da460a5041d7991a/server/forge/gitea/helper.go#L134
+		// see https://codeberg.org/codeberg/community/issues/1556
+		payloadContent, err = substituteRefShortName(payloadContent)
+		if err != nil {
+			return nil, nil, fmt.Errorf("could not substiture ref: %w", err)
+		}
+	}
+
 	switch w.HTTPMethod {
 	case "":
 		log.Info("HTTP Method for %s webhook %s [ID: %d] is not set, defaulting to POST", w.Type, w.URL, w.ID)
@@ -78,7 +88,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	case http.MethodPost:
 		switch w.ContentType {
 		case webhook_model.ContentTypeJSON:
-			req, err = http.NewRequest("POST", w.URL, strings.NewReader(t.PayloadContent))
+			req, err = http.NewRequest("POST", w.URL, strings.NewReader(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -86,7 +96,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 			req.Header.Set("Content-Type", "application/json")
 		case webhook_model.ContentTypeForm:
 			forms := url.Values{
-				"payload": []string{t.PayloadContent},
+				"payload": []string{payloadContent},
 			}
 
 			req, err = http.NewRequest("POST", w.URL, strings.NewReader(forms.Encode()))
@@ -104,7 +114,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 			return nil, nil, fmt.Errorf("invalid URL: %w", err)
 		}
 		vals := u.Query()
-		vals["payload"] = []string{t.PayloadContent}
+		vals["payload"] = []string{payloadContent}
 		u.RawQuery = vals.Encode()
 		req, err = http.NewRequest("GET", u.String(), nil)
 		if err != nil {
@@ -113,12 +123,12 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	case http.MethodPut:
 		switch w.Type {
 		case webhook_module.MATRIX: // used when t.Version == 1
-			txnID, err := getMatrixTxnID([]byte(t.PayloadContent))
+			txnID, err := getMatrixTxnID([]byte(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
 			url := fmt.Sprintf("%s/%s", w.URL, url.PathEscape(txnID))
-			req, err = http.NewRequest("PUT", url, strings.NewReader(t.PayloadContent))
+			req, err = http.NewRequest("PUT", url, strings.NewReader(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -129,43 +139,22 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 		return nil, nil, fmt.Errorf("invalid http method: %v", w.HTTPMethod)
 	}
 
-	body = []byte(t.PayloadContent)
-	return req, body, addDefaultHeaders(req, []byte(w.Secret), t, body)
+	body = []byte(payloadContent)
+	return req, body, shared.AddDefaultHeaders(req, []byte(w.Secret), t, body)
 }
 
-func addDefaultHeaders(req *http.Request, secret []byte, t *webhook_model.HookTask, payloadContent []byte) error {
-	var signatureSHA1 string
-	var signatureSHA256 string
-	if len(secret) > 0 {
-		sig1 := hmac.New(sha1.New, secret)
-		sig256 := hmac.New(sha256.New, secret)
-		_, err := io.MultiWriter(sig1, sig256).Write(payloadContent)
-		if err != nil {
-			// this error should never happen, since the hashes are writing to []byte and always return a nil error.
-			return fmt.Errorf("prepareWebhooks.sigWrite: %w", err)
-		}
-		signatureSHA1 = hex.EncodeToString(sig1.Sum(nil))
-		signatureSHA256 = hex.EncodeToString(sig256.Sum(nil))
+func substituteRefShortName(body string) (string, error) {
+	var m map[string]any
+	if err := json.Unmarshal([]byte(body), &m); err != nil {
+		return body, err
+	}
+	ref, ok := m["ref"].(string)
+	if !ok {
+		return body, fmt.Errorf("expected string 'ref', got %T", m["ref"])
 	}
 
-	event := t.EventType.Event()
-	eventType := string(t.EventType)
-	req.Header.Add("X-Forgejo-Delivery", t.UUID)
-	req.Header.Add("X-Forgejo-Event", event)
-	req.Header.Add("X-Forgejo-Event-Type", eventType)
-	req.Header.Add("X-Forgejo-Signature", signatureSHA256)
-	req.Header.Add("X-Gitea-Delivery", t.UUID)
-	req.Header.Add("X-Gitea-Event", event)
-	req.Header.Add("X-Gitea-Event-Type", eventType)
-	req.Header.Add("X-Gitea-Signature", signatureSHA256)
-	req.Header.Add("X-Gogs-Delivery", t.UUID)
-	req.Header.Add("X-Gogs-Event", event)
-	req.Header.Add("X-Gogs-Event-Type", eventType)
-	req.Header.Add("X-Gogs-Signature", signatureSHA256)
-	req.Header.Add("X-Hub-Signature", "sha1="+signatureSHA1)
-	req.Header.Add("X-Hub-Signature-256", "sha256="+signatureSHA256)
-	req.Header["X-GitHub-Delivery"] = []string{t.UUID}
-	req.Header["X-GitHub-Event"] = []string{event}
-	req.Header["X-GitHub-Event-Type"] = []string{eventType}
-	return nil
+	m["ref"] = git.RefName(ref).ShortName()
+
+	buf, err := json.Marshal(m)
+	return string(buf), err
 }

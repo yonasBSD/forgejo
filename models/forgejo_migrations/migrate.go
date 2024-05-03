@@ -56,6 +56,16 @@ var migrations = []*Migration{
 	NewMigration("Modify the `release`.`note` content to remove SSH signatures", forgejo_v1_22.RemoveSSHSignaturesFromReleaseNotes),
 	// v8 -> v9
 	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
+	// v9 -> v10
+	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
+	// v11 -> v12
+	NewMigration("Add the `created` column to the `issue` table", forgejo_v1_22.AddCreatedToIssue),
+	// v12 -> v13
+	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
+	// v13 -> v14
+	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
+	// v14 -> v15
+	NewMigration("Remove Gitea-specific columns from the repository and badge tables", RemoveGiteaSpecificColumnsFromRepositoryAndBadge),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

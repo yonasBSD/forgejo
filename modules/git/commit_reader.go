@@ -49,9 +49,8 @@ readLoop:
 			if len(line) > 0 && line[0] == ' ' {
 				_, _ = signatureSB.Write(line[1:])
 				continue
-			} else {
-				pgpsig = false
 			}
+			pgpsig = false
 		}
 
 		if !message {
@@ -83,6 +82,8 @@ readLoop:
 			case "committer":
 				commit.Committer = &Signature{}
 				commit.Committer.Decode(data)
+				_, _ = payloadSB.Write(line)
+			case "encoding":
 				_, _ = payloadSB.Write(line)
 			case "gpgsig":
 				fallthrough

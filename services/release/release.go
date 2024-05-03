@@ -199,7 +199,7 @@ func CreateNewTag(ctx context.Context, doer *user_model.User, repo *repo_model.R
 // delAttachmentUUIDs accept a slice of attachments' uuids which will be deleted from the release
 // editAttachments accept a map of attachment uuid to new attachment name which will be updated with attachments.
 func UpdateRelease(ctx context.Context, doer *user_model.User, gitRepo *git.Repository, rel *repo_model.Release,
-	addAttachmentUUIDs, delAttachmentUUIDs []string, editAttachments map[string]string,
+	addAttachmentUUIDs, delAttachmentUUIDs []string, editAttachments map[string]string, createdFromTag bool,
 ) error {
 	if rel.ID == 0 {
 		return errors.New("UpdateRelease only accepts an exist release")
@@ -292,11 +292,11 @@ func UpdateRelease(ctx context.Context, doer *user_model.User, gitRepo *git.Repo
 	}
 
 	if !rel.IsDraft {
-		if !isCreated {
-			notify_service.UpdateRelease(gitRepo.Ctx, doer, rel)
+		if createdFromTag || isCreated {
+			notify_service.NewRelease(gitRepo.Ctx, rel)
 			return nil
 		}
-		notify_service.NewRelease(gitRepo.Ctx, rel)
+		notify_service.UpdateRelease(gitRepo.Ctx, doer, rel)
 	}
 	return nil
 }
@@ -316,6 +316,11 @@ func DeleteReleaseByID(ctx context.Context, repo *repo_model.Repository, rel *re
 			return models.ErrProtectedTagName{
 				TagName: rel.TagName,
 			}
+		}
+
+		err = repo_model.DeleteArchiveDownloadCountForRelease(ctx, rel.ID)
+		if err != nil {
+			return err
 		}
 
 		if stdout, _, err := git.NewCommand(ctx, "tag", "-d").AddDashesAndList(rel.TagName).

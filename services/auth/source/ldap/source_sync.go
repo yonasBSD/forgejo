@@ -105,7 +105,11 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 		}
 
 		if len(su.Mail) == 0 {
-			su.Mail = fmt.Sprintf("%s@localhost.local", su.Username)
+			domainName := source.DefaultDomainName
+			if len(domainName) == 0 {
+				domainName = "localhost.local"
+			}
+			su.Mail = fmt.Sprintf("%s@%s", su.Username, domainName)
 		}
 
 		fullName := composeFullName(su.Name, su.Surname, su.Username)
@@ -155,7 +159,6 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 				!strings.EqualFold(usr.Email, su.Mail) ||
 				usr.FullName != fullName ||
 				!usr.IsActive {
-
 				log.Trace("SyncExternalUsers[%s]: Updating user %s", source.authSource.Name, usr.Name)
 
 				opts := &user_service.UpdateOptions{

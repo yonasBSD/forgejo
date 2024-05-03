@@ -83,7 +83,6 @@ cpu.out
 /public/assets/css
 /public/assets/fonts
 /public/assets/licenses.txt
-/public/assets/img/webpack
 /vendor
 /web_src/fomantic/node_modules
 /web_src/fomantic/build/*
@@ -101,6 +100,9 @@ cpu.out
 /.air
 /.go-licenses
 /.cur-deadcode-out
+
+# Files and folders that were previously generated
+/public/assets/img/webpack
 
 # Snapcraft
 /gitea_a*.txt

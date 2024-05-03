@@ -95,6 +95,7 @@ type User struct {
 	Type        UserType
 	Location    string
 	Website     string
+	Pronouns    string
 	Rands       string `xorm:"VARCHAR(32)"`
 	Salt        string `xorm:"VARCHAR(32)"`
 	Language    string `xorm:"VARCHAR(5)"`
@@ -215,7 +216,7 @@ func (u *User) GetEmail() string {
 // GetAllUsers returns a slice of all individual users found in DB.
 func GetAllUsers(ctx context.Context) ([]*User, error) {
 	users := make([]*User, 0)
-	return users, db.GetEngine(ctx).OrderBy("id").Where("type = ?", UserTypeIndividual).Find(&users)
+	return users, db.GetEngine(ctx).OrderBy("id").In("type", UserTypeIndividual, UserTypeRemoteUser).Find(&users)
 }
 
 // GetAllAdmins returns a slice of all adminusers found in DB.
@@ -413,6 +414,10 @@ func (u *User) IsIndividual() bool {
 // IsBot returns whether or not the user is of type bot
 func (u *User) IsBot() bool {
 	return u.Type == UserTypeBot
+}
+
+func (u *User) IsRemote() bool {
+	return u.Type == UserTypeRemoteUser
 }
 
 // DisplayName returns full name if it's not empty,
@@ -917,7 +922,8 @@ func GetUserByName(ctx context.Context, name string) (*User, error) {
 	if len(name) == 0 {
 		return nil, ErrUserNotExist{Name: name}
 	}
-	u := &User{LowerName: strings.ToLower(name), Type: UserTypeIndividual}
+	// adding Type: UserTypeIndividual is a noop because it is zero and discarded
+	u := &User{LowerName: strings.ToLower(name)}
 	has, err := db.GetEngine(ctx).Get(u)
 	if err != nil {
 		return nil, err
@@ -1001,9 +1007,8 @@ func GetUserIDsByNames(ctx context.Context, names []string, ignoreNonExistent bo
 		if err != nil {
 			if ignoreNonExistent {
 				continue
-			} else {
-				return nil, err
 			}
+			return nil, err
 		}
 		ids = append(ids, u.ID)
 	}
@@ -1244,4 +1249,22 @@ func GetOrderByName() string {
 		return "full_name, name"
 	}
 	return "name"
+}
+
+// IsFeatureDisabledWithLoginType checks if a user feature is disabled, taking into account the login type of the
+// user if applicable
+func IsFeatureDisabledWithLoginType(user *User, feature string) bool {
+	// NOTE: in the long run it may be better to check the ExternalLoginUser table rather than user.LoginType
+	return (user != nil && user.LoginType > auth.Plain && setting.Admin.ExternalUserDisableFeatures.Contains(feature)) ||
+		setting.Admin.UserDisabledFeatures.Contains(feature)
+}
+
+// DisabledFeaturesWithLoginType returns the set of user features disabled, taking into account the login type
+// of the user if applicable
+func DisabledFeaturesWithLoginType(user *User) *container.Set[string] {
+	// NOTE: in the long run it may be better to check the ExternalLoginUser table rather than user.LoginType
+	if user != nil && user.LoginType > auth.Plain {
+		return &setting.Admin.ExternalUserDisableFeatures
+	}
+	return &setting.Admin.UserDisabledFeatures
 }

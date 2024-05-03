@@ -19,6 +19,8 @@ type User struct {
 	// the user's authentication sign-in name.
 	// default: empty
 	LoginName string `json:"login_name"`
+	// The ID of the user's Authentication Source
+	SourceID int64 `json:"source_id"`
 	// the user's full name
 	FullName string `json:"full_name"`
 	// swagger:strfmt email
@@ -41,6 +43,8 @@ type User struct {
 	ProhibitLogin bool `json:"prohibit_login"`
 	// the user's location
 	Location string `json:"location"`
+	// the user's pronouns
+	Pronouns string `json:"pronouns"`
 	// the user's website
 	Website string `json:"website"`
 	// the user's description
@@ -71,6 +75,7 @@ type UserSettings struct {
 	Website             string `json:"website"`
 	Description         string `json:"description"`
 	Location            string `json:"location"`
+	Pronouns            string `json:"pronouns"`
 	Language            string `json:"language"`
 	Theme               string `json:"theme"`
 	DiffViewStyle       string `json:"diff_view_style"`
@@ -87,6 +92,7 @@ type UserSettingsOptions struct {
 	Website             *string `json:"website" binding:"OmitEmpty;ValidUrl;MaxSize(255)"`
 	Description         *string `json:"description" binding:"MaxSize(255)"`
 	Location            *string `json:"location" binding:"MaxSize(50)"`
+	Pronouns            *string `json:"pronouns" binding:"MaxSize(50)"`
 	Language            *string `json:"language"`
 	Theme               *string `json:"theme"`
 	DiffViewStyle       *string `json:"diff_view_style"`

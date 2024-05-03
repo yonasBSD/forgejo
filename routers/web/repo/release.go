@@ -127,6 +127,11 @@ func getReleaseInfos(ctx *context.Context, opts *repo_model.FindReleasesOptions)
 			return nil, err
 		}
 
+		err = r.LoadArchiveDownloadCount(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		if !r.IsDraft {
 			if err := calReleaseNumCommitsBehind(ctx.Repo, r, countCache); err != nil {
 				return nil, err
@@ -355,6 +360,12 @@ func SingleRelease(ctx *context.Context) {
 		ctx.Data["Title"] = release.Title
 	}
 
+	err = release.LoadArchiveDownloadCount(ctx)
+	if err != nil {
+		ctx.ServerError("LoadArchiveDownloadCount", err)
+		return
+	}
+
 	ctx.Data["Releases"] = releases
 	ctx.HTML(http.StatusOK, tplReleasesList)
 }
@@ -429,6 +440,20 @@ func NewRelease(ctx *context.Context) {
 		return
 	}
 	ctx.Data["Tags"] = tags
+
+	// We set the value of the hide_archive_link textbox depending on the latest release
+	latestRelease, err := repo_model.GetLatestReleaseByRepoID(ctx, ctx.Repo.Repository.ID)
+	if err != nil {
+		if repo_model.IsErrReleaseNotExist(err) {
+			ctx.Data["hide_archive_links"] = false
+		} else {
+			ctx.ServerError("GetLatestReleaseByRepoID", err)
+			return
+		}
+	}
+	if latestRelease != nil {
+		ctx.Data["hide_archive_links"] = latestRelease.HideArchiveLinks
+	}
 
 	ctx.HTML(http.StatusOK, tplReleaseNew)
 }
@@ -514,17 +539,18 @@ func NewReleasePost(ctx *context.Context) {
 		}
 
 		rel = &repo_model.Release{
-			RepoID:       ctx.Repo.Repository.ID,
-			Repo:         ctx.Repo.Repository,
-			PublisherID:  ctx.Doer.ID,
-			Publisher:    ctx.Doer,
-			Title:        form.Title,
-			TagName:      form.TagName,
-			Target:       form.Target,
-			Note:         form.Content,
-			IsDraft:      len(form.Draft) > 0,
-			IsPrerelease: form.Prerelease,
-			IsTag:        false,
+			RepoID:           ctx.Repo.Repository.ID,
+			Repo:             ctx.Repo.Repository,
+			PublisherID:      ctx.Doer.ID,
+			Publisher:        ctx.Doer,
+			Title:            form.Title,
+			TagName:          form.TagName,
+			Target:           form.Target,
+			Note:             form.Content,
+			IsDraft:          len(form.Draft) > 0,
+			IsPrerelease:     form.Prerelease,
+			HideArchiveLinks: form.HideArchiveLinks,
+			IsTag:            false,
 		}
 
 		if err = releaseservice.CreateRelease(ctx.Repo.GitRepo, rel, attachmentUUIDs, msg); err != nil {
@@ -554,9 +580,10 @@ func NewReleasePost(ctx *context.Context) {
 		rel.IsDraft = len(form.Draft) > 0
 		rel.IsPrerelease = form.Prerelease
 		rel.PublisherID = ctx.Doer.ID
+		rel.HideArchiveLinks = form.HideArchiveLinks
 		rel.IsTag = false
 
-		if err = releaseservice.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil); err != nil {
+		if err = releaseservice.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo, rel, attachmentUUIDs, nil, nil, true); err != nil {
 			ctx.Data["Err_TagName"] = true
 			ctx.ServerError("UpdateRelease", err)
 			return
@@ -591,6 +618,7 @@ func EditRelease(ctx *context.Context) {
 	ctx.Data["title"] = rel.Title
 	ctx.Data["content"] = rel.Note
 	ctx.Data["prerelease"] = rel.IsPrerelease
+	ctx.Data["hide_archive_links"] = rel.HideArchiveLinks
 	ctx.Data["IsDraft"] = rel.IsDraft
 
 	rel.Repo = ctx.Repo.Repository
@@ -637,6 +665,7 @@ func EditReleasePost(ctx *context.Context) {
 	ctx.Data["title"] = rel.Title
 	ctx.Data["content"] = rel.Note
 	ctx.Data["prerelease"] = rel.IsPrerelease
+	ctx.Data["hide_archive_links"] = rel.HideArchiveLinks
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplReleaseNew)
@@ -662,8 +691,9 @@ func EditReleasePost(ctx *context.Context) {
 	rel.Note = form.Content
 	rel.IsDraft = len(form.Draft) > 0
 	rel.IsPrerelease = form.Prerelease
+	rel.HideArchiveLinks = form.HideArchiveLinks
 	if err = releaseservice.UpdateRelease(ctx, ctx.Doer, ctx.Repo.GitRepo,
-		rel, addAttachmentUUIDs, delAttachmentUUIDs, editAttachments); err != nil {
+		rel, addAttachmentUUIDs, delAttachmentUUIDs, editAttachments, false); err != nil {
 		ctx.ServerError("UpdateRelease", err)
 		return
 	}

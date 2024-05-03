@@ -574,6 +574,21 @@ var migrations = []Migration{
 	NewMigration("Ensure every project has exactly one default column - No Op", noopMigration),
 	// v293 -> v294
 	NewMigration("Ensure every project has exactly one default column", v1_22.CheckProjectColumnsConsistency),
+
+	// Gitea 1.22.0-rc0 ends at 294
+
+	// v294 -> v295
+	NewMigration("Add unique index for project issue table", v1_22.AddUniqueIndexForProjectIssue),
+	// v295 -> v296
+	NewMigration("Add commit status summary table", v1_22.AddCommitStatusSummary),
+	// v296 -> v297
+	NewMigration("Add missing field of commit status summary table", v1_22.AddCommitStatusSummary2),
+	// v297 -> v298
+	NewMigration("Add everyone_access_mode for repo_unit", noopMigration),
+	// v298 -> v299
+	NewMigration("Drop wrongly created table o_auth2_application", v1_22.DropWronglyCreatedTable),
+
+	// Gitea 1.22.0-rc1 ends at 299
 }
 
 // GetCurrentDBVersion returns the current db version
@@ -650,15 +665,15 @@ func Migrate(x *xorm.Engine) error {
 
 	v := currentVersion.Version
 	if minDBVersion > v {
-		log.Fatal(`Gitea no longer supports auto-migration from your previously installed version.
+		log.Fatal(`Forgejo no longer supports auto-migration from your previously installed version.
 Please try upgrading to a lower version first (suggested v1.6.4), then upgrade to this version.`)
 		return nil
 	}
 
-	// Downgrading Gitea's database version not supported
+	// Downgrading Forgejo database version is not supported
 	if int(v-minDBVersion) > len(migrations) {
-		msg := fmt.Sprintf("Your database (migration version: %d) is for a newer Gitea, you can not use the newer database for this old Gitea release (%d).", v, minDBVersion+len(migrations))
-		msg += "\nGitea will exit to keep your database safe and unchanged. Please use the correct Gitea release, do not change the migration version manually (incorrect manual operation may lose data)."
+		msg := fmt.Sprintf("Your database (migration version: %d) is for a newer Forgejo, you can not use the newer database for this old Forgejo release (%d).", v, minDBVersion+len(migrations))
+		msg += "\nForgejo will exit to keep your database safe and unchanged. Please use the correct Forgejo release, do not change the migration version manually (incorrect manual operation may lose data)."
 		if !setting.IsProd {
 			msg += fmt.Sprintf("\nIf you are in development and really know what you're doing, you can force changing the migration version by executing: UPDATE version SET version=%d WHERE id=1;", minDBVersion+len(migrations))
 		}
