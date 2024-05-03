@@ -75,7 +75,9 @@ func TestUnstarRepo(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+
+	assert.True(t, repo_model.IsStaring(db.DefaultContext, user.ID, repo.ID))
 
 	assert.NoError(t, repo_model.StarRepo(db.DefaultContext, user.ID, repo.ID, false))
 
