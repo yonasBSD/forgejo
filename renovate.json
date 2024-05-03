@@ -37,7 +37,8 @@
       "matchDepNames": [
         "bitnami/minio",
         "github.com/go-ap/activitypub",
-        "github.com/nektos/act"
+        "github.com/nektos/act",
+        "gitea.com/gitea/act"
       ],
       "dependencyDashboardApproval": true
     },
@@ -71,6 +72,8 @@
     {
       "description": "Split minor and patch updates",
       "matchDepNames": [
+        "vue",
+        "github.com/urfave/cli/v2",
         "swagger-ui-dist"
       ],
       "separateMinorPatch": true
@@ -78,6 +81,8 @@
     {
       "description": "Automerge patch updates",
       "matchDepNames": [
+        "vue",
+        "github.com/urfave/cli/v2",
         "swagger-ui-dist"
       ],
       "matchUpdateTypes": ["patch"],
