@@ -16,9 +16,8 @@ type Sut struct {
 func (sut Sut) Validate() []string {
 	if sut.valid {
 		return []string{}
-	} else {
-		return []string{"invalid"}
 	}
+	return []string{"invalid"}
 }
 
 func Test_IsValid(t *testing.T) {

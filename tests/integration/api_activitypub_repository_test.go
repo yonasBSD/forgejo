@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
-	forgefed_model "code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
+	forgefed_modules "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers"
 
@@ -35,7 +35,7 @@ func TestActivityPubRepository(t *testing.T) {
 		body := resp.Body.Bytes()
 		assert.Contains(t, string(body), "@context")
 
-		var repository forgefed_model.Repository
+		var repository forgefed_modules.Repository
 		err := repository.UnmarshalJSON(body)
 		assert.NoError(t, err)
 
@@ -81,12 +81,12 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		repositoryID := 2
 		c, err := activitypub.NewClient(db.DefaultContext, actionsUser, "not used")
 		assert.NoError(t, err)
-		repoInboxUrl := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
+		repoInboxURL := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
 			srv.URL, repositoryID)
 
 		activity := []byte(fmt.Sprintf(`{"type":"Like","startTime":"2024-03-27T00:00:00Z","actor":"%s/api/v1/activitypub/user-id/2","object":"%s/api/v1/activitypub/repository-id/%v"}`,
 			srv.URL, srv.URL, repositoryID))
-		resp, err := c.Post(activity, repoInboxUrl)
+		resp, err := c.Post(activity, repoInboxURL)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	})
@@ -114,11 +114,11 @@ func TestActivityPubRepositoryInboxInvalid(t *testing.T) {
 		repositoryID := 2
 		c, err := activitypub.NewClient(db.DefaultContext, actionsUser, "not used")
 		assert.NoError(t, err)
-		repoInboxUrl := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
+		repoInboxURL := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
 			srv.URL, repositoryID)
 
-		activity := []byte(fmt.Sprintf(`{"type":"Wrong"}`))
-		resp, err := c.Post(activity, repoInboxUrl)
+		activity := []byte(`{"type":"Wrong"}`)
+		resp, err := c.Post(activity, repoInboxURL)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNotAcceptable, resp.StatusCode)
 	})

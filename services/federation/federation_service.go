@@ -7,7 +7,7 @@ import (
 	"context"
 	"net/http"
 
-	"code.gitea.io/gitea/models/forgefed"
+	fm "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/validation"
 )
@@ -20,7 +20,7 @@ import (
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
 func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
-	activity := form.(*forgefed.ForgeLike)
+	activity := form.(*fm.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
 	}

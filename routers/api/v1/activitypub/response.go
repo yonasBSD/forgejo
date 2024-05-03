@@ -6,8 +6,8 @@ package activitypub
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/modules/activitypub"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/context"
 
