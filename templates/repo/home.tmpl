@@ -163,11 +163,15 @@
 		</div>
 
 		{{if .CanSyncFork}}
-			<div class="ui positive message gt-df gt-ac">
-				<div class="gt-f1">
-					{{ctx.Locale.Tr "repo.sync_fork.text" (printf "<a href='%s'>%s:%s</a>" .BaseBranchLink .Repository.BaseRepo.FullName (.BranchName|Escape) | Safe)}}
+			<div class="ui positive message tw-flex tw-items-center">
+				<div class="tw-flex-1">
+					{{if eq .ForkCommitsBehind 1}}
+						{{ctx.Locale.Tr "repo.sync_fork.text_1" (printf "<a href='%s'>%s:%s</a>" .BaseBranchLink .Repository.BaseRepo.FullName .BranchName | SafeHTML)}}
+					{{else}}
+						{{ctx.Locale.Tr "repo.sync_fork.text_n" .ForkCommitsBehind (printf "<a href='%s'>%s:%s</a>" .BaseBranchLink .Repository.BaseRepo.FullName .BranchName | SafeHTML)}}
+					{{end}}
 				</div>
-				<a role="button" class="ui compact positive button gt-m-0" href="{{.SyncForkLink}}">
+				<a role="button" class="ui compact positive button tw-m-0" href="{{.SyncForkLink}}">
 					{{ctx.Locale.Tr "repo.sync_fork.button"}}
 				</a>
 			</div>

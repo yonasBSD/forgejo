@@ -27,30 +27,7 @@ func SyncFork(ctx context.Context, doer *user_model.User, repo *repo_model.Repos
 		return err
 	}
 
-	repo.RepoPath()
-
-	err = git.NewCommand(ctx, "fetch", "--force").AddDynamicArguments(repo.BaseRepo.RepoPath(), fmt.Sprintf("%s:%s", branch, branch)).Run(&git.RunOpts{Dir: repo.RepoPath()})
-	if err != nil {
-		return err
-	}
-
-	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
-	if err != nil {
-		return err
-	}
-	defer gitRepo.Close()
-
-	forkBranch, err := gitRepo.GetBranch(branch)
-	if err != nil {
-		return err
-	}
-
-	commit, err := forkBranch.GetCommit()
-	if err != nil {
-		return err
-	}
-
-	_, err = git_model.UpdateBranch(ctx, repo.ID, doer.ID, branch, commit)
+	err = git.NewCommand(ctx, "fetch").AddDynamicArguments(repo.BaseRepo.RepoPath(), fmt.Sprintf("%s:%s", branch, branch)).Run(&git.RunOpts{Dir: repo.RepoPath()})
 	if err != nil {
 		return err
 	}
@@ -123,7 +100,17 @@ func GetSyncForkInfo(ctx context.Context, repo *repo_model.Repository, branch st
 		return nil, err
 	}
 
-	info.Allowed = slices.Contains(branchList, branch)
+	if !slices.Contains(branchList, branch) {
+		return info, nil
+	}
+
+	diff, err := git.GetDivergingCommits(ctx, repo.BaseRepo.RepoPath(), baseBranch.CommitID, forkBranch.CommitID)
+	if err != nil {
+		return nil, err
+	}
+
+	info.Allowed = true
+	info.CommitsBehind = diff.Behind
 
 	return info, nil
 }

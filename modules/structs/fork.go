@@ -13,7 +13,8 @@ type CreateForkOption struct {
 
 // SyncForkInfo information about syncing a fork
 type SyncForkInfo struct {
-	Allowed    bool   `json:"allowed"`
-	ForkCommit string `json:"fork_commit"`
-	BaseCommit string `json:"base_commit"`
+	Allowed       bool   `json:"allowed"`
+	ForkCommit    string `json:"fork_commit"`
+	BaseCommit    string `json:"base_commit"`
+	CommitsBehind int    `json:"commits_behind"`
 }
