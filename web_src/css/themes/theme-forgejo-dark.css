@@ -141,6 +141,7 @@
   /* other colors */
   --color-gold: #b1983b;
   --color-white: #ffffff;
+  --color-pure-black: #000000;
   --color-diff-removed-word-bg: #783030;
   --color-diff-added-word-bg: #255c39;
   --color-diff-removed-row-bg: #432121;
@@ -213,7 +214,7 @@
   --color-secondary-bg: var(--steel-700);
   --color-text-focus: #fff;
   --color-expand-button: #3c404d;
-  --color-placeholder-text: var(--steel-450);
+  --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--steel-700);
   --color-project-board-bg: var(--color-secondary-light-3);
   --color-project-board-dark-label: var(--color-text-light-3);
@@ -304,7 +305,7 @@ i.grey.icon.icon.icon.icon {
 }
 ::selection {
   background: var(--steel-100) !important;
-  color: var(--color-white) !important;
+  color: var(--color-pure-black) !important;
 }
 strong.attention-important, svg.attention-important {
   color: var(--color-violet-light);
