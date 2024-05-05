@@ -45,11 +45,6 @@ package "code.gitea.io/gitea/models/dbfs"
 
 package "code.gitea.io/gitea/models/forgefed"
 	func GetFederationHost
-	func GetItemByType
-	func JSONUnmarshalerFn
-	func NotEmpty
-	func ToRepository
-	func OnRepository
 
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
@@ -168,6 +163,13 @@ package "code.gitea.io/gitea/modules/emoji"
 
 package "code.gitea.io/gitea/modules/eventsource"
 	func (*Event).String
+
+package "code.gitea.io/gitea/modules/forgefed"
+	func GetItemByType
+	func JSONUnmarshalerFn
+	func NotEmpty
+	func ToRepository
+	func OnRepository
 
 package "code.gitea.io/gitea/modules/git"
 	func AllowLFSFiltersArgs
@@ -308,7 +310,6 @@ package "code.gitea.io/gitea/modules/validation"
 	func IsValidFollowingRepoURL
 	func IsValidFollowingRepoURLList
 	func IsOfValidLength
-	func ValidateSuffix
 
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock
