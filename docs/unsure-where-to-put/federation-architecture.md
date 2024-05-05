@@ -92,7 +92,7 @@ classDiagram
       Type                   UserType
       IsActive               bool
       IsAdmin                bool
-      NormalizedFederatedUri string
+      NormalizedFederatedURI string
       Validate()             []string
     }
 
