@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"code.gitea.io/gitea/modules/validation"
+
 	"github.com/valyala/fastjson"
 )
 

@@ -16,7 +16,7 @@ import (
 )
 
 // Respond with an ActivityStreams object
-func response(ctx *context.APIContext, v interface{}) {
+func response(ctx *context.APIContext, v any) {
 	binary, err := jsonld.WithContext(
 		jsonld.IRI(ap.ActivityBaseURI),
 		jsonld.IRI(ap.SecurityContextURI),
