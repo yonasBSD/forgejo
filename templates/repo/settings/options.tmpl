@@ -73,7 +73,7 @@
 				<input type="hidden" name="action" value="federation">
 				<div class="field {{if .Err_FollowingRepos}}error{{end}}">
 					<p>{{ctx.Locale.Tr "repo.settings.federation_apapiurl"}}</p>
-					<p><b>{{.RepositoryAPAPIURL}}<b></p>
+					<p><b>{{.RepositoryAPAPIURL}}</b></p>
 					<div class="divider"></div>
 					<label for="following_repos">{{ctx.Locale.Tr "repo.settings.federation_following_repos"}}</label>
 					<input id="following_repos" name="federation_repos" value="{{.FollowingRepos}}">
@@ -85,7 +85,6 @@
 		</div>
 	{{end}}
 
-
 		{{/* These variables exist to make the logic in the Settings window easier to comprehend and are not used later on. */}}
 		{{$newMirrorsPartiallyEnabled := or (not .DisableNewPullMirrors) (not .DisableNewPushMirrors)}}
 		{{/* .Repository.IsMirror is not always reliable if the repository is not actively acting as a mirror because of errors. */}}
@@ -96,7 +95,6 @@
 		{{$existingPushMirror := or .Repository.IsMirror .PushMirrors}}
 		{{$modifyBrokenPullMirror := and .Repository.IsMirror (not .PullMirror)}}
 		{{$isWorkingPullMirror := .PullMirror}}
-
 
 		{{if $showMirrorSettings}}
 			<h4 class="ui top attached header">
