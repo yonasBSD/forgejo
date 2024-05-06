@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"code.gitea.io/gitea/modules/setting"
@@ -116,51 +115,6 @@ func IsValidExternalTrackerURLFormat(uri string) bool {
 	}
 
 	return true
-}
-
-func IsValidForgejoActivityPubURL(url string) bool {
-	if !IsValidURL(url) {
-		return false
-	}
-	if !strings.Contains(url, "api/v1/activitypub") {
-		return false
-	}
-	return true
-}
-
-func IsValidFollowingRepoURL(url string) bool {
-	if !IsValidForgejoActivityPubURL(url) {
-		return false
-	}
-	if !strings.Contains(url, "repository-id") {
-		return false
-	}
-	splitURL := strings.Split(url, "/")
-	repoIDIndex := len(splitURL) - 1
-	// Is there a valid integer denoting a repo id?
-	if _, err := strconv.Atoi(splitURL[repoIDIndex]); err != nil {
-		return false
-	}
-	return true
-}
-
-func IsValidFollowingRepoURLList(urls string) bool {
-	switch {
-	case len(strings.Split(urls, ";")) == 1:
-		return IsValidFollowingRepoURL(urls)
-	default:
-		for _, url := range strings.Split(urls, ";") {
-			if !IsValidFollowingRepoURLList(url) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-// TODO: use validateable/ValidateMaxLen instead !!
-func IsOfValidLength(str string) bool {
-	return len(str) <= 2048
 }
 
 var (

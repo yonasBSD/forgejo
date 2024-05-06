@@ -84,6 +84,7 @@ func Test_LikeUnmarshalJSON(t *testing.T) {
 		wantErr error
 	}
 
+	//revive:disable
 	tests := map[string]testPair{
 		"with ID": {
 			item: []byte(`{"type":"Like","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"}`),
@@ -96,12 +97,13 @@ func Test_LikeUnmarshalJSON(t *testing.T) {
 			},
 			wantErr: nil,
 		},
-		"invalid": { // ToDo: Here we are testing if the json parser detects invalid json, we could keep this test in case we bould our own.
+		"invalid": {
 			item:    []byte(`{"type":"Invalid","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"`),
 			want:    &ForgeLike{},
 			wantErr: fmt.Errorf("cannot parse JSON:"),
 		},
 	}
+	//revive:enable
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
