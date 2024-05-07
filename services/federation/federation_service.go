@@ -131,7 +131,6 @@ func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*forge
 }
 
 func GetFederationHostForURI(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
-	// parse actorID (person)
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
 	if err != nil {
