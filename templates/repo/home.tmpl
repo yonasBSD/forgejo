@@ -11,7 +11,7 @@
 				{{if $description}}<span class="description">{{$description | RenderCodeBlock}}</span>{{else}}<span class="no-description text-italic">{{ctx.Locale.Tr "repo.no_desc"}}</span>{{end}}
 				{{if .Repository.Website}}<a class="link" href="{{.Repository.Website}}">{{.Repository.Website}}</a>{{end}}
 			</div>
-			<form class="ignore-dirty" action="{{.RepoLink}}/search/{{if .CodeIndexerDisabled}}{{.BranchNameSubURL}}{{end}}" method="get">
+			<form class="ignore-dirty" action="{{.RepoLink}}/search/{{if .CodeIndexerDisabled}}{{.BranchNameSubURL}}{{end}}" method="get" data-test-tag="codesearch">
 				<div class="ui small action input">
 					<input name="q" value="{{.Keyword}}" placeholder="{{ctx.Locale.Tr "search.code_kind"}}">
 					{{template "shared/search/button"}}
