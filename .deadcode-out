@@ -305,6 +305,9 @@ package "code.gitea.io/gitea/modules/translation"
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
 
+package "code.gitea.io/gitea/modules/validation"
+	func ValidateMaxLen
+
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock
 	func RouteMockReset
