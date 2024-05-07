@@ -1011,10 +1011,7 @@ func Routes() *web.Route {
 			repo.CreateOrgRepoDeprecated)
 
 		// requires repo scope
-		m.Combo("/repositories/{id}",
-			reqToken(),
-			tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository),
-		).Get(repo.GetByID)
+		m.Combo("/repositories/{id}", reqToken(), tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository)).Get(repo.GetByID)
 
 		// Repos (requires repo scope)
 		m.Group("/repos", func() {
