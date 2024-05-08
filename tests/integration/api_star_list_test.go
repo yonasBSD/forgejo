@@ -30,7 +30,7 @@ func TestAPIGetStarLists(t *testing.T) {
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser, auth_model.AccessTokenScopeReadRepository)
 
 	t.Run("CurrentUser", func(t *testing.T) {
-		resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starlists?token=%s", token)), http.StatusOK)
+		resp := MakeRequest(t, NewRequest(t, "GET", "/api/v1/user/starlists").AddTokenAuth(token), http.StatusOK)
 
 		var starLists []api.StarList
 		DecodeJSON(t, resp, &starLists)
@@ -74,9 +74,9 @@ func TestAPIGetStarListRepoInfo(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser, auth_model.AccessTokenScopeReadRepository)
 
-	urlStr := fmt.Sprintf("/api/v1/user/starlists/repoinfo/%s/%s?token=%s", repo.OwnerName, repo.Name, token)
+	urlStr := fmt.Sprintf("/api/v1/user/starlists/repoinfo/%s/%s", repo.OwnerName, repo.Name)
 
-	resp := MakeRequest(t, NewRequest(t, "GET", urlStr), http.StatusOK)
+	resp := MakeRequest(t, NewRequest(t, "GET", urlStr).AddTokenAuth(token), http.StatusOK)
 
 	var repoInfo []api.StarListRepoInfo
 	DecodeJSON(t, resp, &repoInfo)
@@ -101,11 +101,11 @@ func TestAPICreateStarList(t *testing.T) {
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
 	t.Run("Success", func(t *testing.T) {
-		req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/user/starlists?token=%s", token), &api.CreateEditStarListOptions{
+		req := NewRequestWithJSON(t, "POST", "/api/v1/user/starlists", &api.CreateEditStarListOptions{
 			Name:        "New Name",
 			Description: "Hello",
 			IsPrivate:   false,
-		})
+		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusCreated)
 
 		var starList api.StarList
@@ -117,11 +117,11 @@ func TestAPICreateStarList(t *testing.T) {
 	})
 
 	t.Run("ExistingName", func(t *testing.T) {
-		req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/user/starlists?token=%s", token), &api.CreateEditStarListOptions{
+		req := NewRequestWithJSON(t, "POST", "/api/v1/user/starlists", &api.CreateEditStarListOptions{
 			Name:        "First List",
 			Description: "Hello",
 			IsPrivate:   false,
-		})
+		}).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusBadRequest)
 	})
 }
@@ -137,7 +137,7 @@ func TestAPIGetStarListByName(t *testing.T) {
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser, auth_model.AccessTokenScopeReadRepository)
 
 	t.Run("CurrentUserPublic", func(t *testing.T) {
-		resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starlist/%s?token=%s", url.PathEscape("First List"), token)), http.StatusOK)
+		resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starlist/%s", url.PathEscape("First List"))).AddTokenAuth(token), http.StatusOK)
 
 		var starList api.StarList
 		DecodeJSON(t, resp, &starList)
@@ -161,7 +161,7 @@ func TestAPIGetStarListByName(t *testing.T) {
 	})
 
 	t.Run("CurrentUserPrivate", func(t *testing.T) {
-		resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starlist/%s?token=%s", url.PathEscape("Second List"), token)), http.StatusOK)
+		resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starlist/%s", url.PathEscape("Second List"))).AddTokenAuth(token), http.StatusOK)
 
 		var starList api.StarList
 		DecodeJSON(t, resp, &starList)
@@ -187,11 +187,11 @@ func TestAPIEditStarList(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
-	req := NewRequestWithJSON(t, "PATCH", fmt.Sprintf("/api/v1/user/starlist/%s?token=%s", url.PathEscape("First List"), token), &api.CreateEditStarListOptions{
+	req := NewRequestWithJSON(t, "PATCH", fmt.Sprintf("/api/v1/user/starlist/%s", url.PathEscape("First List")), &api.CreateEditStarListOptions{
 		Name:        "New Name",
 		Description: "Hello",
 		IsPrivate:   false,
-	})
+	}).AddTokenAuth(token)
 	resp := MakeRequest(t, req, http.StatusOK)
 
 	var starList api.StarList
@@ -212,7 +212,7 @@ func TestAPIDeleteStarList(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
-	MakeRequest(t, NewRequest(t, "DELETE", fmt.Sprintf("/api/v1/user/starlist/%s?token=%s", url.PathEscape("First List"), token)), http.StatusNoContent)
+	MakeRequest(t, NewRequest(t, "DELETE", fmt.Sprintf("/api/v1/user/starlist/%s", url.PathEscape("First List"))).AddTokenAuth(token), http.StatusNoContent)
 }
 
 func TestAPIStarListGetRepos(t *testing.T) {
@@ -226,8 +226,8 @@ func TestAPIStarListGetRepos(t *testing.T) {
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser, auth_model.AccessTokenScopeReadRepository)
 
 	t.Run("CurrentUser", func(t *testing.T) {
-		urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/repos?token=%s", url.PathEscape("First List"), token)
-		resp := MakeRequest(t, NewRequest(t, "GET", urlStr), http.StatusOK)
+		urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/repos", url.PathEscape("First List"))
+		resp := MakeRequest(t, NewRequest(t, "GET", urlStr).AddTokenAuth(token), http.StatusOK)
 
 		var repoList []*api.Repository
 		DecodeJSON(t, resp, &repoList)
@@ -261,8 +261,8 @@ func TestAPIStarListAddRepo(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
-	urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/%s/%s?token=%s", url.PathEscape("First List"), repo.OwnerName, repo.Name, token)
-	MakeRequest(t, NewRequest(t, "PUT", urlStr), http.StatusCreated)
+	urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/%s/%s", url.PathEscape("First List"), repo.OwnerName, repo.Name)
+	MakeRequest(t, NewRequest(t, "PUT", urlStr).AddTokenAuth(token), http.StatusCreated)
 }
 
 func TestAPIStarListRemoveRepo(t *testing.T) {
@@ -276,8 +276,8 @@ func TestAPIStarListRemoveRepo(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
-	urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/%s/%s?token=%s", url.PathEscape("First List"), repo.OwnerName, repo.Name, token)
-	MakeRequest(t, NewRequest(t, "DELETE", urlStr), http.StatusNoContent)
+	urlStr := fmt.Sprintf("/api/v1/user/starlist/%s/%s/%s", url.PathEscape("First List"), repo.OwnerName, repo.Name)
+	MakeRequest(t, NewRequest(t, "DELETE", urlStr).AddTokenAuth(token), http.StatusNoContent)
 }
 
 func TestAPIGetStarListByID(t *testing.T) {

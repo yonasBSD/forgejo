@@ -185,7 +185,7 @@ func CreateStarList(ctx *context.APIContext) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, starList)
+	ctx.JSON(http.StatusCreated, convert.ToStarList(ctx, starList, ctx.Doer))
 }
 
 func getStarListByNameInternal(ctx *context.APIContext) {
