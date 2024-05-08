@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
@@ -72,9 +73,13 @@ func syncForkTest(t *testing.T, forkName, urlPart string) {
 }
 
 func TestAPIRepoSyncForkDefault(t *testing.T) {
-	syncForkTest(t, "SyncForkDefault", "sync_fork")
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		syncForkTest(t, "SyncForkDefault", "sync_fork")
+	})
 }
 
 func TestAPIRepoSyncForkBranch(t *testing.T) {
-	syncForkTest(t, "SyncForkBranch", "sync_fork/master")
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		syncForkTest(t, "SyncForkBranch", "sync_fork/master")
+	})
 }

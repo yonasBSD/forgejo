@@ -1132,12 +1132,6 @@ PostRecentBranchCheck:
 	}
 
 	if ctx.Repo.Repository.IsFork && ctx.Repo.IsViewBranch && len(ctx.Repo.TreePath) == 0 && ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, ctx.Repo.BranchName) {
-		err = ctx.Repo.Repository.GetBaseRepo(ctx)
-		if err != nil {
-			ctx.ServerError("GetBaseRepo", err)
-			return
-		}
-
 		syncForkInfo, err := repo_service.GetSyncForkInfo(ctx, ctx.Repo.Repository, ctx.Repo.BranchName)
 		if err != nil {
 			ctx.ServerError("CanSync", err)

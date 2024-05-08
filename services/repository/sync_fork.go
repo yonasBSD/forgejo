@@ -12,6 +12,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	repo_module "code.gitea.io/gitea/modules/repository"
 	api "code.gitea.io/gitea/modules/structs"
 )
 
@@ -27,12 +28,13 @@ func SyncFork(ctx context.Context, doer *user_model.User, repo *repo_model.Repos
 		return err
 	}
 
-	err = git.NewCommand(ctx, "fetch").AddDynamicArguments(repo.BaseRepo.RepoPath(), fmt.Sprintf("%s:%s", branch, branch)).Run(&git.RunOpts{Dir: repo.RepoPath()})
-	if err != nil {
-		return err
-	}
+	err = git.Push(ctx, repo.BaseRepo.RepoPath(), git.PushOptions{
+		Remote: repo.RepoPath(),
+		Branch: fmt.Sprintf("%s:%s", branch, branch),
+		Env:    repo_module.PushingEnvironment(doer, repo),
+	})
 
-	return nil
+	return err
 }
 
 // CanSyncFork returns information about syncing a fork
