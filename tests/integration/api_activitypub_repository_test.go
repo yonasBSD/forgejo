@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
 	forgefed_modules "code.gitea.io/gitea/modules/forgefed"
@@ -136,8 +138,13 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 			federatedSrv.URL, srv.URL, repositoryID))
 		t.Logf("activity: %s", activity)
 		resp, err := c.Post(activity, repoInboxURL)
+
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{ID: 1})
+		assert.Equal(t, "127.0.0.1", federationHost.HostFqdn)
+
 	})
 }
 
