@@ -70,6 +70,18 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 	srv := httptest.NewServer(testWebRoutes)
 	defer srv.Close()
 
+	federatedRoutes := http.NewServeMux()
+	federatedRoutes.HandleFunc("/someroute/",
+		func(res http.ResponseWriter, req *http.Request) {
+			fmt.Fprintf(res, "huhu")
+		})
+	federatedRoutes.HandleFunc("/",
+		func(res http.ResponseWriter, req *http.Request) {
+			t.Errorf("Unhandled request: %q", req.URL.EscapedPath())
+		})
+	federatedSrv := httptest.NewServer(federatedRoutes)
+	defer federatedSrv.Close()
+
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		appURL := setting.AppURL
 		setting.AppURL = srv.URL + "/"
@@ -81,10 +93,16 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		repositoryID := 2
 		c, err := activitypub.NewClient(db.DefaultContext, actionsUser, "not used")
 		assert.NoError(t, err)
-		repoInboxURL := fmt.Sprintf("%s/api/v1/activitypub/repository-id/%v/inbox",
+		repoInboxURL := fmt.Sprintf(
+			"%s/api/v1/activitypub/repository-id/%v/inbox",
 			srv.URL, repositoryID)
 
-		activity := []byte(fmt.Sprintf(`{"type":"Like","startTime":"2024-03-27T00:00:00Z","actor":"%s/api/v1/activitypub/user-id/2","object":"%s/api/v1/activitypub/repository-id/%v"}`,
+		activity := []byte(fmt.Sprintf(
+			`{"type":"Like",`+
+				`"startTime":"2024-03-27T00:00:01Z",`+
+				`"actor":"%s/api/v1/activitypub/user-id/2",`+
+				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
+			//time.Now().Format(time.RFC3339),
 			srv.URL, srv.URL, repositoryID))
 		resp, err := c.Post(activity, repoInboxURL)
 		assert.NoError(t, err)
