@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/user"
@@ -99,11 +100,12 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 
 		activity := []byte(fmt.Sprintf(
 			`{"type":"Like",`+
-				`"startTime":"2024-03-27T00:00:01Z",`+
+				`"startTime":"%s",`+
 				`"actor":"%s/api/v1/activitypub/user-id/2",`+
 				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
-			//time.Now().Format(time.RFC3339),
+			time.Now().UTC().Format(time.RFC3339),
 			srv.URL, srv.URL, repositoryID))
+		t.Logf("activity: %s", activity)
 		resp, err := c.Post(activity, repoInboxURL)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
