@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 
 	"code.gitea.io/gitea/models"
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
@@ -127,20 +128,11 @@ func (ctx *preReceiveContext) validatePushOptions() error {
 		return nil
 	}
 
-	changesRepoSettings := false
 	for key := range opts.GitPushOptions {
 		switch key {
 		case private.GitPushOptionRepoPrivate, private.GitPushOptionRepoTemplate:
-			changesRepoSettings = true
-		case "topic", "force-push", "title", "description":
-			// Agit options
-		default:
-			return fmt.Errorf("unknown option %s", key)
+			return ctx.canChangeSettings()
 		}
-	}
-
-	if changesRepoSettings {
-		return ctx.canChangeSettings()
 	}
 
 	return nil
@@ -156,9 +148,33 @@ func (ctx *preReceiveContext) assertPushOptions() bool {
 	return true
 }
 
+func sanitizePushOptions(opts private.GitPushOptions) private.GitPushOptions {
+	validOptions := []string{
+		// push-to-create options
+		private.GitPushOptionRepoPrivate,
+		private.GitPushOptionRepoTemplate,
+		// AGit options
+		"topic",
+		"force-push",
+		"title",
+		"description",
+	}
+	var sanitizedOpts private.GitPushOptions
+
+	for key := range opts {
+		if slices.Contains(validOptions, key) {
+			sanitizedOpts[key] = opts[key]
+		}
+	}
+
+	return sanitizedOpts
+}
+
 // HookPreReceive checks whether a individual commit is acceptable
 func HookPreReceive(ctx *gitea_context.PrivateContext) {
 	opts := web.GetForm(ctx).(*private.HookOptions)
+
+	opts.GitPushOptions = sanitizePushOptions(opts.GitPushOptions)
 
 	ourCtx := &preReceiveContext{
 		PrivateContext: ctx,
