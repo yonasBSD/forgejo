@@ -19,7 +19,7 @@ type FederationHost struct {
 	HostFqdn       string             `xorm:"host_fqdn UNIQUE INDEX VARCHAR(255) NOT NULL"`
 	NodeInfo       NodeInfo           `xorm:"extends NOT NULL"`
 	LatestActivity time.Time          `xorm:"NOT NULL"`
-	Create         timeutil.TimeStamp `xorm:"created"`
+	Created        timeutil.TimeStamp `xorm:"created"`
 	Updated        timeutil.TimeStamp `xorm:"updated"`
 }
 
