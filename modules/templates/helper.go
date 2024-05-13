@@ -79,6 +79,9 @@ func NewFuncMap() template.FuncMap {
 		"AppName": func() string {
 			return setting.AppName
 		},
+		"Slogan": func() string {
+			return setting.Slogan
+		},
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},

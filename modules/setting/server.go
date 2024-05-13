@@ -45,6 +45,9 @@ var (
 	// AppName is the Application name, used in the page title.
 	// It maps to ini:"APP_NAME"
 	AppName string
+	// Slogan is the Application slogan.
+	// It maps to ini:"SLOGAN"
+	Slogan string
 	// AppURL is the Application ROOT_URL. It always has a '/' suffix
 	// It maps to ini:"ROOT_URL"
 	AppURL string
@@ -167,7 +170,7 @@ func MakeAbsoluteAssetURL(appURL, staticURLPrefix string) string {
 func loadServerFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("server")
 	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Forgejo: Beyond coding. We Forge.")
-
+	Slogan = rootCfg.Section("").Key("SLOGAN").MustString("")
 	Domain = sec.Key("DOMAIN").MustString("localhost")
 	HTTPAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")
 	HTTPPort = sec.Key("HTTP_PORT").MustString("3000")
