@@ -5,7 +5,6 @@ package repo
 
 import (
 	"context"
-	"fmt"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/validation"
@@ -26,7 +25,7 @@ func FindFollowingReposByRepoID(ctx context.Context, repoID int64) ([]*Following
 	}
 	for _, followingRepo := range followingRepoList {
 		if res, err := validation.IsValid(*followingRepo); !res {
-			return make([]*FollowingRepo, 0, maxFollowingRepos), fmt.Errorf("FederationInfo is not valid: %v", err)
+			return make([]*FollowingRepo, 0, maxFollowingRepos), err
 		}
 	}
 	return followingRepoList, nil
@@ -35,7 +34,7 @@ func FindFollowingReposByRepoID(ctx context.Context, repoID int64) ([]*Following
 func StoreFollowingRepos(ctx context.Context, localRepoID int64, followingRepoList []*FollowingRepo) error {
 	for _, followingRepo := range followingRepoList {
 		if res, err := validation.IsValid(*followingRepo); !res {
-			return fmt.Errorf("FederationInfo is not valid: %v", err)
+			return err
 		}
 	}
 

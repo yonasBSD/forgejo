@@ -32,8 +32,8 @@ func NewActorID(uri string) (ActorID, error) {
 		return ActorID{}, err
 	}
 
-	if valid, outcome := validation.IsValid(result); !valid {
-		return ActorID{}, outcome
+	if valid, err := validation.IsValid(result); !valid {
+		return ActorID{}, err
 	}
 
 	return result, nil
@@ -83,8 +83,8 @@ func NewPersonID(uri, source string) (PersonID, error) {
 
 	// validate Person specific path
 	personID := PersonID{result}
-	if valid, outcome := validation.IsValid(personID); !valid {
-		return PersonID{}, outcome
+	if valid, err := validation.IsValid(personID); !valid {
+		return PersonID{}, err
 	}
 
 	return personID, nil
@@ -137,8 +137,8 @@ func NewRepositoryID(uri, source string) (RepositoryID, error) {
 
 	// validate Person specific path
 	repoID := RepositoryID{result}
-	if valid, outcome := validation.IsValid(repoID); !valid {
-		return RepositoryID{}, outcome
+	if valid, err := validation.IsValid(repoID); !valid {
+		return RepositoryID{}, err
 	}
 
 	return repoID, nil

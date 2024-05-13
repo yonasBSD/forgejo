@@ -18,7 +18,7 @@ func init() {
 
 func CreateFederatedUser(ctx context.Context, user *User, federatedUser *FederatedUser) error {
 	if res, err := validation.IsValid(user); !res {
-		return fmt.Errorf("User is not valid: %v", err)
+		return err
 	}
 	overwrite := CreateUserOverwriteOptions{
 		IsActive:     optional.Some(false),
@@ -38,7 +38,7 @@ func CreateFederatedUser(ctx context.Context, user *User, federatedUser *Federat
 
 	federatedUser.UserID = user.ID
 	if res, err := validation.IsValid(federatedUser); !res {
-		return fmt.Errorf("FederatedUser is not valid: %v", err)
+		return err
 	}
 
 	_, err = db.GetEngine(ctx).Insert(federatedUser)
@@ -69,10 +69,10 @@ func FindFederatedUser(ctx context.Context, externalID string,
 	}
 
 	if res, err := validation.IsValid(*user); !res {
-		return nil, nil, fmt.Errorf("FederatedUser is not valid: %v", err)
+		return nil, nil, err
 	}
 	if res, err := validation.IsValid(*federatedUser); !res {
-		return nil, nil, fmt.Errorf("FederatedUser is not valid: %v", err)
+		return nil, nil, err
 	}
 	return user, federatedUser, nil
 }
