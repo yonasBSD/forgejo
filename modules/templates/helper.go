@@ -82,6 +82,16 @@ func NewFuncMap() template.FuncMap {
 		"AppSlogan": func() string {
 			return setting.AppSlogan
 		},
+		"AppFullNameSeparator": func() string {
+			return setting.AppFullNameSeparator
+		},
+		"AppFullName": func() string {
+			if setting.AppSlogan != "" {
+				return fmt.Sprintf("%s %s %s", setting.AppName, setting.AppFullNameSeparator, setting.AppSlogan)
+			} else {
+				return setting.AppName
+			}
+		},
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},
