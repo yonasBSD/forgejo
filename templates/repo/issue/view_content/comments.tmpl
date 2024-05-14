@@ -45,7 +45,7 @@
 									</a>
 								{{end}}
 								<span class="text grey muted-links">
-									{{template "shared/user/authorlink" .Poster}}
+									{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 									{{ctx.Locale.Tr "repo.issues.commented_at" .HashTag $createdStr}}
 								</span>
 							{{end}}
@@ -143,7 +143,7 @@
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				{{if eq .RefAction 3}}<del>{{end}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr $refTr .EventTag $createdStr (.RefCommentLink ctx) $refFrom}}
 				</span>
 				{{if eq .RefAction 3}}</del>{{end}}
@@ -157,7 +157,7 @@
 				<span class="badge">{{svg "octicon-bookmark"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if .Issue.IsPull}}
 						{{ctx.Locale.Tr "repo.pulls.commit_ref_at" .EventTag $createdStr}}
 					{{else}}
@@ -175,7 +175,7 @@
 					<span class="badge">{{svg "octicon-tag"}}</span>
 					{{template "shared/user/avatarlink" dict "user" .Poster}}
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Poster}}
+						{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 						{{if and .AddedLabels (not .RemovedLabels)}}
 							{{ctx.Locale.TrN (len .AddedLabels) "repo.issues.add_label" "repo.issues.add_labels" (RenderLabels $.Context ctx.Locale .AddedLabels $.RepoLink .Issue.IsPull) $createdStr}}
 						{{else if and (not .AddedLabels) .RemovedLabels}}
@@ -191,7 +191,7 @@
 				<span class="badge">{{svg "octicon-milestone"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if gt .OldMilestoneID 0}}{{if gt .MilestoneID 0}}{{ctx.Locale.Tr "repo.issues.change_milestone_at" .OldMilestone.Name .Milestone.Name $createdStr}}{{else}}{{ctx.Locale.Tr "repo.issues.remove_milestone_at" .OldMilestone.Name $createdStr}}{{end}}{{else if gt .MilestoneID 0}}{{ctx.Locale.Tr "repo.issues.add_milestone_at" .Milestone.Name $createdStr}}{{end}}
 				</span>
 			</div>
@@ -201,7 +201,7 @@
 				{{if .RemovedAssignee}}
 					{{template "shared/user/avatarlink" dict "user" .Assignee}}
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Assignee}}
+						{{template "shared/user/authorlink" dict "user" .Assignee "showPronouns" true}}
 						{{if eq .Poster.ID .Assignee.ID}}
 							{{ctx.Locale.Tr "repo.issues.remove_self_assignment" $createdStr}}
 						{{else}}
@@ -211,7 +211,7 @@
 				{{else}}
 					{{template "shared/user/avatarlink" dict "user" .Assignee}}
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Assignee}}
+						{{template "shared/user/authorlink" dict "user" .Assignee "showPronouns" true}}
 						{{if eq .Poster.ID .AssigneeID}}
 							{{ctx.Locale.Tr "repo.issues.self_assign_at" $createdStr}}
 						{{else}}
@@ -225,7 +225,7 @@
 				<span class="badge">{{svg "octicon-pencil"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.change_title_at" (.OldTitle|RenderEmoji $.Context) (.NewTitle|RenderEmoji $.Context) $createdStr}}
 				</span>
 			</div>
@@ -234,7 +234,7 @@
 				<span class="badge">{{svg "octicon-git-branch"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.delete_branch_at" .OldRef $createdStr}}
 				</span>
 			</div>
@@ -243,7 +243,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.start_tracking_history" $createdStr}}
 				</span>
 			</div>
@@ -252,7 +252,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.stop_tracking_history" $createdStr}}
 				</span>
 				{{template "repo/issue/view_content/comments_delete_time" dict "ctxData" $ "comment" .}}
@@ -271,7 +271,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.add_time_history" $createdStr}}
 				</span>
 				{{template "repo/issue/view_content/comments_delete_time" dict "ctxData" $ "comment" .}}
@@ -290,7 +290,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.cancel_tracking_history" $createdStr}}
 				</span>
 			</div>
@@ -299,7 +299,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.due_date_added" (DateTime "long" .Content) $createdStr}}
 				</span>
 			</div>
@@ -308,7 +308,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{$parsedDeadline := StringUtils.Split .Content "|"}}
 					{{if eq (len $parsedDeadline) 2}}
 						{{$from := DateTime "long" (index $parsedDeadline 1)}}
@@ -322,7 +322,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.due_date_remove" (DateTime "long" .Content) $createdStr}}
 				</span>
 			</div>
@@ -331,7 +331,7 @@
 				<span class="badge">{{svg "octicon-package-dependents"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.dependency.added_dependency" $createdStr}}
 				</span>
 				{{if .DependentIssue}}
@@ -354,7 +354,7 @@
 				<span class="badge">{{svg "octicon-package-dependents"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.dependency.removed_dependency" $createdStr}}
 				</span>
 				{{if .DependentIssue}}
@@ -418,7 +418,7 @@
 										<span class="text grey muted-links"> {{if $.Repository.OriginalURL}}</span>
 										<span class="text migrate">({{ctx.Locale.Tr "repo.migrated_from" $.Repository.OriginalURL $.Repository.GetOriginalURLHostname}}){{end}}</span>
 									{{else}}
-										{{template "shared/user/authorlink" .Poster}}
+										{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 									{{end}}
 
 									{{ctx.Locale.Tr "repo.issues.review.left_comment"}}
@@ -470,12 +470,12 @@
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				{{if .Content}}
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Poster}}
+						{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 						{{ctx.Locale.Tr "repo.issues.lock_with_reason" .Content $createdStr}}
 					</span>
 				{{else}}
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Poster}}
+						{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 						{{ctx.Locale.Tr "repo.issues.lock_no_reason" $createdStr}}
 					</span>
 				{{end}}
@@ -485,7 +485,7 @@
 				<span class="badge">{{svg "octicon-key"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{ctx.Locale.Tr "repo.issues.unlock_comment" $createdStr}}
 				</span>
 			</div>
@@ -505,7 +505,7 @@
 				<span class="badge">{{svg "octicon-clock"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 
 					{{ctx.Locale.Tr "repo.issues.del_time_history" $createdStr}}
 				</span>
@@ -524,7 +524,7 @@
 				<span class="badge">{{svg "octicon-eye"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if (gt .AssigneeID 0)}}
 						{{if .RemovedAssignee}}
 							{{if eq .PosterID .AssigneeID}}
@@ -557,7 +557,7 @@
 			<div class="timeline-item event" id="{{.HashTag}}">
 				<span class="badge">{{svg "octicon-repo-push"}}</span>
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if .IsForcePush}}
 						{{ctx.Locale.Tr "repo.issues.force_push_codes" $.Issue.PullRequest.HeadBranch (ShortSha .OldCommit) ($.Issue.Repo.CommitLink .OldCommit) (ShortSha .NewCommit) ($.Issue.Repo.CommitLink .NewCommit) $createdStr}}
 					{{else}}
@@ -579,7 +579,7 @@
 				<span class="badge">{{svg "octicon-project"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{$oldProjectDisplayHtml := "Unknown Project"}}
 					{{if .OldProject}}
 						{{$trKey := printf "projects.type-%d.display_name" .OldProject.Type}}
@@ -608,7 +608,7 @@
 					</a>
 					<span class="badge grey">{{svg "octicon-x" 16}}</span>
 					<span class="text grey muted-links">
-						{{template "shared/user/authorlink" .Poster}}
+						{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 						{{$reviewerName := ""}}
 						{{if eq .Review.OriginalAuthor ""}}
 							{{$reviewerName = .Review.Reviewer.Name}}
@@ -649,7 +649,7 @@
 				<span class="badge">{{svg "octicon-git-branch"}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if and .OldRef .NewRef}}
 						{{ctx.Locale.Tr "repo.issues.change_ref_at" .OldRef .NewRef $createdStr}}
 					{{else if .OldRef}}
@@ -673,7 +673,7 @@
 				<span class="badge">{{svg "octicon-pin" 16}}</span>
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
-					{{template "shared/user/authorlink" .Poster}}
+					{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 					{{if eq .Type 36}}{{ctx.Locale.Tr "repo.issues.pin_comment" $createdStr}}
 					{{else}}{{ctx.Locale.Tr "repo.issues.unpin_comment" $createdStr}}{{end}}
 				</span>

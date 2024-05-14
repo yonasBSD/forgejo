@@ -38,7 +38,7 @@
 									{{ctx.AvatarUtils.Avatar .Issue.Poster 24}}
 								</a>
 								<span class="text grey muted-links">
-									{{template "shared/user/authorlink" .Issue.Poster}}
+									{{template "shared/user/authorlink" dict "user" .Issue.Poster "showPronouns" true}}
 									{{ctx.Locale.Tr "repo.issues.commented_at" .Issue.HashTag $createdStr}}
 								</span>
 							{{end}}

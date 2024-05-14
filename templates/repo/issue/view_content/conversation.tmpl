@@ -71,7 +71,7 @@
 										<span class="migrate">({{ctx.Locale.Tr "repo.migrated_from" $.Repository.OriginalURL $.Repository.GetOriginalURLHostname}})</span>
 										{{end}}
 									{{else}}
-										{{template "shared/user/authorlink" .Poster}}
+										{{template "shared/user/authorlink" dict "user" .Poster "showPronouns" true}}
 									{{end}}
 									{{ctx.Locale.Tr "repo.issues.commented_at" .HashTag $createdSubStr}}
 								</span>

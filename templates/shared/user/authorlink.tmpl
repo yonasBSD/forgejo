@@ -1,1 +1,5 @@
-<a class="author text black tw-font-semibold muted"{{if gt .ID 0}} href="{{.HomeLink}}"{{end}}>{{.GetDisplayName}}</a>{{if .IsBot}}<span class="ui basic label tw-p-1">bot</span>{{end}}
+{{/* Attributes:
+* user
+* showPronouns
+*/}}
+<a class="author text black tw-font-semibold muted"{{if gt .user.ID 0}} href="{{.user.HomeLink}}"{{end}}>{{.user.GetDisplayName}} {{if and .showPronouns .user.Pronouns}}<small class="tw-opacity-75"> ({{.user.Pronouns}})</small>{{end}}</a>{{if .user.IsBot}}<span class="ui basic label tw-p-1">bot</span>{{end}}

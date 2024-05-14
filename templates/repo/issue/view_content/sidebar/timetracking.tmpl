@@ -61,7 +61,7 @@
 						{{ctx.AvatarUtils.Avatar $user}}
 					</a>
 					<div class="content">
-						{{template "shared/user/authorlink" $user}}
+						{{template "shared/user/authorlink" dict "user" $user "showPronouns" false}}
 						<div class="text">
 							{{$trackedtime|Sec2Time}}
 						</div>
