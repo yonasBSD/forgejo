@@ -28,6 +28,16 @@ func mailSubjectTextFuncMap() texttmpl.FuncMap {
 		"AppName": func() string {
 			return setting.AppName
 		},
+		"AppSlogan": func() string {
+			return setting.AppSlogan
+		},
+		"AppFullName": func() string {
+			if setting.AppSlogan != "" {
+				return fmt.Sprintf("%s %s %s", setting.AppName, setting.AppFullNameSeparator, setting.AppSlogan)
+			} else {
+				return setting.AppName
+			}
+		},
 		"AppDomain": func() string { // documented in mail-templates.md
 			return setting.Domain
 		},
