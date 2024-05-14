@@ -142,8 +142,7 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{ID: 1})
-		assert.Equal(t, "127.0.0.1", federationHost.HostFqdn)
+		unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
 	})
 }
 
