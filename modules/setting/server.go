@@ -48,9 +48,11 @@ var (
 	// AppSlogan is the Application slogan.
 	// It maps to ini:"APP_SLOGAN"
 	AppSlogan string
-	// AppFullNameSlogan is the symbol used to concatenate AppName and AppSlogan to define the AppFullName
-	// It maps to ini:"APP_FULLNAME_SEPARATOR"
-	AppFullNameSeparator string
+	// AppDisplayNameFormat defines how the AppFullName should be presented
+	// It maps to ini:"APP_DISPLAY_NAME_FORMAT"
+	AppDisplayNameFormat string
+	// AppFullName is the fullName for the application, defined following AppDisplayNameFormat
+	AppFullName string
 	// AppURL is the Application ROOT_URL. It always has a '/' suffix
 	// It maps to ini:"ROOT_URL"
 	AppURL string
@@ -170,11 +172,21 @@ func MakeAbsoluteAssetURL(appURL, staticURLPrefix string) string {
 	return strings.TrimSuffix(staticURLPrefix, "/")
 }
 
+func generateFullName() string {
+	appFullName := AppName
+			if AppSlogan != "" {
+				appFullName = strings.Replace(AppDisplayNameFormat, "{APP_NAME}", AppName, 1)
+				appFullName = strings.Replace(appFullName, "{APP_SLOGAN}", AppSlogan, 1)
+			}
+			return appFullName
+}
+
 func loadServerFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("server")
 	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Forgejo: Beyond coding. We Forge.")
 	AppSlogan = rootCfg.Section("").Key("APP_SLOGAN").MustString("")
-	AppFullNameSeparator = rootCfg.Section("").Key("APP_FULLNAME_SEPARATOR").MustString("-")
+	AppDisplayNameFormat = rootCfg.Section("").Key("APP_DISPLAY_NAME_FORMAT").MustString("{APP_NAME} - {APP_SLOGAN}")
+	AppFullName = generateFullName()
 	Domain = sec.Key("DOMAIN").MustString("localhost")
 	HTTPAddr = sec.Key("HTTP_ADDR").MustString("0.0.0.0")
 	HTTPPort = sec.Key("HTTP_PORT").MustString("3000")
