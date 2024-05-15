@@ -898,6 +898,7 @@ input:-webkit-autofill:active,
   font-weight: var(--font-weight-normal);
   margin: 0 6px;
   padding: 5px 10px;
+  flex-shrink: 0;
 }
 
 .ui .sha.label .shortsha {
@@ -1141,6 +1142,20 @@ overflow-menu .ui.label {
 
 .archived-icon {
   color: var(--color-secondary-dark-2) !important;
+}
+
+/* colors of colorful icons */
+svg.text.green,
+.text.green svg {
+  color: var(--color-icon-green) !important;
+}
+svg.text.red,
+.text.red svg {
+  color: var(--color-icon-red) !important;
+}
+svg.text.purple,
+.text.purple svg {
+  color: var(--color-icon-purple) !important;
 }
 
 .oauth2-authorize-application-box {

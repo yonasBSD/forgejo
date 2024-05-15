@@ -15,8 +15,11 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/gitrepo"
+	"code.gitea.io/gitea/modules/optional"
 	repo_service "code.gitea.io/gitea/services/repository"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -75,7 +78,7 @@ func TestCompareBranches(t *testing.T) {
 
 	session := loginUser(t, "user2")
 
-	// Inderect compare remove-files-b (head) with add-csv (base) branch
+	// Indirect compare remove-files-b (head) with add-csv (base) branch
 	//
 	//	'link_hi' and 'test.csv' are deleted, 'test.txt' is added
 	req := NewRequest(t, "GET", "/user2/repo20/compare/add-csv...remove-files-b")
@@ -87,7 +90,7 @@ func TestCompareBranches(t *testing.T) {
 
 	inspectCompare(t, htmlDoc, diffCount, diffChanges)
 
-	// Inderect compare remove-files-b (head) with remove-files-a (base) branch
+	// Indirect compare remove-files-b (head) with remove-files-a (base) branch
 	//
 	//	'link_hi' and 'test.csv' are deleted, 'test.txt' is added
 
@@ -100,7 +103,7 @@ func TestCompareBranches(t *testing.T) {
 
 	inspectCompare(t, htmlDoc, diffCount, diffChanges)
 
-	// Inderect compare remove-files-a (head) with remove-files-b (base) branch
+	// Indirect compare remove-files-a (head) with remove-files-b (base) branch
 	//
 	//	'link_hi' and 'test.csv' are deleted
 
@@ -138,7 +141,7 @@ func TestCompareWithPRsDisabled(t *testing.T) {
 		assert.NoError(t, err)
 
 		defer func() {
-			// Reenable PRs on the repo
+			// Re-enable PRs on the repo
 			err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo,
 				[]repo_model.RepoUnit{{
 					RepoID: repo.ID,
@@ -210,6 +213,46 @@ func TestCompareCrossRepo(t *testing.T) {
 			htmlDoc := NewHTMLParser(t, resp.Body)
 			htmlDoc.AssertElement(t, "a[href='/user1/repo1-copy/src/commit/"+lastCommit+"/README.md']", true)
 			htmlDoc.AssertElement(t, "a[href='/user1/repo1/src/commit/"+lastCommit+"/README.md']", false)
+		})
+	})
+}
+
+func TestCompareCodeExpand(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+		// Create a new repository, with a file that has many lines
+		repo, _, f := CreateDeclarativeRepoWithOptions(t, owner, DeclarativeRepoOptions{
+			Files: optional.Some([]*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "docs.md",
+					ContentReader: strings.NewReader("01\n02\n03\n04\n05\n06\n07\n08\n09\n0a\n0b\n0c\n0d\n0e\n0f\n10\n11\n12\n12\n13\n14\n15\n16\n17\n18\n19\n1a\n1b\n1c\n1d\n1e\n1f\n20\n"),
+				},
+			}),
+		})
+		defer f()
+
+		// Fork the repository
+		forker := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		session := loginUser(t, forker.Name)
+		testRepoFork(t, session, owner.Name, repo.Name, forker.Name, repo.Name+"-copy")
+		testCreateBranch(t, session, forker.Name, repo.Name+"-copy", "branch/main", "code-expand", http.StatusSeeOther)
+
+		// Edit the file, insert a line somewhere in the middle
+		testEditFile(t, session, forker.Name, repo.Name+"-copy", "code-expand", "docs.md",
+			"01\n02\n03\n04\n05\n06\n07\n08\n09\n0a\n0b\n0c\n0d\n0e\n0f\n10\n11\nHELLO WORLD!\n12\n12\n13\n14\n15\n16\n17\n18\n19\n1a\n1b\n1c\n1d\n1e\n1f\n20\n",
+		)
+
+		t.Run("code expander targets the fork", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestf(t, "GET", "%s/%s/compare/main...%s/%s:code-expand",
+				owner.Name, repo.Name, forker.Name, repo.Name+"-copy")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, fmt.Sprintf("button.code-expander-button[hx-get^='/%s/%s/blob_excerpt/'] svg.octicon-fold-up", forker.Name, repo.Name+"-copy"), true)
+			htmlDoc.AssertElement(t, fmt.Sprintf("button.code-expander-button[hx-get^='/%s/%s/blob_excerpt/'] svg.octicon-fold-down", forker.Name, repo.Name+"-copy"), true)
 		})
 	})
 }

@@ -418,7 +418,7 @@ td .commit-summary {
 }
 
 .repository.file.list .non-diff-file-content .plain-text pre {
-  word-break: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -2368,18 +2368,12 @@ td .commit-summary {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 2.5px;
-}
-
-.labels-list a {
-  display: flex;
-  text-decoration: none;
+  align-items: center;
 }
 
 .labels-list .label {
   padding: 0 6px;
-  margin: 0 !important;
   min-height: 20px;
-  display: inline-flex !important;
   line-height: 1.3; /* there is a `font-size: 1.25em` for inside emoji, so here the line-height needs to be larger slightly */
 }
 
@@ -2493,12 +2487,8 @@ tbody.commit-list {
 .commit-body {
   margin: 0.25em 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   line-height: initial;
-}
-
-/* PR-comment */
-.repository .timeline-item .commit-body {
-  margin-left: 45px;
 }
 
 .git-notes.top {
