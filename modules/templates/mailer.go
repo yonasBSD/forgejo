@@ -31,8 +31,8 @@ func mailSubjectTextFuncMap() texttmpl.FuncMap {
 		"AppSlogan": func() string {
 			return setting.AppSlogan
 		},
-		"AppFullName": func() string {
-			return setting.AppFullName
+		"AppDisplayName": func() string {
+			return setting.AppDisplayName
 		},
 		"AppDomain": func() string { // documented in mail-templates.md
 			return setting.Domain
