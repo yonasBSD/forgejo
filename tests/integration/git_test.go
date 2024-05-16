@@ -64,7 +64,7 @@ func testGit(t *testing.T, u *url.URL) {
 
 		dstPath := t.TempDir()
 
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false))
+		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
 
 		t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
@@ -103,7 +103,7 @@ func testGit(t *testing.T, u *url.URL) {
 		sshContext.Reponame = "repo-tmp-18"
 		keyname := "my-testing-key"
 		forkedUserCtx.Reponame = sshContext.Reponame
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false))
+		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, sshContext.Username, perm.AccessModeRead))
 		t.Run("ForkFromDifferentUser", doAPIForkRepository(sshContext, forkedUserCtx.Username))
 
@@ -598,7 +598,7 @@ func doPushCreate(ctx APITestContext, u *url.URL) func(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// Now create local repository to push as our test and set its origin
-		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir))
+		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 		t.Run("AddRemote", doGitAddRemote(tmpDir, "origin", u))
 
 		// Disable "Push To Create" and attempt to push
