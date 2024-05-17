@@ -8,7 +8,9 @@ __webpack_public_path__ = `${window.config?.assetUrlPrefix ?? '/assets'}/`;
 
 // Ignore external and some known internal errors that we are unable to currently fix.
 function shouldIgnoreError(err) {
-  if (!err instanceof Error) return false;
+  const assetBaseUrl = String(new URL(__webpack_public_path__, window.location.origin));
+
+  if (!(err instanceof Error)) return false;
   // If the error stack trace does not include the base URL of our script assets, it likely came
   // from a browser extension or inline script. Ignore these errors.
   if (!err.stack?.includes(assetBaseUrl)) return true;
@@ -63,7 +65,6 @@ export function showGlobalErrorMessage(msg) {
  */
 function processWindowErrorEvent({error, reason, message, type, filename, lineno, colno}) {
   const err = error ?? reason;
-  const assetBaseUrl = String(new URL(__webpack_public_path__, window.location.origin));
   const {runModeIsProd} = window.config ?? {};
 
   // `error` and `reason` are not guaranteed to be errors. If the value is falsy, it is likely a
