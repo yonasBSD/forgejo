@@ -4,32 +4,30 @@
 package forgejo_migrations //nolint:revive
 
 import (
+	"time"
+
 	"code.gitea.io/gitea/modules/timeutil"
 
 	"xorm.io/xorm"
 )
 
-func AddStarLists(x *xorm.Engine) error {
-	type StarList struct {
-		ID          int64  `xorm:"pk autoincr"`
-		UserID      int64  `xorm:"INDEX UNIQUE(name)"`
-		Name        string `xorm:"INDEX UNIQUE(name)"`
-		Description string
-		IsPrivate   bool
-		CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`
-	}
+type (
+	SoftwareNameType string
+)
 
-	err := x.Sync(&StarList{})
-	if err != nil {
-		return err
-	}
+type NodeInfo struct {
+	SoftwareName SoftwareNameType
+}
 
-	type StarListRepos struct {
-		ID          int64              `xorm:"pk autoincr"`
-		StarListID  int64              `xorm:"INDEX UNIQUE(repo)"`
-		RepoID      int64              `xorm:"INDEX UNIQUE(repo)"`
-		CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`
-	}
+type FederationHost struct {
+	ID             int64              `xorm:"pk autoincr"`
+	HostFqdn       string             `xorm:"host_fqdn UNIQUE INDEX VARCHAR(255) NOT NULL"`
+	NodeInfo       NodeInfo           `xorm:"extends NOT NULL"`
+	LatestActivity time.Time          `xorm:"NOT NULL"`
+	Created        timeutil.TimeStamp `xorm:"created"`
+	Updated        timeutil.TimeStamp `xorm:"updated"`
+}
 
-	return x.Sync(&StarListRepos{})
+func CreateFederationHostTable(x *xorm.Engine) error {
+	return x.Sync(new(FederationHost))
 }

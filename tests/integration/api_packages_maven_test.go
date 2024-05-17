@@ -107,7 +107,7 @@ func TestPackageMaven(t *testing.T) {
 	t.Run("UploadVerifySHA1", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		t.Run("Missmatch", func(t *testing.T) {
+		t.Run("Mismatch", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			putFile(t, fmt.Sprintf("/%s/%s.sha1", packageVersion, filename), "test", http.StatusBadRequest)
@@ -240,5 +240,16 @@ func TestPackageMaven(t *testing.T) {
 		putFile(t, "/maven-metadata.xml", "test", http.StatusOK)
 		putFile(t, fmt.Sprintf("/%s/maven-metadata.xml", snapshotVersion), "test", http.StatusCreated)
 		putFile(t, fmt.Sprintf("/%s/maven-metadata.xml", snapshotVersion), "test-overwrite", http.StatusCreated)
+	})
+
+	t.Run("Partial upload", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		partialVersion := packageVersion + "-PARTIAL"
+		putFile(t, fmt.Sprintf("/%s/%s", partialVersion, filename), "test", http.StatusCreated)
+		pkgUIURL := fmt.Sprintf("/%s/-/packages/maven/%s-%s/%s", user.Name, groupID, artifactID, partialVersion)
+		req := NewRequest(t, "GET", pkgUIURL)
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.NotContains(t, resp.Body.String(), "Internal server error")
 	})
 }

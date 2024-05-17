@@ -316,12 +316,12 @@ func runHookUpdate(c *cli.Context) error {
 		return nil
 	}
 
-	// Deletion of the ref means that the new commit ID is only composed of '0'.
-	if strings.ContainsFunc(newCommitID, func(e rune) bool { return e != '0' }) {
-		return nil
+	// Empty new commit ID means deletion.
+	if git.IsEmptyCommitID(newCommitID, nil) {
+		return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
 	}
 
-	return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
+	return nil
 }
 
 func runHookPostReceive(c *cli.Context) error {
@@ -366,6 +366,7 @@ Forgejo or set your environment appropriately.`, "")
 	isWiki, _ := strconv.ParseBool(os.Getenv(repo_module.EnvRepoIsWiki))
 	repoName := os.Getenv(repo_module.EnvRepoName)
 	pusherID, _ := strconv.ParseInt(os.Getenv(repo_module.EnvPusherID), 10, 64)
+	prID, _ := strconv.ParseInt(os.Getenv(repo_module.EnvPRID), 10, 64)
 	pusherName := os.Getenv(repo_module.EnvPusherName)
 
 	hookOptions := private.HookOptions{
@@ -375,6 +376,8 @@ Forgejo or set your environment appropriately.`, "")
 		GitObjectDirectory:              os.Getenv(private.GitObjectDirectory),
 		GitQuarantinePath:               os.Getenv(private.GitQuarantinePath),
 		GitPushOptions:                  pushOptions(),
+		PullRequestID:                   prID,
+		PushTrigger:                     repo_module.PushTrigger(os.Getenv(repo_module.EnvPushTrigger)),
 	}
 	oldCommitIDs := make([]string, hookBatchSize)
 	newCommitIDs := make([]string, hookBatchSize)
@@ -402,8 +405,7 @@ Forgejo or set your environment appropriately.`, "")
 		newCommitIDs[count] = string(fields[1])
 		refFullNames[count] = git.RefName(fields[2])
 
-		commitID, _ := git.NewIDFromString(newCommitIDs[count])
-		if refFullNames[count] == git.BranchPrefix+"master" && !commitID.IsZero() && count == total {
+		if refFullNames[count] == git.BranchPrefix+"master" && !git.IsEmptyCommitID(newCommitIDs[count], nil) && count == total {
 			masterPushed = true
 		}
 		count++
@@ -694,8 +696,7 @@ Forgejo or set your environment appropriately.`, "")
 		if err != nil {
 			return err
 		}
-		commitID, _ := git.NewIDFromString(rs.OldOID)
-		if !commitID.IsZero() {
+		if !git.IsEmptyCommitID(rs.OldOID, nil) {
 			err = writeDataPktLine(ctx, os.Stdout, []byte("option old-oid "+rs.OldOID))
 			if err != nil {
 				return err

@@ -5,7 +5,6 @@ Gitea's private styles use `g-` prefix.
 
 .gt-word-break {
   word-wrap: break-word !important;
-  word-break: break-word; /* compat: Safari */
   overflow-wrap: anywhere;
 }
 
@@ -21,10 +20,7 @@ Gitea's private styles use `g-` prefix.
 
 .g-table-auto-ellipsis td.auto-ellipsis span {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  inset: 0;
   padding: inherit;
   white-space: nowrap;
   overflow: hidden;
@@ -51,6 +47,9 @@ only use:
 * showElem/hideElem/toggleElem functions in "utils/dom.js"
 */
 .tw-hidden.tw-hidden { display: none !important; }
+
+/* proposed class from https://github.com/tailwindlabs/tailwindcss/pull/12128 */
+.tw-break-anywhere { overflow-wrap: anywhere !important; }
 
 @media (max-width: 767.98px) {
   /* double selector so it wins over .tw-flex (old .gt-df) etc */

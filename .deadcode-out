@@ -43,6 +43,10 @@ package "code.gitea.io/gitea/models/dbfs"
 	func Create
 	func Rename
 
+package "code.gitea.io/gitea/models/forgefed"
+	func GetFederationHost
+	func UpdateFederationHost
+
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
 	func SetVersionString
@@ -134,12 +138,7 @@ package "code.gitea.io/gitea/models/user"
 	func GetUserNamesByIDs
 
 package "code.gitea.io/gitea/modules/activitypub"
-	func CurrentTime
-	func containsRequiredHTTPHeaders
-	func NewClient
-	func (*Client).NewRequest
 	func (*Client).Post
-	func GetPrivateKey
 
 package "code.gitea.io/gitea/modules/assetfs"
 	func Bindata
@@ -168,6 +167,24 @@ package "code.gitea.io/gitea/modules/emoji"
 package "code.gitea.io/gitea/modules/eventsource"
 	func (*Event).String
 
+package "code.gitea.io/gitea/modules/forgefed"
+	func NewForgeLike
+	func NewPersonID
+	func (PersonID).AsWebfinger
+	func (PersonID).AsLoginName
+	func (PersonID).HostSuffix
+	func (PersonID).Validate
+	func NewRepositoryID
+	func (RepositoryID).Validate
+	func (ForgePerson).MarshalJSON
+	func (*ForgePerson).UnmarshalJSON
+	func (ForgePerson).Validate
+	func GetItemByType
+	func JSONUnmarshalerFn
+	func NotEmpty
+	func ToRepository
+	func OnRepository
+
 package "code.gitea.io/gitea/modules/git"
 	func AllowLFSFiltersArgs
 	func AddChanges
@@ -178,7 +195,6 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
-	func GetObjectFormatOfRepo
 	func openRepositoryWithDefaultContext
 	func IsTagExist
 	func ToEntryMode
@@ -302,6 +318,9 @@ package "code.gitea.io/gitea/modules/translation"
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
 
+package "code.gitea.io/gitea/modules/validation"
+	func IsErrNotValid
+
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock
 	func RouteMockReset
@@ -314,8 +333,6 @@ package "code.gitea.io/gitea/routers/web"
 
 package "code.gitea.io/gitea/routers/web/org"
 	func MustEnableProjects
-	func getActionIssues
-	func UpdateIssueProject
 
 package "code.gitea.io/gitea/services/context"
 	func GetPrivateContext

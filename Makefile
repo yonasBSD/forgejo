@@ -26,14 +26,14 @@ DIFF ?= diff --unified
 
 XGO_VERSION := go-1.21.x
 
-AIR_PACKAGE ?= github.com/cosmtrek/air@v1.49.0 # renovate: datasource=go
+AIR_PACKAGE ?= github.com/cosmtrek/air@v1 # renovate: datasource=go
 EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker@2.8.0 # renovate: datasource=go
 GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0 # renovate: datasource=go
-GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2 # renovate: datasource=go
+GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.58.1 # renovate: datasource=go
 GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11 # renovate: datasource=go
-MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1 # renovate: datasource=go
-SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786 # renovate: datasource=go
-XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest # renovate: datasource=go
+MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.5.1 # renovate: datasource=go
+SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 # renovate: datasource=go
+XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
@@ -223,6 +223,9 @@ help:
 	@echo " - lint-frontend-fix                lint frontend files and fix issues"
 	@echo " - lint-backend                     lint backend files"
 	@echo " - lint-backend-fix                 lint backend files and fix issues"
+	@echo " - lint-codespell                   lint typos"
+	@echo " - lint-codespell-fix               lint typos and fix them automatically"
+	@echo " - lint-codespell-fix-i             lint typos and fix them interactively"
 	@echo " - lint-go                          lint go files"
 	@echo " - lint-go-fix                      lint go files and fix issues"
 	@echo " - lint-go-vet                      lint go files with vet"
@@ -334,8 +337,8 @@ ifneq "$(TAGS)" "$(shell cat $(TAGS_EVIDENCE) 2>/dev/null)"
 TAGS_PREREQ := $(TAGS_EVIDENCE)
 endif
 
-OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4 # renovate: datasource=go
-KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0 # renovate: datasource=go
+OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
 FORGEJO_API_SERVER = routers/api/forgejo/v1/generated.go
 
 .PHONY: generate-forgejo-api
@@ -398,6 +401,18 @@ lint-backend: lint-go lint-go-vet lint-editorconfig
 .PHONY: lint-backend-fix
 lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
 
+.PHONY: lint-codespell
+lint-codespell:
+	codespell
+
+.PHONY: lint-codespell-fix
+lint-codespell-fix:
+	codespell -w
+
+.PHONY: lint-codespell-fix-i
+lint-codespell-fix-i:
+	codespell -w -i 3 -C 2
+
 .PHONY: lint-js
 lint-js: node_modules
 	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES)
@@ -423,11 +438,11 @@ lint-md: node_modules
 	npx markdownlint docs *.md
 
 .PHONY: lint-spell
-lint-spell:
+lint-spell: lint-codespell
 	@go run $(MISSPELL_PACKAGE) -error $(SPELLCHECK_FILES)
 
 .PHONY: lint-spell-fix
-lint-spell-fix:
+lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
 
 .PHONY: lint-go
@@ -767,7 +782,7 @@ generate-backend: $(TAGS_PREREQ) generate-go
 .PHONY: generate-go
 generate-go: $(TAGS_PREREQ)
 	@echo "Running go generate..."
-	@CC= GOOS= GOARCH= $(GO) generate -tags '$(TAGS)' ./...
+	@CC= GOOS= GOARCH= CGO_ENABLED=0 $(GO) generate -tags '$(TAGS)' ./...
 
 .PHONY: merge-locales
 merge-locales:

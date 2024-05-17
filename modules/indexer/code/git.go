@@ -62,8 +62,8 @@ func isIndexable(entry *git.TreeEntry) bool {
 }
 
 // parseGitLsTreeOutput parses the output of a `git ls-tree -r --full-name` command
-func parseGitLsTreeOutput(objectFormat git.ObjectFormat, stdout []byte) ([]internal.FileUpdate, error) {
-	entries, err := git.ParseTreeEntries(objectFormat, stdout)
+func parseGitLsTreeOutput(stdout []byte) ([]internal.FileUpdate, error) {
+	entries, err := git.ParseTreeEntries(stdout)
 	if err != nil {
 		return nil, err
 	}
@@ -91,10 +91,8 @@ func genesisChanges(ctx context.Context, repo *repo_model.Repository, revision s
 		return nil, runErr
 	}
 
-	objectFormat := git.ObjectFormatFromName(repo.ObjectFormatName)
-
 	var err error
-	changes.Updates, err = parseGitLsTreeOutput(objectFormat, stdout)
+	changes.Updates, err = parseGitLsTreeOutput(stdout)
 	return &changes, err
 }
 
@@ -122,7 +120,7 @@ func nonGenesisChanges(ctx context.Context, repo *repo_model.Repository, revisio
 		}
 		fields := strings.Split(line, "\t")
 		if len(fields) < 2 {
-			log.Warn("Unparseable output for diff --name-status: `%s`)", line)
+			log.Warn("Unparsable output for diff --name-status: `%s`)", line)
 			continue
 		}
 		filename := fields[1]
@@ -142,12 +140,12 @@ func nonGenesisChanges(ctx context.Context, repo *repo_model.Repository, revisio
 			changes.RemovedFilenames = append(changes.RemovedFilenames, filename)
 		case 'R', 'C':
 			if len(fields) < 3 {
-				log.Warn("Unparseable output for diff --name-status: `%s`)", line)
+				log.Warn("Unparsable output for diff --name-status: `%s`)", line)
 				continue
 			}
 			dest := fields[2]
 			if len(dest) == 0 {
-				log.Warn("Unparseable output for diff --name-status: `%s`)", line)
+				log.Warn("Unparsable output for diff --name-status: `%s`)", line)
 				continue
 			}
 			if dest[0] == '"' {
@@ -172,8 +170,6 @@ func nonGenesisChanges(ctx context.Context, repo *repo_model.Repository, revisio
 		return nil, err
 	}
 
-	objectFormat := git.ObjectFormatFromName(repo.ObjectFormatName)
-
-	changes.Updates, err = parseGitLsTreeOutput(objectFormat, lsTreeStdout)
+	changes.Updates, err = parseGitLsTreeOutput(lsTreeStdout)
 	return &changes, err
 }
