@@ -5,6 +5,8 @@ package integration
 
 import (
 	"bytes"
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"mime/multipart"
@@ -29,6 +31,9 @@ func TestPackageRubyGems(t *testing.T) {
 	packageName := "gitea"
 	packageVersion := "1.0.5"
 	packageFilename := "gitea-1.0.5.gem"
+	packageDependency := "runtime-dep:>= 1.2.0&< 2.0"
+	rubyRequirements := "ruby:>= 2.3.0"
+	sep := "---"
 
 	gemContent, _ := base64.StdEncoding.DecodeString(`bWV0YWRhdGEuZ3oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA0NDQAMDAwMDAw
@@ -111,6 +116,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`)
+	checksum := fmt.Sprintf("%x", sha256.Sum256(gemContent))
 
 	root := fmt.Sprintf("/api/packages/%s/rubygems", user.Name)
 
@@ -206,6 +212,30 @@ gAAAAP//MS06Gw==`)
 		enumeratePackages(t, "prerelease_specs.4.8.gz", b)
 	})
 
+	t.Run("PackageInfo", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/info/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		resp := MakeRequest(t, req, http.StatusOK)
+		expected := fmt.Sprintf("%s\n%s %s|checksum:%s,%s\n",
+			sep, packageVersion, packageDependency, checksum, rubyRequirements)
+		assert.Equal(t, expected, resp.Body.String())
+	})
+	t.Run("Versions", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		versions_req := NewRequest(t, "GET", fmt.Sprintf("%s/versions", root)).
+			AddBasicAuth(user.Name)
+		versions_resp := MakeRequest(t, versions_req, http.StatusOK)
+		info_req := NewRequest(t, "GET", fmt.Sprintf("%s/info/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		info_resp := MakeRequest(t, info_req, http.StatusOK)
+
+		expected := fmt.Sprintf("%s\n%s %s %x\n",
+			sep, packageName, packageVersion, md5.Sum(info_resp.Body.Bytes()))
+		assert.Equal(t, expected, string(versions_resp.Body.String()))
+	})
 	t.Run("Delete", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
@@ -223,5 +253,21 @@ gAAAAP//MS06Gw==`)
 		pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeRubyGems)
 		assert.NoError(t, err)
 		assert.Empty(t, pvs)
+	})
+
+	t.Run("NonExistingGem", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/info/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		_ = MakeRequest(t, req, http.StatusNotFound)
+	})
+	t.Run("EmptyVersions", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/versions", root)).
+			AddBasicAuth(user.Name)
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, sep+"\n", string(resp.Body.Bytes()))
 	})
 }
