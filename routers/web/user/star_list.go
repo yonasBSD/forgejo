@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	repo_model "code.gitea.io/gitea/models/repo"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
@@ -23,6 +24,11 @@ const (
 func ShowStarList(ctx *context.Context) {
 	if setting.Repository.DisableStarLists {
 		ctx.NotFound("", fmt.Errorf(""))
+		return
+	}
+
+	if !user_model.IsUserVisibleToViewer(ctx, ctx.ContextUser, ctx.Doer) {
+		ctx.NotFound("user", fmt.Errorf(ctx.ContextUser.Name))
 		return
 	}
 

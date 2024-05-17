@@ -175,7 +175,7 @@ func DeleteStarListByID(ctx context.Context, id int64) error {
 }
 
 // LoadRepositoryCount loads just the RepositoryCount.
-// The count checks if how many repos in the list the actor is able to see.
+// The count checks how many repos in the list the actor is able to see.
 func (starList *StarList) LoadRepositoryCount(ctx context.Context, actor *user_model.User) error {
 	count, err := CountRepository(ctx, &SearchRepoOptions{Actor: actor, StarListID: starList.ID})
 	if err != nil {
