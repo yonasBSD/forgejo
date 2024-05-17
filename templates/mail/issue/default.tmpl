@@ -5,13 +5,11 @@
 
 	<style>
 		blockquote { padding-left: 1em; margin: 1em 0; border-left: 1px solid grey; color: #777}
-		.footer { font-size:small; color:#666;}
 		{{if .ReviewComments}}
 			.review { padding-left: 1em; margin: 1em 0; }
 			.review > pre { padding: 1em; border-left: 1px solid grey; }
 		{{end}}
 	</style>
-
 </head>
 
 <body>
@@ -79,12 +77,6 @@
 			</ul>
 		{{end}}
 	</p>
-	<div class="footer">
-	<p>
-		---
-		<br>
-		<a href="{{.Link}}">{{.locale.Tr "mail.view_it_on" AppName}}</a>{{if .CanReply}} {{.locale.Tr "mail.reply"}}{{end}}.
-	</p>
-	</div>
+	{{template "mail_tool/footer" .}}
 </body>
 </html>
