@@ -345,10 +345,10 @@ func (repo *Repository) APIURL() string {
 	return setting.AppURL + "api/v1/repos/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
 }
 
-// APAPIURL returns the activitypub repository API URL
+// APActorID returns the activitypub repository API URL
 // TODO: At least camel case?
 // TODO: Mv federation related stuff to federated_repo
-func (repo *Repository) APAPIURL() string {
+func (repo *Repository) APActorID() string {
 	// TODO: use spintf instead of concat - might mitigate injections
 	return fmt.Sprintf("%vapi/v1/activitypub/repository-id/%v", setting.AppURL, url.PathEscape(fmt.Sprint(repo.ID)))
 }

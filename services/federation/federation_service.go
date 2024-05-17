@@ -255,14 +255,14 @@ func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error
 	for _, followingRepo := range followingRepos {
 		log.Info("Found following repo: %v", followingRepo)
 		target := followingRepo.URI
-		likeActivity, err := fm.NewForgeLike(doer.APAPIURL(), target, time.Now())
+		likeActivity, err := fm.NewForgeLike(doer.APActorID(), target, time.Now())
 		if err != nil {
 			return err
 		}
 		likeActivityList = append(likeActivityList, likeActivity)
 	}
 
-	apclient, err := activitypub.NewClient(ctx, &doer, doer.APAPIURL())
+	apclient, err := activitypub.NewClient(ctx, &doer, doer.APActorID())
 	if err != nil {
 		return err
 	}
