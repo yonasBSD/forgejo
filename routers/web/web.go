@@ -769,7 +769,6 @@ func registerRoutes(m *web.Route) {
 			m.Post("/-/starlist_edit", web.Bind(forms.EditStarListForm{}), user.EditStarListPost)
 		}, context.UserAssignmentWeb())
 		m.Get("/attachments/{uuid}", repo.GetAttachment)
-		m.Get("/{username}", user.UsernameSubRoute)
 		m.Methods("GET, OPTIONS", "/attachments/{uuid}", optionsCorsHandler(), repo.GetAttachment)
 	}, ignSignIn)
 
