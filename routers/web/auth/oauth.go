@@ -959,7 +959,7 @@ func SignInOAuthCallback(ctx *context.Context) {
 			}
 			if setting.OAuth2Client.Username == setting.OAuth2UsernameNickname && gothUser.NickName == "" {
 				missingFields = append(missingFields, "nickname")
-			} else if setting.OAuth2Client.Username == setting.OAuth2UsernamePreferredUsername && gothUser.RawData["preferred_username"].(string) == "" {
+			} else if setting.OAuth2Client.Username == setting.OAuth2UsernamePreferredUsername && (gothUser.RawData["preferred_username"] == nil || gothUser.RawData["preferred_username"].(string) == "") {
 				missingFields = append(missingFields, "preferred_nickname")
 			}
 			if len(missingFields) > 0 {
