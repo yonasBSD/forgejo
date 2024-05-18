@@ -5,6 +5,7 @@ package actions
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ import (
 
 	runnerv1 "code.gitea.io/actions-proto-go/runner/v1"
 	"xorm.io/builder"
+
+	gouuid "github.com/google/uuid"
 )
 
 // ActionRunner represents runner machines
@@ -253,11 +256,31 @@ func UpdateRunner(ctx context.Context, r *ActionRunner, cols ...string) error {
 
 // DeleteRunner deletes a runner by given ID.
 func DeleteRunner(ctx context.Context, id int64) error {
-	if _, err := GetRunnerByID(ctx, id); err != nil {
+	runner, err := GetRunnerByID(ctx, id)
+	if err != nil {
 		return err
 	}
 
-	_, err := db.DeleteByID[ActionRunner](ctx, id)
+	// Replace the UUID, which was based on the token's first 16 bytes, with a sequence of 8
+	// 0xff bytes followed by the little-endian version of the record's identifier. This will
+	// prevent the deleted record's identifier from colliding with any new record.
+	b := make([]byte, 16)
+	for i := 0; i < 8; i++ {
+		b[i] = 255
+	}
+	binary.LittleEndian.PutUint64(b[8:16], uint64(id))
+	uuid, err := gouuid.FromBytes(b)
+	if err != nil {
+		return fmt.Errorf("gouuid.FromBytes %v", err)
+	}
+	runner.UUID = uuid.String()
+
+	err = UpdateRunner(ctx, runner, "UUID")
+	if err != nil {
+		return err
+	}
+
+	_, err = db.DeleteByID[ActionRunner](ctx, id)
 	return err
 }
 
