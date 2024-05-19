@@ -14,15 +14,15 @@ import (
 )
 
 func TestDeleteRunner(t *testing.T) {
-	const recordId = 12345678
+	const recordID = 12345678
 	assert.NoError(t, unittest.PrepareTestDatabase())
-	before := unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: recordId})
+	before := unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: recordID})
 
-	err := DeleteRunner(db.DefaultContext, recordId)
+	err := DeleteRunner(db.DefaultContext, recordID)
 	assert.NoError(t, err)
 
 	var after ActionRunner
-	found, err := db.GetEngine(db.DefaultContext).ID(recordId).Unscoped().Get(&after)
+	found, err := db.GetEngine(db.DefaultContext).ID(recordID).Unscoped().Get(&after)
 	assert.NoError(t, err)
 	assert.True(t, found)
 
@@ -51,7 +51,7 @@ func TestDeleteRunner(t *testing.T) {
 	assert.Equal(t, "ffffffff-ffff-ffff-", after.UUID[:19])
 	// UUID ends with LE binary representation of record ID
 	idAsBinary := make([]byte, 8)
-	binary.LittleEndian.PutUint64(idAsBinary, uint64(recordId))
+	binary.LittleEndian.PutUint64(idAsBinary, uint64(recordID))
 	idAsHexadecimal := fmt.Sprintf("%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", idAsBinary[0],
 		idAsBinary[1], idAsBinary[2], idAsBinary[3], idAsBinary[4], idAsBinary[5],
 		idAsBinary[6], idAsBinary[7])
