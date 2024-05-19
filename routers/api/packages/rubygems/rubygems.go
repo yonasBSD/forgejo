@@ -100,14 +100,14 @@ func enumeratePackages(ctx *context.Context, filename string, pvs []*packages_mo
 // Serves info file for rubygems.org compatible /info/{gem} file.
 // See also https://guides.rubygems.org/rubygems-org-compact-index-api/.
 func ServePackageInfo(ctx *context.Context) {
-	package_name := ctx.Params("package")
+	packageName := ctx.Params("package")
 	versions, err := packages_model.GetVersionsByPackageName(
-		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, package_name)
+		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, packageName)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 	}
 	if len(versions) == 0 {
-		apiError(ctx, http.StatusNotFound, fmt.Sprintf("Could not find package %s", package_name))
+		apiError(ctx, http.StatusNotFound, fmt.Sprintf("Could not find package %s", packageName))
 	}
 
 	result, err := buildInfoFileForPackage(ctx, versions)
@@ -383,19 +383,19 @@ func buildRequirementStringFromVersion(ctx *context.Context, version *packages_m
 		return "", err
 	}
 	metadata := pd.Metadata.(*rubygems_module.Metadata)
-	dep_requirements := new(strings.Builder)
+	dependencyRequirements := new(strings.Builder)
 	for i, dep := range metadata.RuntimeDependencies {
 		if i != 0 {
-			dep_requirements.WriteString(",")
+			dependencyRequirements.WriteString(",")
 		}
 
-		dep_requirements.WriteString(dep.Name)
-		dep_requirements.WriteString(":")
+		dependencyRequirements.WriteString(dep.Name)
+		dependencyRequirements.WriteString(":")
 		reqs := dep.Version
-		writeRequirements(reqs, dep_requirements)
+		writeRequirements(reqs, dependencyRequirements)
 	}
-	full_name := getFullFilename(pd.Package.Name, version.Version, metadata.Platform)
-	file, err := packages_model.GetFileForVersionByName(ctx, version.ID, full_name, "")
+	fullname := getFullFilename(pd.Package.Name, version.Version, metadata.Platform)
+	file, err := packages_model.GetFileForVersionByName(ctx, version.ID, fullname, "")
 	if err != nil {
 		return "", err
 	}
@@ -403,17 +403,17 @@ func buildRequirementStringFromVersion(ctx *context.Context, version *packages_m
 	if err != nil {
 		return "", err
 	}
-	additional_requirments := new(strings.Builder)
-	fmt.Fprintf(additional_requirments, "checksum:%s", blob.HashSHA256)
+	additionalRequirements := new(strings.Builder)
+	fmt.Fprintf(additionalRequirements, "checksum:%s", blob.HashSHA256)
 	if len(metadata.RequiredRubyVersion) != 0 {
-		additional_requirments.WriteString(",ruby:")
-		writeRequirements(metadata.RequiredRubyVersion, additional_requirments)
+		additionalRequirements.WriteString(",ruby:")
+		writeRequirements(metadata.RequiredRubyVersion, additionalRequirements)
 	}
 	if len(metadata.RequiredRubygemsVersion) != 0 {
-		additional_requirments.WriteString(",rubygems:")
-		writeRequirements(metadata.RequiredRubygemsVersion, additional_requirments)
+		additionalRequirements.WriteString(",rubygems:")
+		writeRequirements(metadata.RequiredRubygemsVersion, additionalRequirements)
 	}
-	return fmt.Sprintf("%s %s|%s", version.Version, dep_requirements, additional_requirments), nil
+	return fmt.Sprintf("%s %s|%s", version.Version, dependencyRequirements, additionalRequirements), nil
 }
 
 func buildInfoFileForPackage(ctx *context.Context, versions []*packages_model.PackageVersion) (*string, error) {
@@ -429,16 +429,15 @@ func buildInfoFileForPackage(ctx *context.Context, versions []*packages_model.Pa
 	return &result, nil
 }
 
-func getFullFilename(gem_name, version, platform string) string {
-	return strings.ToLower(getFullName(gem_name, version, platform)) + ".gem"
+func getFullFilename(gemName, version, platform string) string {
+	return strings.ToLower(getFullName(gemName, version, platform)) + ".gem"
 }
 
-func getFullName(gem_name, version, platform string) string {
+func getFullName(gemName, version, platform string) string {
 	if platform == "" || platform == "ruby" {
-		return fmt.Sprintf("%s-%s", gem_name, version)
-	} else {
-		return fmt.Sprintf("%s-%s-%s", gem_name, version, platform)
+		return fmt.Sprintf("%s-%s", gemName, version)
 	}
+	return fmt.Sprintf("%s-%s-%s", gemName, version, platform)
 }
 
 func getVersionsByFilename(ctx *context.Context, filename string) ([]*packages_model.PackageVersion, error) {

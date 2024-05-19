@@ -225,16 +225,16 @@ gAAAAP//MS06Gw==`)
 	t.Run("Versions", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		versions_req := NewRequest(t, "GET", fmt.Sprintf("%s/versions", root)).
+		versionsReq := NewRequest(t, "GET", fmt.Sprintf("%s/versions", root)).
 			AddBasicAuth(user.Name)
-		versions_resp := MakeRequest(t, versions_req, http.StatusOK)
-		info_req := NewRequest(t, "GET", fmt.Sprintf("%s/info/%s", root, packageName)).
+		versionsResp := MakeRequest(t, versionsReq, http.StatusOK)
+		infoReq := NewRequest(t, "GET", fmt.Sprintf("%s/info/%s", root, packageName)).
 			AddBasicAuth(user.Name)
-		info_resp := MakeRequest(t, info_req, http.StatusOK)
+		infoResp := MakeRequest(t, infoReq, http.StatusOK)
 
 		expected := fmt.Sprintf("%s\n%s %s %x\n",
-			sep, packageName, packageVersion, md5.Sum(info_resp.Body.Bytes()))
-		assert.Equal(t, expected, string(versions_resp.Body.String()))
+			sep, packageName, packageVersion, md5.Sum(infoResp.Body.Bytes()))
+		assert.Equal(t, expected, versionsResp.Body.String())
 	})
 	t.Run("Delete", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
@@ -268,6 +268,6 @@ gAAAAP//MS06Gw==`)
 		req := NewRequest(t, "GET", fmt.Sprintf("%s/versions", root)).
 			AddBasicAuth(user.Name)
 		resp := MakeRequest(t, req, http.StatusOK)
-		assert.Equal(t, sep+"\n", string(resp.Body.Bytes()))
+		assert.Equal(t, sep+"\n", resp.Body.String())
 	})
 }
