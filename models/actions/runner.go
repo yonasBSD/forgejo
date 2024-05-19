@@ -259,9 +259,10 @@ func DeleteRunner(ctx context.Context, id int64) error {
 		return err
 	}
 
-	// Replace the UUID, which was based on the token's first 16 bytes, with a sequence of 8
-	// 0xff bytes followed by the little-endian version of the record's identifier. This will
-	// prevent the deleted record's identifier from colliding with any new record.
+	// Replace the UUID, which was either based on the secret's first 16 bytes or an UUIDv4,
+	// with a sequence of 8 0xff bytes followed by the little-endian version of the record's
+	// identifier. This will prevent the deleted record's identifier from colliding with any
+	// new record.
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(id))
 	runner.UUID = fmt.Sprintf("ffffffff-ffff-ffff-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
