@@ -265,7 +265,7 @@ func DeleteRunner(ctx context.Context, id int64) error {
 	// new record.
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(id))
-	runner.UUID = fmt.Sprintf("ffffffff-ffff-ffff-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
+	runner.UUID = fmt.Sprintf("ffffffff-ffff-ffff-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x",
 		b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7])
 
 	err = UpdateRunner(ctx, runner, "UUID")
