@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-
 	"strings"
 	"testing"
 
@@ -30,8 +29,8 @@ func TestRepoLastUpdatedTime(t *testing.T) {
 
 		// Relative time should be present as a descendent
 		{
-			l := node.Find("relative-time").Text()
-			assert.Equal(t, true, strings.HasPrefix(l, "19")) // ~1970, might underflow with timezone
+			relativeTime := node.Find("relative-time").Text()
+			assert.Equal(t, true, strings.HasPrefix(relativeTime, "19")) // ~1970, might underflow with timezone
 		}
 	})
 }
@@ -54,8 +53,8 @@ func TestBranchLastUpdatedTime(t *testing.T) {
 		}
 
 		{
-			relative_time := node.Find("relative-time").Text()
-			assert.Equal(t, true, strings.HasPrefix(relative_time, "2017"))
+			relativeTime := node.Find("relative-time").Text()
+			assert.Equal(t, true, strings.HasPrefix(relativeTime, "2017"))
 		}
 	})
 }
