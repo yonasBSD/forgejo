@@ -65,23 +65,26 @@ func TestBaseRedis(t *testing.T) {
 	}
 
 	var redisServer *exec.Cmd
+	if !waitRedisReady(redisAddress, 0) {
+		redisServer = redisServerCmd(t)
+
+		if redisServer == nil {
+			t.Skip("redis-server not found in Forgejo test yet")
+			return
+		}
+
+		assert.NoError(t, redisServer.Start())
+		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
+			return
+		}
+	}
+
 	defer func() {
 		if redisServer != nil {
 			_ = redisServer.Process.Signal(os.Interrupt)
 			_ = redisServer.Wait()
 		}
 	}()
-	if !waitRedisReady(redisAddress, 0) {
-		redisServer = redisServerCmd(t)
-		if true {
-			t.Skip("redis-server not found in Forgejo test yet")
-			return
-		}
-		assert.NoError(t, redisServer.Start())
-		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
-			return
-		}
-	}
 
 	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
 	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
@@ -95,23 +98,26 @@ func TestBaseRedisWithPrefix(t *testing.T) {
 	}
 
 	var redisServer *exec.Cmd
+	if !waitRedisReady(redisAddress, 0) {
+		redisServer = redisServerCmd(t)
+
+		if redisServer == nil {
+			t.Skip("redis-server not found in Forgejo test yet")
+			return
+		}
+
+		assert.NoError(t, redisServer.Start())
+		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
+			return
+		}
+	}
+
 	defer func() {
 		if redisServer != nil {
 			_ = redisServer.Process.Signal(os.Interrupt)
 			_ = redisServer.Wait()
 		}
 	}()
-	if !waitRedisReady(redisAddress, 0) {
-		redisServer = redisServerCmd(t)
-		if true {
-			t.Skip("redis-server not found in Forgejo test yet")
-			return
-		}
-		assert.NoError(t, redisServer.Start())
-		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
-			return
-		}
-	}
 
 	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
 	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
