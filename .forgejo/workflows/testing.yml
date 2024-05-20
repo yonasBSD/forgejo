@@ -70,6 +70,10 @@ jobs:
           apt-get -q install -qq -y git
           rm /etc/apt/sources.list.d/testing.list
           apt-get update -qq
+      - name: install redis-server
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get install --no-install-recommends -qq -y redis-server
       - run: |
           su forgejo -c 'make deps-backend'
       - run: |
