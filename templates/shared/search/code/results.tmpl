@@ -12,7 +12,10 @@
 	{{range $result := .SearchResults}}
 		{{$repo := or $.Repo (index $.RepoMaps .RepoID)}}
 		<div class="diff-file-box diff-box file-content non-diff-file-content repo-search-result">
-			<h4 class="ui top attached header tw-font-normal tw-flex tw-flex-wrap">
+			<h4 class="ui top attached header tw-font-normal tw-flex tw-flex-wrap diff-file-header">
+				<button class="fold-file btn interact-bg tw-p-1">
+					{{svg "octicon-chevron-down" 18}}
+				</button>
 				{{if not $.Repo}}
 					<span class="file tw-flex-1">
 						<a rel="nofollow" href="{{$repo.Link}}">{{$repo.FullName}}</a>
@@ -26,7 +29,7 @@
 				{{end}}
 				<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/commit/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 			</h4>
-			<div class="ui attached table segment">
+			<div class="ui attached table segment diff-file-body">
 				{{template "shared/searchfile" dict "RepoLink" $repo.Link "SearchResult" .}}
 			</div>
 			{{template "shared/searchbottom" dict "root" $ "result" .}}
