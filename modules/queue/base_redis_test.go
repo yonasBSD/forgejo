@@ -56,8 +56,8 @@ func TestBaseRedis(t *testing.T) {
 	}()
 	if !waitRedisReady("redis://127.0.0.1:6379/0", 0) {
 		redisServer = redisServerCmd(t)
-		if true {
-			t.Skip("redis-server not found in Forgejo test yet")
+		if redisServer == nil && os.Getenv("CI") == "" {
+			t.Skip("redis-server not found")
 			return
 		}
 		assert.NoError(t, redisServer.Start())
