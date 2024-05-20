@@ -16,6 +16,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const defaultTestRedisServer = "127.0.0.1:6379"
+
+func testRedisHost() string {
+	value := os.Getenv("TEST_REDIS_SERVER")
+	if value != "" {
+		return value
+	}
+
+	return defaultTestRedisServer
+}
+
 func waitRedisReady(conn string, dur time.Duration) (ready bool) {
 	ctxTimed, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -47,7 +58,7 @@ func redisServerCmd(t *testing.T) *exec.Cmd {
 }
 
 func TestBaseRedis(t *testing.T) {
-	redisAddress := "redis://127.0.0.1:6379/0"
+	redisAddress := "redis://" + testRedisHost() + "/0"
 	queueSettings := setting.QueueSettings{
 		Length:  10,
 		ConnStr: redisAddress,
@@ -77,7 +88,7 @@ func TestBaseRedis(t *testing.T) {
 }
 
 func TestBaseRedisWithPrefix(t *testing.T) {
-	redisAddress := "redis://127.0.0.1:6379/0?prefix=forgejo:queue:"
+	redisAddress := "redis://" + testRedisHost() + "/0?prefix=forgejo:queue:"
 	queueSettings := setting.QueueSettings{
 		Length:  10,
 		ConnStr: redisAddress,
