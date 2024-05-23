@@ -8,25 +8,25 @@
 			{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 		</button>
 		<div class="menu">
-			<div class="message">
-				<form method="post" action="{{.Repo.RepoLink}}/actions/manual" id="branch-dropdown-form" class="ui form">
-					<div class="field">
-						<label>{{ctx.Locale.Tr "actions.workflow.dispatch.use_from"}}</label>
-						{{template "repo/branch_dropdown" dict
-							"root" (dict
-								"IsViewBranch" true
-								"BranchName" .Repo.BranchName
-								"CommitID" .Repo.CommitID
-								"RepoLink" .Repo.RepoLink
-								"Repository" .Repo.Repository
-							)
-							"disableCreateBranch" true
-							"branchForm" "branch-dropdown-form"
-							"setAction" false
-							"submitForm" false
-						}}
-					</div>
+			<div class="message ui form">
+				<div class="field">
+					<label>{{ctx.Locale.Tr "actions.workflow.dispatch.use_from"}}</label>
+					{{template "repo/branch_dropdown" dict
+						"root" (dict
+							"IsViewBranch" true
+							"BranchName" .Repo.BranchName
+							"CommitID" .Repo.CommitID
+							"RepoLink" .Repo.RepoLink
+							"Repository" .Repo.Repository
+						)
+						"disableCreateBranch" true
+						"branchForm" "branch-dropdown-form"
+						"setAction" false
+						"submitForm" false
+					}}
+				</div>
 
+				<form method="post" action="{{.Repo.RepoLink}}/actions/manual" id="branch-dropdown-form">
 					{{range $i, $key := .CurWorkflowDispatchInputKeys}}
 						{{$val := index $.CurWorkflowDispatch.Inputs $key}}
 						<div class="{{if $val.Required}}required {{end}}field">
