@@ -27,7 +27,8 @@
 						}}
 					</div>
 
-					{{range $key, $val := .CurWorkflowDispatch.Inputs}}
+					{{range $i, $key := .CurWorkflowDispatchInputKeys}}
+						{{$val := index $.CurWorkflowDispatch.Inputs $key}}
 						<div class="{{if $val.Required}}required {{end}}field">
 							{{if eq $val.Type "boolean"}}
 								<div class="ui checkbox">
@@ -55,6 +56,12 @@
 									<strong>{{ctx.Locale.Tr "actions.workflow.dispatch.invalid_input_type" $val.Type}}</strong>
 								{{end}}
 							{{end}}
+						</div>
+					{{end}}
+
+					{{if .WarnDispatchInputsLimit}}
+						<div class="text yellow tw-mb-4">
+							{{svg "octicon-alert"}} {{ctx.Locale.Tr "actions.workflow.dispatch.warnInputLimit" .DispatchInputsLimit}}
 						</div>
 					{{end}}
 

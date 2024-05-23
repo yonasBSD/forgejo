@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	actions_model "code.gitea.io/gitea/models/actions"
@@ -18,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/repo"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
@@ -145,7 +147,17 @@ func List(ctx *context.Context) {
 			workflows = append(workflows, workflow)
 
 			if workflow.Entry.Name() == curWorkflow {
-				ctx.Data["CurWorkflowDispatch"] = wf.WorkflowDispatchConfig()
+				config := wf.WorkflowDispatchConfig()
+				keys := util.KeysOfMap(config.Inputs)
+				slices.Sort(keys)
+				if int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs {
+					keys = keys[:setting.Actions.LimitDispatchInputs]
+				}
+
+				ctx.Data["CurWorkflowDispatch"] = config
+				ctx.Data["CurWorkflowDispatchInputKeys"] = keys
+				ctx.Data["WarnDispatchInputsLimit"] = int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs
+				ctx.Data["DispatchInputsLimit"] = setting.Actions.LimitDispatchInputs
 			}
 		}
 	}

@@ -11,10 +11,12 @@ import (
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/webhook"
 	context_module "code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
+
 	"github.com/nektos/act/pkg/jobparser"
 	act_model "github.com/nektos/act/pkg/model"
 )
@@ -114,6 +116,11 @@ func ManualRunWorkflow(ctx *context_module.Context) {
 			}
 			inputs[key] = val
 		}
+	}
+
+	if int64(len(inputs)) > setting.Actions.LimitDispatchInputs {
+		ctx.ServerError("ToManyInputs", nil)
+		return
 	}
 
 	payload := &structs.WorkflowDispatchPayload{
