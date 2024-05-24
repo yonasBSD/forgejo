@@ -417,7 +417,6 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		log.Info("Repo Saved: %v", repo.FederationRepos)
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(repo.Link() + "/settings")
 
