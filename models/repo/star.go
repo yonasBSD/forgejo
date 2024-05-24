@@ -1,5 +1,4 @@
 // Copyright 2016 The Gitea Authors. All rights reserved.
-// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -24,6 +23,7 @@ func init() {
 	db.RegisterModel(new(Star))
 }
 
+// StarRepo or unstar repository.
 func StarRepo(ctx context.Context, userID, repoID int64, star bool) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {

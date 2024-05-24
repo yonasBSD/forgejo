@@ -1,6 +1,5 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
-// ToDo: Is this package the right place for federated repo? May need to diskuss this.
 package repo
 
 import (

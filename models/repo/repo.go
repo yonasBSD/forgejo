@@ -138,8 +138,6 @@ type Repository struct {
 	OriginalURL         string             `xorm:"VARCHAR(2048)"`
 	DefaultBranch       string
 	WikiBranch          string
-	// TODO: Do we still need this here?
-	FederationRepos string `xorm:"TEXT"`
 
 	NumWatches          int
 	NumStars            int
@@ -346,10 +344,8 @@ func (repo *Repository) APIURL() string {
 }
 
 // APActorID returns the activitypub repository API URL
-// TODO: At least camel case?
 // TODO: Mv federation related stuff to federated_repo
 func (repo *Repository) APActorID() string {
-	// TODO: use spintf instead of concat - might mitigate injections
 	return fmt.Sprintf("%vapi/v1/activitypub/repository-id/%v", setting.AppURL, url.PathEscape(fmt.Sprint(repo.ID)))
 }
 
