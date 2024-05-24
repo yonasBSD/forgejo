@@ -144,10 +144,10 @@ github.com/bsm/gomega v1.27.10/go.mod h1:JyEr/xRbxbtgWNi8tIEVPUYZ5Dzef52k01W3YH0
 github.com/buildkite/terminal-to-html/v3 v3.10.1 h1:znT9eD26LQ59dDJJEpMCwkP4wEptEAPi74hsTBuHdEo=
 github.com/buildkite/terminal-to-html/v3 v3.10.1/go.mod h1:qtuRyYs6/Sw3FS9jUyVEaANHgHGqZsGqMknPLyau5cQ=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
-github.com/caddyserver/certmagic v0.21.0 h1:yDoifClc4hIxhHer3AxUj4buhF+NzRR6torw/AOnuUE=
-github.com/caddyserver/certmagic v0.21.0/go.mod h1:OgUZNXYV/ylYoFJNmoYVR5nntydLNMQISePPgqZTyhc=
-github.com/caddyserver/zerossl v0.1.2 h1:tlEu1VzWGoqcCpivs9liKAKhfpJWYJkHEMmlxRbVAxE=
-github.com/caddyserver/zerossl v0.1.2/go.mod h1:wtiJEHbdvunr40ZzhXlnIkOB8Xj4eKtBKizCcZitJiQ=
+github.com/caddyserver/certmagic v0.21.2 h1:O18LtaYBGDooyy257cYePnhp4lPfz6TaJELil6Q1fDg=
+github.com/caddyserver/certmagic v0.21.2/go.mod h1:Zq6pklO9nVRl3DIFUw9gVUfXKdpc/0qwTUAQMBlfgtI=
+github.com/caddyserver/zerossl v0.1.3 h1:onS+pxp3M8HnHpN5MMbOMyNjmTheJyWRaZYwn+YTAyA=
+github.com/caddyserver/zerossl v0.1.3/go.mod h1:CxA0acn7oEGO6//4rtrRjYgEoa4MFw/XofZnrYwGqG4=
 github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a h1:MISbI8sU/PSK/ztvmWKFcI7UGb5/HQT7B+i3a2myKgI=
 github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a/go.mod h1:2GxOXOlEPAMFPfp014mK1SWq8G8BN8o7/dfYqJrVGn8=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
