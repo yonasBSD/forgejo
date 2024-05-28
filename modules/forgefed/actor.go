@@ -126,6 +126,7 @@ type RepositoryID struct {
 
 // Factory function for RepositoryID. Created struct is asserted to be valid.
 func NewRepositoryID(uri, source string) (RepositoryID, error) {
+	// ToDo: Here we check if the uri is coming from OUR machine. This fails for any urls pointing to other machines.
 	if !validation.IsAPIURL(uri) {
 		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
 	}
