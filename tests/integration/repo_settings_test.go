@@ -311,7 +311,7 @@ func TestRepoFollowing(t *testing.T) {
 			"action":          "federation",
 			"following_repos": fmt.Sprintf("%s/api/v1/activitypub/repository-id/1", federatedSrv.URL),
 		})
-		session.MakeRequest(t, req, http.StatusOK)
+		session.MakeRequest(t, req, http.StatusSeeOther)
 
 		// Verify it was added.
 		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
