@@ -125,6 +125,7 @@ type RepositoryID struct {
 }
 
 // Factory function for RepositoryID. Created struct is asserted to be valid.
+// ToDo: Add a NewForeignRepositoryID
 func NewRepositoryID(uri, source string, isFollowing bool) (RepositoryID, error) {
 
 	if isFollowing {
