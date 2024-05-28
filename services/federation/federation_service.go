@@ -55,7 +55,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	log.Info("Actor accepted:%v", actorID)
 
 	// parse objectID (repository)
-	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
+	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType), false)
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
@@ -222,7 +222,7 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
-		followingRepoID, err := fm.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName))
+		followingRepoID, err := fm.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName), true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Invalid federated repo", err
 		}

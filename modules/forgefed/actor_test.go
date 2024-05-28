@@ -52,7 +52,7 @@ func TestNewRepositoryId(t *testing.T) {
 	expected.Host = "localhost"
 	expected.Port = "3000"
 	expected.UnvalidatedInput = "http://localhost:3000/api/activitypub/repository-id/1"
-	sut, _ := NewRepositoryID("http://localhost:3000/api/activitypub/repository-id/1", "forgejo")
+	sut, _ := NewRepositoryID("http://localhost:3000/api/activitypub/repository-id/1", "forgejo", false)
 	if sut != expected {
 		t.Errorf("expected: %v\n but was: %v\n", expected, sut)
 	}

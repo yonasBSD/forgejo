@@ -125,11 +125,18 @@ type RepositoryID struct {
 }
 
 // Factory function for RepositoryID. Created struct is asserted to be valid.
-func NewRepositoryID(uri, source string) (RepositoryID, error) {
-	// ToDo: Here we check if the uri is coming from OUR machine. This fails for any urls pointing to other machines.
-	if !validation.IsAPIURL(uri) {
-		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
+func NewRepositoryID(uri, source string, isFollowing bool) (RepositoryID, error) {
+
+	if isFollowing {
+		if !validation.IsValidURL(uri) {
+			return RepositoryID{}, fmt.Errorf("uri %s is not a valid url on their host: %s", uri, setting.AppURL+"api")
+		}
+	} else {
+		if !validation.IsAPIURL(uri) {
+			return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on our host: %s", uri, setting.AppURL+"api")
+		}
 	}
+
 	result, err := newActorID(uri)
 	if err != nil {
 		return RepositoryID{}, err
