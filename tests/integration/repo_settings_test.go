@@ -268,9 +268,9 @@ func TestProtectedBranch(t *testing.T) {
 
 func TestRepoFollowing(t *testing.T) {
 	setting.Federation.Enabled = true
+	defer tests.PrepareTestEnv(t)()
 	defer func() {
 		setting.Federation.Enabled = false
-		tests.PrepareTestEnv(t)()
 	}()
 
 	federatedRoutes := http.NewServeMux()
