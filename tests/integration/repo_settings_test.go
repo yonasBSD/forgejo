@@ -315,7 +315,9 @@ func TestRepoFollowing(t *testing.T) {
 
 		// Verify it was added.
 		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
-		unittest.AssertExistsAndLoadBean(t, &repo_model.FollowingRepo{ExternalID: "1",
-			FederationHostID: federationHost.ID})
+		unittest.AssertExistsAndLoadBean(t, &repo_model.FollowingRepo{
+			ExternalID:       "1",
+			FederationHostID: federationHost.ID,
+		})
 	})
 }
