@@ -318,5 +318,4 @@ func TestRepoFollowing(t *testing.T) {
 		unittest.AssertExistsAndLoadBean(t, &repo_model.FollowingRepo{ExternalID: "1",
 			FederationHostID: federationHost.ID})
 	})
-
 }
