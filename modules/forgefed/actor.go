@@ -70,7 +70,6 @@ type PersonID struct {
 
 // Factory function for PersonID. Created struct is asserted to be valid
 func NewPersonID(uri, source string) (PersonID, error) {
-
 	result, err := newActorID(uri)
 	if err != nil {
 		return PersonID{}, err
@@ -122,7 +121,6 @@ type RepositoryID struct {
 
 // Factory function for RepositoryID. Created struct is asserted to be valid.
 func NewRepositoryID(uri, source string) (RepositoryID, error) {
-
 	result, err := newActorID(uri)
 	if err != nil {
 		return RepositoryID{}, err
