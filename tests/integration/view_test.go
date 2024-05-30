@@ -197,7 +197,7 @@ func TestHomeDisplayName(t *testing.T) {
 	req := NewRequest(t, "GET", "/")
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	assert.Equal(t, "Gitea: Git with a cup of tea", htmlDoc.Find("h1.title").Text())
+	assert.Equal(t, "Gitea: Git with a cup of tea", strings.TrimSpace(htmlDoc.Find("h1.title").Text()))
 }
 
 func TestOpenGraphDisplayName(t *testing.T) {
