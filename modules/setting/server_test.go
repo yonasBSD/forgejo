@@ -30,4 +30,3 @@ func TestDisplayNameCustomFormat(t *testing.T) {
 	displayName := generateDisplayName()
 	assert.Equal(t, "Forgejo - Beyond coding. We Forge.", displayName)
 }
-
