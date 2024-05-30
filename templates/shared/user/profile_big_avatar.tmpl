@@ -18,15 +18,28 @@
 						{{svg "octicon-gear" 18}}
 					</a>
 				{{end}}</span>
-		<div class="tw-mt-2">
-			<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-people" 18 "tw-mr-1"}}{{ctx.Locale.TrN .NumFollowers "user.followers_one" "user.followers_few" .NumFollowers}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{ctx.Locale.TrN .NumFollowing "user.following_one" "user.following_few" .NumFollowing}}</a>
-			{{if .EnableFeed}}
-				<a href="{{.ContextUser.HomeLink}}.rss"><i class="ui text grey tw-ml-2" data-tooltip-content="{{ctx.Locale.Tr "rss_feed"}}">{{svg "octicon-rss" 18}}</i></a>
-			{{end}}
-		</div>
 	</div>
 	<div class="extra content gt-word-break">
 		<ul>
+			<li class="follow">
+				<div class="tw-mb-2">
+					<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-people" 18 "tw-mr-1"}}{{ctx.Locale.TrN .NumFollowers "user.followers_one" "user.followers_few" .NumFollowers}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{ctx.Locale.TrN .NumFollowing "user.following_one" "user.following_few" .NumFollowing}}</a>
+					{{if .EnableFeed}}
+						<a href="{{.ContextUser.HomeLink}}.rss"><i class="ui text grey tw-ml-2" data-tooltip-content="{{ctx.Locale.Tr "rss_feed"}}">{{svg "octicon-rss" 18}}</i></a>
+					{{end}}
+				</div>
+				{{if and .IsSigned (ne .SignedUserID .ContextUser.ID)}}
+					<button hx-target="#profile-avatar-card" hx-indicator="#profile-avatar-card"
+						{{if $.IsFollowing}}
+							hx-post="{{.ContextUser.HomeLink}}?action=unfollow" class="ui basic red button">
+							{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unfollow"}}
+						{{else}}
+							hx-post="{{.ContextUser.HomeLink}}?action=follow" class="ui basic button">
+							{{svg "octicon-person"}} {{ctx.Locale.Tr "user.follow"}}
+						{{end}}
+					</button>
+				{{end}}
+			</li>
 			{{if .ContextUser.Location}}
 				<li>
 					{{svg "octicon-location"}}
@@ -39,17 +52,17 @@
 				</li>
 			{{end}}
 			{{if .ShowUserEmail}}
-					<li>
-						{{svg "octicon-mail"}}
-						<a class="tw-flex-1" href="mailto:{{.ContextUser.Email}}" rel="nofollow">{{.ContextUser.Email}}</a>
-						{{if (eq .SignedUserID .ContextUser.ID)}}
-							<a href="{{AppSubUrl}}/user/settings#privacy-user-settings">
-								<i data-tooltip-content="{{ctx.Locale.Tr "user.email_visibility.limited"}}">
-									{{svg "octicon-unlock"}}
-								</i>
-							</a>
-						{{end}}
-					</li>
+				<li>
+					{{svg "octicon-mail"}}
+					<a class="tw-flex-1" href="mailto:{{.ContextUser.Email}}" rel="nofollow">{{.ContextUser.Email}}</a>
+					{{if (eq .SignedUserID .ContextUser.ID)}}
+						<a href="{{AppSubUrl}}/user/settings#privacy-user-settings">
+							<i data-tooltip-content="{{ctx.Locale.Tr "user.email_visibility.limited"}}">
+								{{svg "octicon-unlock"}}
+							</i>
+						</a>
+					{{end}}
+				</li>
 			{{end}}
 			{{if .ContextUser.Website}}
 				<li>
@@ -98,29 +111,18 @@
 			</li>
 			{{end}}
 			{{if and .IsSigned (ne .SignedUserID .ContextUser.ID)}}
-			<li class="follow" hx-target="#profile-avatar-card" hx-indicator="#profile-avatar-card" >
-				{{if $.IsFollowing}}
-					<button hx-post="{{.ContextUser.HomeLink}}?action=unfollow" class="ui basic red button">
-						{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unfollow"}}
-					</button>
-				{{else}}
-					<button hx-post="{{.ContextUser.HomeLink}}?action=follow" class="ui basic primary button">
-						{{svg "octicon-person"}} {{ctx.Locale.Tr "user.follow"}}
-					</button>
-				{{end}}
-			</li>
-			<li class="block">
-				{{if $.IsBlocked}}
-					<button class="ui basic red button link-action" data-url="{{.ContextUser.HomeLink}}?action=unblock&redirect_to={{$.Link}}">
-						{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unblock"}}
-					</button>
-				{{else}}
-					<button type="submit" class="ui basic orange button delete-button"
-					data-modal-id="block-user" data-url="{{.ContextUser.HomeLink}}?action=block">
-						{{svg "octicon-blocked"}} {{ctx.Locale.Tr "user.block"}}
-					</button>
-				{{end}}
-			</li>
+				<li class="block">
+					{{if $.IsBlocked}}
+						<button class="ui basic red button link-action" data-url="{{.ContextUser.HomeLink}}?action=unblock&redirect_to={{$.Link}}">
+							{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unblock"}}
+						</button>
+					{{else}}
+						<button type="submit" class="ui basic orange button delete-button"
+						data-modal-id="block-user" data-url="{{.ContextUser.HomeLink}}?action=block">
+							{{svg "octicon-blocked"}} {{ctx.Locale.Tr "user.block"}}
+						</button>
+					{{end}}
+				</li>
 			{{end}}
 		</ul>
 	</div>

@@ -45,6 +45,10 @@
   width: 100%;
 }
 
+.user.profile .ui.card .extra.content > ul > li.follow {
+  flex-direction: column;
+}
+
 .user.profile .ui.card #profile-avatar {
   padding: 1rem 1rem 0.25rem;
   justify-content: center;
