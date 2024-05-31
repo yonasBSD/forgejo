@@ -32,10 +32,6 @@
   border-bottom: 1px solid var(--color-secondary);
 }
 
-.user.profile .ui.card .extra.content > ul > li.follow .ui.button {
-  width: 100%;
-}
-
 .user.profile .ui.card .extra.content > ul > li .svg {
   margin-left: 1px;
   margin-right: 5px;
@@ -75,16 +71,6 @@
   flex-wrap: wrap;
 }
 
-.user.followers .header.name {
-  font-size: 20px;
-  line-height: 24px;
-  vertical-align: middle;
-}
-
-.user.followers .follow .ui.button {
-  padding: 8px 15px;
-}
-
 .user.link-account:not(.icon) {
   padding-top: 15px;
   padding-bottom: 5px;
@@ -119,7 +105,7 @@
 }
 
 #readme_profile {
-  padding: 1em 2em;
+  padding: 1.5em;
   background: var(--color-box-body);
   border: 1px solid var(--color-secondary);
   border-radius: var(--border-radius);
