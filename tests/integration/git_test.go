@@ -389,8 +389,17 @@ func doBranchProtect(baseCtx *APITestContext, dstPath string) func(t *testing.T)
 				assert.NoError(t, err)
 			})
 
-			t.Run("ProtectedFilePathsApplyToAdmins", doProtectBranch(ctx, "protected"))
+			t.Run("ProtectedFilePathsApplyToAdmins", doProtectBranch(ctx, "protected", parameterProtectBranch{
+				"protected_file_patterns": "protected-file-*",
+				"apply_to_admins":         "true",
+			}))
 			doGitPushTestRepositoryFail(dstPath, "origin", "modified-protected-file-protected-branch:protected")(t)
+
+			t.Run("ProtectedFilePathsDoNotApplyToAdmins", doProtectBranch(ctx, "protected", parameterProtectBranch{
+				"protected_file_patterns": "protected-file-*",
+				"apply_to_admins":         "false",
+			}))
+			doGitPushTestRepository(dstPath, "origin", "modified-protected-file-protected-branch:protected")(t)
 
 			doGitCheckoutBranch(dstPath, "protected")(t)
 			doGitPull(dstPath, "origin", "protected")(t)
