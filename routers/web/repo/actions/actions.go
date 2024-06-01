@@ -148,16 +148,18 @@ func List(ctx *context.Context) {
 
 			if workflow.Entry.Name() == curWorkflow {
 				config := wf.WorkflowDispatchConfig()
-				keys := util.KeysOfMap(config.Inputs)
-				slices.Sort(keys)
-				if int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs {
-					keys = keys[:setting.Actions.LimitDispatchInputs]
-				}
+				if config != nil {
+					keys := util.KeysOfMap(config.Inputs)
+					slices.Sort(keys)
+					if int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs {
+						keys = keys[:setting.Actions.LimitDispatchInputs]
+					}
 
-				ctx.Data["CurWorkflowDispatch"] = config
-				ctx.Data["CurWorkflowDispatchInputKeys"] = keys
-				ctx.Data["WarnDispatchInputsLimit"] = int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs
-				ctx.Data["DispatchInputsLimit"] = setting.Actions.LimitDispatchInputs
+					ctx.Data["CurWorkflowDispatch"] = config
+					ctx.Data["CurWorkflowDispatchInputKeys"] = keys
+					ctx.Data["WarnDispatchInputsLimit"] = int64(len(config.Inputs)) > setting.Actions.LimitDispatchInputs
+					ctx.Data["DispatchInputsLimit"] = setting.Actions.LimitDispatchInputs
+				}
 			}
 		}
 	}

@@ -13,6 +13,7 @@ import (
 	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/perm/access"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/git"
@@ -20,7 +21,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/webhook"
-	gitea_context "code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 
 	"github.com/nektos/act/pkg/jobparser"
@@ -49,7 +49,7 @@ type Workflow struct {
 
 type InputValueGetter func(key string) string
 
-func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGetter, repo *gitea_context.Repository, doer *user.User) error {
+func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGetter, repo *repo_model.Repository, doer *user.User) error {
 	content, err := actions.GetContentFromEntry(entry.GitEntry)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 	payload := &structs.WorkflowDispatchPayload{
 		Inputs:     inputs,
 		Ref:        entry.Ref,
-		Repository: convert.ToRepo(ctx, repo.Repository, access.Permission{AccessMode: perm.AccessModeNone}),
+		Repository: convert.ToRepo(ctx, repo, access.Permission{AccessMode: perm.AccessModeNone}),
 		Sender:     convert.ToUser(ctx, doer, nil),
 		Workflow:   fullWorkflowID,
 	}
@@ -113,9 +113,9 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 
 	run := &actions_model.ActionRun{
 		Title:         title,
-		RepoID:        repo.Repository.ID,
-		Repo:          repo.Repository,
-		OwnerID:       repo.Repository.OwnerID,
+		RepoID:        repo.ID,
+		Repo:          repo,
+		OwnerID:       repo.OwnerID,
 		WorkflowID:    entry.WorkflowID,
 		TriggerUserID: doer.ID,
 		TriggerUser:   doer,
@@ -140,8 +140,8 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 	return actions_model.InsertRun(ctx, run, jobs)
 }
 
-func GetWorkflowFromCommit(repo *gitea_context.Repository, ref, workflowID string) (*Workflow, error) {
-	commit, err := repo.GitRepo.GetCommit(ref)
+func GetWorkflowFromCommit(gitRepo *git.Repository, ref, workflowID string) (*Workflow, error) {
+	commit, err := gitRepo.GetCommit(ref)
 	if err != nil {
 		return nil, err
 	}

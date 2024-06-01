@@ -628,7 +628,7 @@ func DispatchWorkflow(ctx *context.APIContext) {
 		return
 	}
 
-	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo, opt.Ref, name)
+	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo.GitRepo, opt.Ref, name)
 	if err != nil {
 		if errors.Is(err, util.ErrNotExist) {
 			ctx.Error(http.StatusNotFound, "GetWorkflowFromCommit", err)
@@ -642,7 +642,7 @@ func DispatchWorkflow(ctx *context.APIContext) {
 		return opt.Inputs[key]
 	}
 
-	if err := workflow.Dispatch(ctx, inputGetter, ctx.Repo, ctx.Doer); err != nil {
+	if err := workflow.Dispatch(ctx, inputGetter, ctx.Repo.Repository, ctx.Doer); err != nil {
 		if actions_service.IsInputRequiredErr(err) {
 			ctx.Error(http.StatusBadRequest, "workflow.Dispatch", err)
 		} else {

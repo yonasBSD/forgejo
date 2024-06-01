@@ -31,7 +31,7 @@ func ManualRunWorkflow(ctx *context_module.Context) {
 		return
 	}
 
-	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo, ref, workflowID)
+	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo.GitRepo, ref, workflowID)
 	if err != nil {
 		ctx.ServerError("GetWorkflowFromCommit", err)
 		return
@@ -46,7 +46,7 @@ func ManualRunWorkflow(ctx *context_module.Context) {
 		return ctx.FormString(formKey)
 	}
 
-	if err := workflow.Dispatch(ctx, formKeyGetter, ctx.Repo, ctx.Doer); err != nil {
+	if err := workflow.Dispatch(ctx, formKeyGetter, ctx.Repo.Repository, ctx.Doer); err != nil {
 		if actions_service.IsInputRequiredErr(err) {
 			ctx.Flash.Error(ctx.Locale.Tr("actions.workflow.dispatch.input_required", err.(actions_service.InputRequiredErr).Name))
 			ctx.Redirect(location)
