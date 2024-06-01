@@ -5,6 +5,6 @@
 			data-prompt-error="{{ctx.Locale.Tr "repo.pulls.allow_edits_from_maintainers_err"}}"
 		>
 		<label><strong>{{ctx.Locale.Tr "repo.pulls.allow_edits_from_maintainers"}}</strong></label>
-		<input type="checkbox" {{if .Issue.PullRequest.AllowMaintainerEdit}}checked{{end}}>
+		<input type="checkbox" {{if not (and .IsIssuePoster (not .Issue.IsClosed) .CanWriteToHeadRepo)}}disabled{{end}} {{if .Issue.PullRequest.AllowMaintainerEdit}}checked{{end}}>
 	</div>
 </div>
