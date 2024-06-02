@@ -9,5 +9,5 @@
 .markup [src$="#dark-mode-only"],
 .markup [href$="#gh-dark-mode-only"],
 .markup [href$="#dark-mode-only"] {
-  display: inherit;
+  display: unset;
 }
