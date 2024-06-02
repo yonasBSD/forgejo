@@ -20,11 +20,7 @@
 								{{end}}
 							</div>
 							<div class="flex-item-trailing">
-								{{if eq .RepositoryCount 1}}
-									<span class="text grey flex-text-inline">{{ctx.Locale.Tr "repository_count_1"}}</span>
-								{{else}}
-									<span class="text grey flex-text-inline">{{ctx.Locale.Tr "repository_count_n" .RepositoryCount}}</span>
-								{{end}}
+								<span class="text grey flex-text-inline">{{ctx.Locale.TrN .RepositoryCount "repository_count_one" "repository_count_few" .RepositoryCount}}</span>
 							</div>
 						</a>
 					</div>
