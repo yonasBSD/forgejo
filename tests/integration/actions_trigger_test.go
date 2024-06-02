@@ -406,16 +406,16 @@ func TestWorkflowDispatchEvent(t *testing.T) {
 			[]unit_model.Type{unit_model.TypeActions}, nil,
 			[]*files_service.ChangeRepoFile{
 				{
-					Operation:     "create",
-					TreePath:      ".gitea/workflows/dispatch.yml",
+					Operation: "create",
+					TreePath:  ".gitea/workflows/dispatch.yml",
 					ContentReader: strings.NewReader(
 						"name: test\n" +
-						"on: [workflow_dispatch]\n" +
-						"jobs:\n" +
-						"  test:\n" +
-						"    runs-on: ubuntu-latest\n" +
-						"    steps:\n" +
-						"      - run: echo helloworld\n",
+							"on: [workflow_dispatch]\n" +
+							"jobs:\n" +
+							"  test:\n" +
+							"    runs-on: ubuntu-latest\n" +
+							"    steps:\n" +
+							"      - run: echo helloworld\n",
 					),
 				},
 			},
@@ -428,7 +428,7 @@ func TestWorkflowDispatchEvent(t *testing.T) {
 		workflow, err := actions_service.GetWorkflowFromCommit(gitRepo, sha, "dispatch.yml")
 		assert.NoError(t, err)
 
-		inputGetter := func(key string) (string) {
+		inputGetter := func(key string) string {
 			return ""
 		}
 
