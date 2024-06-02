@@ -1,6 +1,6 @@
 // @ts-check
 import {test, expect} from '@playwright/test';
-import {login_user, save_visual, load_logged_in_context} from './utils_e2e.js';
+import {login_user, load_logged_in_context} from './utils_e2e.js';
 
 test.beforeAll(async ({browser}, workerInfo) => {
   await login_user(browser, workerInfo, 'user2');
@@ -17,8 +17,7 @@ test('Test markup with #xyz-mode-only', async ({browser}, workerInfo) => {
   await page.locator('form button.ui.primary.button:visible').click();
   await page.waitForLoadState('networkidle');
 
-  const comment = page.locator('.comment-body>.markup')
-    .filter({ hasText: 'test markup with #xyz-mode-only:' });
+  const comment = page.locator('.comment-body>.markup', {hasText: 'test markup with #xyz-mode-only:'});
   await expect(comment).toBeVisible();
   await expect(comment.locator('[src$="#gh-light-mode-only"]')).toBeVisible();
   await expect(comment.locator('[src$="#gh-dark-mode-only"]')).not.toBeVisible();
