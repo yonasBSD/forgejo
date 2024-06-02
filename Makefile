@@ -29,7 +29,7 @@ XGO_VERSION := go-1.21.x
 AIR_PACKAGE ?= github.com/cosmtrek/air@v1 # renovate: datasource=go
 EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker@2.8.0 # renovate: datasource=go
 GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0 # renovate: datasource=go
-GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.58.1 # renovate: datasource=go
+GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0 # renovate: datasource=go
 GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11 # renovate: datasource=go
 MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.5.1 # renovate: datasource=go
 SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 # renovate: datasource=go
@@ -38,6 +38,7 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasour
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
 DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
+GOMOCK_PACKAGE ?= go.uber.org/mock/mockgen@v0.4.0 # renovate: datasource=go
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -259,6 +260,7 @@ help:
 	@echo " - generate-license                 update license files"
 	@echo " - generate-gitignore               update gitignore files"
 	@echo " - generate-manpage                 generate manpage"
+	@echo " - generate-gomock                  generate gomock files"
 	@echo " - generate-forgejo-api             generate the forgejo API from spec"
 	@echo " - forgejo-api-validate             check if the forgejo API matches the specs"
 	@echo " - generate-swagger                 generate the swagger spec from code comments"
@@ -884,6 +886,7 @@ deps-tools:
 	$(GO) install $(GO_LICENSES_PACKAGE)
 	$(GO) install $(GOVULNCHECK_PACKAGE)
 	$(GO) install $(ACTIONLINT_PACKAGE)
+	$(GO) install $(GOMOCK_PACKAGE)
 
 node_modules: package-lock.json
 	npm install --no-save
@@ -967,6 +970,10 @@ generate-license:
 .PHONY: generate-gitignore
 generate-gitignore:
 	$(GO) run build/generate-gitignores.go
+
+.PHONY: generate-gomock
+generate-gomock:
+	$(GO) run $(GOMOCK_PACKAGE) -package mock -destination ./modules/queue/mock/redisuniversalclient.go  github.com/redis/go-redis/v9 UniversalClient
 
 .PHONY: generate-images
 generate-images: | node_modules

@@ -45,7 +45,6 @@ package "code.gitea.io/gitea/models/dbfs"
 
 package "code.gitea.io/gitea/models/forgefed"
 	func GetFederationHost
-	func UpdateFederationHost
 
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
@@ -131,6 +130,7 @@ package "code.gitea.io/gitea/models/user"
 	func (ErrUserInactive).Unwrap
 	func IsErrExternalLoginUserAlreadyExist
 	func IsErrExternalLoginUserNotExist
+	func NewFederatedUser
 	func IsErrUserSettingIsNotExist
 	func GetUserAllSettings
 	func DeleteUserSetting
@@ -169,16 +169,6 @@ package "code.gitea.io/gitea/modules/eventsource"
 
 package "code.gitea.io/gitea/modules/forgefed"
 	func NewForgeLike
-	func NewPersonID
-	func (PersonID).AsWebfinger
-	func (PersonID).AsLoginName
-	func (PersonID).HostSuffix
-	func (PersonID).Validate
-	func NewRepositoryID
-	func (RepositoryID).Validate
-	func (ForgePerson).MarshalJSON
-	func (*ForgePerson).UnmarshalJSON
-	func (ForgePerson).Validate
 	func GetItemByType
 	func JSONUnmarshalerFn
 	func NotEmpty

@@ -151,7 +151,7 @@ func Install(ctx *context.Context) {
 
 	form.EnableOpenIDSignIn = setting.Service.EnableOpenIDSignIn
 	form.EnableOpenIDSignUp = setting.Service.EnableOpenIDSignUp
-	form.DisableRegistration = setting.Service.DisableRegistration
+	form.DisableRegistration = true // Force it to true, for the installation, to discourage creating instances with open registration, which invite all kinds of spam.
 	form.AllowOnlyExternalRegistration = setting.Service.AllowOnlyExternalRegistration
 	form.EnableCaptcha = setting.Service.EnableCaptcha
 	form.RequireSignInView = setting.Service.RequireSignInView
@@ -484,6 +484,17 @@ func SubmitInstall(ctx *context.Context) {
 			return
 		}
 		cfg.Section("security").Key("INTERNAL_TOKEN").SetValue(internalToken)
+	}
+
+	// FIXME: at the moment, no matter oauth2 is enabled or not, it must generate a "oauth2 JWT_SECRET"
+	// see the "loadOAuth2From" in "setting/oauth2.go"
+	if !cfg.Section("oauth2").HasKey("JWT_SECRET") && !cfg.Section("oauth2").HasKey("JWT_SECRET_URI") {
+		_, jwtSecretBase64, err := generate.NewJwtSecret()
+		if err != nil {
+			ctx.RenderWithErr(ctx.Tr("install.secret_key_failed", err), tplInstall, &form)
+			return
+		}
+		cfg.Section("oauth2").Key("JWT_SECRET").SetValue(jwtSecretBase64)
 	}
 
 	// if there is already a SECRET_KEY, we should not overwrite it, otherwise the encrypted data will not be able to be decrypted

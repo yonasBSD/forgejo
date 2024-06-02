@@ -100,6 +100,7 @@
       "extends": ["packages:linters", "packages:test"],
       "matchDepNames": [
           "github.com/golangci/golangci-lint/cmd/golangci-lint",
+	  "github.com/go-testfixtures/testfixtures",
           "github.com/PuerkitoBio/goquery",
           "happy-dom",
           "markdownlint-cli",
@@ -122,6 +123,11 @@
       "description": "Hold back on some package updates for a few days",
       "matchDepNames": ["monaco-editor"],
       "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "disallow `eslint-plugin-no-use-extend-native` v0.6.0+, requires eslint v9",
+      "matchDepNames":["eslint-plugin-no-use-extend-native"],
+      "allowedVersions": "<0.6.0"
     }
   ],
   "customManagers": [
