@@ -49,8 +49,6 @@ jobs:
         image: elasticsearch:7.5.0
         env:
           discovery.type: single-node
-        ports:
-          - 9200:9200
       minio:
         image: bitnami/minio:2024.3.30
         options: >-
