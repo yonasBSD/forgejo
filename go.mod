@@ -1,6 +1,8 @@
 module code.gitea.io/gitea
 
-go 1.22.3
+go 1.22.0
+
+toolchain go1.22.3
 
 require (
 	code.forgejo.org/forgejo/reply v1.0.1
@@ -310,3 +312,5 @@ exclude github.com/gofrs/uuid v4.0.0+incompatible
 exclude github.com/goccy/go-json v0.4.11
 
 exclude github.com/satori/go.uuid v1.2.0
+
+replace github.com/mholt/archiver/v3 => code.forgejo.org/forgejo/archiver/v3 v3.5.1
