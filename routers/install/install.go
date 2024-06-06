@@ -384,11 +384,7 @@ func SubmitInstall(ctx *context.Context) {
 	}
 
 	cfg.Section("").Key("APP_NAME").SetValue(form.AppName)
-	if form.AppSlogan == "" {
-		cfg.Section("").Key("APP_SLOGAN").SetValue(setting.AppSloganDisableValue)
-	} else {
-		cfg.Section("").Key("APP_SLOGAN").SetValue(form.AppSlogan)
-	}
+	cfg.Section("").Key("APP_SLOGAN").SetValue(form.AppSlogan)
 	cfg.Section("").Key("RUN_USER").SetValue(form.RunUser)
 	cfg.Section("").Key("WORK_PATH").SetValue(setting.AppWorkPath)
 	cfg.Section("").Key("RUN_MODE").SetValue("prod")

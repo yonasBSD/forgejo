@@ -41,11 +41,6 @@ const (
 	LandingPageLogin         LandingPage = "/user/login"
 )
 
-// value to disable AppSlogan config
-const (
-	AppSloganDisableValue string = "unset"
-)
-
 var (
 	// AppName is the Application name, used in the page title.
 	// It maps to ini:"APP_NAME"
@@ -179,7 +174,7 @@ func MakeAbsoluteAssetURL(appURL, staticURLPrefix string) string {
 
 func generateDisplayName() string {
 	appDisplayName := AppName
-	if AppSlogan != AppSloganDisableValue {
+	if AppSlogan != "" {
 		appDisplayName = strings.Replace(AppDisplayNameFormat, "{APP_NAME}", AppName, 1)
 		appDisplayName = strings.Replace(appDisplayName, "{APP_SLOGAN}", AppSlogan, 1)
 	}
@@ -188,8 +183,8 @@ func generateDisplayName() string {
 
 func loadServerFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("server")
-	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Forgejo")
-	AppSlogan = rootCfg.Section("").Key("APP_SLOGAN").MustString("Beyond coding. We Forge.")
+	AppName = rootCfg.Section("").Key("APP_NAME").MustString("Forgejo: Beyond coding. We Forge.")
+	AppSlogan = rootCfg.Section("").Key("APP_SLOGAN").MustString("")
 	AppDisplayNameFormat = rootCfg.Section("").Key("APP_DISPLAY_NAME_FORMAT").MustString("{APP_NAME}: {APP_SLOGAN}")
 	AppDisplayName = generateDisplayName()
 	Domain = sec.Key("DOMAIN").MustString("localhost")

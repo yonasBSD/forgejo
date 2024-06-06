@@ -19,9 +19,9 @@ func TestDisplayNameDefault(t *testing.T) {
 	assert.Equal(t, "Forgejo: Beyond coding. We Forge.", displayName)
 }
 
-func TestDisplayNameUnsetSlogan(t *testing.T) {
+func TestDisplayNameEmptySlogan(t *testing.T) {
 	defer test.MockVariableValue(&AppName, "Forgejo")()
-	defer test.MockVariableValue(&AppSlogan, "unset")()
+	defer test.MockVariableValue(&AppSlogan, "")()
 	defer test.MockVariableValue(&AppDisplayNameFormat, "{APP_NAME}: {APP_SLOGAN}")()
 	displayName := generateDisplayName()
 	assert.Equal(t, "Forgejo", displayName)
