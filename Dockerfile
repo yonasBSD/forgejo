@@ -81,13 +81,13 @@ RUN apk --no-cache add \
     && rm -rf /var/cache/apk/*
 
 RUN addgroup \
-    -S -g 1000 \
+    -S -g 998 \
     git && \
   adduser \
     -S -H -D \
     -h /data/git \
     -s /bin/bash \
-    -u 1000 \
+    -u 998 \
     -G git \
     git && \
   echo "git:*" | chpasswd -e
