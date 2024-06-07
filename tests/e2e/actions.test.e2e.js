@@ -33,7 +33,7 @@ test('Test workflow dispatch error: missing inputs', async ({browser}, workerInf
   await page.getByRole('button', {name: 'Run workflow'}).click();
 
   // Remove the required attribute so we can trigger the error message!
-  await page.locator('[name="inputs[string2]"]').evaluate((elem) => {
+  await page.locator('input[name="inputs[string2]"]').evaluate((elem) => {
     elem.removeAttribute('required');
   });
 
@@ -51,7 +51,7 @@ test('Test workflow dispatch success', async ({browser}, workerInfo) => {
   await page.goto('/user2/test_workflows/actions?workflow=test-dispatch.yml&actor=0&status=0');
 
   await page.getByRole('button', {name: 'Run workflow'}).click();
-  await page.locator('[name="inputs[string2]"]').fill('abc');
+  await page.locator('input[name="inputs[string2]"]').fill('abc');
   await page.locator('#workflow-dispatch-submit').click();
   await page.waitForLoadState('networkidle');
 
