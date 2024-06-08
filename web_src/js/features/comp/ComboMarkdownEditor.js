@@ -97,16 +97,22 @@ class ComboMarkdownEditor {
       if (e.shiftKey) {
         e.target._shiftDown = true;
       }
+      const unmodified = !e.shiftKey && !e.ctrlKey && !e.altKey;
       if (e.key === 'Escape') {
         // Explicitly lose focus and reenable tab navigation.
         e.target.blur();
         this.interceptTab = false;
-      } else if (e.key === 'Tab' && this.interceptTab) {
+      } else if (e.key === 'Tab' && this.interceptTab && !e.altKey && !e.ctrlKey) {
         this.indentSelection(e.shiftKey);
         this.options?.onContentChanged?.(this, e);
         e.preventDefault();
+      } else if (e.key === 'Enter' && unmodified) {
+        if (this.breakLine()) {
+          this.options?.onContentChanged?.(this, e);
+          e.preventDefault();
+        }
       } else {
-        this.interceptTab ||= !e.shiftKey && !e.ctrlKey && !e.altKey;
+        this.interceptTab ||= unmodified;
       }
     });
     this.textarea.addEventListener('keyup', (e) => {
@@ -358,6 +364,37 @@ class ComboMarkdownEditor {
 
     // Set selection to (effectively) be the same as before.
     this.textarea.setSelectionRange(newStart, Math.max(newStart, newEnd));
+  }
+
+  breakLine() {
+    const [start, end] = [this.textarea.selectionStart, this.textarea.selectionEnd];
+
+    // Do nothing if a range is selected
+    if (start !== end) return false;
+
+    const value = this.textarea.value;
+    // Find the beginning of the current line.
+    const lineStart = Math.max(0, value.lastIndexOf('\n', start - 1) + 1);
+    // Find the end and extract the line.
+    const lineEnd = value.indexOf('\n', start);
+    const line = value.slice(lineStart, lineEnd < 0 ? value.length : lineEnd);
+    // Match any whitespace at the start + any repeatable prefix + exactly one space after.
+    const prefix = line.match(/^\s*((\d+)\.|-\s?\[[ x]\]|-|\+|\*|>)?\s/);
+
+    // Defer to browser if we can't do anything more useful, or if the cursor is inside the prefix.
+    if (!prefix || !prefix[0].length || lineStart + prefix[0].length > start) return false;
+
+    // Insert newline + prefix.
+    let text = `\n${prefix[0]}`;
+    // Increment a number if present. (perhaps detecting repeating 1. and not doing that then would be a good idea)
+    const num = text.match(/\d+/);
+    if (num) text = text.replace(num[0], Number(num[0]) + 1);
+
+    if (!document.execCommand('insertText', false, text)) {
+      this.textarea.setRangeText(text);
+    }
+
+    return true;
   }
 
   get userPreferredEditor() {
