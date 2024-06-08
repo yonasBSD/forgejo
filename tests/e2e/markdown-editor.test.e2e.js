@@ -1,12 +1,12 @@
 // @ts-check
-import {test, expect} from '@playwright/test';
-import {login_user, save_visual, load_logged_in_context} from './utils_e2e.js';
+import {expect, test} from '@playwright/test';
+import {load_logged_in_context, login_user} from './utils_e2e.js';
 
 test.beforeAll(async ({browser}, workerInfo) => {
   await login_user(browser, workerInfo, 'user2');
 });
 
-test('Test Markdown Indentation', async ({browser}, workerInfo) => {
+test('Test markdown indentation', async ({browser}, workerInfo) => {
   const context = await load_logged_in_context(browser, workerInfo, 'user2');
 
   const initText = `* first\n* second\n* third\n* last`;
@@ -78,4 +78,67 @@ test('Test Markdown Indentation', async ({browser}, workerInfo) => {
   await textarea.pressSequentially('  ');
   await textarea.press('Shift+Tab');
   await expect(textarea).toHaveValue(initText);
+});
+
+test('Test markdown list continuation', async ({browser}, workerInfo) => {
+  const context = await load_logged_in_context(browser, workerInfo, 'user2');
+
+  const initText = `* first\n* second\n* third\n* last`;
+
+  const page = await context.newPage();
+  const response = await page.goto('/user2/repo1/issues/new');
+  await expect(response?.status()).toBe(200);
+
+  const textarea = page.locator('textarea[name=content]');
+  const tab = '    ';
+  await textarea.fill(initText);
+
+  // Test continuation of '* ' prefix
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.indexOf('cond'), it.value.indexOf('cond')));
+  await textarea.press('End');
+  await textarea.press('Enter');
+  await textarea.pressSequentially('middle');
+  await expect(textarea).toHaveValue(`* first\n* second\n* middle\n* third\n* last`);
+
+  // Test continuation of '    * ' prefix
+  await textarea.press('Tab');
+  await textarea.press('Enter');
+  await textarea.pressSequentially('muddle');
+  await expect(textarea).toHaveValue(`* first\n* second\n${tab}* middle\n${tab}* muddle\n* third\n* last`);
+
+  // Test breaking in the middle of a line
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.lastIndexOf('ddle'), it.value.lastIndexOf('ddle')));
+  await textarea.pressSequentially('tate');
+  await textarea.press('Enter');
+  await textarea.pressSequentially('me');
+  await expect(textarea).toHaveValue(`* first\n* second\n${tab}* middle\n${tab}* mutate\n${tab}* meddle\n* third\n* last`);
+
+  // Test not triggering when Shift held
+  await textarea.fill(initText);
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+  await textarea.press('Shift+Enter');
+  await textarea.press('Enter');
+  await textarea.pressSequentially('...but not least');
+  await expect(textarea).toHaveValue(`* first\n* second\n* third\n* last\n\n...but not least`);
+
+  // Test continuation of ordered list
+  await textarea.fill(`1. one\n2. two`);
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+  await textarea.press('Enter');
+  await textarea.pressSequentially('three');
+  await expect(textarea).toHaveValue(`1. one\n2. two\n3. three`);
+
+  // Test continuation of blockquote
+  await textarea.fill(`> knowledge is power`);
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+  await textarea.press('Enter');
+  await textarea.pressSequentially('france is bacon');
+  await expect(textarea).toHaveValue(`> knowledge is power\n> france is bacon`);
+
+  // Test continuation of checklists
+  await textarea.fill(`- [ ] have a problem\n- [x] create a solution`);
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+  await textarea.press('Enter');
+  await textarea.pressSequentially('write a test');
+  await expect(textarea).toHaveValue(`- [ ] have a problem\n- [x] create a solution\n- [ ] write a test`);
 });

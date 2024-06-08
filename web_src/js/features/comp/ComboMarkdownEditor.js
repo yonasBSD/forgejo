@@ -389,6 +389,7 @@ class ComboMarkdownEditor {
     // Increment a number if present. (perhaps detecting repeating 1. and not doing that then would be a good idea)
     const num = text.match(/\d+/);
     if (num) text = text.replace(num[0], Number(num[0]) + 1);
+    text = text.replace('[x]', '[ ]');
 
     if (!document.execCommand('insertText', false, text)) {
       this.textarea.setRangeText(text);
