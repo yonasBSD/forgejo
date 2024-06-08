@@ -84,9 +84,29 @@ class ComboMarkdownEditor {
       if (el.nodeName === 'BUTTON' && !el.getAttribute('type')) el.setAttribute('type', 'button');
     }
 
+    // Track whether any actual input or pointer action was made after focusing, and only intercept Tab presses after that.
+    this.interceptTab = false;
+    this.textarea.addEventListener('focus', () => {
+      this.interceptTab = false;
+    });
+    this.textarea.addEventListener('pointerup', () => {
+      // Assume if a pointer is used then Tab handling is a bit less of an issue.
+      this.interceptTab = true;
+    });
     this.textarea.addEventListener('keydown', (e) => {
       if (e.shiftKey) {
         e.target._shiftDown = true;
+      }
+      if (e.key === 'Escape') {
+        // Explicitly lose focus and reenable tab navigation.
+        e.target.blur();
+        this.interceptTab = false;
+      } else if (e.key === 'Tab' && this.interceptTab) {
+        this.indentSelection(e.shiftKey);
+        this.options?.onContentChanged?.(this, e);
+        e.preventDefault();
+      } else {
+        this.interceptTab ||= !e.shiftKey && !e.ctrlKey && !e.altKey;
       }
     });
     this.textarea.addEventListener('keyup', (e) => {
@@ -286,6 +306,58 @@ class ComboMarkdownEditor {
       this.easyMDE.codemirror.focus();
       this.easyMDE.codemirror.setCursor(this.easyMDE.codemirror.lineCount(), 0);
     }
+  }
+
+  indentSelection(reverse) {
+    // Indent with 4 spaces, unindent 4 spaces or fewer or a lost tab.
+    const indent = '    ';
+    const unindent = /^( {1,4}|\t)/;
+
+    // Indent all lines that are included in the selection, partially or whole, while preserving the original selection at the end.
+    const lines = this.textarea.value.split('\n');
+    const changedLines = [];
+    // The current selection or cursor position.
+    const [start, end] = [this.textarea.selectionStart, this.textarea.selectionEnd];
+    // The range containing whole lines that will effectively be replaced.
+    let [editStart, editEnd] = [start, end];
+    // The range that needs to be re-selected to match previous selection.
+    let [newStart, newEnd] = [start, end];
+    // The start and end position of the current line (where end points to the newline or EOF)
+    let [lineStart, lineEnd] = [0, 0];
+
+    for (const line of lines) {
+      lineEnd = lineStart + line.length + 1;
+      if (lineEnd <= start) {
+        lineStart = lineEnd;
+        continue;
+      }
+
+      const updated = reverse ? line.replace(unindent, '') : indent + line;
+      changedLines.push(updated);
+      const move = updated.length - line.length;
+
+      if (start >= lineStart && start < lineEnd) {
+        editStart = lineStart;
+        newStart = Math.max(start + move, lineStart);
+      }
+
+      newEnd += move;
+      editEnd = lineEnd - 1;
+      lineStart = lineEnd;
+      if (lineStart > end) break;
+    }
+
+    // Update changed lines whole.
+    const text = changedLines.join('\n');
+    this.textarea.setSelectionRange(editStart, editEnd);
+    if (!document.execCommand('insertText', false, text)) {
+      // execCommand is deprecated, but setRangeText (and any other direct value modifications) erases the native undo history.
+      // So only fall back to it if execCommand fails.
+      this.textarea.setRangeText(text);
+    }
+
+    // Set selection to (effectively) be the same as before.
+    this.textarea.setSelectionRange(newStart, Math.max(newStart, newEnd));
   }
 
   get userPreferredEditor() {
