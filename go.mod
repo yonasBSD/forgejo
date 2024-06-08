@@ -89,7 +89,7 @@ require (
 	github.com/quasoft/websspi v1.1.2
 	github.com/redis/go-redis/v9 v9.5.2
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/sassoftware/go-rpmutils v0.2.1-0.20240124161140-277b154961dd
 	github.com/sergi/go-diff v1.3.1
 	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92
