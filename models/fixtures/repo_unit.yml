@@ -761,6 +761,30 @@
 -
   id: 109
   repo_id: 62
+  type: 2
+  created_unix: 946684810
+
+-
+  id: 110
+  repo_id: 62
+  type: 3
+  created_unix: 946684810
+
+-
+  id: 111
+  repo_id: 62
+  type: 4
+  created_unix: 946684810
+
+-
+  id: 112
+  repo_id: 62
+  type: 5
+  created_unix: 946684810
+
+-
+  id: 113
+  repo_id: 62
   type: 10
   config: "{}"
   created_unix: 946684810

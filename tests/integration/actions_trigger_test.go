@@ -424,6 +424,7 @@ func TestWorkflowDispatchEvent(t *testing.T) {
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		assert.NoError(t, err)
+		defer gitRepo.Close()
 
 		workflow, err := actions_service.GetWorkflowFromCommit(gitRepo, sha, "dispatch.yml")
 		assert.NoError(t, err)
