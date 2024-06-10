@@ -31,6 +31,10 @@ type FederationService struct {
 
 var federationServiceSingletonPointer *FederationService = nil
 
+// TODO: Find a better solution.
+// e.g.: singleton always has the default repo.
+// In case of different repos via params, return new service but do not set it as singleton.
+// OR: define it in or around cmd/main?
 func GetFederationService(params ...interface{}) FederationService {
 	if federationServiceSingletonPointer != nil && len(params) == 0 {
 		return *federationServiceSingletonPointer
