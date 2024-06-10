@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
+	"code.gitea.io/gitea/ddd-federation/infrastructure"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
@@ -24,6 +25,35 @@ import (
 	"github.com/google/uuid"
 )
 
+type FederationService struct {
+	federationHostRepository domain.FederationHostRepository
+}
+
+var federationServiceSingletonPointer *FederationService = nil
+
+func GetFederationService(params ...interface{}) FederationService {
+	if federationServiceSingletonPointer != nil && len(params) == 0 {
+		return *federationServiceSingletonPointer
+	}
+
+	var federationHostRepository domain.FederationHostRepository = nil
+
+	for _, param := range params {
+		switch v := param.(type) {
+		case domain.FederationHostRepository:
+			federationHostRepository = v
+		}
+	}
+
+	if federationHostRepository == nil {
+		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
+	}
+
+	federationServiceSingletonPointer = &FederationService{federationHostRepository: federationHostRepository}
+
+	return *federationServiceSingletonPointer
+}
+
 // ProcessLikeActivity receives a ForgeLike activity and does the following:
 // Validation of the activity
 // Creation of a (remote) federationHost if not existing
@@ -31,7 +61,7 @@ import (
 // Validation of incoming RepositoryID against Local RepositoryID
 // Star the repo if it wasn't already stared
 // Do some mitigation against out of order attacks
-func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
+func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*fm.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
 		return http.StatusNotAcceptable, "Invalid activity", err
@@ -41,7 +71,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	log.Info("actorURI was: %v", actorURI)
-	federationHost, err := GetFederationHostForURI(ctx, actorURI)
+	federationHost, err := s.GetFederationHostForURI(ctx, actorURI)
 	if err != nil {
 		return http.StatusInternalServerError, "Wrong FederationHost", err
 	}
@@ -72,7 +102,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	if user != nil {
 		log.Info("Found local federatedUser: %v", user)
 	} else {
-		user, _, err = CreateUserFromAP(ctx, actorID, federationHost.ID)
+		user, _, err = s.CreateUserFromAP(ctx, actorID, federationHost.ID)
 		if err != nil {
 			return http.StatusInternalServerError, "Error creating federatedUser", err
 		}
@@ -89,7 +119,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 		}
 	}
 	federationHost.LatestActivity = activity.StartTime
-	err = domain.UpdateFederationHost(ctx, federationHost)
+	err = s.federationHostRepository.UpdateFederationHost(ctx, federationHost)
 	if err != nil {
 		return http.StatusNotAcceptable, "Error updating federatedHost", err
 	}
@@ -97,7 +127,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	return 0, "", nil
 }
 
-func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domain.FederationHost, error) {
+func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domain.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -123,25 +153,25 @@ func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domai
 	if err != nil {
 		return nil, err
 	}
-	err = domain.CreateFederationHost(ctx, &result)
+	err = s.federationHostRepository.CreateFederationHost(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
+func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
 	if err != nil {
 		return nil, err
 	}
-	federationHost, err := domain.FindFederationHostByFqdn(ctx, rawActorID.Host)
+	federationHost, err := s.federationHostRepository.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		return nil, err
 	}
 	if federationHost == nil {
-		result, err := CreateFederationHostFromAP(ctx, rawActorID)
+		result, err := s.CreateFederationHostFromAP(ctx, rawActorID)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +180,7 @@ func GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.Fede
 	return federationHost, nil
 }
 
-func CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
+func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -215,10 +245,10 @@ func CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostI
 }
 
 // Create or update a list of FollowingRepo structs
-func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
+func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
 	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
 	for _, uri := range followingRepoList {
-		federationHost, err := GetFederationHostForURI(ctx, uri)
+		federationHost, err := s.GetFederationHostForURI(ctx, uri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
@@ -240,11 +270,11 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 	return 0, "", nil
 }
 
-func DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
+func (s FederationService) DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
 	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
 }
 
-func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
+func (s FederationService) SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
 	followingRepos, err := repo.FindFollowingReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", followingRepos)
 	if err != nil {

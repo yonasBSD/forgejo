@@ -18,7 +18,7 @@ func StarRepoAndSendLikeActivities(ctx context.Context, doer user.User, repoID i
 	}
 
 	if star && setting.Federation.Enabled {
-		if err := federation.SendLikeActivities(ctx, doer, repoID); err != nil {
+		if err := federation.GetFederationService().SendLikeActivities(ctx, doer, repoID); err != nil {
 			return err
 		}
 	}

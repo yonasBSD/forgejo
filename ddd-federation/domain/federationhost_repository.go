@@ -3,59 +3,11 @@
 
 package domain
 
-import (
-	"context"
-	"fmt"
-	"strings"
+import "context"
 
-	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/validation"
-)
-
-func init() {
-	db.RegisterModel(new(FederationHost))
-}
-
-func GetFederationHost(ctx context.Context, ID int64) (*FederationHost, error) {
-	host := new(FederationHost)
-	has, err := db.GetEngine(ctx).Where("id=?", ID).Get(host)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, fmt.Errorf("FederationInfo record %v does not exist", ID)
-	}
-	if res, err := validation.IsValid(host); !res {
-		return nil, err
-	}
-	return host, nil
-}
-
-func FindFederationHostByFqdn(ctx context.Context, fqdn string) (*FederationHost, error) {
-	host := new(FederationHost)
-	has, err := db.GetEngine(ctx).Where("host_fqdn=?", strings.ToLower(fqdn)).Get(host)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, nil
-	}
-	if res, err := validation.IsValid(host); !res {
-		return nil, err
-	}
-	return host, nil
-}
-
-func CreateFederationHost(ctx context.Context, host *FederationHost) error {
-	if res, err := validation.IsValid(host); !res {
-		return err
-	}
-	_, err := db.GetEngine(ctx).Insert(host)
-	return err
-}
-
-func UpdateFederationHost(ctx context.Context, host *FederationHost) error {
-	if res, err := validation.IsValid(host); !res {
-		return err
-	}
-	_, err := db.GetEngine(ctx).ID(host.ID).Update(host)
-	return err
+type FederationHostRepository interface {
+	GetFederationHost(ctx context.Context, ID int64) (*FederationHost, error)
+	FindFederationHostByFqdn(ctx context.Context, fqdn string) (*FederationHost, error)
+	CreateFederationHost(ctx context.Context, host *FederationHost) error
+	UpdateFederationHost(ctx context.Context, host *FederationHost) error
 }

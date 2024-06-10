@@ -411,7 +411,7 @@ func SettingsPost(ctx *context.Context) {
 			federationRepoSplit[idx] = strings.TrimSpace(repo)
 		}
 
-		if _, _, err := federation.StoreFollowingRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
+		if _, _, err := federation.GetFederationService().StoreFollowingRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
 			ctx.ServerError("UpdateRepository", err)
 			return
 		}
