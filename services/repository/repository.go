@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	federation "code.gitea.io/gitea/ddd-federation/application"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/git"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -22,7 +23,6 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
-	federation_service "code.gitea.io/gitea/services/federation"
 	notify_service "code.gitea.io/gitea/services/notify"
 	pull_service "code.gitea.io/gitea/services/pull"
 )
@@ -68,7 +68,7 @@ func DeleteRepository(ctx context.Context, doer *user_model.User, repo *repo_mod
 		return err
 	}
 
-	if err := federation_service.DeleteFollowingRepos(ctx, repo.ID); err != nil {
+	if err := federation.DeleteFollowingRepos(ctx, repo.ID); err != nil {
 		return err
 	}
 

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	federation "code.gitea.io/gitea/ddd-federation/application"
 	"code.gitea.io/gitea/models"
 	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/db"
@@ -34,7 +35,6 @@ import (
 	actions_service "code.gitea.io/gitea/services/actions"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 	"code.gitea.io/gitea/services/context"
-	"code.gitea.io/gitea/services/federation"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"

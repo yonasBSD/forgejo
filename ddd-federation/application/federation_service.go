@@ -1,7 +1,7 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package federation
+package application
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/ddd-federation/domain"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
@@ -55,7 +55,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	log.Info("Actor accepted:%v", actorID)
 
 	// parse objectID (repository)
-	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(forgefed.ForgejoSourceType))
+	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(domain.ForgejoSourceType))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
@@ -89,7 +89,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 		}
 	}
 	federationHost.LatestActivity = activity.StartTime
-	err = forgefed.UpdateFederationHost(ctx, federationHost)
+	err = domain.UpdateFederationHost(ctx, federationHost)
 	if err != nil {
 		return http.StatusNotAcceptable, "Error updating federatedHost", err
 	}
@@ -97,7 +97,7 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 	return 0, "", nil
 }
 
-func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*forgefed.FederationHost, error) {
+func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domain.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -107,7 +107,7 @@ func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*forge
 	if err != nil {
 		return nil, err
 	}
-	nodeInfoWellKnown, err := forgefed.NewNodeInfoWellKnown(body)
+	nodeInfoWellKnown, err := domain.NewNodeInfoWellKnown(body)
 	if err != nil {
 		return nil, err
 	}
@@ -115,28 +115,28 @@ func CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*forge
 	if err != nil {
 		return nil, err
 	}
-	nodeInfo, err := forgefed.NewNodeInfo(body)
+	nodeInfo, err := domain.NewNodeInfo(body)
 	if err != nil {
 		return nil, err
 	}
-	result, err := forgefed.NewFederationHost(nodeInfo, actorID.Host)
+	result, err := domain.NewFederationHost(nodeInfo, actorID.Host)
 	if err != nil {
 		return nil, err
 	}
-	err = forgefed.CreateFederationHost(ctx, &result)
+	err = domain.CreateFederationHost(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func GetFederationHostForURI(ctx context.Context, actorURI string) (*forgefed.FederationHost, error) {
+func GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
 	if err != nil {
 		return nil, err
 	}
-	federationHost, err := forgefed.FindFederationHostByFqdn(ctx, rawActorID.Host)
+	federationHost, err := domain.FindFederationHostByFqdn(ctx, rawActorID.Host)
 	if err != nil {
 		return nil, err
 	}

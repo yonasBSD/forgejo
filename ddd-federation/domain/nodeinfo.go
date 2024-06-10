@@ -1,7 +1,7 @@
 // Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package forgefed
+package domain
 
 import (
 	"net/url"

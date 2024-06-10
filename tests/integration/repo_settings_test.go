@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	federation_domain "code.gitea.io/gitea/ddd-federation/domain"
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/models/forgefed"
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
@@ -348,7 +348,7 @@ func TestRepoFollowing(t *testing.T) {
 		session.MakeRequest(t, req, http.StatusSeeOther)
 
 		// Verify it was added.
-		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
+		federationHost := unittest.AssertExistsAndLoadBean(t, &federation_domain.FederationHost{HostFqdn: "127.0.0.1"})
 		unittest.AssertExistsAndLoadBean(t, &repo_model.FollowingRepo{
 			ExternalID:       "1",
 			FederationHostID: federationHost.ID,

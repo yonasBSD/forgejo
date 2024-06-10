@@ -6,10 +6,10 @@ package repository
 import (
 	"context"
 
+	federation "code.gitea.io/gitea/ddd-federation/application"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/services/federation"
 )
 
 func StarRepoAndSendLikeActivities(ctx context.Context, doer user.User, repoID int64, star bool) error {
