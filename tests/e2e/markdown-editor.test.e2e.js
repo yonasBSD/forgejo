@@ -128,6 +128,13 @@ test('Test markdown list continuation', async ({browser}, workerInfo) => {
   await textarea.pressSequentially('three');
   await expect(textarea).toHaveValue(`1. one\n2. two\n3. three`);
 
+  // Test continuation of alternative ordered list syntax
+  await textarea.fill(`1) one\n2) two`);
+  await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+  await textarea.press('Enter');
+  await textarea.pressSequentially('three');
+  await expect(textarea).toHaveValue(`1) one\n2) two\n3) three`);
+
   // Test continuation of blockquote
   await textarea.fill(`> knowledge is power`);
   await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
@@ -141,4 +148,30 @@ test('Test markdown list continuation', async ({browser}, workerInfo) => {
   await textarea.press('Enter');
   await textarea.pressSequentially('write a test');
   await expect(textarea).toHaveValue(`- [ ] have a problem\n- [x] create a solution\n- [ ] write a test`);
+
+  // Test all conceivable syntax (except ordered lists)
+  const prefixes = [
+    '- ', // A space between the bullet and the content is required.
+    ' - ', // I have seen single space in front of -/* being used and even recommended, I think.
+    '* ',
+    '+ ',
+    '  ',
+    '    ',
+    '    - ',
+    '\t',
+    '\t\t* ',
+    '> ',
+    '> > ',
+    '- [ ] ',
+    '- [ ]', // This does seem to render, so allow.
+    '* [ ] ',
+    '+ [ ] ',
+  ];
+  for (const prefix of prefixes) {
+    await textarea.fill(`${prefix}one`);
+    await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
+    await textarea.press('Enter');
+    await textarea.pressSequentially('two');
+    await expect(textarea).toHaveValue(`${prefix}one\n${prefix}two`);
+  }
 });

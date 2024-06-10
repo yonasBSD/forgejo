@@ -314,10 +314,10 @@ class ComboMarkdownEditor {
     }
   }
 
-  indentSelection(reverse) {
+  indentSelection(unindent) {
     // Indent with 4 spaces, unindent 4 spaces or fewer or a lost tab.
-    const indent = '    ';
-    const unindent = /^( {1,4}|\t)/;
+    const indentPrefix = '    ';
+    const unindentRegex = /^( {1,4}|\t)/;
 
     // Indent all lines that are included in the selection, partially or whole, while preserving the original selection at the end.
     const lines = this.textarea.value.split('\n');
@@ -338,7 +338,7 @@ class ComboMarkdownEditor {
         continue;
       }
 
-      const updated = reverse ? line.replace(unindent, '') : indent + line;
+      const updated = unindent ? line.replace(unindentRegex, '') : indentPrefix + line;
       changedLines.push(updated);
       const move = updated.length - line.length;
 
@@ -379,7 +379,7 @@ class ComboMarkdownEditor {
     const lineEnd = value.indexOf('\n', start);
     const line = value.slice(lineStart, lineEnd < 0 ? value.length : lineEnd);
     // Match any whitespace at the start + any repeatable prefix + exactly one space after.
-    const prefix = line.match(/^\s*((\d+)\.|-\s?\[[ x]\]|-|\+|\*|>)?\s/);
+    const prefix = line.match(/^\s*((\d+)[.)]\s|[-*+]\s+(\[[ x]\]\s?)?|(>\s+)+)?/);
 
     // Defer to browser if we can't do anything more useful, or if the cursor is inside the prefix.
     if (!prefix || !prefix[0].length || lineStart + prefix[0].length > start) return false;
