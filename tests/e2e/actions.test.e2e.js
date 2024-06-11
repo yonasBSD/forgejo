@@ -15,7 +15,7 @@ test('Test workflow dispatch present', async ({browser}, workerInfo) => {
 
   await expect(page.getByText('This workflow has a workflow_dispatch event trigger.')).toBeVisible();
 
-  const run_workflow_btn = page.getByRole('button', {name: 'Run workflow'});
+  const run_workflow_btn = page.locator('#workflow_dispatch_dropdown>button');
   await expect(run_workflow_btn).toBeVisible();
 
   const menu = page.locator('#workflow_dispatch_dropdown>.menu');
@@ -30,14 +30,17 @@ test('Test workflow dispatch error: missing inputs', async ({browser}, workerInf
   const page = await context.newPage();
 
   await page.goto('/user2/test_workflows/actions?workflow=test-dispatch.yml&actor=0&status=0');
-  await page.getByRole('button', {name: 'Run workflow'}).click();
+  await page.locator('#workflow_dispatch_dropdown>button').click();
+
+  await page.waitForTimeout(1000);
 
   // Remove the required attribute so we can trigger the error message!
-  await page.locator('input[name="inputs[string2]"]').evaluate((elem) => {
-    elem.removeAttribute('required');
+  await page.evaluate(() => {
+    const elem = document.querySelector('input[name="inputs[string2]"]');
+    elem?.removeAttribute('required');
   });
 
-  await page.locator('#workflow-dispatch-submit').click();
+  await page.click('#workflow-dispatch-submit');
   await page.waitForLoadState('networkidle');
 
   await expect(page.getByText('Require value for input "String w/o. default".')).toBeVisible();
@@ -50,7 +53,9 @@ test('Test workflow dispatch success', async ({browser}, workerInfo) => {
 
   await page.goto('/user2/test_workflows/actions?workflow=test-dispatch.yml&actor=0&status=0');
 
-  await page.getByRole('button', {name: 'Run workflow'}).click();
+  await page.locator('#workflow_dispatch_dropdown>button').click();
+  await page.waitForTimeout(1000);
+
   await page.locator('input[name="inputs[string2]"]').fill('abc');
   await page.locator('#workflow-dispatch-submit').click();
   await page.waitForLoadState('networkidle');
