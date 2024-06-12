@@ -31,10 +31,14 @@ type FederationService struct {
 
 var federationServiceSingletonPointer *FederationService = nil
 
-// TODO: Find a better solution.
-// e.g.: singleton always has the default repo.
-// In case of different repos via params, return new service but do not set it as singleton.
-// OR: define it in or around cmd/main?
+// TODO: Find a better solution. Define it in or around cmd/main?
+//
+// GetFederationService returns a FederationService.
+// If no FederationHostRepository is passed as param, then `infrastructure.FederationHostRepositoryImpl` is used.
+// In this case FederationService is created as singleton.
+// If a FederationHostRepository is passed as param, an already created singleton is ignored and a
+// new FederationService using the passed repo is returned.
+// An in this case returned FederationService, however, does not overwrite an already created singleton.
 func GetFederationService(params ...interface{}) FederationService {
 	if federationServiceSingletonPointer != nil && len(params) == 0 {
 		return *federationServiceSingletonPointer
@@ -51,11 +55,11 @@ func GetFederationService(params ...interface{}) FederationService {
 
 	if federationHostRepository == nil {
 		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
+		federationServiceSingletonPointer = &FederationService{federationHostRepository: federationHostRepository}
+		return *federationServiceSingletonPointer
+	} else {
+		return FederationService{federationHostRepository: federationHostRepository}
 	}
-
-	federationServiceSingletonPointer = &FederationService{federationHostRepository: federationHostRepository}
-
-	return *federationServiceSingletonPointer
 }
 
 // ProcessLikeActivity receives a ForgeLike activity and does the following:
