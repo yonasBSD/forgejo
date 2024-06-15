@@ -13,8 +13,8 @@
 		{{$repo := or $.Repo (index $.RepoMaps .RepoID)}}
 		<details class="tw-group diff-file-box diff-box file-content non-diff-file-content repo-search-result" open>
 			<summary class="tw-list-none">
-				<h4 class="ui top attached header tw-font-normal tw-flex tw-flex-wrap">
-					<span class="tw-transition tw-transform-reset group-open:-tw-rotate-180">
+				<h4 class="ui top attached header tw-font-normal tw-flex tw-flex-wrap tw-transform-reset">
+					<span class="tw-h-4 tw-transition -tw-rotate-90 group-open:tw-rotate-0">
 						{{svg "octicon-chevron-down"}}
 					</span>
 					{{if not $.Repo}}
@@ -28,7 +28,7 @@
 					{{else}}
 						<span class="file tw-flex-1 tw-ml-2">{{.Filename}}</span>
 					{{end}}
-					<a role="button" class="ui basic tiny button tw-mr-auto" rel="nofollow" href="{{$repo.Link}}/src/commit/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+					<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/commit/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 				</h4>
 			</summary>
 			<div class="ui attached table segment">
