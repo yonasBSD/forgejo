@@ -49,7 +49,8 @@ export async function initCaptcha() {
     case 'frc-captcha': {
       const {WidgetInstance} = await import(/* webpackChunkName: "mcaptcha-vanilla-glue" */'friendly-challenge');
       if (isDark) captchaEl.classList.add('dark');
-      const widget = new WidgetInstance(captchaEl, params);
+      new WidgetInstance(captchaEl, params);
+      break;
     }
     default:
   }
