@@ -9,6 +9,7 @@ import (
 
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/cache"
+	"code.gitea.io/gitea/modules/frccaptcha"
 	"code.gitea.io/gitea/modules/hcaptcha"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/mcaptcha"
@@ -49,6 +50,7 @@ func SetCaptchaData(ctx *Context) {
 	ctx.Data["McaptchaSitekey"] = setting.Service.McaptchaSitekey
 	ctx.Data["McaptchaURL"] = setting.Service.McaptchaURL
 	ctx.Data["CfTurnstileSitekey"] = setting.Service.CfTurnstileSitekey
+	ctx.Data["FrcCaptchaSitekey"] = setting.Service.FrcCaptchaSitekey
 }
 
 const (
@@ -56,6 +58,7 @@ const (
 	hCaptchaResponseField    = "h-captcha-response"
 	mCaptchaResponseField    = "m-captcha-response"
 	cfTurnstileResponseField = "cf-turnstile-response"
+	frcCaptchaResponseField  = "frc-captcha-solution"
 )
 
 // VerifyCaptcha verifies Captcha data
@@ -78,6 +81,8 @@ func VerifyCaptcha(ctx *Context, tpl base.TplName, form any) {
 		valid, err = mcaptcha.Verify(ctx, ctx.Req.Form.Get(mCaptchaResponseField))
 	case setting.CfTurnstile:
 		valid, err = turnstile.Verify(ctx, ctx.Req.Form.Get(cfTurnstileResponseField))
+	case setting.FrcCaptcha:
+		valid, err = frccaptcha.Verify(ctx, ctx.Req.Form.Get(frcCaptchaResponseField))
 	default:
 		ctx.ServerError("Unknown Captcha Type", fmt.Errorf("unknown Captcha Type: %s", setting.Service.CaptchaType))
 		return

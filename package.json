@@ -27,6 +27,7 @@
     "esbuild-loader": "4.1.0",
     "escape-goat": "4.0.0",
     "fast-glob": "3.3.2",
+    "friendly-challenge": "0.9.15",
     "htmx.org": "1.9.12",
     "idiomorph": "0.3.0",
     "jquery": "3.7.1",
@@ -96,5 +97,7 @@
     "vite-string-plugin": "1.3.2",
     "vitest": "1.6.0"
   },
-  "browserslist": ["defaults"]
+  "browserslist": [
+    "defaults"
+  ]
 }
