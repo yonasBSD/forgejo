@@ -36,6 +36,7 @@ test('Test workflow dispatch error: missing inputs', async ({browser}, workerInf
 
   // Remove the required attribute so we can trigger the error message!
   await page.evaluate(() => {
+    // eslint-disable-next-line no-undef
     const elem = document.querySelector('input[name="inputs[string2]"]');
     elem?.removeAttribute('required');
   });
@@ -56,7 +57,7 @@ test('Test workflow dispatch success', async ({browser}, workerInfo) => {
   await page.locator('#workflow_dispatch_dropdown>button').click();
   await page.waitForTimeout(1000);
 
-  await page.locator('input[name="inputs[string2]"]').fill('abc');
+  await page.type('input[name="inputs[string2]"]', 'abc');
   await page.locator('#workflow-dispatch-submit').click();
   await page.waitForLoadState('networkidle');
 
