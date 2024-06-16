@@ -69,23 +69,32 @@ func Verify(ctx context.Context, response string) (bool, error) {
 	return jsonResponse.Success, respErr
 }
 
+const (
+	ErrSecretMissing   ErrorCode = "secret_missing"
+	ErrSecretInvalid   ErrorCode = "secret_invalid"
+	ErrSolutionMissing ErrorCode = "solution_missing"
+	ErrSolutionInvalid ErrorCode = "solution_invalid"
+	ErrBadRequest      ErrorCode = "bad_request"
+	ErrSolutionTimeout ErrorCode = "solution_timeout_or_duplicate"
+)
+
 // ErrorCode is a reCaptcha error
 type ErrorCode string
 
 // String fulfills the Stringer interface
 func (e ErrorCode) String() string {
 	switch e {
-	case "secret_missing":
+	case ErrSecretMissing:
 		return "The secret parameter is missing."
-	case "secret_invalid":
+	case ErrSecretInvalid:
 		return "The secret parameter is invalid or malformed."
-	case "solution_missing":
+	case ErrSolutionMissing:
 		return "The solution parameter is missing."
-	case "solution_invalid":
+	case ErrSolutionInvalid:
 		return "The solution parameter is invalid or malformed."
-	case "bad_request":
+	case ErrBadRequest:
 		return "The request is invalid or malformed."
-	case "solution_timeout_or_duplicate":
+	case ErrSolutionTimeout:
 		return "The solution is no longer valid: either is too old or has been used previously."
 	}
 	return string(e)
