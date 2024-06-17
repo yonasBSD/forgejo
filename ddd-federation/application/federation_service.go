@@ -15,7 +15,6 @@ import (
 	"code.gitea.io/gitea/ddd-federation/infrastructure"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/auth/password"
 	fm "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
@@ -25,28 +24,42 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO: Is it allowed to create/use objects/entities/aggregates from outside in domain?
+//		 Or only in application/infra?
+
 type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
+	httpClientAPI            domain.HttpClientAPI
 }
 
 // NewFederationService returns a FederationService.
 // If no FederationHostRepository is passed as param, then `infrastructure.FederationHostRepositoryImpl` is used.
+// If no HttpClientAPI is passed as param, then `infrastructure.HttpClientAPIImpl` is used.
 // If a FederationHostRepository is passed as param, a FederationService using the passed repo is returned.
+// If a HttpClientAPI is passed as param, a FederationService using the passed api is returned.
 func NewFederationService(params ...interface{}) FederationService {
 	var federationHostRepository domain.FederationHostRepository = nil
+	var httpClientAPI domain.HttpClientAPI = nil
 
 	for _, param := range params {
 		switch v := param.(type) {
 		case domain.FederationHostRepository:
 			federationHostRepository = v
+		case domain.HttpClientAPI:
+			httpClientAPI = v
 		}
 	}
 
 	if federationHostRepository == nil {
 		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
-		return FederationService{federationHostRepository: federationHostRepository}
-	} else {
-		return FederationService{federationHostRepository: federationHostRepository}
+	}
+	if httpClientAPI == nil {
+		httpClientAPI = domain.HttpClientAPI(infrastructure.HttpClientAPIImpl{})
+	}
+
+	return FederationService{
+		federationHostRepository: federationHostRepository,
+		httpClientAPI:            httpClientAPI,
 	}
 }
 
@@ -90,6 +103,8 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	}
 	log.Info("Object accepted:%v", objectID)
 
+	// TODO: user does not have a repo within this ddd context. Thus, this code cannot be moved into domain layer.
+	//       Create userRepo in ddd-federation?
 	// Check if user already exists
 	user, _, err := user.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
@@ -124,28 +139,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 }
 
 func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domain.FederationHost, error) {
-	actionsUser := user.NewActionsUser()
-	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
-	if err != nil {
-		return nil, err
-	}
-	body, err := client.GetBody(actorID.AsWellKnownNodeInfoURI())
-	if err != nil {
-		return nil, err
-	}
-	nodeInfoWellKnown, err := domain.NewNodeInfoWellKnown(body)
-	if err != nil {
-		return nil, err
-	}
-	body, err = client.GetBody(nodeInfoWellKnown.Href)
-	if err != nil {
-		return nil, err
-	}
-	nodeInfo, err := domain.NewNodeInfo(body)
-	if err != nil {
-		return nil, err
-	}
-	result, err := domain.NewFederationHost(nodeInfo, actorID.Host)
+	result, err := s.httpClientAPI.GetFederationHostFromAP(ctx, actorID)
 	if err != nil {
 		return nil, err
 	}
@@ -177,27 +171,10 @@ func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI
 }
 
 func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
-	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
-	actionsUser := user.NewActionsUser()
-	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
+	person, err := s.httpClientAPI.GetForgePersonFromAP(ctx, personID)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	body, err := client.GetBody(personID.AsURI())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	person := fm.ForgePerson{}
-	err = person.UnmarshalJSON(body)
-	if err != nil {
-		return nil, nil, err
-	}
-	if res, err := validation.IsValid(person); !res {
-		return nil, nil, err
-	}
-	log.Info("Fetched valid person:%q", person)
 
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
@@ -231,6 +208,8 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		ExternalID:       personID.ID,
 		FederationHostID: federationHostID,
 	}
+
+	// TODO: Create FederatedUser Repo in infra?
 	err = user.CreateFederatedUser(ctx, &newUser, &federatedUser)
 	if err != nil {
 		return nil, nil, err
@@ -259,6 +238,7 @@ func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepo
 		followingRepos = append(followingRepos, &followingRepo)
 	}
 
+	// TODO: Create FollowingReposRepository in Domain
 	if err := repo.StoreFollowingRepos(ctx, localRepoID, followingRepos); err != nil {
 		return 0, "", err
 	}
@@ -267,10 +247,12 @@ func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepo
 }
 
 func (s FederationService) DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
+	// TODO: Create FollowingReposRepository in Domain
 	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
 }
 
 func (s FederationService) SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
+	// TODO: Create FollowingReposRepository in Domain
 	followingRepos, err := repo.FindFollowingReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", followingRepos)
 	if err != nil {
@@ -288,22 +270,5 @@ func (s FederationService) SendLikeActivities(ctx context.Context, doer user.Use
 		likeActivityList = append(likeActivityList, likeActivity)
 	}
 
-	apclient, err := activitypub.NewClient(ctx, &doer, doer.APActorID())
-	if err != nil {
-		return err
-	}
-	for i, activity := range likeActivityList {
-		activity.StartTime = activity.StartTime.Add(time.Duration(i) * time.Second)
-		json, err := activity.MarshalJSON()
-		if err != nil {
-			return err
-		}
-
-		_, err = apclient.Post(json, fmt.Sprintf("%v/inbox/", activity.Object))
-		if err != nil {
-			log.Error("error %v while sending activity: %q", err, activity)
-		}
-	}
-
-	return nil
+	return s.httpClientAPI.PostLikeActivities(ctx, doer, likeActivityList)
 }
