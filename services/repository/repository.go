@@ -68,7 +68,7 @@ func DeleteRepository(ctx context.Context, doer *user_model.User, repo *repo_mod
 		return err
 	}
 
-	if err := federation.GetFederationService().DeleteFollowingRepos(ctx, repo.ID); err != nil {
+	if err := federation.NewFederationService().DeleteFollowingRepos(ctx, repo.ID); err != nil {
 		return err
 	}
 

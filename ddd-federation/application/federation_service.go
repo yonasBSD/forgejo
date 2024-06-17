@@ -29,21 +29,10 @@ type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
 }
 
-var federationServiceSingletonPointer *FederationService = nil
-
-// TODO: Find a better solution. Define it in or around cmd/main?
-//
-// GetFederationService returns a FederationService.
+// NewFederationService returns a FederationService.
 // If no FederationHostRepository is passed as param, then `infrastructure.FederationHostRepositoryImpl` is used.
-// In this case FederationService is created as singleton.
-// If a FederationHostRepository is passed as param, an already created singleton is ignored and a
-// new FederationService using the passed repo is returned.
-// An in this case returned FederationService, however, does not overwrite an already created singleton.
-func GetFederationService(params ...interface{}) FederationService {
-	if federationServiceSingletonPointer != nil && len(params) == 0 {
-		return *federationServiceSingletonPointer
-	}
-
+// If a FederationHostRepository is passed as param, a FederationService using the passed repo is returned.
+func NewFederationService(params ...interface{}) FederationService {
 	var federationHostRepository domain.FederationHostRepository = nil
 
 	for _, param := range params {
@@ -55,8 +44,7 @@ func GetFederationService(params ...interface{}) FederationService {
 
 	if federationHostRepository == nil {
 		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
-		federationServiceSingletonPointer = &FederationService{federationHostRepository: federationHostRepository}
-		return *federationServiceSingletonPointer
+		return FederationService{federationHostRepository: federationHostRepository}
 	} else {
 		return FederationService{federationHostRepository: federationHostRepository}
 	}
