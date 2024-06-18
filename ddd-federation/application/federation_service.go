@@ -29,6 +29,7 @@ import (
 
 type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
+	followingRepoRepository  domain.FollowingRepoRepository
 	httpClientAPI            domain.HttpClientAPI
 }
 
@@ -39,12 +40,15 @@ type FederationService struct {
 // If a HttpClientAPI is passed as param, a FederationService using the passed api is returned.
 func NewFederationService(params ...interface{}) FederationService {
 	var federationHostRepository domain.FederationHostRepository = nil
+	var followingRepoRepository domain.FollowingRepoRepository = nil
 	var httpClientAPI domain.HttpClientAPI = nil
 
 	for _, param := range params {
 		switch v := param.(type) {
 		case domain.FederationHostRepository:
 			federationHostRepository = v
+		case domain.FollowingRepoRepository:
+			followingRepoRepository = v
 		case domain.HttpClientAPI:
 			httpClientAPI = v
 		}
@@ -53,12 +57,16 @@ func NewFederationService(params ...interface{}) FederationService {
 	if federationHostRepository == nil {
 		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
 	}
+	if followingRepoRepository == nil {
+		followingRepoRepository = domain.FollowingRepoRepository(infrastructure.FollowingRepoRepositoryWrapper{})
+	}
 	if httpClientAPI == nil {
 		httpClientAPI = domain.HttpClientAPI(infrastructure.HttpClientAPIImpl{})
 	}
 
 	return FederationService{
 		federationHostRepository: federationHostRepository,
+		followingRepoRepository:  followingRepoRepository,
 		httpClientAPI:            httpClientAPI,
 	}
 }
@@ -238,8 +246,7 @@ func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepo
 		followingRepos = append(followingRepos, &followingRepo)
 	}
 
-	// TODO: Create FollowingReposRepository in Domain
-	if err := repo.StoreFollowingRepos(ctx, localRepoID, followingRepos); err != nil {
+	if err := s.followingRepoRepository.StoreFollowingRepos(ctx, localRepoID, followingRepos); err != nil {
 		return 0, "", err
 	}
 
@@ -247,13 +254,11 @@ func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepo
 }
 
 func (s FederationService) DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
-	// TODO: Create FollowingReposRepository in Domain
-	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
+	return s.followingRepoRepository.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
 }
 
 func (s FederationService) SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
-	// TODO: Create FollowingReposRepository in Domain
-	followingRepos, err := repo.FindFollowingReposByRepoID(ctx, repoID)
+	followingRepos, err := s.followingRepoRepository.FindFollowingReposByRepoID(ctx, repoID)
 	log.Info("Federated Repos is: %v", followingRepos)
 	if err != nil {
 		return err
