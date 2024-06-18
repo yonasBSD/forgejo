@@ -15,3 +15,7 @@ type UserRepositoryWrapper struct{}
 func (UserRepositoryWrapper) FindFederatedUser(ctx context.Context, externalID string, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	return user.FindFederatedUser(ctx, externalID, federationHostID)
 }
+
+func (UserRepositoryWrapper) CreateFederatedUser(ctx context.Context, newUser *user.User, federatedUser *user.FederatedUser) error {
+	return user.CreateFederatedUser(ctx, newUser, federatedUser)
+}

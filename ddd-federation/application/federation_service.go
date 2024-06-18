@@ -231,8 +231,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		FederationHostID: federationHostID,
 	}
 
-	// TODO: Create FederatedUser Repo in infra?
-	err = user.CreateFederatedUser(ctx, &newUser, &federatedUser)
+	err = s.userRepository.CreateFederatedUser(ctx, &newUser, &federatedUser)
 	if err != nil {
 		return nil, nil, err
 	}
