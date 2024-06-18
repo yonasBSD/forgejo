@@ -198,6 +198,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		return nil, nil, err
 	}
 
+	// TODO: is "setting.AppURL" an infra call?
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
 		return nil, nil, err
@@ -209,6 +210,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 	if len(person.Name) == 0 {
 		fullName = name
 	}
+	// TODO: is this an infra call?
 	password, err := password.Generate(32)
 	if err != nil {
 		return nil, nil, err
