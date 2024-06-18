@@ -31,6 +31,7 @@ type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
 	followingRepoRepository  domain.FollowingRepoRepository
 	userRepository           domain.UserRepository
+	repoRepository           domain.RepoRepository
 	httpClientAPI            domain.HttpClientAPI
 }
 
@@ -43,6 +44,7 @@ func NewFederationService(params ...interface{}) FederationService {
 	var federationHostRepository domain.FederationHostRepository = nil
 	var followingRepoRepository domain.FollowingRepoRepository = nil
 	var userRepository domain.UserRepository = nil
+	var repoRepository domain.RepoRepository = nil
 	var httpClientAPI domain.HttpClientAPI = nil
 
 	for _, param := range params {
@@ -53,6 +55,8 @@ func NewFederationService(params ...interface{}) FederationService {
 			followingRepoRepository = v
 		case domain.UserRepository:
 			userRepository = v
+		case domain.RepoRepository:
+			repoRepository = v
 		case domain.HttpClientAPI:
 			httpClientAPI = v
 		}
@@ -67,6 +71,9 @@ func NewFederationService(params ...interface{}) FederationService {
 	if userRepository == nil {
 		userRepository = domain.UserRepository(infrastructure.UserRepositoryWrapper{})
 	}
+	if repoRepository == nil {
+		repoRepository = domain.RepoRepository(infrastructure.RepoRepositoryWrapper{})
+	}
 	if httpClientAPI == nil {
 		httpClientAPI = domain.HttpClientAPI(infrastructure.HttpClientAPIImpl{})
 	}
@@ -75,6 +82,7 @@ func NewFederationService(params ...interface{}) FederationService {
 		federationHostRepository: federationHostRepository,
 		followingRepoRepository:  followingRepoRepository,
 		userRepository:           userRepository,
+		repoRepository:           repoRepository,
 		httpClientAPI:            httpClientAPI,
 	}
 }
@@ -136,10 +144,9 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	log.Info("Got user:%v", user.Name)
 
 	// execute the activity if the repo was not stared already
-	// TODO: Add StarRepository
-	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
+	alreadyStared := s.repoRepository.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
-		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
+		err = s.repoRepository.StarRepo(ctx, user.ID, repositoryID, true)
 		if err != nil {
 			return http.StatusNotAcceptable, "Error staring", err
 		}
