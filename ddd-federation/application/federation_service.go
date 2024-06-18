@@ -30,6 +30,7 @@ import (
 type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
 	followingRepoRepository  domain.FollowingRepoRepository
+	userRepository           domain.UserRepository
 	httpClientAPI            domain.HttpClientAPI
 }
 
@@ -41,6 +42,7 @@ type FederationService struct {
 func NewFederationService(params ...interface{}) FederationService {
 	var federationHostRepository domain.FederationHostRepository = nil
 	var followingRepoRepository domain.FollowingRepoRepository = nil
+	var userRepository domain.UserRepository = nil
 	var httpClientAPI domain.HttpClientAPI = nil
 
 	for _, param := range params {
@@ -49,6 +51,8 @@ func NewFederationService(params ...interface{}) FederationService {
 			federationHostRepository = v
 		case domain.FollowingRepoRepository:
 			followingRepoRepository = v
+		case domain.UserRepository:
+			userRepository = v
 		case domain.HttpClientAPI:
 			httpClientAPI = v
 		}
@@ -60,6 +64,9 @@ func NewFederationService(params ...interface{}) FederationService {
 	if followingRepoRepository == nil {
 		followingRepoRepository = domain.FollowingRepoRepository(infrastructure.FollowingRepoRepositoryWrapper{})
 	}
+	if userRepository == nil {
+		userRepository = domain.UserRepository(infrastructure.UserRepositoryWrapper{})
+	}
 	if httpClientAPI == nil {
 		httpClientAPI = domain.HttpClientAPI(infrastructure.HttpClientAPIImpl{})
 	}
@@ -67,6 +74,7 @@ func NewFederationService(params ...interface{}) FederationService {
 	return FederationService{
 		federationHostRepository: federationHostRepository,
 		followingRepoRepository:  followingRepoRepository,
+		userRepository:           userRepository,
 		httpClientAPI:            httpClientAPI,
 	}
 }
@@ -111,10 +119,8 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	}
 	log.Info("Object accepted:%v", objectID)
 
-	// TODO: user does not have a repo within this ddd context. Thus, this code cannot be moved into domain layer.
-	//       Create userRepo in ddd-federation?
 	// Check if user already exists
-	user, _, err := user.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
+	user, _, err := s.userRepository.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
 	if err != nil {
 		return http.StatusInternalServerError, "Searching for user failed", err
 	}
@@ -130,6 +136,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	log.Info("Got user:%v", user.Name)
 
 	// execute the activity if the repo was not stared already
+	// TODO: Add StarRepository
 	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
 	if !alreadyStared {
 		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
