@@ -18,9 +18,11 @@ import (
 type HttpClientAPIMock struct{}
 
 var MockFederationHost1 domain.FederationHost = domain.FederationHost{
-	ID:             1,
-	HostFqdn:       "https://www.example.com/",
-	NodeInfo:       domain.NodeInfo{},
+	ID:       1,
+	HostFqdn: "https://www.example.com/",
+	NodeInfo: domain.NodeInfo{
+		SoftwareName: domain.ForgejoSourceType,
+	},
 	LatestActivity: time.Date(2020, 01, 01, 12, 12, 12, 0, time.Now().UTC().Location()),
 	Created:        timeutil.TimeStampNow(),
 	Updated:        timeutil.TimeStampNow(),
