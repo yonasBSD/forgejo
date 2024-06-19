@@ -5,16 +5,42 @@ package application
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
+	"code.gitea.io/gitea/modules/timeutil"
 )
 
 type HttpClientAPIMock struct{}
 
+var MockFederationHost1 domain.FederationHost = domain.FederationHost{
+	ID:             1,
+	HostFqdn:       "https://www.example.com/",
+	NodeInfo:       domain.NodeInfo{},
+	LatestActivity: time.Date(2020, 01, 01, 12, 12, 12, 0, time.Now().UTC().Location()),
+	Created:        timeutil.TimeStampNow(),
+	Updated:        timeutil.TimeStampNow(),
+}
+
+var MockActorID forgefed.ActorID = forgefed.ActorID{
+	ID:               "30",
+	Schema:           "https",
+	Host:             "www.example.com",
+	Path:             "api/v1/activitypub/user-id",
+	Port:             "",
+	UnvalidatedInput: "https://www.example.com/api/v1/activitypub/user-id/30",
+}
+
 func (HttpClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
-	return domain.FederationHost{}, nil
+	if actorID == MockActorID {
+		fmt.Printf("actorID is: %v", actorID)
+		return MockFederationHost1, nil
+	}
+	return domain.FederationHost{}, errors.New("actorID not found")
 }
 
 func (HttpClientAPIMock) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {

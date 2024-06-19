@@ -6,6 +6,8 @@ package application
 import (
 	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_GetFederationHostForURI(t *testing.T) {
@@ -16,7 +18,8 @@ func Test_GetFederationHostForURI(t *testing.T) {
 	hca := HttpClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
-	sut.GetFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
-	//TODO: Complete this unit test
-	t.Fail()
+	host, err := sut.GetFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
+
+	assert.Nil(t, err)
+	assert.Equal(t, host, &MockFederationHost1)
 }
