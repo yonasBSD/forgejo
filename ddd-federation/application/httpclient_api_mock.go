@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
@@ -17,8 +18,10 @@ import (
 
 type HttpClientAPIMock struct{}
 
+const MockFederationHost1ID int64 = 1
+
 var MockFederationHost1 domain.FederationHost = domain.FederationHost{
-	ID:       1,
+	ID:       MockFederationHost1ID,
 	HostFqdn: "https://www.example.com/",
 	NodeInfo: domain.NodeInfo{
 		SoftwareName: domain.ForgejoSourceType,
@@ -36,6 +39,26 @@ var MockActorID forgefed.ActorID = forgefed.ActorID{
 	Port:             "",
 	UnvalidatedInput: "https://www.example.com/api/v1/activitypub/user-id/30",
 }
+
+var MockPersonID forgefed.PersonID = forgefed.PersonID{
+	ActorID: MockActorID,
+}
+
+var MockUser = user.User{
+	LowerName:                    strings.ToLower("[]-www.example.com"),
+	Name:                         "[]-www.example.com",
+	FullName:                     "[]-www.example.com",
+	Email:                        "email@example.com",
+	EmailNotificationsPreference: "disabled",
+	Passwd:                       "password",
+	MustChangePassword:           false,
+	LoginName:                    "",
+	Type:                         user.UserTypeRemoteUser,
+	IsAdmin:                      false,
+	NormalizedFederatedURI:       "",
+}
+
+var MockFederatedUser, _ = user.NewFederatedUser(MockUser.ID, MockPersonID.ID, MockFederationHost1.ID)
 
 func (HttpClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
 	if actorID == MockActorID {
