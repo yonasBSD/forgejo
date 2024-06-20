@@ -111,11 +111,11 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	if !activity.IsNewer(federationHost.LatestActivity) {
 		return http.StatusNotAcceptable, "Activity out of order.", fmt.Errorf("Activity already processed")
 	}
-	actorID, err := fm.NewPersonID(actorURI, string(federationHost.NodeInfo.SoftwareName))
+	personID, err := fm.NewPersonID(actorURI, string(federationHost.NodeInfo.SoftwareName))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid PersonID", err
 	}
-	log.Info("Actor accepted:%v", actorID)
+	log.Info("Person ActorID accepted:%v", personID)
 
 	// parse objectID (repository)
 	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(domain.ForgejoSourceType))
@@ -128,14 +128,14 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	log.Info("Object accepted:%v", objectID)
 
 	// Check if user already exists
-	user, _, err := s.userRepository.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
+	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
 	if err != nil {
 		return http.StatusInternalServerError, "Searching for user failed", err
 	}
 	if user != nil {
 		log.Info("Found local federatedUser: %v", user)
 	} else {
-		user, _, err = s.CreateUserFromAP(ctx, actorID, federationHost.ID)
+		user, _, err = s.CreateUserFromAP(ctx, personID, federationHost.ID)
 		if err != nil {
 			return http.StatusInternalServerError, "Error creating federatedUser", err
 		}
@@ -172,6 +172,8 @@ func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actor
 	return &result, nil
 }
 
+// check if fed host exists
+// if not create it from actorURI
 func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
