@@ -15,7 +15,7 @@ func Test_GetFederationHostForURI(t *testing.T) {
 	frr := FollowingRepoRepositoryMock{}
 	ur := UserRepositoryMock{}
 	rr := RepoRepositoryMock{}
-	hca := HttpClientAPIMock{}
+	hca := HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
 	host, err := sut.GetFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
@@ -29,7 +29,7 @@ func Test_GetFederationUserForID(t *testing.T) {
 	frr := FollowingRepoRepositoryMock{}
 	ur := UserRepositoryMock{}
 	rr := RepoRepositoryMock{}
-	hca := HttpClientAPIMock{}
+	hca := HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
 	MockPersonID.Source = "forgejo"
@@ -37,5 +37,4 @@ func Test_GetFederationUserForID(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, fedUser, &MockUser)
-
 }

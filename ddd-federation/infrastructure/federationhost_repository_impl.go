@@ -17,10 +17,9 @@ func init() {
 	db.RegisterModel(new(domain.FederationHost))
 }
 
-type FederationHostRepositoryImpl struct {
-}
+type FederationHostRepositoryImpl struct{}
 
-func (_ FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID int64) (*domain.FederationHost, error) {
+func (FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID int64) (*domain.FederationHost, error) {
 	host := new(domain.FederationHost)
 	has, err := db.GetEngine(ctx).Where("id=?", ID).Get(host)
 	if err != nil {
@@ -34,7 +33,7 @@ func (_ FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID 
 	return host, nil
 }
 
-func (_ FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Context, fqdn string) (*domain.FederationHost, error) {
+func (FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Context, fqdn string) (*domain.FederationHost, error) {
 	host := new(domain.FederationHost)
 	has, err := db.GetEngine(ctx).Where("host_fqdn=?", strings.ToLower(fqdn)).Get(host)
 	if err != nil {
@@ -48,7 +47,7 @@ func (_ FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Conte
 	return host, nil
 }
 
-func (_ FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, host *domain.FederationHost) error {
+func (FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, host *domain.FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return err
 	}
@@ -56,7 +55,7 @@ func (_ FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, 
 	return err
 }
 
-func (_ FederationHostRepositoryImpl) UpdateFederationHost(ctx context.Context, host *domain.FederationHost) error {
+func (FederationHostRepositoryImpl) UpdateFederationHost(ctx context.Context, host *domain.FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return err
 	}

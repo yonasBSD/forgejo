@@ -26,7 +26,7 @@ type FederationService struct {
 	followingRepoRepository  domain.FollowingRepoRepository
 	userRepository           domain.UserRepository
 	repoRepository           domain.RepoRepository
-	httpClientAPI            domain.HttpClientAPI
+	httpClientAPI            domain.HTTPClientAPI
 }
 
 // NewFederationService returns a FederationService.
@@ -35,11 +35,11 @@ type FederationService struct {
 // If a FederationHostRepository is passed as param, a FederationService using the passed repo is returned.
 // If a HttpClientAPI is passed as param, a FederationService using the passed api is returned.
 func NewFederationService(params ...interface{}) FederationService {
-	var federationHostRepository domain.FederationHostRepository = nil
-	var followingRepoRepository domain.FollowingRepoRepository = nil
-	var userRepository domain.UserRepository = nil
-	var repoRepository domain.RepoRepository = nil
-	var httpClientAPI domain.HttpClientAPI = nil
+	var federationHostRepository domain.FederationHostRepository
+	var followingRepoRepository domain.FollowingRepoRepository
+	var userRepository domain.UserRepository
+	var repoRepository domain.RepoRepository
+	var httpClientAPI domain.HTTPClientAPI
 
 	for _, param := range params {
 		switch v := param.(type) {
@@ -51,7 +51,7 @@ func NewFederationService(params ...interface{}) FederationService {
 			userRepository = v
 		case domain.RepoRepository:
 			repoRepository = v
-		case domain.HttpClientAPI:
+		case domain.HTTPClientAPI:
 			httpClientAPI = v
 		}
 	}
@@ -69,7 +69,7 @@ func NewFederationService(params ...interface{}) FederationService {
 		repoRepository = domain.RepoRepository(infrastructure.RepoRepositoryWrapper{})
 	}
 	if httpClientAPI == nil {
-		httpClientAPI = domain.HttpClientAPI(infrastructure.HttpClientAPIImpl{})
+		httpClientAPI = domain.HTTPClientAPI(infrastructure.HTTPClientAPIImpl{})
 	}
 
 	return FederationService{

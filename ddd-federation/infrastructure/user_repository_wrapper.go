@@ -29,7 +29,6 @@ func (UserRepositoryWrapper) CreateFederatedUser(ctx context.Context, newUser *u
 
 // ToDo: These are indirections to make CreateUserFromAP testable
 func (UserRepositoryWrapper) GetRepresentativeUser(ctx context.Context, person forgefed.ForgePerson, personID forgefed.PersonID) (user.User, error) {
-
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
 		return user.User{}, err

@@ -6,7 +6,6 @@ package application
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/timeutil"
 )
 
-type HttpClientAPIMock struct{}
+type HTTPClientAPIMock struct{}
 
 const MockFederationHost1ID int64 = 1
 
@@ -26,9 +25,12 @@ var MockFederationHost1 domain.FederationHost = domain.FederationHost{
 	NodeInfo: domain.NodeInfo{
 		SoftwareName: domain.ForgejoSourceType,
 	},
-	LatestActivity: time.Date(2020, 01, 01, 12, 12, 12, 0, time.Now().UTC().Location()),
-	Created:        timeutil.TimeStampNow(),
-	Updated:        timeutil.TimeStampNow(),
+	LatestActivity: time.Date(
+		2020, 1, 1, 12, 12, 12, 0,
+		time.Now().UTC().Location(),
+	),
+	Created: timeutil.TimeStampNow(),
+	Updated: timeutil.TimeStampNow(),
 }
 
 var MockActorID forgefed.ActorID = forgefed.ActorID{
@@ -60,18 +62,17 @@ var MockUser = user.User{
 
 var MockFederatedUser, _ = user.NewFederatedUser(MockUser.ID, MockPersonID.ID, MockFederationHost1.ID)
 
-func (HttpClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
+func (HTTPClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
 	if actorID == MockActorID {
-		fmt.Printf("actorID is: %v", actorID)
 		return MockFederationHost1, nil
 	}
 	return domain.FederationHost{}, errors.New("actorID not found")
 }
 
-func (HttpClientAPIMock) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
+func (HTTPClientAPIMock) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
 	return forgefed.ForgePerson{}, nil
 }
 
-func (HttpClientAPIMock) PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error {
+func (HTTPClientAPIMock) PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error {
 	return nil
 }

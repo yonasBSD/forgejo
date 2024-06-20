@@ -16,10 +16,9 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 )
 
-type HttpClientAPIImpl struct {
-}
+type HTTPClientAPIImpl struct{}
 
-func (_ HttpClientAPIImpl) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
+func (HTTPClientAPIImpl) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
 	if err != nil {
@@ -49,7 +48,7 @@ func (_ HttpClientAPIImpl) GetFederationHostFromAP(ctx context.Context, actorID 
 	return result, nil
 }
 
-func (_ HttpClientAPIImpl) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
+func (HTTPClientAPIImpl) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?
 	actionsUser := user.NewActionsUser()
 	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
@@ -73,7 +72,7 @@ func (_ HttpClientAPIImpl) GetForgePersonFromAP(ctx context.Context, personID fo
 	return person, nil
 }
 
-func (_ HttpClientAPIImpl) PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error {
+func (HTTPClientAPIImpl) PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error {
 	apclient, err := activitypub.NewClient(ctx, &doer, doer.APActorID())
 	if err != nil {
 		return err

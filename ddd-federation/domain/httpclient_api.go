@@ -10,7 +10,7 @@ import (
 	"code.gitea.io/gitea/modules/forgefed"
 )
 
-type HttpClientAPI interface {
+type HTTPClientAPI interface {
 	GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (FederationHost, error)
 	GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error)
 	PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error
