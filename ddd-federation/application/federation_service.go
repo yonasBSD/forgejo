@@ -157,7 +157,7 @@ func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actor
 }
 
 // Check if federation host exists on this server DB.
-// If not create it from actorURI.
+// If not create it from actorURI and return a pointer to it.
 func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
@@ -179,7 +179,7 @@ func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI
 }
 
 // Check if the federated user already exists on this server DB.
-// Create if it does not.
+// Create if it does not and return a pointer to it.
 func (s FederationService) GetFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *domain.FederationHost) (*user.User, error) {
 	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
 	if err != nil {
