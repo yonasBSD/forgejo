@@ -97,6 +97,7 @@ func NewFederationService(params ...interface{}) FederationService {
 func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int, string, error) {
 	activity := form.(*fm.ForgeLike)
 	if res, err := validation.IsValid(activity); !res {
+		// ToDo: Why do we return an additional error string?
 		return http.StatusNotAcceptable, "Invalid activity", err
 	}
 	log.Info("Activity validated:%v", activity)
@@ -161,8 +162,8 @@ func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actor
 	return &result, nil
 }
 
-// check if fed host exists
-// if not create it from actorURI
+// Check if federation host exists on this server DB.
+// If not create it from actorURI.
 func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
