@@ -127,21 +127,10 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	}
 	log.Info("Object accepted:%v", objectID)
 
-	// Check if user already exists
-	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
+	user, err := s.GetFederationUserForID(ctx, personID, federationHost)
 	if err != nil {
-		return http.StatusInternalServerError, "Searching for user failed", err
+		return http.StatusInternalServerError, "Error getting or creating federation user", err
 	}
-	if user != nil {
-		log.Info("Found local federatedUser: %v", user)
-	} else {
-		user, _, err = s.CreateUserFromAP(ctx, personID, federationHost.ID)
-		if err != nil {
-			return http.StatusInternalServerError, "Error creating federatedUser", err
-		}
-		log.Info("Created federatedUser from ap: %v", user)
-	}
-	log.Info("Got user:%v", user.Name)
 
 	// execute the activity if the repo was not stared already
 	alreadyStared := s.repoRepository.IsStaring(ctx, user.ID, repositoryID)
@@ -194,6 +183,28 @@ func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI
 	return federationHost, nil
 }
 
+// Check if the federated user already exists on this server DB.
+// Create if it does not.
+func (s FederationService) GetFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *domain.FederationHost) (*user.User, error) {
+	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
+	if err != nil {
+		return nil, err
+	}
+	if user != nil {
+		log.Info("Found local federatedUser: %v", user)
+	} else {
+		user, _, err = s.CreateUserFromAP(ctx, personID, federationHost.ID)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("Created federatedUser from ap: %v", user)
+	}
+	log.Info("Got user:%v", user.Name)
+
+	return user, nil
+}
+
+// ToDo: user.Federated user is not used anywhere. Do we need to return it?
 func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	person, err := s.httpClientAPI.GetForgePersonFromAP(ctx, personID)
 	if err != nil {
