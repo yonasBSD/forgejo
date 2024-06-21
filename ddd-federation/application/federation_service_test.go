@@ -21,7 +21,7 @@ func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 	host, err := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
 
 	assert.Nil(t, err)
-	assert.Equal(t, host, &MockFederationHost1)
+	assert.Equal(t, &MockFederationHost1, host)
 }
 
 func Test_GetOrCreateFederationUserForID(t *testing.T) {
@@ -36,5 +36,5 @@ func Test_GetOrCreateFederationUserForID(t *testing.T) {
 	fedUser, err := sut.GetOrCreateFederationUserForID(context.Background(), MockPersonID, &MockFederationHost1)
 
 	assert.Nil(t, err)
-	assert.Equal(t, fedUser, &MockUser)
+	assert.Equal(t, &MockUser, fedUser)
 }

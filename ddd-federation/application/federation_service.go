@@ -7,15 +7,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
 	"code.gitea.io/gitea/ddd-federation/infrastructure"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/auth/password"
 	fm "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
+	"github.com/google/uuid"
 )
 
 // TODO: Is it allowed to create/use objects/entities/aggregates from outside in domain?
@@ -201,20 +206,48 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		return nil, nil, err
 	}
 
-	representativeUser, err := s.userRepository.GetRepresentativeUser(ctx, person, personID)
+	// TODO: Encapsulate the following domain logic into a function with descriptive name
+	localFqdn, err := url.ParseRequestURI(setting.AppURL)
+	if err != nil {
+		return &user.User{}, nil, err
+	}
+
+	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
+	loginName := personID.AsLoginName()
+	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
+	fullName := person.Name.String()
+	if len(person.Name) == 0 {
+		fullName = name
+	}
+	password, err := password.Generate(32)
 	if err != nil {
 		return nil, nil, err
 	}
+	newUser := user.User{
+		LowerName:                    strings.ToLower(name),
+		Name:                         name,
+		FullName:                     fullName,
+		Email:                        email,
+		EmailNotificationsPreference: "disabled",
+		Passwd:                       password,
+		MustChangePassword:           false,
+		LoginName:                    loginName,
+		Type:                         user.UserTypeRemoteUser,
+		IsAdmin:                      false,
+		NormalizedFederatedURI:       personID.AsURI(),
+	}
+	federatedUser := user.FederatedUser{
+		ExternalID:       personID.ID,
+		FederationHostID: federationHostID,
+	}
 
-	federatedUser := s.userRepository.GetFederatedUser(personID, federationHostID)
-
-	err = s.userRepository.CreateFederatedUser(ctx, &representativeUser, &federatedUser)
+	err = s.userRepository.CreateFederatedUser(ctx, &newUser, &federatedUser)
 	if err != nil {
 		return nil, nil, err
 	}
 	log.Info("Created federatedUser:%q", federatedUser)
 
-	return &representativeUser, &federatedUser, nil
+	return &newUser, &federatedUser, nil
 }
 
 // Create or update a list of FollowingRepo structs
