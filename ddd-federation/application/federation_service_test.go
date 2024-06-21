@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	mock "code.gitea.io/gitea/ddd-federation/infrastructure_mock"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
@@ -15,11 +16,11 @@ import (
 )
 
 func Test_GetOrCreateFederationHostForURI(t *testing.T) {
-	fhr := FederationHostRepositoryMock{}
-	frr := FollowingRepoRepositoryMock{}
-	ur := UserRepositoryMock{}
-	rr := RepoRepositoryMock{}
-	hca := HTTPClientAPIMock{}
+	fhr := mock.FederationHostRepositoryMock{}
+	frr := mock.FollowingRepoRepositoryMock{}
+	ur := mock.UserRepositoryMock{}
+	rr := mock.RepoRepositoryMock{}
+	hca := mock.HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
 	host1, err1 := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
@@ -27,8 +28,8 @@ func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 
 	assert.Nil(t, err1)
 	assert.Nil(t, err2)
-	assert.Equal(t, &MockFederationHost1, host1)
-	assert.Equal(t, &MockFederationHost2, host2)
+	assert.Equal(t, &mock.MockFederationHost1, host1)
+	assert.Equal(t, &mock.MockFederationHost2, host2)
 }
 
 func Test_GetOrCreateFederationUserForID(t *testing.T) {
@@ -37,18 +38,18 @@ func Test_GetOrCreateFederationUserForID(t *testing.T) {
 		setting.AppURL = ""
 	}()
 
-	fhr := FederationHostRepositoryMock{}
-	frr := FollowingRepoRepositoryMock{}
-	ur := UserRepositoryMock{}
-	rr := RepoRepositoryMock{}
-	hca := HTTPClientAPIMock{}
+	fhr := mock.FederationHostRepositoryMock{}
+	frr := mock.FollowingRepoRepositoryMock{}
+	ur := mock.UserRepositoryMock{}
+	rr := mock.RepoRepositoryMock{}
+	hca := mock.HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
 	var mockPersonID forgefed.PersonID = forgefed.PersonID{
-		ActorID: MockActorID,
+		ActorID: mock.MockActorID,
 	}
 
-	sutUser, err := sut.GetOrCreateFederationUserForID(context.Background(), mockPersonID, &MockFederationHost1)
+	sutUser, err := sut.GetOrCreateFederationUserForID(context.Background(), mockPersonID, &mock.MockFederationHost1)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "maxmuster-www.example.com", sutUser.LowerName)
