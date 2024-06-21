@@ -1,7 +1,7 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package infrastruckture_mock
+package infrastructuremock
 
 import (
 	"context"
@@ -16,8 +16,10 @@ import (
 
 type HTTPClientAPIMock struct{}
 
-const MockFederationHost1ID int64 = 1
-const MockFederationHost2ID int64 = 2
+const (
+	MockFederationHost1ID int64 = 1
+	MockFederationHost2ID int64 = 2
+)
 
 var MockFederationHost1 domain.FederationHost = domain.FederationHost{
 	ID:       MockFederationHost1ID,
@@ -64,7 +66,7 @@ func (HTTPClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID fo
 }
 
 func (HTTPClientAPIMock) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
-	var MockForgePerson1 = forgefed.ForgePerson{}
+	MockForgePerson1 := forgefed.ForgePerson{}
 	err := MockForgePerson1.UnmarshalJSON([]byte(`{"type":"Person","preferredUsername":"MaxMuster"}`))
 	if err != nil {
 		return forgefed.ForgePerson{}, err
