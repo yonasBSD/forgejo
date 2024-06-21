@@ -17,10 +17,25 @@ import (
 type HTTPClientAPIMock struct{}
 
 const MockFederationHost1ID int64 = 1
+const MockFederationHost2ID int64 = 2
 
 var MockFederationHost1 domain.FederationHost = domain.FederationHost{
 	ID:       MockFederationHost1ID,
 	HostFqdn: "https://www.example.com/",
+	NodeInfo: domain.NodeInfo{
+		SoftwareName: domain.ForgejoSourceType,
+	},
+	LatestActivity: time.Date(
+		2020, 1, 1, 12, 12, 12, 0,
+		time.Now().UTC().Location(),
+	),
+	Created: timeutil.TimeStampNow(),
+	Updated: timeutil.TimeStampNow(),
+}
+
+var MockFederationHost2 domain.FederationHost = domain.FederationHost{
+	ID:       MockFederationHost2ID,
+	HostFqdn: "https://www.existingFederationHost.com/",
 	NodeInfo: domain.NodeInfo{
 		SoftwareName: domain.ForgejoSourceType,
 	},

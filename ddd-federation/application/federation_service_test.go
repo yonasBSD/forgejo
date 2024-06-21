@@ -22,10 +22,13 @@ func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 	hca := HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
-	host, err := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
+	host1, err1 := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
+	host2, err2 := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.existingFederationHost.com/api/v1/activitypub/user-id/30")
 
-	assert.Nil(t, err)
-	assert.Equal(t, &MockFederationHost1, host)
+	assert.Nil(t, err1)
+	assert.Nil(t, err2)
+	assert.Equal(t, &MockFederationHost1, host1)
+	assert.Equal(t, &MockFederationHost2, host2)
 }
 
 func Test_GetOrCreateFederationUserForID(t *testing.T) {

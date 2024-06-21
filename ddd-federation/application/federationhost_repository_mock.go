@@ -16,6 +16,9 @@ func (FederationHostRepositoryMock) GetFederationHost(ctx context.Context, ID in
 }
 
 func (FederationHostRepositoryMock) FindFederationHostByFqdn(ctx context.Context, fqdn string) (*domain.FederationHost, error) {
+	if fqdn == "www.existingFederationHost.com" {
+		return &MockFederationHost2, nil
+	}
 	return nil, nil
 }
 
