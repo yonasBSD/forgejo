@@ -32,7 +32,7 @@ func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 	assert.Equal(t, &mock.MockFederationHost2, host2)
 }
 
-func Test_GetOrCreateFederationUserForID(t *testing.T) {
+func Test_NewRemoteUser(t *testing.T) {
 	setting.AppURL = "https://our-forgejo.com/"
 	defer func() {
 		setting.AppURL = ""
@@ -49,7 +49,7 @@ func Test_GetOrCreateFederationUserForID(t *testing.T) {
 		ActorID: mock.MockActorID,
 	}
 
-	sutUser, err := sut.GetOrCreateFederationUserForID(context.Background(), mockPersonID, &mock.MockFederationHost1)
+	sutUser, err := sut.NewRemoteUser(mockPersonID, "", "MaxMuster")
 
 	assert.Nil(t, err)
 	assert.Equal(t, "maxmuster-www.example.com", sutUser.LowerName)

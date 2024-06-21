@@ -200,30 +200,26 @@ func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, p
 	return user, nil
 }
 
-func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
-	person, err := s.httpClientAPI.GetForgePersonFromAP(ctx, personID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// TODO: Encapsulate the following domain logic into a function with descriptive name
+func (s FederationService) NewRemoteUser(personID fm.PersonID, personName string, personPreferredUsername string) (user.User, error) {
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
-		return &user.User{}, nil, err
+		return user.User{}, err
 	}
 
 	email := fmt.Sprintf("f%v@%v", uuid.New().String(), localFqdn.Hostname())
 	loginName := personID.AsLoginName()
-	name := fmt.Sprintf("%v%v", person.PreferredUsername.String(), personID.HostSuffix())
-	fullName := person.Name.String()
-	if len(person.Name) == 0 {
+	name := fmt.Sprintf("%v%v", personPreferredUsername, personID.HostSuffix())
+	fullName := personName
+	if len(personName) == 0 {
 		fullName = name
 	}
+
 	password, err := password.Generate(32)
 	if err != nil {
-		return nil, nil, err
+		return user.User{}, err
 	}
-	newUser := user.User{
+
+	return user.User{
 		LowerName:                    strings.ToLower(name),
 		Name:                         name,
 		FullName:                     fullName,
@@ -235,6 +231,18 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		Type:                         user.UserTypeRemoteUser,
 		IsAdmin:                      false,
 		NormalizedFederatedURI:       personID.AsURI(),
+	}, nil
+}
+
+func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
+	person, err := s.httpClientAPI.GetForgePersonFromAP(ctx, personID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	newUser, err := s.NewRemoteUser(personID, person.Name.String(), person.PreferredUsername.String())
+	if err != nil {
+		return nil, nil, err
 	}
 	federatedUser := user.FederatedUser{
 		ExternalID:       personID.ID,
