@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	mock "code.gitea.io/gitea/ddd-federation/infrastructure_mock"
+	mock "code.gitea.io/gitea/ddd-federation/infrastructuremock"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/setting"
@@ -45,7 +45,7 @@ func Test_NewRemoteUser(t *testing.T) {
 	hca := mock.HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
-	var mockPersonID forgefed.PersonID = forgefed.PersonID{
+	mockPersonID := forgefed.PersonID{
 		ActorID: mock.MockActorID,
 	}
 

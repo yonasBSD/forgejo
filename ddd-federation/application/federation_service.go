@@ -200,7 +200,7 @@ func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, p
 	return user, nil
 }
 
-func (s FederationService) NewRemoteUser(personID fm.PersonID, personName string, personPreferredUsername string) (user.User, error) {
+func (s FederationService) NewRemoteUser(personID fm.PersonID, personName, personPreferredUsername string) (user.User, error) {
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
 		return user.User{}, err

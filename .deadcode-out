@@ -9,23 +9,6 @@ code.gitea.io/gitea/cmd/forgejo
 	ContextSetStdout
 	ContextSetStdin
 
-code.gitea.io/gitea/ddd-federation/application
-	FederationHostRepositoryMock.GetFederationHost
-	FederationHostRepositoryMock.FindFederationHostByFqdn
-	FederationHostRepositoryMock.CreateFederationHost
-	FederationHostRepositoryMock.UpdateFederationHost
-	FollowingRepoRepositoryMock.StoreFollowingRepos
-	FollowingRepoRepositoryMock.FindFollowingReposByRepoID
-	HTTPClientAPIMock.GetFederationHostFromAP
-	HTTPClientAPIMock.GetForgePersonFromAP
-	HTTPClientAPIMock.PostLikeActivities
-	RepoRepositoryMock.IsStaring
-	RepoRepositoryMock.StarRepo
-	UserRepositoryMock.FindFederatedUser
-	UserRepositoryMock.CreateFederatedUser
-	UserRepositoryMock.GetRepresentativeUser
-	UserRepositoryMock.GetFederatedUser
-
 code.gitea.io/gitea/models
 	IsErrUpdateTaskNotExist
 	ErrUpdateTaskNotExist.Error
@@ -144,6 +127,7 @@ code.gitea.io/gitea/models/user
 	ErrUserInactive.Unwrap
 	IsErrExternalLoginUserAlreadyExist
 	IsErrExternalLoginUserNotExist
+	NewFederatedUser
 	IsErrUserSettingIsNotExist
 	GetUserAllSettings
 	DeleteUserSetting
