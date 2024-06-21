@@ -5,8 +5,12 @@ package application
 
 import (
 	"context"
+	"strings"
 	"testing"
 
+	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/forgefed"
+	"code.gitea.io/gitea/modules/setting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,6 +29,11 @@ func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 }
 
 func Test_GetOrCreateFederationUserForID(t *testing.T) {
+	setting.AppURL = "https://our-forgejo.com/"
+	defer func() {
+		setting.AppURL = ""
+	}()
+
 	fhr := FederationHostRepositoryMock{}
 	frr := FollowingRepoRepositoryMock{}
 	ur := UserRepositoryMock{}
@@ -32,9 +41,16 @@ func Test_GetOrCreateFederationUserForID(t *testing.T) {
 	hca := HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
-	MockPersonID.Source = "forgejo"
-	fedUser, err := sut.GetOrCreateFederationUserForID(context.Background(), MockPersonID, &MockFederationHost1)
+	var mockPersonID forgefed.PersonID = forgefed.PersonID{
+		ActorID: MockActorID,
+	}
+
+	sutUser, err := sut.GetOrCreateFederationUserForID(context.Background(), mockPersonID, &MockFederationHost1)
 
 	assert.Nil(t, err)
-	assert.Equal(t, &MockUser, fedUser)
+	assert.Equal(t, "maxmuster-www.example.com", sutUser.LowerName)
+	assert.Equal(t, "MaxMuster-www.example.com", sutUser.Name)
+	assert.Equal(t, "MaxMuster-www.example.com", sutUser.FullName)
+	assert.Equal(t, "our-forgejo.com", strings.Split(sutUser.Email, "@")[1])
+	assert.Equal(t, user.UserTypeRemoteUser, sutUser.Type)
 }

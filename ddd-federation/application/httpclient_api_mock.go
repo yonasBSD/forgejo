@@ -6,7 +6,6 @@ package application
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
@@ -42,26 +41,6 @@ var MockActorID forgefed.ActorID = forgefed.ActorID{
 	UnvalidatedInput: "https://www.example.com/api/v1/activitypub/user-id/30",
 }
 
-var MockPersonID forgefed.PersonID = forgefed.PersonID{
-	ActorID: MockActorID,
-}
-
-var MockUser = user.User{
-	LowerName:                    strings.ToLower("[]-www.example.com"),
-	Name:                         "[]-www.example.com",
-	FullName:                     "[]-www.example.com",
-	Email:                        "email@example.com",
-	EmailNotificationsPreference: "disabled",
-	Passwd:                       "password",
-	MustChangePassword:           false,
-	LoginName:                    "",
-	Type:                         user.UserTypeRemoteUser,
-	IsAdmin:                      false,
-	NormalizedFederatedURI:       "",
-}
-
-var MockFederatedUser, _ = user.NewFederatedUser(MockUser.ID, MockPersonID.ID, MockFederationHost1.ID)
-
 func (HTTPClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
 	if actorID == MockActorID {
 		return MockFederationHost1, nil
@@ -70,7 +49,12 @@ func (HTTPClientAPIMock) GetFederationHostFromAP(ctx context.Context, actorID fo
 }
 
 func (HTTPClientAPIMock) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
-	return forgefed.ForgePerson{}, nil
+	var MockForgePerson1 = forgefed.ForgePerson{}
+	err := MockForgePerson1.UnmarshalJSON([]byte(`{"type":"Person","preferredUsername":"MaxMuster"}`))
+	if err != nil {
+		return forgefed.ForgePerson{}, err
+	}
+	return MockForgePerson1, nil
 }
 
 func (HTTPClientAPIMock) PostLikeActivities(ctx context.Context, doer user.User, activityList []forgefed.ForgeLike) error {
