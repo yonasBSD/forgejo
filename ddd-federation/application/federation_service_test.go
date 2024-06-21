@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_GetFederationHostForURI(t *testing.T) {
+func Test_GetOrCreateFederationHostForURI(t *testing.T) {
 	fhr := FederationHostRepositoryMock{}
 	frr := FollowingRepoRepositoryMock{}
 	ur := UserRepositoryMock{}
@@ -18,13 +18,13 @@ func Test_GetFederationHostForURI(t *testing.T) {
 	hca := HTTPClientAPIMock{}
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
-	host, err := sut.GetFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
+	host, err := sut.GetOrCreateFederationHostForURI(context.Background(), "https://www.example.com/api/v1/activitypub/user-id/30")
 
 	assert.Nil(t, err)
 	assert.Equal(t, host, &MockFederationHost1)
 }
 
-func Test_GetFederationUserForID(t *testing.T) {
+func Test_GetOrCreateFederationUserForID(t *testing.T) {
 	fhr := FederationHostRepositoryMock{}
 	frr := FollowingRepoRepositoryMock{}
 	ur := UserRepositoryMock{}
@@ -33,7 +33,7 @@ func Test_GetFederationUserForID(t *testing.T) {
 	sut := NewFederationService(fhr, frr, ur, rr, hca)
 
 	MockPersonID.Source = "forgejo"
-	fedUser, err := sut.GetFederationUserForID(context.Background(), MockPersonID, &MockFederationHost1)
+	fedUser, err := sut.GetOrCreateFederationUserForID(context.Background(), MockPersonID, &MockFederationHost1)
 
 	assert.Nil(t, err)
 	assert.Equal(t, fedUser, &MockUser)

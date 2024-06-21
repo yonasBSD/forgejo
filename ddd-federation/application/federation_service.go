@@ -99,7 +99,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	log.Info("actorURI was: %v", actorURI)
-	federationHost, err := s.GetFederationHostForURI(ctx, actorURI)
+	federationHost, err := s.GetOrCreateFederationHostForURI(ctx, actorURI)
 	if err != nil {
 		return http.StatusInternalServerError, "Wrong FederationHost", err
 	}
@@ -122,7 +122,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	}
 	log.Info("Object accepted:%v", objectID)
 
-	user, err := s.GetFederationUserForID(ctx, personID, federationHost)
+	user, err := s.GetOrCreateFederationUserForID(ctx, personID, federationHost)
 	if err != nil {
 		return http.StatusInternalServerError, "Error getting or creating federation user", err
 	}
@@ -156,9 +156,7 @@ func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actor
 	return &result, nil
 }
 
-// Check if federation host exists on this server DB.
-// If not create it from actorURI and return a pointer to it.
-func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
+func (s FederationService) GetOrCreateFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
 	log.Info("Input was: %v", actorURI)
 	rawActorID, err := fm.NewActorID(actorURI)
 	if err != nil {
@@ -178,9 +176,7 @@ func (s FederationService) GetFederationHostForURI(ctx context.Context, actorURI
 	return federationHost, nil
 }
 
-// Check if the federated user already exists on this server DB.
-// Create if it does not and return a pointer to it.
-func (s FederationService) GetFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *domain.FederationHost) (*user.User, error) {
+func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *domain.FederationHost) (*user.User, error) {
 	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
 	if err != nil {
 		return nil, err
@@ -199,7 +195,6 @@ func (s FederationService) GetFederationUserForID(ctx context.Context, personID 
 	return user, nil
 }
 
-// ToDo: user.Federated user is not used anywhere. Do we need to return it?
 func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostID int64) (*user.User, *user.FederatedUser, error) {
 	person, err := s.httpClientAPI.GetForgePersonFromAP(ctx, personID)
 	if err != nil {
@@ -226,7 +221,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
 	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
 	for _, uri := range followingRepoList {
-		federationHost, err := s.GetFederationHostForURI(ctx, uri)
+		federationHost, err := s.GetOrCreateFederationHostForURI(ctx, uri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
