@@ -202,6 +202,7 @@ func TestActionsArtifactV4DownloadSingle(t *testing.T) {
 	req = NewRequest(t, "GET", finalizeResp.SignedUrl)
 	resp = MakeRequest(t, req, http.StatusOK)
 	body := strings.Repeat("A", 1024)
+	assert.Equal(t, resp.Header().Get("accept-ranges"), "bytes")
 	assert.Equal(t, resp.Body.String(), body)
 }
 
