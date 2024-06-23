@@ -202,8 +202,21 @@ func TestActionsArtifactV4DownloadSingle(t *testing.T) {
 	req = NewRequest(t, "GET", finalizeResp.SignedUrl)
 	resp = MakeRequest(t, req, http.StatusOK)
 	body := strings.Repeat("A", 1024)
-	assert.Equal(t, resp.Header().Get("accept-ranges"), "bytes")
-	assert.Equal(t, resp.Body.String(), body)
+	assert.Equal(t, "bytes", resp.Header().Get("accept-ranges"))
+	assert.Equal(t, body, resp.Body.String())
+
+	// Download artifact via user-facing URL
+	req = NewRequest(t, "GET", "/user5/repo4/actions/runs/188/artifacts/artifact")
+	resp = MakeRequest(t, req, http.StatusOK)
+	assert.Equal(t, "bytes", resp.Header().Get("accept-ranges"))
+	assert.Equal(t, body, resp.Body.String())
+
+	// Partial artifact download
+	req = NewRequest(t, "GET", "/user5/repo4/actions/runs/188/artifacts/artifact").SetHeader("range", "bytes=0-99")
+	resp = MakeRequest(t, req, http.StatusPartialContent)
+	body = strings.Repeat("A", 100)
+	assert.Equal(t, "bytes 0-99/1024", resp.Header().Get("content-range"))
+	assert.Equal(t, body, resp.Body.String())
 }
 
 func TestActionsArtifactV4Delete(t *testing.T) {
