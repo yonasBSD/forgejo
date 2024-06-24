@@ -1,7 +1,7 @@
 import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
-  toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64,
+  toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64, isDarkTheme, sleep,
 } from './utils.js';
 
 test('basename', () => {
@@ -112,3 +112,23 @@ test('encodeURLEncodedBase64, decodeURLEncodedBase64', () => {
   expect(Array.from(decodeURLEncodedBase64('YQ'))).toEqual(Array.from(uint8array('a')));
   expect(Array.from(decodeURLEncodedBase64('YQ=='))).toEqual(Array.from(uint8array('a')));
 });
+
+test('should sleep for a while', async () => {
+  const start = Date.now();
+  await sleep(100);
+  const end = Date.now();
+  expect(end - start).to.be.greaterThan(90);
+});
+
+test('should return true if dark theme is enabled', () => {
+  document.documentElement.style.setProperty('--is-dark-theme', 'true');
+  expect(isDarkTheme()).to.be.true;
+  document.documentElement.style.setProperty('--is-dark-theme', 'True ');
+  expect(isDarkTheme()).to.be.true;
+});
+
+test('should return false if dark theme is disabled', () => {
+  document.documentElement.style.setProperty('--is-dark-theme', 'false');
+  expect(isDarkTheme()).to.be.false
+});
+
