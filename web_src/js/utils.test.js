@@ -117,18 +117,18 @@ test('should sleep for a while', async () => {
   const start = Date.now();
   await sleep(100);
   const end = Date.now();
-  expect(end - start).to.be.greaterThan(90);
+  const executionTime = end - start;
+  expect(executionTime).toBeGreaterThan(90);
 });
 
 test('should return true if dark theme is enabled', () => {
   document.documentElement.style.setProperty('--is-dark-theme', 'true');
-  expect(isDarkTheme()).to.be.true;
+  expect(isDarkTheme()).toBe(true);
   document.documentElement.style.setProperty('--is-dark-theme', 'True ');
-  expect(isDarkTheme()).to.be.true;
+  expect(isDarkTheme()).toBe(true);
 });
 
 test('should return false if dark theme is disabled', () => {
   document.documentElement.style.setProperty('--is-dark-theme', 'false');
-  expect(isDarkTheme()).to.be.false
+  expect(isDarkTheme()).toBe(false);
 });
-
