@@ -2,6 +2,7 @@ import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
   toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64,
+  convertImage,
 } from './utils.js';
 
 test('basename', () => {
@@ -111,4 +112,10 @@ test('encodeURLEncodedBase64, decodeURLEncodedBase64', () => {
   expect(encodeURLEncodedBase64(uint8array('a'))).toEqual('YQ'); // standard base64: "YQ=="
   expect(Array.from(decodeURLEncodedBase64('YQ'))).toEqual(Array.from(uint8array('a')));
   expect(Array.from(decodeURLEncodedBase64('YQ=='))).toEqual(Array.from(uint8array('a')));
+});
+
+test('covertImage', async () => {
+  // Invalid image blob
+  const blob = new Blob([JSON.stringify({test: true})], {type: 'application/json'});
+  await expect(convertImage(blob, 'image/png')).rejects.toThrowError();
 });
