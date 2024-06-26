@@ -52,6 +52,8 @@ test('Test workflow dispatch error: missing inputs', async ({browser}, workerInf
 });
 
 test('Test workflow dispatch success', async ({browser}, workerInfo) => {
+  test.skip(workerInfo.project.name === 'Mobile Safari', 'Flaky behaviour on mobile safari; see https://codeberg.org/forgejo/forgejo/pulls/3334#issuecomment-2033383');
+
   const context = await load_logged_in_context(browser, workerInfo, 'user2');
   /** @type {import('@playwright/test').Page} */
   const page = await context.newPage();
