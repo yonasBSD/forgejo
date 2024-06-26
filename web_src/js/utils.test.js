@@ -2,7 +2,7 @@ import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
   toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64,
-  isDarkTheme, getCurrentLocale, parseDom, serializeXml, sleep
+  isDarkTheme, getCurrentLocale, parseDom, serializeXml, sleep,
 } from './utils.js';
 
 test('basename', () => {
@@ -82,13 +82,13 @@ test('parseUrl', () => {
   expect(parseUrl('https://localhost/path?search#hash').hash).toEqual('#hash');
 });
 
-test ('getCurrentLocale', () => {
+test('getCurrentLocale', () => {
   // HTML document without explicit lang
-  expect(getCurrentLocale()).toEqual("");
+  expect(getCurrentLocale()).toEqual('');
 
   // HTML document with explicit lang
-  document.documentElement.setAttribute("lang", "en-US");
-  expect(getCurrentLocale()).toEqual("en-US");
+  document.documentElement.setAttribute('lang', 'en-US');
+  expect(getCurrentLocale()).toEqual('en-US');
 });
 
 test('translateMonth', () => {
@@ -148,20 +148,20 @@ test('encodeURLEncodedBase64, decodeURLEncodedBase64', () => {
 });
 
 test('parseDom', () => {
-  const paragraphStr = "This is sample paragraph";
-  const paragraphTagStr = `<p>${paragraphStr}</p>`
-  const content = parseDom(paragraphTagStr, "text/html");
+  const paragraphStr = 'This is sample paragraph';
+  const paragraphTagStr = `<p>${paragraphStr}</p>`;
+  const content = parseDom(paragraphTagStr, 'text/html');
   expect(content.body.innerHTML).toEqual(paragraphTagStr);
 
   // Content should have only one paragraph
-  const paragraphs = content.getElementsByTagName('p')
+  const paragraphs = content.getElementsByTagName('p');
   expect(paragraphs.length).toEqual(1);
-  expect(paragraphs[0].innerText).toEqual(paragraphStr);
+  expect(paragraphs[0].textContent).toEqual(paragraphStr);
 });
 
 test('serializeXml', () => {
-  const textStr = "This is a sample text";
-  const tagName = "item";
+  const textStr = 'This is a sample text';
+  const tagName = 'item';
   const node = document.createElement(tagName);
   node.textContent = textStr;
   expect(serializeXml(node)).toEqual(`<${tagName}>${textStr}</${tagName}>`);
@@ -169,7 +169,7 @@ test('serializeXml', () => {
 
 test('sleep', async () => {
   // Test 500 ms sleep
-  await testSleep(500)
+  await testSleep(500);
 
   // Test 2000 ms sleep
   await testSleep(2000);
