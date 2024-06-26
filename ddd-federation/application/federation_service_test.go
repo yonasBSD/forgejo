@@ -49,7 +49,7 @@ func Test_NewRemoteUser(t *testing.T) {
 		ActorID: mock.MockActorID,
 	}
 
-	sutUser, err := sut.NewRemoteUser(mockPersonID, "", "MaxMuster")
+	sutUser, err := sut.NewFederatedUser(mockPersonID, "", "MaxMuster")
 
 	assert.Nil(t, err)
 	assert.Equal(t, "maxmuster-www.example.com", sutUser.LowerName)

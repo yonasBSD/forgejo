@@ -23,9 +23,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO: Is it allowed to create/use objects/entities/aggregates from outside in domain?
-//		 Or only in application/infra?
-
 type FederationService struct {
 	federationHostRepository domain.FederationHostRepository
 	followingRepoRepository  domain.FollowingRepoRepository
@@ -200,7 +197,7 @@ func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, p
 	return user, nil
 }
 
-func (s FederationService) NewRemoteUser(personID fm.PersonID, personName, personPreferredUsername string) (user.User, error) {
+func (s FederationService) NewFederatedUser(personID fm.PersonID, personName, personPreferredUsername string) (user.User, error) {
 	localFqdn, err := url.ParseRequestURI(setting.AppURL)
 	if err != nil {
 		return user.User{}, err
@@ -240,7 +237,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 		return nil, nil, err
 	}
 
-	newUser, err := s.NewRemoteUser(personID, person.Name.String(), person.PreferredUsername.String())
+	newUser, err := s.NewFederatedUser(personID, person.Name.String(), person.PreferredUsername.String())
 	if err != nil {
 		return nil, nil, err
 	}
