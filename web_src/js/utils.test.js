@@ -1,4 +1,3 @@
-import { afterEach } from 'vitest';
 import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
@@ -14,7 +13,6 @@ afterEach(() => {
   document.documentElement.removeAttribute('lang');
   document.documentElement.removeAttribute('style');
 });
-
 
 test('basename', () => {
   expect(basename('/path/to/file.js')).toEqual('file.js');
