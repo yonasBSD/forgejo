@@ -15,7 +15,8 @@ test('startDaysBetween', () => {
 });
 
 test('firstStartDateAfterDate', () => {
-  expect(firstStartDateAfterDate(new Date('2024-02-15'))).toEqual(1708214400000);
+  expect(firstStartDateAfterDate(new Date('2024-02-15'))).toEqual(1_708_214_400_000);
+  expect(firstStartDateAfterDate(new Date('2024-02-12'))).toEqual(1_708_214_400_000);
   try {
     firstStartDateAfterDate('2024-02-15');
   } catch (error) {
