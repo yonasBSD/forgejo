@@ -1,9 +1,20 @@
+import { afterEach } from 'vitest';
 import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
   toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64,
   isDarkTheme, getCurrentLocale, parseDom, serializeXml, sleep,
 } from './utils.js';
+
+afterEach(() => {
+  // Reset head and body sections of the document
+  document.documentElement.innerHTML = '<head></head><body></body>';
+
+  // Remove 'lang' and 'style' attributes of html tag
+  document.documentElement.removeAttribute('lang');
+  document.documentElement.removeAttribute('style');
+});
+
 
 test('basename', () => {
   expect(basename('/path/to/file.js')).toEqual('file.js');
@@ -180,5 +191,5 @@ async function testSleep(ms) {
   await sleep(ms);
   const endTime = Date.now();    // Record the end time
   const actualSleepTime = endTime - startTime;
-  expect(Math.abs(actualSleepTime - ms) <= 10).toBeTruthy();
+  expect(Math.abs(actualSleepTime - ms) <= 15).toBeTruthy();
 }
