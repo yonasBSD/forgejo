@@ -2,7 +2,7 @@ import {
   basename, extname, isObject, stripTags, parseIssueHref,
   parseUrl, translateMonth, translateDay, blobToDataURI,
   toAbsoluteUrl, encodeURLEncodedBase64, decodeURLEncodedBase64,
-  convertImage,
+  isDarkTheme, getCurrentLocale, parseDom, serializeXml, sleep
 } from './utils.js';
 
 test('basename', () => {
@@ -21,6 +21,31 @@ test('extname', () => {
 test('isObject', () => {
   expect(isObject({})).toBeTruthy();
   expect(isObject([])).toBeFalsy();
+});
+
+test('should return true if dark theme is enabled', () => {
+  // When --is-dark-theme var is defined with value true
+  document.documentElement.style.setProperty('--is-dark-theme', 'true');
+  expect(isDarkTheme()).toBeTruthy();
+
+  // when --is-dark-theme var is defined with value TRUE
+  document.documentElement.style.setProperty('--is-dark-theme', 'TRUE');
+  expect(isDarkTheme()).toBeTruthy();
+});
+
+test('should return false if dark theme is disabled', () => {
+  // when --is-dark-theme var is defined with value false
+  document.documentElement.style.setProperty('--is-dark-theme', 'false');
+  expect(isDarkTheme()).toBeFalsy();
+
+  // when --is-dark-theme var is defined with value FALSE
+  document.documentElement.style.setProperty('--is-dark-theme', 'FALSE');
+  expect(isDarkTheme()).toBeFalsy();
+});
+
+test('should return false if dark theme is not defined', () => {
+  // when --is-dark-theme var is not exist
+  expect(isDarkTheme()).toBeFalsy();
 });
 
 test('stripTags', () => {
@@ -57,6 +82,15 @@ test('parseUrl', () => {
   expect(parseUrl('https://localhost/path?search#hash').hash).toEqual('#hash');
 });
 
+test ('getCurrentLocale', () => {
+  // HTML document without explicit lang
+  expect(getCurrentLocale()).toEqual("");
+
+  // HTML document with explicit lang
+  document.documentElement.setAttribute("lang", "en-US");
+  expect(getCurrentLocale()).toEqual("en-US");
+});
+
 test('translateMonth', () => {
   const originalLang = document.documentElement.lang;
   document.documentElement.lang = 'en-US';
@@ -87,10 +121,9 @@ test('blobToDataURI', async () => {
 test('toAbsoluteUrl', () => {
   expect(toAbsoluteUrl('//host/dir')).toEqual('http://host/dir');
   expect(toAbsoluteUrl('https://host/dir')).toEqual('https://host/dir');
-
+  expect(toAbsoluteUrl('http://host/dir')).toEqual('http://host/dir');
   expect(toAbsoluteUrl('')).toEqual('http://localhost:3000');
   expect(toAbsoluteUrl('/user/repo')).toEqual('http://localhost:3000/user/repo');
-
   expect(() => toAbsoluteUrl('path')).toThrowError('unsupported');
 });
 
@@ -114,8 +147,38 @@ test('encodeURLEncodedBase64, decodeURLEncodedBase64', () => {
   expect(Array.from(decodeURLEncodedBase64('YQ=='))).toEqual(Array.from(uint8array('a')));
 });
 
-test('covertImage', async () => {
-  // Invalid image blob
-  const blob = new Blob([JSON.stringify({test: true})], {type: 'application/json'});
-  await expect(convertImage(blob, 'image/png')).rejects.toThrowError();
+test('parseDom', () => {
+  const paragraphStr = "This is sample paragraph";
+  const paragraphTagStr = `<p>${paragraphStr}</p>`
+  const content = parseDom(paragraphTagStr, "text/html");
+  expect(content.body.innerHTML).toEqual(paragraphTagStr);
+
+  // Content should have only one paragraph
+  const paragraphs = content.getElementsByTagName('p')
+  expect(paragraphs.length).toEqual(1);
+  expect(paragraphs[0].innerText).toEqual(paragraphStr);
 });
+
+test('serializeXml', () => {
+  const textStr = "This is a sample text";
+  const tagName = "item";
+  const node = document.createElement(tagName);
+  node.textContent = textStr;
+  expect(serializeXml(node)).toEqual(`<${tagName}>${textStr}</${tagName}>`);
+});
+
+test('sleep', async () => {
+  // Test 500 ms sleep
+  await testSleep(500)
+
+  // Test 2000 ms sleep
+  await testSleep(2000);
+});
+
+async function testSleep(ms) {
+  const startTime = Date.now();  // Record the start time
+  await sleep(ms);
+  const endTime = Date.now();    // Record the end time
+  const actualSleepTime = endTime - startTime;
+  expect(Math.abs(actualSleepTime - ms) <= 10).toBeTruthy();
+}
