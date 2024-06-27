@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"code.gitea.io/gitea/ddd-federation/domain"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/forgefed"
@@ -17,36 +16,6 @@ import (
 )
 
 type HTTPClientAPIImpl struct{}
-
-func (HTTPClientAPIImpl) GetFederationHostFromAP(ctx context.Context, actorID forgefed.ActorID) (domain.FederationHost, error) {
-	actionsUser := user.NewActionsUser()
-	client, err := activitypub.NewClient(ctx, actionsUser, "no idea where to get key material.")
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-	body, err := client.GetBody(actorID.AsWellKnownNodeInfoURI())
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-	nodeInfoWellKnown, err := domain.NewNodeInfoWellKnown(body)
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-	body, err = client.GetBody(nodeInfoWellKnown.Href)
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-	nodeInfo, err := domain.NewNodeInfo(body)
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-	result, err := domain.NewFederationHost(nodeInfo, actorID.Host)
-	if err != nil {
-		return domain.FederationHost{}, err
-	}
-
-	return result, nil
-}
 
 func (HTTPClientAPIImpl) GetForgePersonFromAP(ctx context.Context, personID forgefed.PersonID) (forgefed.ForgePerson, error) {
 	// ToDo: Do we get a publicKeyId from server, repo or owner or repo?

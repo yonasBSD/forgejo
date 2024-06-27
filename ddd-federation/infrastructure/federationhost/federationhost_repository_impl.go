@@ -1,26 +1,26 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package infrastructure
+package federationhost
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"code.gitea.io/gitea/ddd-federation/domain"
+	"code.gitea.io/gitea/ddd-federation/domain/federationhost"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/validation"
 )
 
 func init() {
-	db.RegisterModel(new(domain.FederationHost))
+	db.RegisterModel(new(federationhost.FederationHost))
 }
 
 type FederationHostRepositoryImpl struct{}
 
-func (FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID int64) (*domain.FederationHost, error) {
-	host := new(domain.FederationHost)
+func (FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID int64) (*federationhost.FederationHost, error) {
+	host := new(federationhost.FederationHost)
 	has, err := db.GetEngine(ctx).Where("id=?", ID).Get(host)
 	if err != nil {
 		return nil, err
@@ -33,8 +33,8 @@ func (FederationHostRepositoryImpl) GetFederationHost(ctx context.Context, ID in
 	return host, nil
 }
 
-func (FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Context, fqdn string) (*domain.FederationHost, error) {
-	host := new(domain.FederationHost)
+func (FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Context, fqdn string) (*federationhost.FederationHost, error) {
+	host := new(federationhost.FederationHost)
 	has, err := db.GetEngine(ctx).Where("host_fqdn=?", strings.ToLower(fqdn)).Get(host)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (FederationHostRepositoryImpl) FindFederationHostByFqdn(ctx context.Context
 	return host, nil
 }
 
-func (FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, host *domain.FederationHost) error {
+func (FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, host *federationhost.FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return err
 	}
@@ -55,7 +55,7 @@ func (FederationHostRepositoryImpl) CreateFederationHost(ctx context.Context, ho
 	return err
 }
 
-func (FederationHostRepositoryImpl) UpdateFederationHost(ctx context.Context, host *domain.FederationHost) error {
+func (FederationHostRepositoryImpl) UpdateFederationHost(ctx context.Context, host *federationhost.FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
 		return err
 	}

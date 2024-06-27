@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/ddd-federation/domain"
+	"code.gitea.io/gitea/ddd-federation/domain/federationhost"
 	"code.gitea.io/gitea/ddd-federation/infrastructure"
+	infraFh "code.gitea.io/gitea/ddd-federation/infrastructure/federationhost"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/auth/password"
@@ -24,7 +26,8 @@ import (
 )
 
 type FederationService struct {
-	federationHostRepository domain.FederationHostRepository
+	federationHostService    federationhost.FederationHostService
+	federationHostRepository federationhost.FederationHostRepository
 	followingRepoRepository  domain.FollowingRepoRepository
 	userRepository           domain.UserRepository
 	repoRepository           domain.RepoRepository
@@ -36,8 +39,10 @@ type FederationService struct {
 // If no HttpClientAPI is passed as param, then `infrastructure.HttpClientAPIImpl` is used.
 // If a FederationHostRepository is passed as param, a FederationService using the passed repo is returned.
 // If a HttpClientAPI is passed as param, a FederationService using the passed api is returned.
+// This is part of DependencyInjection. Therefore it has to stay in application layer.
 func NewFederationService(params ...interface{}) FederationService {
-	var federationHostRepository domain.FederationHostRepository
+	var federationHostService federationhost.FederationHostService
+	var federationHostRepository federationhost.FederationHostRepository
 	var followingRepoRepository domain.FollowingRepoRepository
 	var userRepository domain.UserRepository
 	var repoRepository domain.RepoRepository
@@ -45,7 +50,9 @@ func NewFederationService(params ...interface{}) FederationService {
 
 	for _, param := range params {
 		switch v := param.(type) {
-		case domain.FederationHostRepository:
+		case federationhost.FederationHostService:
+			federationHostService = v
+		case federationhost.FederationHostRepository:
 			federationHostRepository = v
 		case domain.FollowingRepoRepository:
 			followingRepoRepository = v
@@ -59,7 +66,13 @@ func NewFederationService(params ...interface{}) FederationService {
 	}
 
 	if federationHostRepository == nil {
-		federationHostRepository = domain.FederationHostRepository(infrastructure.FederationHostRepositoryImpl{})
+		federationHostRepository = federationhost.FederationHostRepository(infraFh.FederationHostRepositoryImpl{})
+	}
+	if federationHostService == nil {
+		federationHostService = federationhost.FederationHostServiceImpl{
+			FederationHostRepository: federationHostRepository,
+			FederationhostHttpClient: infraFh.FederationHostHttpClientImpl{},
+		}
 	}
 	if followingRepoRepository == nil {
 		followingRepoRepository = domain.FollowingRepoRepository(infrastructure.FollowingRepoRepositoryWrapper{})
@@ -75,6 +88,7 @@ func NewFederationService(params ...interface{}) FederationService {
 	}
 
 	return FederationService{
+		federationHostService:    federationHostService,
 		federationHostRepository: federationHostRepository,
 		followingRepoRepository:  followingRepoRepository,
 		userRepository:           userRepository,
@@ -101,7 +115,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	// parse actorID (person)
 	actorURI := activity.Actor.GetID().String()
 	log.Info("actorURI was: %v", actorURI)
-	federationHost, err := s.GetOrCreateFederationHostForURI(ctx, actorURI)
+	federationHost, err := s.federationHostService.GetOrCreateFederationHostForURI(ctx, actorURI)
 	if err != nil {
 		return http.StatusInternalServerError, "Wrong FederationHost", err
 	}
@@ -115,7 +129,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	log.Info("Person ActorID accepted:%v", personID)
 
 	// parse objectID (repository)
-	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(domain.ForgejoSourceType))
+	objectID, err := fm.NewRepositoryID(activity.Object.GetID().String(), string(federationhost.ForgejoSourceType))
 	if err != nil {
 		return http.StatusNotAcceptable, "Invalid objectId", err
 	}
@@ -146,39 +160,7 @@ func (s FederationService) ProcessLikeActivity(ctx context.Context, form any, re
 	return 0, "", nil
 }
 
-func (s FederationService) CreateFederationHostFromAP(ctx context.Context, actorID fm.ActorID) (*domain.FederationHost, error) {
-	result, err := s.httpClientAPI.GetFederationHostFromAP(ctx, actorID)
-	if err != nil {
-		return nil, err
-	}
-	err = s.federationHostRepository.CreateFederationHost(ctx, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (s FederationService) GetOrCreateFederationHostForURI(ctx context.Context, actorURI string) (*domain.FederationHost, error) {
-	log.Info("Input was: %v", actorURI)
-	rawActorID, err := fm.NewActorID(actorURI)
-	if err != nil {
-		return nil, err
-	}
-	federationHost, err := s.federationHostRepository.FindFederationHostByFqdn(ctx, rawActorID.Host)
-	if err != nil {
-		return nil, err
-	}
-	if federationHost == nil {
-		result, err := s.CreateFederationHostFromAP(ctx, rawActorID)
-		if err != nil {
-			return nil, err
-		}
-		federationHost = result
-	}
-	return federationHost, nil
-}
-
-func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *domain.FederationHost) (*user.User, error) {
+func (s FederationService) GetOrCreateFederationUserForID(ctx context.Context, personID fm.PersonID, federationHost *federationhost.FederationHost) (*user.User, error) {
 	user, _, err := s.userRepository.FindFederatedUser(ctx, personID.ID, federationHost.ID)
 	if err != nil {
 		return nil, err
@@ -259,7 +241,7 @@ func (s FederationService) CreateUserFromAP(ctx context.Context, personID fm.Per
 func (s FederationService) StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
 	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
 	for _, uri := range followingRepoList {
-		federationHost, err := s.GetOrCreateFederationHostForURI(ctx, uri)
+		federationHost, err := s.federationHostService.GetOrCreateFederationHostForURI(ctx, uri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}

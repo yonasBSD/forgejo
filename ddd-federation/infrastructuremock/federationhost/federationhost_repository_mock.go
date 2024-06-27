@@ -1,12 +1,12 @@
 // Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package infrastructuremock
+package federationhost
 
 import (
 	"context"
 
-	"code.gitea.io/gitea/ddd-federation/domain"
+	domain "code.gitea.io/gitea/ddd-federation/domain/federationhost"
 )
 
 type FederationHostRepositoryMock struct{}
