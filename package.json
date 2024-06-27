@@ -34,7 +34,7 @@
     "license-checker-webpack-plugin": "0.2.1",
     "mermaid": "10.9.1",
     "mini-css-extract-plugin": "2.9.0",
-    "minimatch": "9.0.4",
+    "minimatch": "9.0.5",
     "monaco-editor": "0.47.0",
     "monaco-editor-webpack-plugin": "7.1.0",
     "pdfobject": "2.3.0",
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "4.3.0",
-    "@playwright/test": "1.44.1",
+    "@playwright/test": "1.45.0",
     "@stoplight/spectral-cli": "6.11.1",
     "@stylistic/eslint-plugin-js": "1.8.1",
     "@stylistic/stylelint-plugin": "2.1.2",

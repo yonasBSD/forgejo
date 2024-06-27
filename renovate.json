@@ -7,7 +7,8 @@
     "group:postcss",
     "group:linters",
     "schedule:daily",
-    "schedule:automergeDaily"
+    "schedule:automergeDaily",
+    "local>forgejo-contrib/forgejo-renovate//go.json"
   ],
   "ignorePresets": [
     ":semanticPrefixFixDepsChoreOthers",
@@ -92,7 +93,8 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/visualon/renovate"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": true
+      "automerge": true,
+      "groupName": "renovate"
     },
     {
       "description": "Split minor and patch updates",
@@ -195,7 +197,7 @@
       "customType": "regex",
       "fileMatch": ["^Makefile$"],
       "matchStrings": [
-        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)\\s"
+        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)(?: packageName=(?<packageName>.+?))?( versioning=(?<versioning>.+?))?\\s"
       ]
     }
   ]
