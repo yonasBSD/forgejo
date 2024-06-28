@@ -17,11 +17,7 @@ test('startDaysBetween', () => {
 test('firstStartDateAfterDate', () => {
   const expectedDate = new Date('2024-02-18').getTime();
   expect(firstStartDateAfterDate(new Date('2024-02-15'))).toEqual(expectedDate);
-  try {
-    firstStartDateAfterDate('2024-02-15');
-  } catch (error) {
-    expect(error.message).toBe('Invalid date');
-  }
+  expect(() => firstStartDateAfterDate('2024-02-15')).toThrowError('Invalid date');
 });
 test('fillEmptyStartDaysWithZeroes with data', () => {
   expect(fillEmptyStartDaysWithZeroes([1708214400000, 1708819200000, 1708819300000], {
