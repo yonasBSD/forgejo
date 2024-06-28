@@ -17,6 +17,7 @@ test('startDaysBetween', () => {
 test('firstStartDateAfterDate', () => {
   const expectedDate = new Date('2024-02-18').getTime();
   expect(firstStartDateAfterDate(new Date('2024-02-15'))).toEqual(expectedDate);
+
   expect(() => firstStartDateAfterDate('2024-02-15')).toThrowError('Invalid date');
 });
 test('fillEmptyStartDaysWithZeroes with data', () => {
@@ -33,6 +34,7 @@ test('fillEmptyStartDaysWithZeroes with data', () => {
       'week': 1708819300000,
     }]);
 });
+
 test('fillEmptyStartDaysWithZeroes with empty array', () => {
   expect(fillEmptyStartDaysWithZeroes([], {})).toEqual([]);
 });
