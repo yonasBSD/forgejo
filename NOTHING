@@ -1,0 +1,11 @@
+weekly-cherry-pick.sh session info
+Session #20, for week 2024-27-v7.0:
+  - Targets 'v7.0/forgejo' (starting at '6ef70edb0ba940514218161388f49bcb8fbbfb45')
+  - Picking from 'release/v1.22' (688085c15efcc37859b059034ca23b9eb536d193...dceadd2ebe79e452bef9eddc05922bb641b3fdad)
+  - In progress
+  - Commits: 8
+    - todo: 0
+    - pick: 0
+    - skip: 6
+    - port: 2
+    - in-progress: 0
