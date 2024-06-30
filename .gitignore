@@ -120,3 +120,6 @@ prime/
 
 # Manpage
 /man
+
+# Vim swapfiles
+*.swp
