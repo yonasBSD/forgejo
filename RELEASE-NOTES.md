@@ -610,6 +610,41 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Align ISSUE_TEMPLATE with the new label system](https://codeberg.org/forgejo/forgejo/commit/248b7ee850ecdb538b22ddcfbe80b6f91be32b70).
   * [Improve the list header in milestone page](https://codeberg.org/forgejo/forgejo/commit/8abc1aae4ab5b03be0bcbdd390bb903b54ccd21a).
 
+## 1.21.11-3
+
+[The complete list of new commits included in the Forgejo v1.21.11-3 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.11-2...v1.21.11-3), or from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo
+$ git -C forgejo log --oneline --no-merges v1.21.11-2..v1.21.11-3
+```
+
+This stable release contains a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.14+0-gitea-1.21.10`
+
+* **regreSSHion**
+
+  Recommended action when running Forgejo from a:
+  * binary - upgrade the OpenSSH server that was installed independently.
+  * root OCI image - upgrade to [Forgejo 1.21.11-3](https://codeberg.org/forgejo/-/packages/container/forgejo/1.21.11-3).
+  * rootless OCI image - no upgrade is necessary.
+
+  [CVE-2024-6387](https://nvd.nist.gov/vuln/detail/CVE-2024-6387) also known as [regreSSHion](https://www.qualys.com/regresshion-cve-2024-6387/) is an Unauthenticated Remote Code Execution (RCE) vulnerability in OpenSSH’s server (sshd) on glibc-based Linux systems. It is **strongly recommended** that an OpenSSH server installed independently of Forgejo is upgraded as soon as possible.
+
+  All Forgejo OCI root images, including [1.21.11-3](https://codeberg.org/forgejo/-/packages/container/forgejo/1.21.11-3) contain an OpenSSH server. They are based on https://alpinelinux.org/ which relies on https://musl.libc.org/ and not https://en.wikipedia.org/wiki/Glibc. As a precaution the [Forgejo v1.21.11-3 root OCI image](https://codeberg.org/forgejo/-/packages/container/forgejo/1.21.11-3) contains an [updated OpenSSH server](https://pkgs.alpinelinux.org/packages?name=openssh&branch=v3.19) patched for [CVE-2024-6387](https://nvd.nist.gov/vuln/detail/CVE-2024-6387).
+
+  The Forgejo OCI rootless images, including [1.21.11-3](https://codeberg.org/forgejo/-/packages/container/forgejo/1.21.11-3-rootless), do not contain an OpenSSH server, they rely on the internal Forgejo implementation of the SSH protocol.
+
+* **Security:**
+  * Compiled with Go v1.21.12. Fixed: [CVE-2024-24791](https://nvd.nist.gov/vuln/detail/CVE-2024-24791) - [GO-2024-2963](https://pkg.go.dev/vuln/GO-2024-2963): Denial of service due to improper 100-continue handling in net/http. The net/http HTTP/1.1 client mishandled the case where a server responds to a request with an "Expect: 100-continue" header with a non-informational (200 or higher) status. This mishandling could leave a client connection in an invalid state, where the next request sent on the connection will fail. An attacker sending a request to a net/http/httputil.ReverseProxy proxy can exploit this mishandling to cause a denial of service by sending "Expect: 100-continue" requests which elicit a non-informational response from the backend. Each such request leaves the proxy with an invalid connection, and causes one subsequent request using that connection to fail.
+
 ## 1.21.11-2
 
 [The complete list of new commits included in the Forgejo v1.21.11-2 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.11-1...v1.21.11-2), or from the command line with:
