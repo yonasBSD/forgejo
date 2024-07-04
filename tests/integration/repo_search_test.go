@@ -20,11 +20,20 @@ import (
 )
 
 func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
-	filenameSelections := doc.Find(".repository.search").Find("details.repo-search-result").Find(".header").Find("span.file")
-	result := make([]string, filenameSelections.Length())
-	filenameSelections.Each(func(i int, selection *goquery.Selection) {
-		result[i] = selection.Text()
+	resultSelections := doc.
+		Find(".repository.search").
+		Find("details.repo-search-result")
+
+	result := make([]string, resultSelections.Length())
+	resultSelections.Each(func(i int, selection *goquery.Selection) {
+		assert.True(t, resultSelections.Find("div ol li").Length() > 0)
+		result[i] = selection.
+			Find(".header").
+			Find("span.file a.file-link").
+			First().
+			Text()
 	})
+
 	return result
 }
 
@@ -101,6 +110,23 @@ func testSearch(t *testing.T, url string, expected []string, indexer bool) {
 
 	branchDropdown := container.Find(".js-branch-tag-selector")
 	assert.EqualValues(t, indexer, len(branchDropdown.Nodes) == 0)
+
+	// if indexer is disabled "fuzzy" should be displayed as "either"
+	expectedFuzzy := "Fuzzy"
+	if !indexer {
+		expectedFuzzy = "Either"
+	}
+
+	fuzzyDropdown := container.Find(".ui.dropdown[data-test-tag=fuzzy-dropdown]")
+	actualFuzzyText := fuzzyDropdown.Find(".menu .item[data-value=true]").First().Text()
+	assert.EqualValues(t, expectedFuzzy, actualFuzzyText)
+
+	if fuzzyDropdown.
+		Find("input[name=fuzzy][value=true]").
+		Length() != 0 {
+		actualFuzzyText = fuzzyDropdown.Find("div.text").First().Text()
+		assert.EqualValues(t, expectedFuzzy, actualFuzzyText)
+	}
 
 	filenames := resultFilenames(t, doc)
 	assert.EqualValues(t, expected, filenames)
