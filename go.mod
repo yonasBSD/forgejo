@@ -9,7 +9,7 @@ require (
 	code.forgejo.org/forgejo/reply v1.0.2
 	code.gitea.io/actions-proto-go v0.4.0
 	code.gitea.io/gitea-vet v0.2.3
-	code.gitea.io/sdk/gitea v0.17.1
+	code.gitea.io/sdk/gitea v0.18.0
 	codeberg.org/gusted/mcaptcha v0.0.0-20220723083913-4f3072e1d570
 	connectrpc.com/connect v1.16.2
 	gitea.com/go-chi/binding v0.0.0-20240430071103-39a851e106ed
