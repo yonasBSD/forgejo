@@ -86,7 +86,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/pquerna/otp v1.4.0
-	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/quasoft/websspi v1.1.2
 	github.com/redis/go-redis/v9 v9.5.2
 	github.com/robfig/cron/v3 v3.0.1
@@ -251,7 +251,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.46.0 // indirect
+	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rhysd/actionlint v1.6.27 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
