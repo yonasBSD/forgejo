@@ -88,5 +88,5 @@ func TestRepoGenerate(t *testing.T) {
 func TestRepoGenerateToOrg(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
-	testRepoGenerate(t, session, "44", "user27", "template1", "user2", "generated2")
+	testRepoGenerate(t, session, "44", "user27", "template1", "org3", "generated2")
 }
