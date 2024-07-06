@@ -8,7 +8,7 @@
 		{{range .SearchResult.Lines}}
 		{{if and (gt $expNum 0) (ne .Num $expNum)}}
 		</ol>
-		<ol class="tw-p-0 tw-m-0 tw-pt-2 tw-mt-2 tw-border-t-4 tw-border-box-body-highlight">
+		<ol class="tw-p-0 tw-m-0 tw-pt-2 tw-mt-2 tw-border-t-4 tw-border-secondary">
 		{{end}}
 			<li value="{{.Num}}" class="tw-grid tw-grid-cols-[minmax(50px,_1%)_auto] tw-list-none">
 				<div class="lines-num">
