@@ -21,10 +21,12 @@ var IncomingEmail = struct {
 	SkipTLSVerify        bool `ini:"SKIP_TLS_VERIFY"`
 	Username             string
 	Password             string
+	AuthMechanism        string
 	Mailbox              string
 	DeleteHandledMessage bool
 	MaximumMessageSize   uint32
 }{
+	AuthMechanism:        "-",
 	Mailbox:              "INBOX",
 	DeleteHandledMessage: true,
 	TokenPlaceholder:     "%{token}",

@@ -20,6 +20,7 @@ import (
 	"code.forgejo.org/forgejo/reply"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
+	"github.com/emersion/go-sasl"
 	"github.com/jhillyerd/enmime"
 )
 
@@ -90,11 +91,12 @@ func processIncomingEmails(ctx context.Context) error {
 		return fmt.Errorf("could not connect to server '%s': %w", server, err)
 	}
 
-	if err := c.Login(setting.IncomingEmail.Username, setting.IncomingEmail.Password); err != nil {
+	err = login(c)
+	if err != nil {
 		return fmt.Errorf("could not login: %w", err)
 	}
 	defer func() {
-		if err := c.Logout(); err != nil {
+		if err := c.Logout(); err != nil && err != client.ErrAlreadyLoggedOut {
 			log.Error("Logout from incoming email server failed: %v", err)
 		}
 	}()
@@ -124,6 +126,47 @@ func processIncomingEmails(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+func login(c *client.Client) error {
+	var saslClient sasl.Client
+	switch setting.IncomingEmail.AuthMechanism {
+	case "-":
+		err := c.Login(setting.IncomingEmail.Username, setting.IncomingEmail.Password)
+		if err != nil {
+			return fmt.Errorf("could not login: %w", err)
+		}
+	case "ANONYMOUS":
+		saslClient = sasl.NewAnonymousClient(setting.AppVer)
+	case "LOGIN":
+		saslClient = sasl.NewLoginClient(setting.IncomingEmail.Username, setting.IncomingEmail.Password)
+	case "PLAIN":
+		saslClient = sasl.NewPlainClient("", setting.IncomingEmail.Username, setting.IncomingEmail.Password)
+	case "OAUTHBEARER":
+		saslClient = sasl.NewOAuthBearerClient(&sasl.OAuthBearerOptions{
+			Username: setting.IncomingEmail.Username,
+			Token:    setting.IncomingEmail.Password,
+			Host:     setting.IncomingEmail.Host,
+			Port:     setting.IncomingEmail.Port,
+		})
+	case "CRAM-MD5":
+		saslClient = NewCramMD5Client(setting.IncomingEmail.Username, setting.IncomingEmail.Password)
+	default:
+		return fmt.Errorf("auth mechanism '%s' is not implemented", setting.IncomingEmail.AuthMechanism)
+	}
+
+	supports, err := c.SupportAuth(setting.IncomingEmail.AuthMechanism)
+	if err != nil {
+		return fmt.Errorf("could not check server auth mechanism support: %w", err)
+	} else if !supports {
+		return fmt.Errorf("auth mechanism '%s' is not supported by the server", setting.IncomingEmail.AuthMechanism)
+	} else {
+		err := c.Authenticate(saslClient)
+		if err != nil {
+			return fmt.Errorf("failed to authenticate with '%s' auth mechanism: %s\n", setting.IncomingEmail.AuthMechanism, err)
+		}
+	}
+	return nil
 }
 
 // waitForUpdates uses IMAP IDLE to wait for new emails
