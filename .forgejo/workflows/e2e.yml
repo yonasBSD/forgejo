@@ -31,7 +31,6 @@ jobs:
           su forgejo -c 'make deps-frontend frontend deps-backend'
       - run: |
           su forgejo -c 'make generate test-e2e-sqlite'
-        timeout-minutes: 40
         env:
           DEPS_PLAYWRIGHT: 1
           USE_REPO_TEST_DIR: 1

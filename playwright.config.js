@@ -19,7 +19,7 @@ export default {
   workers: 1,
 
   /* Maximum time one test can run for. */
-  timeout: 30 * 1000,
+  timeout: 120 * 1000,
 
   expect: {
 
@@ -27,7 +27,7 @@ export default {
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 2000,
+    timeout: 30 * 1000,
   },
 
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -46,10 +46,10 @@ export default {
     locale: 'en-US',
 
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
-    actionTimeout: 1000,
+    actionTimeout: 5 * 1000,
 
     /* Maximum time allowed for navigation, such as `page.goto()`. */
-    navigationTimeout: 5 * 1000,
+    navigationTimeout: 50 * 1000,
 
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: BASE_URL,

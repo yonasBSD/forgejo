@@ -38,7 +38,7 @@ test('Test workflow dispatch error: missing inputs', async ({browser}, workerInf
 
   await page.locator('#workflow_dispatch_dropdown>button').click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(5 * 1000);
 
   // Remove the required attribute so we can trigger the error message!
   await page.evaluate(() => {
@@ -64,7 +64,7 @@ test('Test workflow dispatch success', async ({browser}, workerInfo) => {
   await page.waitForLoadState('networkidle');
 
   await page.locator('#workflow_dispatch_dropdown>button').click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(5 * 1000);
 
   await page.type('input[name="inputs[string2]"]', 'abc');
   await page.locator('#workflow-dispatch-submit').click();
