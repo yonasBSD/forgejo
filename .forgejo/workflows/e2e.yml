@@ -10,7 +10,7 @@ on:
 jobs:
   test-e2e:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
-    runs-on: docker
+    runs-on: e2e-docker
     container:
       image: 'docker.io/node:20-bookworm'
     steps:
