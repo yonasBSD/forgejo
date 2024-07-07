@@ -160,7 +160,6 @@ onDomReady(() => {
   initRepoMigration();
   initRepoMigrationStatusChecker();
   initRepoProject();
-  initRepoPullRequestMergeInstruction();
   initRepoPullRequestAllowMaintainerEdit();
   initRepoPullRequestReview();
   initRepoRelease();
