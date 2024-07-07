@@ -72,9 +72,10 @@ func loadResourceConfig(sec ConfigSection) {
 }
 
 func loadTraceConfig(rootSec, traceSec ConfigSection) {
-	if !rootSec.HasKey("ENDPOINT") && !traceSec.HasKey("ENDPOINT") {
+	if (!rootSec.HasKey("ENDPOINT") && !traceSec.HasKey("ENDPOINT")) || traceSec.Key("ENDPOINT").String() == "" {
 		return
 	}
+
 	endpoint := traceSec.Key("ENDPOINT").MustString(rootSec.Key("ENDPOINT").String())
 	if ep, err := url.Parse(endpoint); err == nil && ep.Host != "" {
 		OpenTelemetry.Traces.Endpoint = ep
