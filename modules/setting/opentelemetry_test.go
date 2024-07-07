@@ -56,6 +56,29 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	assert.Equal(t, OpenTelemetry.Traces.Headers["overwrite"], "true")
 }
 
+func TestOpenTelemetryTraceDisable(t *testing.T) {
+	defer test.MockProtect(&OpenTelemetry)()
+	iniStr := ``
+	cfg, err := NewConfigProviderFromData(iniStr)
+	assert.NoError(t, err)
+	loadOpenTelemetryFrom(cfg)
+	assert.Nil(t, OpenTelemetry.Traces.Endpoint)
+	assert.False(t, IsOpenTelemetryEnabled())
+
+	iniStr = `
+	[opentelemetry]
+	ENDPOINT = http://jaeger:4317/
+	[opentelemetry.traces]
+	ENDPOINT =
+	`
+	cfg, err = NewConfigProviderFromData(iniStr)
+	assert.NoError(t, err)
+	loadOpenTelemetryFrom(cfg)
+
+	assert.False(t, IsOpenTelemetryEnabled())
+	assert.Nil(t, OpenTelemetry.Traces.Endpoint)
+}
+
 func TestSamplerCombinations(t *testing.T) {
 	defer test.MockProtect(&OpenTelemetry)()
 	type config struct {
