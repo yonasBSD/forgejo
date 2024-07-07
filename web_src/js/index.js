@@ -30,7 +30,6 @@ import {
   initRepoIssueReferenceRepositorySearch,
   initRepoIssueTimeTracking,
   initRepoIssueWipTitle,
-  initRepoPullRequestMergeInstruction,
   initRepoPullRequestAllowMaintainerEdit,
   initRepoPullRequestReview, initRepoIssueSidebarList, initArchivedLabelHandler,
 } from './features/repo-issue.js';
