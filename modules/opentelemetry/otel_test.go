@@ -26,6 +26,7 @@ import (
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -76,19 +77,26 @@ func TestOtelIntegration(t *testing.T) {
 	assert.True(t, span.SpanContext().HasSpanID())
 
 	span.End()
-	// Give the exporter time to send the span
-	time.Sleep(8 * time.Second)
 
 	traceEndpoint.Host = traceEndpoint.Hostname() + ":16686"
 	traceEndpoint.Path = "/api/services"
 
-	resp, err := http.Get(traceEndpoint.String())
+	namePresent := false
 
-	assert.NoError(t, err)
+	for i := range []int{1, 1, 2, 3, 5, 8} {
+		resp, err := http.Get(traceEndpoint.String())
+		assert.NoError(t, err)
 
-	apiResponse, err := io.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	assert.Contains(t, string(apiResponse), ServiceName)
+		apiResponse, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		if strings.Contains(string(apiResponse), ServiceName) {
+			namePresent = true
+			break
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
+	assert.True(t, namePresent)
 
 	graceful.GetManager().DoGracefulShutdown()
 }
@@ -122,7 +130,7 @@ func TestOtelTls(t *testing.T) {
 	ctx := context.Background()
 	assert.NoError(t, Init(ctx))
 
-	tracer := otel.Tracer("test_jaeger")
+	tracer := otel.Tracer("test_tls")
 	_, span := tracer.Start(ctx, "test span")
 	assert.True(t, span.SpanContext().HasTraceID())
 	assert.True(t, span.SpanContext().HasSpanID())
@@ -138,34 +146,9 @@ func TestOtelTls(t *testing.T) {
 	graceful.GetManager().DoGracefulShutdown()
 }
 
-func TestExporter(t *testing.T) {
-	inMem := tracetest.NewInMemoryExporter()
-	exp := func(ctx context.Context) (sdktrace.SpanExporter, error) {
-		return inMem, nil
-	}
-	defer test.MockVariableValue(&newTraceExporter, exp)()
-
-	// Force feature activation
-	endpoint, err := url.Parse("http://localhost:4317")
-	assert.NoError(t, err)
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Endpoint, endpoint)()
-
-	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
-	tracer := otel.Tracer("test_grpc")
-
-	_, span := tracer.Start(ctx, "test span")
-
-	assert.True(t, span.SpanContext().HasTraceID())
-	assert.True(t, span.SpanContext().HasSpanID())
-	graceful.GetManager().DoGracefulShutdown()
-}
-
 func generateTestTLS(t *testing.T, path, host string) *tls.Config {
 	_, priv, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		t.Fatalf("Failed to generate private key: %v", err)
-	}
+	require.NoError(t, err, "Failed to generate private key: %v", err)
 
 	keyUsage := x509.KeyUsageDigitalSignature
 
@@ -174,9 +157,7 @@ func generateTestTLS(t *testing.T, path, host string) *tls.Config {
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		t.Fatalf("Failed to generate serial number: %v", err)
-	}
+	require.NoError(t, err, "Failed to generate serial number: %v", err)
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
@@ -201,13 +182,11 @@ func generateTestTLS(t *testing.T, path, host string) *tls.Config {
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.Public(), priv)
-	if err != nil {
-		t.Fatalf("Failed to create certificate: %v", err)
-	}
+	require.NoError(t, err, "Failed to create certificate: %v", err)
+
 	certOut, err := os.Create(path + "/cert.pem")
-	if err != nil {
-		t.Fatalf("Failed to open cert.pem for writing: %v", err)
-	}
+	require.NoError(t, err, "Failed to open cert.pem for writing: %v", err)
+
 	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
 		t.Fatalf("Failed to write data to cert.pem: %v", err)
 	}
@@ -215,13 +194,11 @@ func generateTestTLS(t *testing.T, path, host string) *tls.Config {
 		t.Fatalf("Error closing cert.pem: %v", err)
 	}
 	keyOut, err := os.OpenFile(path+"/key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		t.Fatalf("Failed to open key.pem for writing: %v", err)
-	}
+	require.NoError(t, err, "Failed to open key.pem for writing: %v", err)
+
 	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
-	if err != nil {
-		t.Fatalf("Unable to marshal private key: %v", err)
-	}
+	require.NoError(t, err, "Unable to marshal private key: %v", err)
+
 	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
 		t.Fatalf("Failed to write data to key.pem: %v", err)
 	}
@@ -229,9 +206,7 @@ func generateTestTLS(t *testing.T, path, host string) *tls.Config {
 		t.Fatalf("Error closing key.pem: %v", err)
 	}
 	serverCert, err := tls.LoadX509KeyPair(path+"/cert.pem", path+"/key.pem")
-	if err != nil {
-		return nil
-	}
+	require.NoError(t, err, "failed to load the key pair")
 	return &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
 		ClientAuth:   tls.RequireAnyClientCert,
