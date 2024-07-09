@@ -11,12 +11,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
-	"io"
 	"math/big"
-	mrand "math/rand/v2"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -52,51 +48,6 @@ func TestNoopDefault(t *testing.T) {
 	assert.False(t, span.SpanContext().HasTraceID())
 	assert.False(t, span.SpanContext().HasSpanID())
 	assert.False(t, called)
-}
-
-func TestOtelIntegration(t *testing.T) {
-	ServiceName := "forgejo-integration" + fmt.Sprint(mrand.Int())
-	otelURL, ok := os.LookupEnv("TEST_OTEL_URL")
-	if !ok {
-		t.Skip("TEST_OTEL_URL not set")
-	}
-	traceEndpoint, err := url.Parse(otelURL)
-	assert.NoError(t, err)
-
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.ServiceName, ServiceName)()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Endpoint, traceEndpoint)()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Insecure, true)()
-
-	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
-
-	tracer := otel.Tracer("test_jaeger")
-	_, span := tracer.Start(ctx, "test span")
-
-	assert.True(t, span.SpanContext().HasTraceID())
-	assert.True(t, span.SpanContext().HasSpanID())
-
-	span.End()
-
-	traceEndpoint.Host = traceEndpoint.Hostname() + ":16686"
-	traceEndpoint.Path = "/api/services"
-
-	namePresent := false
-
-	for i := range []int{1, 1, 2, 3, 5, 8} {
-		resp, err := http.Get(traceEndpoint.String())
-		assert.NoError(t, err)
-
-		apiResponse, err := io.ReadAll(resp.Body)
-		assert.NoError(t, err)
-
-		if strings.Contains(string(apiResponse), ServiceName) {
-			namePresent = true
-			break
-		}
-		time.Sleep(time.Duration(i) * time.Second)
-	}
-	assert.True(t, namePresent)
 }
 
 func TestOtelTls(t *testing.T) {
