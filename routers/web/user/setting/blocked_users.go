@@ -23,6 +23,7 @@ func BlockedUsers(ctx *context.Context) {
 	ctx.Data["PageIsBlockedUsers"] = true
 	ctx.Data["BaseLink"] = setting.AppSubURL + "/user/settings/blocked_users"
 	ctx.Data["BaseLinkNew"] = setting.AppSubURL + "/user/settings/blocked_users"
+	ctx.Data["UserDisabledFeatures"] = user_model.DisabledFeaturesWithLoginType(ctx.Doer)
 
 	blockedUsers, err := user_model.ListBlockedUsers(ctx, ctx.Doer.ID, db.ListOptions{})
 	if err != nil {

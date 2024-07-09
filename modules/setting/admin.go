@@ -22,11 +22,13 @@ func loadAdminFrom(rootCfg ConfigProvider) {
 	Admin.DefaultEmailNotification = sec.Key("DEFAULT_EMAIL_NOTIFICATIONS").MustString("enabled")
 	Admin.SendNotificationEmailOnNewUser = sec.Key("SEND_NOTIFICATION_EMAIL_ON_NEW_USER").MustBool(false)
 	Admin.UserDisabledFeatures = container.SetOf(sec.Key("USER_DISABLED_FEATURES").Strings(",")...)
-	Admin.ExternalUserDisableFeatures = container.SetOf(sec.Key("EXTERNAL_USER_DISABLE_FEATURES").Strings(",")...)
+	Admin.ExternalUserDisableFeatures = container.SetOf(sec.Key("EXTERNAL_USER_DISABLE_FEATURES").Strings(",")...).Union(Admin.UserDisabledFeatures)
 }
 
 const (
-	UserFeatureDeletion      = "deletion"
-	UserFeatureManageSSHKeys = "manage_ssh_keys"
-	UserFeatureManageGPGKeys = "manage_gpg_keys"
+	UserFeatureDeletion          = "deletion"
+	UserFeatureManageSSHKeys     = "manage_ssh_keys"
+	UserFeatureManageGPGKeys     = "manage_gpg_keys"
+	UserFeatureManageMFA         = "manage_mfa"
+	UserFeatureManageCredentials = "manage_credentials"
 )
