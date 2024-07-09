@@ -86,7 +86,7 @@ func testSearchRepo(t *testing.T, indexer bool) {
 		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{"x/b.txt", "a.txt"}, indexer)
 		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{"x/b.txt", "a.txt"}, indexer)
 	} else {
-		// fuzzy search: OR of all the keywords
+		// fuzzy search: Union/OR of all the keywords
 		// when indexer is disabled
 		testSearch(t, "/user2/glob/search?q=file3+file1&page=1", []string{"a.txt", "x/b.txt"}, indexer)
 		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{}, indexer)
@@ -114,7 +114,7 @@ func testSearch(t *testing.T, url string, expected []string, indexer bool) {
 	// if indexer is disabled "fuzzy" should be displayed as "either"
 	expectedFuzzy := "Fuzzy"
 	if !indexer {
-		expectedFuzzy = "Either"
+		expectedFuzzy = "Union"
 	}
 
 	fuzzyDropdown := container.Find(".ui.dropdown[data-test-tag=fuzzy-dropdown]")

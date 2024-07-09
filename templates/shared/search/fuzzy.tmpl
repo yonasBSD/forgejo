@@ -3,7 +3,7 @@
 <div class="ui small dropdown selection {{if .Disabled}} disabled{{end}}" data-tooltip-content="{{ctx.Locale.Tr "search.type_tooltip"}}" data-test-tag="fuzzy-dropdown">
 	{{$fuzzyType := "fuzzy"}}
 	{{if .CodeIndexerDisabled}}
-		{{$fuzzyType = "either"}}
+		{{$fuzzyType = "union"}}
 	{{end}}
 	<input name="fuzzy" type="hidden"{{if .Disabled}} disabled{{end}} value="{{.IsFuzzy}}">{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 	<div class="text">{{/*
