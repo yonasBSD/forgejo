@@ -111,7 +111,7 @@ func testSearch(t *testing.T, url string, expected []string, indexer bool) {
 	branchDropdown := container.Find(".js-branch-tag-selector")
 	assert.EqualValues(t, indexer, len(branchDropdown.Nodes) == 0)
 
-	// if indexer is disabled "fuzzy" should be displayed as "either"
+	// if indexer is disabled "fuzzy" should be displayed as "union"
 	expectedFuzzy := "Fuzzy"
 	if !indexer {
 		expectedFuzzy = "Union"

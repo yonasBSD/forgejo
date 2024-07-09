@@ -7,7 +7,7 @@
 	{{end}}
 	<input name="fuzzy" type="hidden"{{if .Disabled}} disabled{{end}} value="{{.IsFuzzy}}">{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 	<div class="text">{{/*
-		if code indexer is disabled display fuzzy as either
+		if code indexer is disabled display fuzzy as union
 	*/}}{{if .IsFuzzy}}{{/*
 		*/}}{{ctx.Locale.Tr (printf "search.%s" $fuzzyType)}}{{/*
 	*/}}{{else}}{{/*
