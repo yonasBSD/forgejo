@@ -11,8 +11,10 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"math/big"
+	mrand "math/rand/v2"
 	"net"
 	"net/http"
 	"net/url"
@@ -21,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 
@@ -51,11 +52,10 @@ func TestNoopDefault(t *testing.T) {
 	assert.False(t, span.SpanContext().HasTraceID())
 	assert.False(t, span.SpanContext().HasSpanID())
 	assert.False(t, called)
-	graceful.GetManager().DoGracefulShutdown()
 }
 
 func TestOtelIntegration(t *testing.T) {
-	const ServiceName = "forgejo-integration"
+	ServiceName := "forgejo-integration" + fmt.Sprint(mrand.Int())
 	otelURL, ok := os.LookupEnv("TEST_OTEL_URL")
 	if !ok {
 		t.Skip("TEST_OTEL_URL not set")
@@ -97,8 +97,6 @@ func TestOtelIntegration(t *testing.T) {
 		time.Sleep(time.Duration(i) * time.Second)
 	}
 	assert.True(t, namePresent)
-
-	graceful.GetManager().DoGracefulShutdown()
 }
 
 func TestOtelTls(t *testing.T) {
@@ -143,7 +141,6 @@ func TestOtelTls(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("no grpc call within 10s")
 	}
-	graceful.GetManager().DoGracefulShutdown()
 }
 
 func generateTestTLS(t *testing.T, path, host string) *tls.Config {

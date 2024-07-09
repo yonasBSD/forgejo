@@ -5,7 +5,9 @@ package install
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,7 +17,6 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/opentelemetry"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
@@ -49,7 +50,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestOtelChi(t *testing.T) {
-	const ServiceName = "forgejo-otelchi"
+	ServiceName := "forgejo-otelchi" + fmt.Sprint(rand.Int())
+
 	otelURL, ok := os.LookupEnv("TEST_OTEL_URL")
 	if !ok {
 		t.Skip("TEST_OTEL_URL not set")
@@ -87,6 +89,4 @@ func TestOtelChi(t *testing.T) {
 		time.Sleep(time.Duration(i) * time.Second)
 	}
 	assert.True(t, namePresent)
-
-	graceful.GetManager().DoGracefulShutdown()
 }
