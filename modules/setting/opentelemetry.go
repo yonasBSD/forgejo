@@ -16,15 +16,13 @@ import (
 )
 
 const (
-	opentelemetrySectionName            string = "opentelemetry"
-	opentelemetryTraceSubSectionName    string = "traces"
-	opentelemetryResourceSubSectionName string = "resources"
-	alwaysOn                            string = "always_on"
-	alwaysOff                           string = "always_off"
-	traceIDRatio                        string = "traceidratio"
-	parentBasedAlwaysOn                 string = "parentbased_always_on"
-	parentBasedAlwaysOff                string = "parentbased_always_off"
-	parentBasedTraceIDRatio             string = "parentbased_traceidratio"
+	opentelemetrySectionName string = "opentelemetry"
+	alwaysOn                 string = "always_on"
+	alwaysOff                string = "always_off"
+	traceIDRatio             string = "traceidratio"
+	parentBasedAlwaysOn      string = "parentbased_always_on"
+	parentBasedAlwaysOff     string = "parentbased_always_off"
+	parentBasedTraceIDRatio  string = "parentbased_traceidratio"
 )
 
 // Opentelemetry settings
@@ -58,10 +56,8 @@ type resourceConfig struct {
 
 func loadOpenTelemetryFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section(opentelemetrySectionName)
-	traceSec := rootCfg.Section(opentelemetrySectionName + "." + opentelemetryTraceSubSectionName)
-	resourceSec := rootCfg.Section(opentelemetrySectionName + "." + opentelemetryResourceSubSectionName)
-	loadResourceConfig(resourceSec)
-	loadTraceConfig(sec, traceSec)
+	loadResourceConfig(sec)
+	loadTraceConfig(sec)
 }
 
 func loadResourceConfig(sec ConfigSection) {
@@ -71,12 +67,18 @@ func loadResourceConfig(sec ConfigSection) {
 	OpenTelemetry.Resource.EnabledDecoders = strings.ToLower(strings.TrimSpace(OpenTelemetry.Resource.EnabledDecoders))
 }
 
-func loadTraceConfig(rootSec, traceSec ConfigSection) {
-	if (!rootSec.HasKey("ENDPOINT") && !traceSec.HasKey("ENDPOINT")) || traceSec.Key("ENDPOINT").String() == "" {
+func loadTraceConfig(rootSec ConfigSection) {
+	var endpoint string
+	if rootSec.HasKey("TRACES_ENDPOINT") {
+		endpoint = rootSec.Key("TRACES_ENDPOINT").String()
+	} else {
+		endpoint = rootSec.Key("ENDPOINT").String()
+	}
+
+	if endpoint == "" {
 		return
 	}
 
-	endpoint := traceSec.Key("ENDPOINT").MustString(rootSec.Key("ENDPOINT").String())
 	if ep, err := url.Parse(endpoint); err == nil && ep.Host != "" {
 		OpenTelemetry.Traces.Endpoint = ep
 	} else if err != nil {
@@ -89,15 +91,19 @@ func loadTraceConfig(rootSec, traceSec ConfigSection) {
 	if OpenTelemetry.Traces.Endpoint.Scheme == "http" || OpenTelemetry.Traces.Endpoint.Scheme == "unix" {
 		OpenTelemetry.Traces.Insecure = true
 	}
-	OpenTelemetry.Traces.Insecure = traceSec.Key("INSECURE").MustBool(rootSec.Key("INSECURE").MustBool(OpenTelemetry.Traces.Insecure))
-	OpenTelemetry.Traces.Compression = traceSec.Key("COMPRESSION").In(rootSec.Key("COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions), compressions)
-	OpenTelemetry.Traces.Timeout = traceSec.Key("TIMEOUT").MustDuration(rootSec.Key("TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout))
+	OpenTelemetry.Traces.Insecure = rootSec.Key("TRACES_INSECURE").MustBool(rootSec.Key("INSECURE").MustBool(OpenTelemetry.Traces.Insecure))
+	OpenTelemetry.Traces.Compression = rootSec.Key("COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
+	if rootSec.HasKey("TRACES_COMPRESSION") {
+		OpenTelemetry.Traces.Compression = rootSec.Key("TRACES_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
+	}
+
+	OpenTelemetry.Traces.Timeout = rootSec.Key("TRACES_TIMEOUT").MustDuration(rootSec.Key("TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout))
 	samplers := make([]string, 0, len(sampler))
 	for k := range sampler {
 		samplers = append(samplers, k)
 	}
-	samplerName := traceSec.Key("SAMPLER").In(parentBasedAlwaysOn, samplers)
-	samplerArg := traceSec.Key("SAMPLER_ARG").MustString("")
+	samplerName := rootSec.Key("TRACES_SAMPLER").In(parentBasedAlwaysOn, samplers)
+	samplerArg := rootSec.Key("TRACES_SAMPLER_ARG").MustString("")
 	OpenTelemetry.Traces.Sampler = sampler[samplerName](samplerArg)
 	OpenTelemetry.Traces.Headers = map[string]string{}
 	headers := rootSec.Key("HEADERS").String()
@@ -106,16 +112,16 @@ func loadTraceConfig(rootSec, traceSec ConfigSection) {
 			OpenTelemetry.Traces.Headers[k] = v
 		}
 	}
-	headers = traceSec.Key("HEADERS").String()
+	headers = rootSec.Key("TRACES_HEADERS").String()
 	if headers != "" {
 		for k, v := range _stringToHeader(headers) {
 			OpenTelemetry.Traces.Headers[k] = v
 		}
 	}
 
-	OpenTelemetry.Traces.Certificate = rootSec.Key("CERTIFICATE").MustString(rootSec.Key("CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("CLIENT_CERTIFICATE").MustString(rootSec.Key("CLIENT_CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientKey = rootSec.Key("CLIENT_KEY").MustString(rootSec.Key("CLIENT_KEY").String())
+	OpenTelemetry.Traces.Certificate = rootSec.Key("TRACES_CERTIFICATE").MustString(rootSec.Key("CERTIFICATE").String())
+	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("TRACES_CLIENT_CERTIFICATE").MustString(rootSec.Key("CLIENT_CERTIFICATE").String())
+	OpenTelemetry.Traces.ClientKey = rootSec.Key("TRACES_CLIENT_KEY").MustString(rootSec.Key("CLIENT_KEY").String())
 	if len(OpenTelemetry.Traces.Certificate) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.Certificate) {
 		OpenTelemetry.Traces.Certificate = filepath.Join(CustomPath, OpenTelemetry.Traces.Certificate)
 	}

@@ -44,7 +44,7 @@ func TestResourceServiceName(t *testing.T) {
 
 func TestResourceAttributes(t *testing.T) {
 	ctx := context.Background()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.EnabledDecoders, "")()
+	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.EnabledDecoders, "foo")()
 	defer test.MockProtect(&setting.OpenTelemetry.Resource.Attributes)()
 	setting.OpenTelemetry.Resource.Attributes = "Test=LABEL,broken,unescape=%XXlabel"
 	res, err := newResource(ctx)
