@@ -69,10 +69,10 @@ func loadResourceConfig(sec ConfigSection) {
 
 func loadTraceConfig(rootSec ConfigSection) {
 	var endpoint string
-	if rootSec.HasKey("TRACES_ENDPOINT") {
-		endpoint = rootSec.Key("TRACES_ENDPOINT").String()
+	if rootSec.HasKey("EXPORTER_OTLP_TRACES_ENDPOINT") {
+		endpoint = rootSec.Key("EXPORTER_OTLP_TRACES_ENDPOINT").String()
 	} else {
-		endpoint = rootSec.Key("ENDPOINT").String()
+		endpoint = rootSec.Key("EXPORTER_OTLP_ENDPOINT").String()
 	}
 
 	if endpoint == "" {
@@ -88,16 +88,18 @@ func loadTraceConfig(rootSec ConfigSection) {
 		log.Warn("Otel trace endpoint parsing failure, no host was detected")
 		return
 	}
+
 	if OpenTelemetry.Traces.Endpoint.Scheme == "http" || OpenTelemetry.Traces.Endpoint.Scheme == "unix" {
 		OpenTelemetry.Traces.Insecure = true
 	}
-	OpenTelemetry.Traces.Insecure = rootSec.Key("TRACES_INSECURE").MustBool(rootSec.Key("INSECURE").MustBool(OpenTelemetry.Traces.Insecure))
-	OpenTelemetry.Traces.Compression = rootSec.Key("COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
-	if rootSec.HasKey("TRACES_COMPRESSION") {
-		OpenTelemetry.Traces.Compression = rootSec.Key("TRACES_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
+	OpenTelemetry.Traces.Insecure = rootSec.Key("EXPORTER_OTLP_TRACES_INSECURE").MustBool(rootSec.Key("EXPORTER_OTLP_INSECURE").MustBool(OpenTelemetry.Traces.Insecure))
+
+	OpenTelemetry.Traces.Compression = rootSec.Key("EXPORTER_OTLP_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
+	if rootSec.HasKey("EXPORTER_OTLP_TRACES_COMPRESSION") {
+		OpenTelemetry.Traces.Compression = rootSec.Key("EXPORTER_OTLP_TRACES_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
 	}
 
-	OpenTelemetry.Traces.Timeout = rootSec.Key("TRACES_TIMEOUT").MustDuration(rootSec.Key("TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout))
+	OpenTelemetry.Traces.Timeout = rootSec.Key("EXPORTER_OTLP_TRACES_TIMEOUT").MustDuration(rootSec.Key("EXPORTER_OTLP_TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout))
 	samplers := make([]string, 0, len(sampler))
 	for k := range sampler {
 		samplers = append(samplers, k)
@@ -105,23 +107,24 @@ func loadTraceConfig(rootSec ConfigSection) {
 	samplerName := rootSec.Key("TRACES_SAMPLER").In(parentBasedAlwaysOn, samplers)
 	samplerArg := rootSec.Key("TRACES_SAMPLER_ARG").MustString("")
 	OpenTelemetry.Traces.Sampler = sampler[samplerName](samplerArg)
+
 	OpenTelemetry.Traces.Headers = map[string]string{}
-	headers := rootSec.Key("HEADERS").String()
+	headers := rootSec.Key("EXPORTER_OTLP_HEADERS").String()
 	if headers != "" {
 		for k, v := range _stringToHeader(headers) {
 			OpenTelemetry.Traces.Headers[k] = v
 		}
 	}
-	headers = rootSec.Key("TRACES_HEADERS").String()
+	headers = rootSec.Key("EXPORTER_OTLP_TRACES_HEADERS").String()
 	if headers != "" {
 		for k, v := range _stringToHeader(headers) {
 			OpenTelemetry.Traces.Headers[k] = v
 		}
 	}
 
-	OpenTelemetry.Traces.Certificate = rootSec.Key("TRACES_CERTIFICATE").MustString(rootSec.Key("CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("TRACES_CLIENT_CERTIFICATE").MustString(rootSec.Key("CLIENT_CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientKey = rootSec.Key("TRACES_CLIENT_KEY").MustString(rootSec.Key("CLIENT_KEY").String())
+	OpenTelemetry.Traces.Certificate = rootSec.Key("EXPORTER_OTLP_TRACES_CERTIFICATE").MustString(rootSec.Key("EXPORTER_OTLP_CERTIFICATE").String())
+	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE").MustString(rootSec.Key("EXPORTER_OTLP_CLIENT_CERTIFICATE").String())
+	OpenTelemetry.Traces.ClientKey = rootSec.Key("EXPORTER_OTLP_TRACES_CLIENT_KEY").MustString(rootSec.Key("EXPORTER_OTLP_CLIENT_KEY").String())
 	if len(OpenTelemetry.Traces.Certificate) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.Certificate) {
 		OpenTelemetry.Traces.Certificate = filepath.Join(CustomPath, OpenTelemetry.Traces.Certificate)
 	}

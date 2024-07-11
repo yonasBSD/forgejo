@@ -24,16 +24,16 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 
 	iniStr = `
 	[opentelemetry]
-	ENDPOINT = http://jaeger:4317/
-	TIMEOUT = 30s
-	COMPRESSION = gzip
-	INSECURE = TRUE
-	HEADERS=foo=bar,overwrite=false
+	EXPORTER_OTLP_ENDPOINT = http://jaeger:4317/
+	EXPORTER_OTLP_TIMEOUT = 30s
+	EXPORTER_OTLP_COMPRESSION = gzip
+	EXPORTER_OTLP_INSECURE = TRUE
+	EXPORTER_OTLP_HEADERS=foo=bar,overwrite=false
 	SERVICE_NAME = test service
 	RESOURCE_ATTRIBUTES = foo=bar
 	TRACES_SAMPLER = always_on
-	TRACES_TIMEOUT=5s
-	TRACES_HEADERS=overwrite=true,foobar=barfoo
+	EXPORTER_OTLP_TRACES_TIMEOUT=5s
+	EXPORTER_OTLP_TRACES_HEADERS=overwrite=true,foobar=barfoo
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
 	assert.NoError(t, err)
@@ -65,8 +65,8 @@ func TestOpenTelemetryTraceDisable(t *testing.T) {
 
 	iniStr = `
 	[opentelemetry]
-	ENDPOINT = http://jaeger:4317/
-	TRACES_ENDPOINT =
+	EXPORTER_OTLP_ENDPOINT = http://jaeger:4317/
+	EXPORTER_OTLP_TRACES_ENDPOINT =
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
 	assert.NoError(t, err)
@@ -84,36 +84,36 @@ func TestSamplerCombinations(t *testing.T) {
 	}
 	testSamplers := []config{
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = always_on
   TRACES_SAMPLER_ARG = nothing`, sdktrace.AlwaysSample()},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = always_off`, sdktrace.NeverSample()},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = traceidratio
   TRACES_SAMPLER_ARG = 0.7`, sdktrace.TraceIDRatioBased(0.7)},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = traceidratio
   TRACES_SAMPLER_ARG = badarg`, sdktrace.TraceIDRatioBased(1)},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = parentbased_always_off`, sdktrace.ParentBased(sdktrace.NeverSample())},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = parentbased_always_of`, sdktrace.ParentBased(sdktrace.AlwaysSample())},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = parentbased_traceidratio
   TRACES_SAMPLER_ARG = 0.3`, sdktrace.ParentBased(sdktrace.TraceIDRatioBased(0.3))},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = parentbased_traceidratio
   TRACES_SAMPLER_ARG = badarg`, sdktrace.ParentBased(sdktrace.TraceIDRatioBased(1))},
 		{`[opentelemetry]
-	ENDPOINT=http://localhost:4317
+	EXPORTER_OTLP_ENDPOINT=http://localhost:4317
   TRACES_SAMPLER = not existing
   TRACES_SAMPLER_ARG = badarg`, sdktrace.ParentBased(sdktrace.AlwaysSample())},
 	}
@@ -130,7 +130,7 @@ func TestOpentelemetryBadConfigs(t *testing.T) {
 	defer test.MockProtect(&OpenTelemetry)()
 	iniStr := `
 	[opentelemetry]
-	ENDPOINT = jaeger:4317/
+	EXPORTER_OTLP_ENDPOINT = jaeger:4317/
 	`
 	cfg, err := NewConfigProviderFromData(iniStr)
 	assert.NoError(t, err)
@@ -147,11 +147,11 @@ func TestOpentelemetryBadConfigs(t *testing.T) {
 
 	iniStr = `
 	[opentelemetry]
-	ENDPOINT = http://jaeger:4317/
+	EXPORTER_OTLP_ENDPOINT = http://jaeger:4317/
 
-	TIMEOUT = abc
-	COMPRESSION = foo
-	HEADERS=%s=bar,foo=%h,foo
+	EXPORTER_OTLP_TIMEOUT = abc
+	EXPORTER_OTLP_COMPRESSION = foo
+	EXPORTER_OTLP_HEADERS=%s=bar,foo=%h,foo
 	SERVICE_NAME =
   TRACES_SAMPLER = not existing one
 	`
