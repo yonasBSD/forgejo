@@ -13,6 +13,7 @@ import (
 type Key string
 
 const (
+	RepoCreate      = Key("create")
 	RepoPrivate     = Key("repo.private")
 	RepoTemplate    = Key("repo.template")
 	AgitTopic       = Key("topic")
@@ -64,6 +65,7 @@ func (o *gitPushOptions) Parse(data string) bool {
 		value = "true"
 	}
 	switch Key(key) {
+	case RepoCreate:
 	case RepoPrivate:
 	case RepoTemplate:
 	case AgitTopic:
