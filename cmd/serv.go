@@ -22,6 +22,7 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/pushoptions"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/pprof"
@@ -258,6 +259,14 @@ func runServ(c *cli.Context) error {
 			return fail(ctx, "Unknown LFS verb", "Unknown lfs verb %s", lfsVerb)
 		}
 	}
+
+	// This is where i would want to get the value of the 'create' push option
+	// this is currently not working
+
+	// return fail(ctx, "debug: envcount", "envcount: %s", os.Getenv(pushoptions.EnvCount))
+	pushOptions := pushoptions.New().ReadEnv()
+	pushString, _ := pushOptions.GetString("repo.private")
+	_, _ = fmt.Fprintln(os.Stderr, "Kwonunn Debuggin: ", pushString)
 
 	results, extra := private.ServCommand(ctx, keyID, username, reponame, requestedMode, verb, lfsVerb)
 	if extra.HasError() {
