@@ -32,8 +32,6 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	SERVICE_NAME = test service
 	RESOURCE_ATTRIBUTES = foo=bar
 	TRACES_SAMPLER = always_on
-	EXPORTER_OTLP_TRACES_TIMEOUT=5s
-	EXPORTER_OTLP_TRACES_HEADERS=overwrite=true,foobar=barfoo
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
 	assert.NoError(t, err)
@@ -42,16 +40,14 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	assert.True(t, IsOpenTelemetryEnabled())
 	assert.Equal(t, "test service", OpenTelemetry.Resource.ServiceName)
 	assert.Equal(t, "foo=bar", OpenTelemetry.Resource.Attributes)
-	assert.Equal(t, 5*time.Second, OpenTelemetry.Traces.Timeout)
+	assert.Equal(t, 30*time.Second, OpenTelemetry.Traces.Timeout)
 	assert.Equal(t, "gzip", OpenTelemetry.Traces.Compression)
 	assert.Equal(t, sdktrace.AlwaysSample(), OpenTelemetry.Traces.Sampler)
 	assert.Equal(t, "http://jaeger:4317/", OpenTelemetry.Traces.Endpoint.String())
 	assert.Contains(t, OpenTelemetry.Traces.Headers, "foo")
 	assert.Equal(t, OpenTelemetry.Traces.Headers["foo"], "bar")
-	assert.Contains(t, OpenTelemetry.Traces.Headers, "foobar")
-	assert.Equal(t, OpenTelemetry.Traces.Headers["foobar"], "barfoo")
 	assert.Contains(t, OpenTelemetry.Traces.Headers, "overwrite")
-	assert.Equal(t, OpenTelemetry.Traces.Headers["overwrite"], "true")
+	assert.Equal(t, OpenTelemetry.Traces.Headers["overwrite"], "false")
 }
 
 func TestOpenTelemetryTraceDisable(t *testing.T) {
@@ -65,8 +61,7 @@ func TestOpenTelemetryTraceDisable(t *testing.T) {
 
 	iniStr = `
 	[opentelemetry]
-	EXPORTER_OTLP_ENDPOINT = http://jaeger:4317/
-	EXPORTER_OTLP_TRACES_ENDPOINT =
+	EXPORTER_OTLP_ENDPOINT =
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
 	assert.NoError(t, err)

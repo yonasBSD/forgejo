@@ -68,12 +68,7 @@ func loadResourceConfig(sec ConfigSection) {
 }
 
 func loadTraceConfig(rootSec ConfigSection) {
-	var endpoint string
-	if rootSec.HasKey("EXPORTER_OTLP_TRACES_ENDPOINT") {
-		endpoint = rootSec.Key("EXPORTER_OTLP_TRACES_ENDPOINT").String()
-	} else {
-		endpoint = rootSec.Key("EXPORTER_OTLP_ENDPOINT").String()
-	}
+	endpoint := rootSec.Key("EXPORTER_OTLP_ENDPOINT").String()
 
 	if endpoint == "" {
 		return
@@ -92,14 +87,11 @@ func loadTraceConfig(rootSec ConfigSection) {
 	if OpenTelemetry.Traces.Endpoint.Scheme == "http" || OpenTelemetry.Traces.Endpoint.Scheme == "unix" {
 		OpenTelemetry.Traces.Insecure = true
 	}
-	OpenTelemetry.Traces.Insecure = rootSec.Key("EXPORTER_OTLP_TRACES_INSECURE").MustBool(rootSec.Key("EXPORTER_OTLP_INSECURE").MustBool(OpenTelemetry.Traces.Insecure))
+	OpenTelemetry.Traces.Insecure = rootSec.Key("EXPORTER_OTLP_INSECURE").MustBool(OpenTelemetry.Traces.Insecure)
 
 	OpenTelemetry.Traces.Compression = rootSec.Key("EXPORTER_OTLP_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
-	if rootSec.HasKey("EXPORTER_OTLP_TRACES_COMPRESSION") {
-		OpenTelemetry.Traces.Compression = rootSec.Key("EXPORTER_OTLP_TRACES_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
-	}
 
-	OpenTelemetry.Traces.Timeout = rootSec.Key("EXPORTER_OTLP_TRACES_TIMEOUT").MustDuration(rootSec.Key("EXPORTER_OTLP_TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout))
+	OpenTelemetry.Traces.Timeout = rootSec.Key("EXPORTER_OTLP_TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout)
 	samplers := make([]string, 0, len(sampler))
 	for k := range sampler {
 		samplers = append(samplers, k)
@@ -115,16 +107,10 @@ func loadTraceConfig(rootSec ConfigSection) {
 			OpenTelemetry.Traces.Headers[k] = v
 		}
 	}
-	headers = rootSec.Key("EXPORTER_OTLP_TRACES_HEADERS").String()
-	if headers != "" {
-		for k, v := range _stringToHeader(headers) {
-			OpenTelemetry.Traces.Headers[k] = v
-		}
-	}
 
-	OpenTelemetry.Traces.Certificate = rootSec.Key("EXPORTER_OTLP_TRACES_CERTIFICATE").MustString(rootSec.Key("EXPORTER_OTLP_CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE").MustString(rootSec.Key("EXPORTER_OTLP_CLIENT_CERTIFICATE").String())
-	OpenTelemetry.Traces.ClientKey = rootSec.Key("EXPORTER_OTLP_TRACES_CLIENT_KEY").MustString(rootSec.Key("EXPORTER_OTLP_CLIENT_KEY").String())
+	OpenTelemetry.Traces.Certificate = rootSec.Key("EXPORTER_OTLP_CERTIFICATE").String()
+	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("EXPORTER_OTLP_CLIENT_CERTIFICATE").String()
+	OpenTelemetry.Traces.ClientKey = rootSec.Key("EXPORTER_OTLP_CLIENT_KEY").String()
 	if len(OpenTelemetry.Traces.Certificate) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.Certificate) {
 		OpenTelemetry.Traces.Certificate = filepath.Join(CustomPath, OpenTelemetry.Traces.Certificate)
 	}
