@@ -15,9 +15,11 @@ import (
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/pushoptions"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/private"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 	wiki_service "code.gitea.io/gitea/services/wiki"
@@ -329,6 +331,24 @@ func ServCommand(ctx *context.PrivateContext) {
 			ctx.JSON(http.StatusInternalServerError, private.Response{
 				Err: fmt.Sprintf("Unable to get owner: %s %v", results.OwnerName, err),
 			})
+			return
+		}
+
+		opts := web.GetForm(ctx).(*private.HookOptions)
+		createRepo := opts.GetGitPushOptions().GetBool(pushoptions.RepoCreate, false)
+
+		if !createRepo {
+			ctx.JSON(http.StatusNotFound, private.Response{
+				UserMsg: fmt.Sprintf("Cannot find repository: %s/%s", results.OwnerName, results.RepoName),
+			})
+
+			if (owner.IsOrganization() && setting.Repository.EnablePushCreateOrg) ||
+				(!owner.IsOrganization() && setting.Repository.EnablePushCreateUser) {
+				ctx.JSON(http.StatusForbidden, private.Response{
+					UserMsg: "If you intended to create the repo, append '-o create=public/private' to your 'git push' command.",
+				})
+			}
+
 			return
 		}
 
