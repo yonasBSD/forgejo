@@ -9,7 +9,8 @@ import (
 
 func AddHidePronounsOptionToUser(x *xorm.Engine) error {
 	type User struct {
-		HidePronouns bool `xorm:"NOT NULL DEFAULT false"`
+		ID									int64 `xorm:"pk autoincr"`
+		KeepPronounsPrivate bool `xorm:"NOT NULL DEFAULT false"`
 	}
 
 	return x.Sync(&User{})
