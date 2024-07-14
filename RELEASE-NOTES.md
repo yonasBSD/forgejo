@@ -19,9 +19,9 @@ $ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forg
 
 <!--start release-notes-assistant-->
 <!--URL:https://codeberg.org/forgejo/forgejo-->
-- BREAKING
+- **Breaking**
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3040)</a>: <!--number 3040 --><!--number--><!--description -->Remove Microsoft SQL Server support see [the discussion](https://codeberg.org/forgejo/discussions/issues/122)<!--description-->
-- USER INTERFACE FEATURES & ENHANCEMENTS
+- **User interface features & enhancements**
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4201)</a>: <!--number 4201 --><!--number--><!--description Make tooltip of Author label in comments more clear-->Make tooltip of Author label in comments more clear<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4189)</a>: <!--number 4189 --><!--number--><!--description User profiles: only show RSS feed button and Public activity tab when the activity can be accessed, add messages about visibility-->User profiles: only show RSS feed button and Public activity tab when the activity can be accessed, add messages about visibility<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4139)</a>: <!--number 4139 --><!--number--><!--description multine placeholder-->
@@ -41,7 +41,7 @@ $ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forg
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3434)</a>: <!--number 3434 --><!--number--><!--description When PDFs are displayed in the repository, the [full height of the screen](https://codeberg.org/forgejo/forgejo/pulls/3434) is now used instead of a predefined fixed height-->When PDFs are displayed in the repository, the [full height of the screen](https://codeberg.org/forgejo/forgejo/pulls/3434) is now used instead of a predefined fixed height<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3337)</a>: <!--number 3337 --><!--number--><!--description Added support for grouping of log-lines inside steps between the special `::group::{title}` and `::endgroup::` workflow commands. A runner of v3.4.2 or later is needed.-->Added support for grouping of log-lines inside steps between the special `::group::{title}` and `::endgroup::` workflow commands. A runner of v3.4.2 or later is needed.<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3285)</a>: <!--number 3285 --><!--number--><!--description The default for `[repository].USE_COMPAT_SSH_URI` has been changed to `true`. With this change, Forgejo defaults to using the same URL style for SSH clone URLs as for HTTPS ones, instead of the former scp-style.-->The default for `[repository].USE_COMPAT_SSH_URI` has been changed to `true`. With this change, Forgejo defaults to using the same URL style for SSH clone URLs as for HTTPS ones, instead of the former scp-style.<!--description-->
-- FEATURES & ENHANCEMENTS
+- **Features & Enhancements**
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4283)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4266)): <!--number 4283 --><!--number--><!--description - add support for LFS server implementations which have batch API responses in an older/deprecated schema-->- add support for LFS server implementations which have batch API responses in an older/deprecated schema<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4262)</a>: <!--number 4262 --><!--number--><!--description Introduced branch/tag dropdown in code search page if using git-grep.-->Introduced branch/tag dropdown in code search page if using git-grep.<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4160)</a>: <!--number 4160 --><!--number--><!--description Added support for fuzzy searching issues and pulls - support for `/issues` and `/pulls` were ported from [`gitea#be5be0ac81`](https://github.com/go-gitea/gitea/commit/be5be0ac81ce50ad5adb079af6ca4e8c396aaece) - support for `/user/repo/issues` and `/user/repo/pulls` were added-->Added support for fuzzy searching issues and pulls - support for `/issues` and `/pulls` were ported from [`gitea#be5be0ac81`](https://github.com/go-gitea/gitea/commit/be5be0ac81ce50ad5adb079af6ca4e8c396aaece) - support for `/user/repo/issues` and `/user/repo/pulls` were added<!--description-->
@@ -125,24 +125,7 @@ $ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forg
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3334)</a>: <!--number 3334 --><!--number--><!--description Added support for the `workflow_dispatch` workflow trigger-->Added support for the `workflow_dispatch` workflow trigger<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3307)</a>: <!--number 3307 --><!--number--><!--description Support [Proof Key for Code Exchange (PKCE - RFC7636)](https://www.rfc-editor.org/rfc/rfc7636) for external login using the OpenID Connect authentication source.-->Support [Proof Key for Code Exchange (PKCE - RFC7636)](https://www.rfc-editor.org/rfc/rfc7636) for external login using the OpenID Connect authentication source.<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3139)</a>: <!--number 3139 --><!--number--><!--description Allow hiding auto generated release archives-->Allow hiding auto generated release archives<!--description-->
-- LOCALIZATION
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4445)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4330)): <!--number 4445 --><!--number--><!--description -->[v8.0/forgejo] i18n: update of translations from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4316)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4251)): <!--number 4316 --><!--number--><!--description -->[v8.0/forgejo] [I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4168)</a>: <!--number 4168 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4098)</a>: <!--number 4098 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3992)</a>: <!--number 3992 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3908)</a>: <!--number 3908 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3851)</a>: <!--number 3851 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3759)</a>: <!--number 3759 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3637)</a>: <!--number 3637 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3508)</a>: <!--number 3508 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3359)</a>: <!--number 3359 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3244)</a>: <!--number 3244 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3138)</a>: <!--number 3138 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3064)</a>: <!--number 3064 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2982)</a>: <!--number 2982 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2937)</a>: <!--number 2937 --><!--number--><!--description -->[I18N] Translations update from Weblate<!--description-->
-- BUG FIXES
+- **Bug fixes**
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4423)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4375)): <!--number 4423 --><!--number--><!--description the "View command line instructions" link in pull requests and the "Copy content" button in file editor are not accessible-->Fixed: the "View command line instructions" link in pull requests and the "Copy content" button in file editor are not accessible<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4288)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4253)): <!--number 4288 --><!--number--><!--description - unknown git push options are rejected instead of being ignored-->Fixed: unknown git push options are rejected instead of being ignored<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4240)</a>: <!--number 4240 --><!--number--><!--description - markdown `[*[a]*](b)` [is incorrectly rendered as `<p><a href="b"><em>[a]</em></a></p>`](https://github.com/yuin/goldmark/issues/457)-->Fixed: markdown `[*[a]*](b)` [is incorrectly rendered as `<p><a href="b"><em>[a]</em></a></p>`](https://github.com/yuin/goldmark/issues/457)<!--description-->
@@ -151,6 +134,23 @@ $ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forg
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3442)</a>: <!--number 3442 --><!--number--><!--description Save updated empty comments instead of skipping the update silently, [which prevented the removal of attachments of such comments](https://codeberg.org/forgejo/forgejo/issues/3424).-->Save updated empty comments instead of skipping the update silently, [which prevented the removal of attachments of such comments](https://codeberg.org/forgejo/forgejo/issues/3424).<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3430)</a>: <!--number 3430 --><!--number--><!--description Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use.-->Fixed: the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints is using a hardcoded "master" branch for the wiki, rather than the branch they really use<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/3379)</a>: <!--number 3379 --><!--number--><!--description -->Fixed: using the API to search for users, the results are not paged by default an the default paging limits are not respected<!--description-->
+- **Localization**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4445)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4330)): <!--number 4445 --><!--number--><!--description -->11 July updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4316)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4251)): <!--number 4316 --><!--number--><!--description -->4 July updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4168)</a>: <!--number 4168 --><!--number--><!--description -->18 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4098)</a>: <!--number 4098 --><!--number--><!--description -->10 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3992)</a>: <!--number 3992 --><!--number--><!--description -->2 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3908)</a>: <!--number 3908 --><!--number--><!--description -->25 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3851)</a>: <!--number 3851 --><!--number--><!--description -->20 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3759)</a>: <!--number 3759 --><!--number--><!--description -->14 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3637)</a>: <!--number 3637 --><!--number--><!--description -->5 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3508)</a>: <!--number 3508 --><!--number--><!--description -->28 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3359)</a>: <!--number 3359 --><!--number--><!--description -->22 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3244)</a>: <!--number 3244 --><!--number--><!--description -->15 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3138)</a>: <!--number 3138 --><!--number--><!--description -->10 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3064)</a>: <!--number 3064 --><!--number--><!--description -->5 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2982)</a>: <!--number 2982 --><!--number--><!--description -->3 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2937)</a>: <!--number 2937 --><!--number--><!--description -->31 March updates<!--description-->
 <!--end release-notes-assistant-->
 
 ## 7.0.5
