@@ -24,6 +24,7 @@ jobs:
         with:
           go-version: "1.22"
           check-latest: true
+      - run: make test-lint-pr lint-pr
       - run: make deps-backend deps-tools
       - run: make --always-make -j$(nproc) lint-backend tidy-check swagger-check fmt-check swagger-validate # ensure the "go-licenses" make target runs
   frontend-checks:

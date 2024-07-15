@@ -244,6 +244,7 @@ help:
 	@echo " - lint-yaml                        lint yaml files"
 	@echo " - lint-spell                       lint spelling"
 	@echo " - lint-spell-fix                   lint spelling and fix issues"
+	@echo " - lint-pr                          lint a workflow triggered by a pull request"
 	@echo " - checks                           run various consistency checks"
 	@echo " - checks-frontend                  check frontend files"
 	@echo " - checks-backend                   check backend files"
@@ -455,6 +456,14 @@ lint-spell: lint-codespell
 .PHONY: lint-spell-fix
 lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
+
+.PHONY: test-lint-pr
+test-lint-pr:
+	.forgejo/lint-pr.sh main_test
+
+.PHONY: lint-pr
+lint-pr:
+	.forgejo/lint-pr.sh
 
 RUN_DEADCODE = $(GO) run $(DEADCODE_PACKAGE) -generated=false -f='{{println .Path}}{{range .Funcs}}{{printf "\t%s\n" .Name}}{{end}}{{println}}' -test code.gitea.io/gitea
 
