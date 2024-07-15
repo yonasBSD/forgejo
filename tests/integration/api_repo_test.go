@@ -13,8 +13,10 @@ import (
 	"code.gitea.io/gitea/models/db"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -93,9 +95,9 @@ func TestAPISearchRepo(t *testing.T) {
 	}{
 		{
 			name: "RepositoriesMax50", requestURL: "/api/v1/repos/search?limit=50&private=false", expectedResults: expectedResults{
-				nil:   {count: 36},
-				user:  {count: 36},
-				user2: {count: 36},
+				nil:   {count: 37},
+				user:  {count: 37},
+				user2: {count: 37},
 			},
 		},
 		{
@@ -326,6 +328,39 @@ func TestAPIOrgRepos(t *testing.T) {
 	}
 }
 
+// See issue #28483. Tests to make sure we consider more than just code unit-enabled repositories.
+func TestAPIOrgReposWithCodeUnitDisabled(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	repo21 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: "repo21"})
+	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo21.OwnerID})
+
+	// Disable code repository unit.
+	var units []unit_model.Type
+	units = append(units, unit_model.TypeCode)
+
+	if err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo21, nil, units); err != nil {
+		assert.Fail(t, "should have been able to delete code repository unit; failed to %v", err)
+	}
+	assert.False(t, repo21.UnitEnabled(db.DefaultContext, unit_model.TypeCode))
+
+	session := loginUser(t, "user2")
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadOrganization)
+
+	req := NewRequestf(t, "GET", "/api/v1/orgs/%s/repos", org3.Name).
+		AddTokenAuth(token)
+
+	resp := MakeRequest(t, req, http.StatusOK)
+	var apiRepos []*api.Repository
+	DecodeJSON(t, resp, &apiRepos)
+
+	var repoNames []string
+	for _, r := range apiRepos {
+		repoNames = append(repoNames, r.Name)
+	}
+
+	assert.Contains(t, repoNames, repo21.Name)
+}
+
 func TestAPIGetRepoByIDUnauthorized(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
@@ -393,7 +428,7 @@ func testAPIRepoMigrateConflict(t *testing.T, u *url.URL) {
 		httpContext := baseAPITestContext
 
 		httpContext.Reponame = "repo-tmp-17"
-		t.Run("CreateRepo", doAPICreateRepository(httpContext, false))
+		t.Run("CreateRepo", doAPICreateRepository(httpContext, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 		user, err := user_model.GetUserByName(db.DefaultContext, httpContext.Username)
 		assert.NoError(t, err)
@@ -476,7 +511,7 @@ func testAPIRepoCreateConflict(t *testing.T, u *url.URL) {
 		httpContext := baseAPITestContext
 
 		httpContext.Reponame = "repo-tmp-17"
-		t.Run("CreateRepo", doAPICreateRepository(httpContext, false))
+		t.Run("CreateRepo", doAPICreateRepository(httpContext, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 		req := NewRequestWithJSON(t, "POST", "/api/v1/user/repos",
 			&api.CreateRepoOption{
@@ -684,7 +719,9 @@ func TestAPIRepoGetReviewers(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusOK)
 	var reviewers []*api.User
 	DecodeJSON(t, resp, &reviewers)
-	assert.Len(t, reviewers, 4)
+	if assert.Len(t, reviewers, 3) {
+		assert.ElementsMatch(t, []int64{1, 4, 11}, []int64{reviewers[0].ID, reviewers[1].ID, reviewers[2].ID})
+	}
 }
 
 func TestAPIRepoGetAssignees(t *testing.T) {
@@ -711,4 +748,18 @@ func TestAPIViewRepoObjectFormat(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &repo)
 	assert.EqualValues(t, "sha1", repo.ObjectFormatName)
+}
+
+func TestAPIRepoCommitPull(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	var pr api.PullRequest
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/1a8823cd1a9549fde083f992f6b9b87a7ab74fb3/pull")
+	resp := MakeRequest(t, req, http.StatusOK)
+
+	DecodeJSON(t, resp, &pr)
+	assert.EqualValues(t, 1, pr.ID)
+
+	req = NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/not-a-commit/pull")
+	MakeRequest(t, req, http.StatusNotFound)
 }

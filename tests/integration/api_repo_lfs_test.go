@@ -17,6 +17,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/setting"
@@ -61,7 +62,7 @@ func TestAPILFSMediaType(t *testing.T) {
 
 func createLFSTestRepository(t *testing.T, name string) *repo_model.Repository {
 	ctx := NewAPITestContext(t, "user2", "lfs-"+name+"-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-	t.Run("CreateRepo", doAPICreateRepository(ctx, false))
+	t.Run("CreateRepo", doAPICreateRepository(ctx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "lfs-"+name+"-repo")
 	assert.NoError(t, err)
@@ -84,7 +85,7 @@ func TestAPILFSBatch(t *testing.T) {
 
 	newRequest := func(t testing.TB, br *lfs.BatchRequest) *RequestWrapper {
 		return NewRequestWithJSON(t, "POST", "/user2/lfs-batch-repo.git/info/lfs/objects/batch", br).
-			SetHeader("Accept", lfs.MediaType).
+			SetHeader("Accept", lfs.AcceptHeader).
 			SetHeader("Content-Type", lfs.MediaType)
 	}
 	decodeResponse := func(t *testing.T, b *bytes.Buffer) *lfs.BatchResponse {
@@ -447,7 +448,7 @@ func TestAPILFSVerify(t *testing.T) {
 
 	newRequest := func(t testing.TB, p *lfs.Pointer) *RequestWrapper {
 		return NewRequestWithJSON(t, "POST", "/user2/lfs-verify-repo.git/info/lfs/verify", p).
-			SetHeader("Accept", lfs.MediaType).
+			SetHeader("Accept", lfs.AcceptHeader).
 			SetHeader("Content-Type", lfs.MediaType)
 	}
 

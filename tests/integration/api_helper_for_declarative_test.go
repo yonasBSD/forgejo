@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/queue"
 	api "code.gitea.io/gitea/modules/structs"
@@ -47,17 +48,18 @@ func (ctx APITestContext) GitPath() string {
 	return fmt.Sprintf("%s/%s.git", ctx.Username, ctx.Reponame)
 }
 
-func doAPICreateRepository(ctx APITestContext, empty bool, callback ...func(*testing.T, api.Repository)) func(*testing.T) {
+func doAPICreateRepository(ctx APITestContext, empty bool, objectFormat git.ObjectFormat, callback ...func(*testing.T, api.Repository)) func(*testing.T) {
 	return func(t *testing.T) {
 		createRepoOption := &api.CreateRepoOption{
-			AutoInit:    !empty,
-			Description: "Temporary repo",
-			Name:        ctx.Reponame,
-			Private:     true,
-			Template:    true,
-			Gitignores:  "",
-			License:     "WTFPL",
-			Readme:      "Default",
+			AutoInit:         !empty,
+			Description:      "Temporary repo",
+			Name:             ctx.Reponame,
+			Private:          true,
+			Template:         true,
+			Gitignores:       "",
+			License:          "WTFPL",
+			Readme:           "Default",
+			ObjectFormatName: objectFormat.Name(),
 		}
 		req := NewRequestWithJSON(t, "POST", "/api/v1/user/repos", createRepoOption).
 			AddTokenAuth(ctx.Token)
@@ -255,39 +257,49 @@ func doAPIGetPullRequest(ctx APITestContext, owner, repo string, index int64) fu
 
 func doAPIMergePullRequest(ctx APITestContext, owner, repo string, index int64) func(*testing.T) {
 	return func(t *testing.T) {
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/pulls/%d/merge", owner, repo, index)
-
-		var req *RequestWrapper
-		var resp *httptest.ResponseRecorder
-
-		for i := 0; i < 6; i++ {
-			req = NewRequestWithJSON(t, http.MethodPost, urlStr, &forms.MergePullRequestForm{
-				MergeMessageField: "doAPIMergePullRequest Merge",
-				Do:                string(repo_model.MergeStyleMerge),
-			}).AddTokenAuth(ctx.Token)
-
-			resp = ctx.Session.MakeRequest(t, req, NoExpectedStatus)
-
-			if resp.Code != http.StatusMethodNotAllowed {
-				break
-			}
-			err := api.APIError{}
-			DecodeJSON(t, resp, &err)
-			assert.EqualValues(t, "Please try again later", err.Message)
-			queue.GetManager().FlushAll(context.Background(), 5*time.Second)
-			<-time.After(1 * time.Second)
-		}
-
-		expected := ctx.ExpectedCode
-		if expected == 0 {
-			expected = http.StatusOK
-		}
-
-		if !assert.EqualValues(t, expected, resp.Code,
-			"Request: %s %s", req.Method, req.URL.String()) {
-			logUnexpectedResponse(t, resp)
-		}
+		t.Helper()
+		doAPIMergePullRequestForm(t, ctx, owner, repo, index, &forms.MergePullRequestForm{
+			MergeMessageField: "doAPIMergePullRequest Merge",
+			Do:                string(repo_model.MergeStyleMerge),
+		})
 	}
+}
+
+func doAPIMergePullRequestForm(t *testing.T, ctx APITestContext, owner, repo string, index int64, merge *forms.MergePullRequestForm) *httptest.ResponseRecorder {
+	t.Helper()
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/pulls/%d/merge", owner, repo, index)
+
+	var req *RequestWrapper
+	var resp *httptest.ResponseRecorder
+
+	for i := 0; i < 6; i++ {
+		req = NewRequestWithJSON(t, http.MethodPost, urlStr, merge).AddTokenAuth(ctx.Token)
+
+		resp = ctx.Session.MakeRequest(t, req, NoExpectedStatus)
+
+		if resp.Code != http.StatusMethodNotAllowed {
+			break
+		}
+		err := api.APIError{}
+		DecodeJSON(t, resp, &err)
+		if err.Message != "Please try again later" {
+			break
+		}
+		queue.GetManager().FlushAll(context.Background(), 5*time.Second)
+		<-time.After(1 * time.Second)
+	}
+
+	expected := ctx.ExpectedCode
+	if expected == 0 {
+		expected = http.StatusOK
+	}
+
+	if !assert.EqualValues(t, expected, resp.Code,
+		"Request: %s %s", req.Method, req.URL.String()) {
+		logUnexpectedResponse(t, resp)
+	}
+
+	return resp
 }
 
 func doAPIManuallyMergePullRequest(ctx APITestContext, owner, repo, commitID string, index int64) func(*testing.T) {

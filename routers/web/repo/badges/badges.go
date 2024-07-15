@@ -39,16 +39,15 @@ func redirectToBadge(ctx *context_module.Context, label, text, color string) {
 	ctx.Redirect(getBadgeURL(ctx, label, text, color))
 }
 
-func errorBadge(ctx *context_module.Context, label, text string) {
+func errorBadge(ctx *context_module.Context, label, text string) { //nolint:unparam
 	ctx.Redirect(getBadgeURL(ctx, label, text, "crimson"))
 }
 
 func GetWorkflowBadge(ctx *context_module.Context) {
 	branch := ctx.Req.URL.Query().Get("branch")
-	if branch == "" {
-		branch = ctx.Repo.Repository.DefaultBranch
+	if branch != "" {
+		branch = fmt.Sprintf("refs/heads/%s", branch)
 	}
-	branch = fmt.Sprintf("refs/heads/%s", branch)
 	event := ctx.Req.URL.Query().Get("event")
 
 	workflowFile := ctx.Params("workflow_name")

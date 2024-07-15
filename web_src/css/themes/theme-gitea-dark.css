@@ -1,5 +1,6 @@
 @import "../chroma/dark.css";
 @import "../codemirror/dark.css";
+@import "../markup/dark.css";
 
 :root {
   --is-dark-theme: true;
@@ -179,6 +180,10 @@
   --color-orange-badge-bg: #f2711c1a;
   --color-orange-badge-hover-bg: #f2711c4d;
   --color-git: #f05133;
+  /* Icon colors (PR/Issue/...) */
+  --color-icon-green: var(--color-green);
+  --color-icon-red: var(--color-red);
+  --color-icon-purple: var(--color-purple);
   /* target-based colors */
   --color-body: #1c1f25;
   --color-box-header: #1a1d1f;
@@ -214,7 +219,7 @@
   --color-expand-button: #2b353e;
   --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--color-primary-light-5);
-  --color-project-board-bg: var(--color-secondary-light-2);
+  --color-project-column-bg: var(--color-secondary-light-2);
   --color-caret: var(--color-text); /* should ideally be --color-text-dark, see #15651 */
   --color-reaction-bg: #e8e8ff12;
   --color-reaction-hover-bg: var(--color-primary-light-4);
@@ -234,6 +239,9 @@
   --color-highlight-fg: #87651e;
   --color-highlight-bg: #352c1c;
   --color-overlay-backdrop: #080808c0;
+  /* pattern colors for image diff */
+  --checkerboard-color-1: #313131;
+  --checkerboard-color-2: #212121;
   accent-color: var(--color-accent);
   color-scheme: dark;
 }

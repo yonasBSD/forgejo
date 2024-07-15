@@ -115,7 +115,8 @@ func Install(ctx *context.Context) {
 	ctx.Data["CurDbType"] = curDBType
 
 	// Application general settings
-	form.AppName = setting.AppName
+	form.AppName = "Forgejo"
+	form.AppSlogan = "Beyond coding. We Forge."
 	form.RepoRootPath = setting.RepoRootPath
 	form.LFSRootPath = setting.LFS.Storage.Path
 
@@ -151,7 +152,7 @@ func Install(ctx *context.Context) {
 
 	form.EnableOpenIDSignIn = setting.Service.EnableOpenIDSignIn
 	form.EnableOpenIDSignUp = setting.Service.EnableOpenIDSignUp
-	form.DisableRegistration = setting.Service.DisableRegistration
+	form.DisableRegistration = true // Force it to true, for the installation, to discourage creating instances with open registration, which invite all kinds of spam.
 	form.AllowOnlyExternalRegistration = setting.Service.AllowOnlyExternalRegistration
 	form.EnableCaptcha = setting.Service.EnableCaptcha
 	form.RequireSignInView = setting.Service.RequireSignInView
@@ -318,7 +319,7 @@ func SubmitInstall(ctx *context.Context) {
 
 	// Check logic loophole between disable self-registration and no admin account.
 	if form.DisableRegistration && len(form.AdminName) == 0 {
-		ctx.Data["Err_Services"] = true
+		ctx.Data["Err_DisabledRegistration"] = true
 		ctx.Data["Err_Admin"] = true
 		ctx.RenderWithErr(ctx.Tr("install.no_admin_and_disable_registration"), tplInstall, form)
 		return
@@ -383,6 +384,7 @@ func SubmitInstall(ctx *context.Context) {
 	}
 
 	cfg.Section("").Key("APP_NAME").SetValue(form.AppName)
+	cfg.Section("").Key("APP_SLOGAN").SetValue(form.AppSlogan)
 	cfg.Section("").Key("RUN_USER").SetValue(form.RunUser)
 	cfg.Section("").Key("WORK_PATH").SetValue(setting.AppWorkPath)
 	cfg.Section("").Key("RUN_MODE").SetValue("prod")
@@ -484,6 +486,17 @@ func SubmitInstall(ctx *context.Context) {
 			return
 		}
 		cfg.Section("security").Key("INTERNAL_TOKEN").SetValue(internalToken)
+	}
+
+	// FIXME: at the moment, no matter oauth2 is enabled or not, it must generate a "oauth2 JWT_SECRET"
+	// see the "loadOAuth2From" in "setting/oauth2.go"
+	if !cfg.Section("oauth2").HasKey("JWT_SECRET") && !cfg.Section("oauth2").HasKey("JWT_SECRET_URI") {
+		_, jwtSecretBase64, err := generate.NewJwtSecret()
+		if err != nil {
+			ctx.RenderWithErr(ctx.Tr("install.secret_key_failed", err), tplInstall, &form)
+			return
+		}
+		cfg.Section("oauth2").Key("JWT_SECRET").SetValue(jwtSecretBase64)
 	}
 
 	// if there is already a SECRET_KEY, we should not overwrite it, otherwise the encrypted data will not be able to be decrypted

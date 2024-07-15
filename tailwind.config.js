@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {env} from 'node:process';
 import {parse} from 'postcss';
+import plugin from 'tailwindcss/plugin.js';
 
 const isProduction = env.NODE_ENV !== 'development';
 
@@ -43,8 +44,6 @@ export default {
     'backdrop-filter',
     // we use double-class tw-hidden defined in web_src/css/helpers.css for increased specificity
     'hidden',
-    // unneeded classes
-    '[-a-zA-Z:0-9_.]',
   ],
   theme: {
     colors: {
@@ -66,7 +65,7 @@ export default {
       'xl': '12px',
       '2xl': '16px',
       '3xl': '24px',
-      'full': 'var(--border-radius-circle)', // 50%
+      'full': 'var(--border-radius-full)',
     },
     fontFamily: {
       sans: 'var(--fonts-regular)',
@@ -98,4 +97,42 @@ export default {
       })),
     },
   },
+  plugins: [
+    plugin(({addUtilities}) => {
+      // base veriables required for tranform utilities
+      // added as utilities since base is not imported
+      // note: required when using tailwind's transform classes
+      addUtilities({
+        '.transform-reset': {
+          '--tw-translate-x': 0,
+          '--tw-translate-y': 0,
+          '--tw-rotate': 0,
+          '--tw-skew-x': 0,
+          '--tw-skew-y': 0,
+          '--tw-scale-x': '1',
+          '--tw-scale-y': '1',
+        },
+      });
+    }),
+    plugin(({addUtilities}) => {
+      addUtilities({
+        // tw-hidden must win all other "display: xxx !important" classes to get the chance to "hide" an element.
+        // do not use:
+        // * "[hidden]" attribute: it's too weak, can not be applied to an element with "display: flex"
+        // * ".hidden" class: it has been polluted by Fomantic UI in many cases
+        // * inline style="display: none": it's difficult to tweak
+        // * jQuery's show/hide/toggle: it can not show/hide elements with "display: xxx !important"
+        // only use:
+        // * this ".tw-hidden" class
+        // * showElem/hideElem/toggleElem functions in "utils/dom.js"
+        '.hidden.hidden': {
+          'display': 'none',
+        },
+        // proposed class from https://github.com/tailwindlabs/tailwindcss/pull/12128
+        '.break-anywhere': {
+          'overflow-wrap': 'anywhere',
+        },
+      });
+    }),
+  ],
 };

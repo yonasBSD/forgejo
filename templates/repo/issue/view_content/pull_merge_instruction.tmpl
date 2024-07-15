@@ -1,6 +1,6 @@
 <div class="divider"></div>
-<div class="instruct-toggle"> {{ctx.Locale.Tr "repo.pulls.cmd_instruction_hint"}} </div>
-<div class="instruct-content tw-mt-2 tw-hidden">
+<details class="collapsible">
+  <summary class="tw-py-2"> {{ctx.Locale.Tr "repo.pulls.cmd_instruction_hint"}} </summary>
 	<div><h3>{{ctx.Locale.Tr "repo.pulls.cmd_instruction_checkout_title"}}</h3>{{ctx.Locale.Tr "repo.pulls.cmd_instruction_checkout_desc"}}</div>
 	{{$localBranch := .PullRequest.HeadBranch}}
 	{{if ne .PullRequest.HeadRepo.ID .PullRequest.BaseRepo.ID}}
@@ -8,11 +8,11 @@
 	{{end}}
 	<div class="ui secondary segment">
 		{{if eq .PullRequest.Flow 0}}
-		<div>git fetch -u {{if ne .PullRequest.HeadRepo.ID .PullRequest.BaseRepo.ID}}<origin-url data-url="{{.PullRequest.HeadRepo.Link}}"></origin-url>{{else}}origin{{end}} {{.PullRequest.HeadBranch}}:{{$localBranch}}</div>
-		<div>git checkout {{$localBranch}}</div>
+			<div>git fetch -u {{if ne .PullRequest.HeadRepo.ID .PullRequest.BaseRepo.ID}}<origin-url data-url="{{.PullRequest.HeadRepo.Link}}"></origin-url>{{else}}origin{{end}} {{.PullRequest.HeadBranch}}:{{$localBranch}}</div>
 		{{else}}
-		<div>git fetch -u origin {{.GetGitRefName}}:{{$localBranch}}</div>
+			<div>git fetch -u origin +refs/pull/{{.PullRequest.Index}}/head:{{$localBranch}}</div>
 		{{end}}
+		<div>git checkout {{$localBranch}}</div>
 	</div>
 	{{if .ShowMergeInstructions}}
 	<div><h3>{{ctx.Locale.Tr "repo.pulls.cmd_instruction_merge_title"}}</h3>{{ctx.Locale.Tr "repo.pulls.cmd_instruction_merge_desc"}}</div>
@@ -46,4 +46,4 @@
 		<div>git push origin {{.PullRequest.BaseBranch}}</div>
 	</div>
 	{{end}}
-</div>
+</details>

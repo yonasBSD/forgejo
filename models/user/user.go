@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package user
@@ -130,6 +131,9 @@ type User struct {
 	Avatar          string `xorm:"VARCHAR(2048) NOT NULL"`
 	AvatarEmail     string `xorm:"NOT NULL"`
 	UseCustomAvatar bool
+
+	// For federation
+	NormalizedFederatedURI string
 
 	// Counters
 	NumFollowers int
@@ -303,6 +307,11 @@ func (u *User) HTMLURL() string {
 	return setting.AppURL + url.PathEscape(u.Name)
 }
 
+// APActorID returns the IRI to the api endpoint of the user
+func (u *User) APActorID() string {
+	return fmt.Sprintf("%vapi/v1/activitypub/user-id/%v", setting.AppURL, url.PathEscape(fmt.Sprintf("%v", u.ID)))
+}
+
 // OrganisationLink returns the organization sub page link.
 func (u *User) OrganisationLink() string {
 	return setting.AppSubURL + "/org/" + url.PathEscape(u.Name)
@@ -312,7 +321,7 @@ func (u *User) OrganisationLink() string {
 func (u *User) GenerateEmailActivateCode(email string) string {
 	code := base.CreateTimeLimitCode(
 		fmt.Sprintf("%d%s%s%s%s", u.ID, email, u.LowerName, u.Passwd, u.Rands),
-		setting.Service.ActiveCodeLives, nil)
+		setting.Service.ActiveCodeLives, time.Now(), nil)
 
 	// Add tail hex username
 	code += hex.EncodeToString([]byte(u.LowerName))
@@ -809,14 +818,11 @@ func GetVerifyUser(ctx context.Context, code string) (user *User) {
 
 // VerifyUserActiveCode verifies active code when active account
 func VerifyUserActiveCode(ctx context.Context, code string) (user *User) {
-	minutes := setting.Service.ActiveCodeLives
-
 	if user = GetVerifyUser(ctx, code); user != nil {
 		// time limit code
 		prefix := code[:base.TimeLimitCodeLength]
 		data := fmt.Sprintf("%d%s%s%s%s", user.ID, user.Email, user.LowerName, user.Passwd, user.Rands)
-
-		if base.VerifyTimeLimitCode(data, minutes, prefix) {
+		if base.VerifyTimeLimitCode(time.Now(), data, setting.Service.ActiveCodeLives, prefix) {
 			return user
 		}
 	}
@@ -832,6 +838,17 @@ func ValidateUser(u *User, cols ...string) error {
 	}
 
 	return nil
+}
+
+func (u User) Validate() []string {
+	var result []string
+	if err := ValidateUser(&u); err != nil {
+		result = append(result, err.Error())
+	}
+	if err := ValidateEmail(u.Email); err != nil {
+		result = append(result, err.Error())
+	}
+	return result
 }
 
 // UpdateUserCols update user according special columns
@@ -877,6 +894,10 @@ func GetUserByID(ctx context.Context, id int64) (*User, error) {
 
 // GetUserByIDs returns the user objects by given IDs if exists.
 func GetUserByIDs(ctx context.Context, ids []int64) ([]*User, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	users := make([]*User, 0, len(ids))
 	err := db.GetEngine(ctx).In("id", ids).
 		Table("user").

@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	actions_service "code.gitea.io/gitea/services/actions"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/convert"
 	secret_service "code.gitea.io/gitea/services/secrets"
 )
 
@@ -516,4 +517,139 @@ type Action struct{}
 // NewAction creates a new Action service
 func NewAction() actions_service.API {
 	return Action{}
+}
+
+// ListActionTasks list all the actions of a repository
+func ListActionTasks(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/actions/tasks repository ListActionTasks
+	// ---
+	// summary: List a repository's action tasks
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, default maximum page size is 50
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/TasksList"
+	//   "400":
+	//     "$ref": "#/responses/error"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "409":
+	//     "$ref": "#/responses/conflict"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	tasks, total, err := db.FindAndCount[actions_model.ActionTask](ctx, &actions_model.FindTaskOptions{
+		ListOptions: utils.GetListOptions(ctx),
+		RepoID:      ctx.Repo.Repository.ID,
+	})
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "ListActionTasks", err)
+		return
+	}
+
+	res := new(api.ActionTaskResponse)
+	res.TotalCount = total
+
+	res.Entries = make([]*api.ActionTask, len(tasks))
+	for i := range tasks {
+		convertedTask, err := convert.ToActionTask(ctx, tasks[i])
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "ToActionTask", err)
+			return
+		}
+		res.Entries[i] = convertedTask
+	}
+
+	ctx.JSON(http.StatusOK, &res)
+}
+
+// DispatchWorkflow dispatches a workflow
+func DispatchWorkflow(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/actions/workflows/{workflowname}/dispatches repository DispatchWorkflow
+	// ---
+	// summary: Dispatches a workflow
+	// consumes:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: workflowname
+	//   in: path
+	//   description: name of the workflow
+	//   type: string
+	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     "$ref": "#/definitions/DispatchWorkflowOption"
+	// responses:
+	//   "204":
+	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	opt := web.GetForm(ctx).(*api.DispatchWorkflowOption)
+	name := ctx.Params("workflowname")
+
+	if len(opt.Ref) == 0 {
+		ctx.Error(http.StatusBadRequest, "ref", nil)
+		return
+	} else if len(name) == 0 {
+		ctx.Error(http.StatusBadRequest, "workflowname", nil)
+		return
+	}
+
+	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo.GitRepo, opt.Ref, name)
+	if err != nil {
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.Error(http.StatusNotFound, "GetWorkflowFromCommit", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "GetWorkflowFromCommit", err)
+		}
+		return
+	}
+
+	inputGetter := func(key string) string {
+		return opt.Inputs[key]
+	}
+
+	if err := workflow.Dispatch(ctx, inputGetter, ctx.Repo.Repository, ctx.Doer); err != nil {
+		if actions_service.IsInputRequiredErr(err) {
+			ctx.Error(http.StatusBadRequest, "workflow.Dispatch", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "workflow.Dispatch", err)
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
 }

@@ -82,6 +82,65 @@ func TestAuthorizeShow(t *testing.T) {
 	htmlDoc.GetCSRF()
 }
 
+func TestOAuth_AuthorizeConfidentialTwice(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// da7da3ba-9a13-4167-856f-3899de0b0138 a confidential client in models/fixtures/oauth2_application.yml
+
+	// request authorization for the first time shows the grant page ...
+	authorizeURL := "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=a&response_type=code&state=thestate"
+	req := NewRequest(t, "GET", authorizeURL)
+	ctx := loginUser(t, "user4")
+	resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, "#authorize-app", true)
+
+	// ... and the user grants the authorization
+	req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+		"_csrf":        htmlDoc.GetCSRF(),
+		"client_id":    "da7da3ba-9a13-4167-856f-3899de0b0138",
+		"redirect_uri": "a",
+		"state":        "thestate",
+		"granted":      "true",
+	})
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "code=")
+
+	// request authorization the second time and the grant page is not shown again, redirection happens immediately
+	req = NewRequest(t, "GET", authorizeURL)
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "code=")
+}
+
+func TestOAuth_AuthorizePublicTwice(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// ce5a1322-42a7-11ed-b878-0242ac120002 is a public client in models/fixtures/oauth2_application.yml
+	authorizeURL := "/login/oauth/authorize?client_id=ce5a1322-42a7-11ed-b878-0242ac120002&redirect_uri=b&response_type=code&code_challenge_method=plain&code_challenge=CODE&state=thestate"
+	ctx := loginUser(t, "user4")
+	// a public client must be authorized every time
+	for _, name := range []string{"First", "Second"} {
+		t.Run(name, func(t *testing.T) {
+			req := NewRequest(t, "GET", authorizeURL)
+			resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#authorize-app", true)
+
+			req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+				"_csrf":        htmlDoc.GetCSRF(),
+				"client_id":    "ce5a1322-42a7-11ed-b878-0242ac120002",
+				"redirect_uri": "b",
+				"state":        "thestate",
+				"granted":      "true",
+			})
+			resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+			assert.Contains(t, test.RedirectURL(resp), "code=")
+		})
+	}
+}
+
 func TestAuthorizeRedirectWithExistingGrant(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	req := NewRequest(t, "GET", "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=https%3A%2F%2Fexample.com%2Fxyzzy&response_type=code&state=thestate")
@@ -473,7 +532,8 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
 }
 
-func TestSignInOAuthCallbackPKCE(t *testing.T) {
+func TestSignInOAuthCallbackWithoutPKCEWhenUnsupported(t *testing.T) {
+	// https://codeberg.org/forgejo/forgejo/issues/4033
 	defer tests.PrepareTestEnv(t)()
 
 	// Setup authentication source
@@ -498,20 +558,12 @@ func TestSignInOAuthCallbackPKCE(t *testing.T) {
 	resp := session.MakeRequest(t, req, http.StatusTemporaryRedirect)
 	dest, err := url.Parse(resp.Header().Get("Location"))
 	assert.NoError(t, err)
-	assert.Equal(t, "S256", dest.Query().Get("code_challenge_method"))
-	codeChallenge := dest.Query().Get("code_challenge")
-	assert.NotEmpty(t, codeChallenge)
+	assert.Empty(t, dest.Query().Get("code_challenge_method"))
+	assert.Empty(t, dest.Query().Get("code_challenge"))
 
 	// callback (to check the initial code_challenge)
 	defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
-		codeVerifier := req.URL.Query().Get("code_verifier")
-		assert.NotEmpty(t, codeVerifier)
-		assert.Greater(t, len(codeVerifier), 40, codeVerifier)
-
-		sha2 := sha256.New()
-		io.WriteString(sha2, codeVerifier)
-		assert.Equal(t, codeChallenge, base64.RawURLEncoding.EncodeToString(sha2.Sum(nil)))
-
+		assert.Empty(t, req.URL.Query().Get("code_verifier"))
 		return goth.User{
 			Provider: gitlabName,
 			UserID:   userGitLabUserID,
@@ -524,6 +576,57 @@ func TestSignInOAuthCallbackPKCE(t *testing.T) {
 	unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
 }
 
+func TestSignInOAuthCallbackPKCE(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		// Setup authentication source
+		sourceName := "oidc"
+		authSource := addAuthSource(t, authSourcePayloadOpenIDConnect(sourceName, u.String()))
+		// Create a user as if it had been previously been created by the authentication source.
+		userID := "5678"
+		user := &user_model.User{
+			Name:        "oidc.user",
+			Email:       "oidc.user@example.com",
+			Passwd:      "oidc.userpassword",
+			Type:        user_model.UserTypeIndividual,
+			LoginType:   auth_model.OAuth2,
+			LoginSource: authSource.ID,
+			LoginName:   userID,
+		}
+		defer createUser(context.Background(), t, user)()
+
+		// initial redirection (to generate the code_challenge)
+		session := emptyTestSession(t)
+		req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s", sourceName))
+		resp := session.MakeRequest(t, req, http.StatusTemporaryRedirect)
+		dest, err := url.Parse(resp.Header().Get("Location"))
+		assert.NoError(t, err)
+		assert.Equal(t, "S256", dest.Query().Get("code_challenge_method"))
+		codeChallenge := dest.Query().Get("code_challenge")
+		assert.NotEmpty(t, codeChallenge)
+
+		// callback (to check the initial code_challenge)
+		defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+			codeVerifier := req.URL.Query().Get("code_verifier")
+			assert.NotEmpty(t, codeVerifier)
+			assert.Greater(t, len(codeVerifier), 40, codeVerifier)
+
+			sha2 := sha256.New()
+			io.WriteString(sha2, codeVerifier)
+			assert.Equal(t, codeChallenge, base64.RawURLEncoding.EncodeToString(sha2.Sum(nil)))
+
+			return goth.User{
+				Provider: sourceName,
+				UserID:   userID,
+				Email:    user.Email,
+			}, nil
+		})()
+		req = NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", sourceName))
+		resp = session.MakeRequest(t, req, http.StatusSeeOther)
+		assert.Equal(t, "/", test.RedirectURL(resp))
+		unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: user.ID})
+	})
+}
+
 func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -534,7 +637,7 @@ func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
 	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 
 	//
-	// Create a user as if it had been previously been created by the GitLab
+	// Create a user as if it had been previously created by the GitLab
 	// authentication source.
 	//
 	userGitLabUserID := "5678"
@@ -607,4 +710,25 @@ func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
 	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
 	resp := MakeRequest(t, req, http.StatusSeeOther)
 	assert.Equal(t, test.RedirectURL(resp), "/user/link_account")
+}
+
+func TestOAuth_GrantApplicationOAuth(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=a&response_type=code&state=thestate")
+	ctx := loginUser(t, "user4")
+	resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, "#authorize-app", true)
+
+	req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+		"_csrf":        htmlDoc.GetCSRF(),
+		"client_id":    "da7da3ba-9a13-4167-856f-3899de0b0138",
+		"redirect_uri": "a",
+		"state":        "thestate",
+		"granted":      "false",
+	})
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "error=access_denied&error_description=the+request+is+denied")
 }

@@ -117,7 +117,7 @@ func CreateCommitStatus(ctx context.Context, repo *repo_model.Repository, creato
 	}
 
 	if status.State.IsSuccess() {
-		if err := automerge.MergeScheduledPullRequest(ctx, sha, repo); err != nil {
+		if err := automerge.StartPRCheckAndAutoMergeBySHA(ctx, sha, repo); err != nil {
 			return fmt.Errorf("MergeScheduledPullRequest[repo_id: %d, user_id: %d, sha: %s]: %w", repo.ID, creator.ID, sha, err)
 		}
 	}
@@ -125,7 +125,7 @@ func CreateCommitStatus(ctx context.Context, repo *repo_model.Repository, creato
 	return nil
 }
 
-// FindReposLastestCommitStatuses loading repository default branch latest combinded commit status with cache
+// FindReposLastestCommitStatuses loading repository default branch latest combined commit status with cache
 func FindReposLastestCommitStatuses(ctx context.Context, repos []*repo_model.Repository) ([]*git_model.CommitStatus, error) {
 	if len(repos) == 0 {
 		return nil, nil

@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package setting
@@ -33,6 +34,7 @@ import (
 	actions_service "code.gitea.io/gitea/services/actions"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/federation"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
@@ -379,6 +381,40 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 		log.Trace("Repository basic settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
+
+		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
+		ctx.Redirect(repo.Link() + "/settings")
+
+	case "federation":
+		if !setting.Federation.Enabled {
+			ctx.NotFound("", nil)
+			ctx.Flash.Info(ctx.Tr("repo.settings.federation_not_enabled"))
+			return
+		}
+		followingRepos := strings.TrimSpace(form.FollowingRepos)
+		followingRepos = strings.TrimSuffix(followingRepos, ";")
+
+		maxFollowingRepoStrLength := 2048
+		errs := validation.ValidateMaxLen(followingRepos, maxFollowingRepoStrLength, "federationRepos")
+		if len(errs) > 0 {
+			ctx.Data["ERR_FollowingRepos"] = true
+			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFollowingRepoStrLength))
+			ctx.Redirect(repo.Link() + "/settings")
+			return
+		}
+
+		federationRepoSplit := []string{}
+		if followingRepos != "" {
+			federationRepoSplit = strings.Split(followingRepos, ";")
+		}
+		for idx, repo := range federationRepoSplit {
+			federationRepoSplit[idx] = strings.TrimSpace(repo)
+		}
+
+		if _, _, err := federation.StoreFollowingRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
+			ctx.ServerError("UpdateRepository", err)
+			return
+		}
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(repo.Link() + "/settings")
@@ -798,6 +834,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Repo.GitRepo = nil
 		}
 
+		oldFullname := repo.FullName()
 		if err := repo_service.StartRepositoryTransfer(ctx, ctx.Doer, newOwner, repo, nil); err != nil {
 			if errors.Is(err, user_model.ErrBlockedByUser) {
 				ctx.RenderWithErr(ctx.Tr("repo.settings.new_owner_blocked_doer"), tplSettingsOptions, nil)
@@ -812,8 +849,13 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		log.Trace("Repository transfer process was started: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
-		ctx.Flash.Success(ctx.Tr("repo.settings.transfer_started", newOwner.DisplayName()))
+		if ctx.Repo.Repository.Status == repo_model.RepositoryPendingTransfer {
+			log.Trace("Repository transfer process was started: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
+			ctx.Flash.Success(ctx.Tr("repo.settings.transfer_started", newOwner.DisplayName()))
+		} else {
+			log.Trace("Repository transferred: %s -> %s", oldFullname, ctx.Repo.Repository.FullName())
+			ctx.Flash.Success(ctx.Tr("repo.settings.transfer_succeed"))
+		}
 		ctx.Redirect(repo.Link() + "/settings")
 
 	case "cancel_transfer":

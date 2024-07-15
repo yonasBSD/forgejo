@@ -1,5 +1,6 @@
 @import "../chroma/light.css";
 @import "../codemirror/light.css";
+@import "../markup/light.css";
 
 :root {
   --steel-900: #10161d;
@@ -195,6 +196,10 @@
   --color-orange-badge-bg: #ea580c22;
   --color-orange-badge-hover-bg: #ea580c44;
   --color-git: #f05133;
+  /* Icon colors (PR/Issue/...) */
+  --color-icon-green: var(--color-green-light);
+  --color-icon-red: var(--color-red-light);
+  --color-icon-purple: var(--color-purple-light);
   /* target-based colors */
   --color-body: #fff;
   --color-box-header: var(--zinc-100);
@@ -243,6 +248,9 @@
   --color-tooltip-bg: #000000f0;
   --color-nav-bg: var(--zinc-100);
   --color-nav-hover-bg: var(--zinc-300);
+  --color-nav-text: var(--color-text);
+  --color-secondary-nav-bg: var(--color-body);
+  --color-label-text: var(--color-text);
   --color-label-bg: #cacaca5b;
   --color-label-hover-bg: #cacacaa0;
   --color-label-active-bg: #cacacaff;
@@ -252,11 +260,11 @@
   --color-highlight-fg: var(--color-primary-light-4);
   --color-highlight-bg: var(--color-primary-light-6);
   --color-overlay-backdrop: #080808c0;
+  /* pattern colors for gradient */
+  --checkerboard-color-1: #ffffff;
+  --checkerboard-color-2: #e5e5e5;
   accent-color: var(--color-accent);
   color-scheme: light;
-}
-.text.green.svg {
-  color: var(--color-green-light) !important;
 }
 .ui.secondary.vertical.menu {
   border-radius: 0.28571429rem !important;

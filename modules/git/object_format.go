@@ -34,13 +34,13 @@ type ObjectFormat interface {
 	ComputeHash(t ObjectType, content []byte) ObjectID
 }
 
-func computeHash(dst []byte, hasher hash.Hash, t ObjectType, content []byte) []byte {
+func computeHash(dst []byte, hasher hash.Hash, t ObjectType, content []byte) {
 	_, _ = hasher.Write(t.Bytes())
 	_, _ = hasher.Write([]byte(" "))
 	_, _ = hasher.Write([]byte(strconv.Itoa(len(content))))
 	_, _ = hasher.Write([]byte{0})
 	_, _ = hasher.Write(content)
-	return hasher.Sum(dst)
+	hasher.Sum(dst)
 }
 
 /* SHA1 Type */
@@ -122,6 +122,7 @@ func (h Sha256ObjectFormatImpl) ComputeHash(t ObjectType, content []byte) Object
 var (
 	Sha1ObjectFormat   ObjectFormat = Sha1ObjectFormatImpl{}
 	Sha256ObjectFormat ObjectFormat = Sha256ObjectFormatImpl{}
+	// any addition must be reflected in IsEmptyCommitID
 )
 
 var SupportedObjectFormats = []ObjectFormat{

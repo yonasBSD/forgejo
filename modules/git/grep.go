@@ -27,8 +27,10 @@ type GrepResult struct {
 type GrepOptions struct {
 	RefName           string
 	MaxResultLimit    int
+	MatchesPerFile    int
 	ContextLineNumber int
 	IsFuzzy           bool
+	PathSpec          []setting.Glob
 }
 
 func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepOptions) ([]*GrepResult, error) {
@@ -53,6 +55,9 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	var results []*GrepResult
 	cmd := NewCommand(ctx, "grep", "--null", "--break", "--heading", "--fixed-strings", "--line-number", "--ignore-case", "--full-name")
 	cmd.AddOptionValues("--context", fmt.Sprint(opts.ContextLineNumber))
+	if opts.MatchesPerFile > 0 {
+		cmd.AddOptionValues("--max-count", fmt.Sprint(opts.MatchesPerFile))
+	}
 	if opts.IsFuzzy {
 		words := strings.Fields(search)
 		for _, word := range words {
@@ -61,15 +66,20 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	} else {
 		cmd.AddOptionValues("-e", strings.TrimLeft(search, "-"))
 	}
+
 	// pathspec
-	files := make([]string, 0, len(setting.Indexer.IncludePatterns)+len(setting.Indexer.ExcludePatterns))
-	for _, expr := range setting.Indexer.IncludePatterns {
-		files = append(files, expr.Pattern())
+	files := make([]string, 0,
+		len(setting.Indexer.IncludePatterns)+
+			len(setting.Indexer.ExcludePatterns)+
+			len(opts.PathSpec))
+	for _, expr := range append(setting.Indexer.IncludePatterns, opts.PathSpec...) {
+		files = append(files, ":"+expr.Pattern())
 	}
 	for _, expr := range setting.Indexer.ExcludePatterns {
 		files = append(files, ":^"+expr.Pattern())
 	}
 	cmd.AddDynamicArguments(cmp.Or(opts.RefName, "HEAD")).AddDashesAndList(files...)
+
 	opts.MaxResultLimit = cmp.Or(opts.MaxResultLimit, 50)
 	stderr := bytes.Buffer{}
 	err = cmd.Run(&RunOpts{

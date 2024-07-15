@@ -339,7 +339,7 @@ export default sfc; // activate the IDE's Vue plugin
 </script>
 <template>
   <div>
-    <div v-if="!isOrganization" class="ui secondary stackable menu">
+    <div v-if="!isOrganization" class="ui secondary stackable menu tabs-with-labels">
       <a :class="{item: true, active: tab === 'repos'}" @click="changeTab('repos')">{{ textMyRepos }} <span class="ui grey label tw-ml-2">{{ reposTotalCount }}</span></a>
       <a :class="{item: true, active: tab === 'organizations'}" @click="changeTab('organizations')">{{ textMyOrgs }} <span class="ui grey label tw-ml-2">{{ organizationsTotalCount }}</span></a>
     </div>
@@ -415,7 +415,7 @@ export default sfc; // activate the IDE's Vue plugin
                 <svg-icon name="octicon-archive" :size="16"/>
               </div>
             </a>
-            <a class="tw-flex tw-items-center" v-if="repo.latest_commit_status" :href="repo.latest_commit_status.TargetLink" :data-tooltip-content="repo.locale_latest_commit_status.State">
+            <a class="tw-flex tw-items-center" v-if="repo.latest_commit_status" :href="repo.latest_commit_status.TargetURL" :data-tooltip-content="repo.locale_latest_commit_status">
               <!-- the commit status icon logic is taken from templates/repo/commit_status.tmpl -->
               <svg-icon :name="statusIcon(repo.latest_commit_status.State)" :class-name="'tw-ml-2 commit-status icon text ' + statusColor(repo.latest_commit_status.State)" :size="16"/>
             </a>

@@ -56,86 +56,90 @@ func testGit(t *testing.T, u *url.URL) {
 	forkedUserCtx := NewAPITestContext(t, "user4", "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
 	t.Run("HTTP", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
 		ensureAnonymousClone(t, u)
-		httpContext := baseAPITestContext
-		httpContext.Reponame = "repo-tmp-17"
-		forkedUserCtx.Reponame = httpContext.Reponame
-
-		dstPath := t.TempDir()
-
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false))
-		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
-
-		t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
-
-		u.Path = httpContext.GitPath()
-		u.User = url.UserPassword(username, userPassword)
-
-		t.Run("Clone", doGitClone(dstPath, u))
-
-		dstPath2 := t.TempDir()
-
-		t.Run("Partial Clone", doPartialGitClone(dstPath2, u))
-
-		little, big := standardCommitAndPushTest(t, dstPath)
-		littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
-		rawTest(t, &httpContext, little, big, littleLFS, bigLFS)
-		mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
-
-		t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "master", "test/head"))
-		t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
-		t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
-		t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
-		t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
-		t.Run("MergeFork", func(t *testing.T) {
+		forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
 			defer tests.PrintCurrentTest(t)()
-			t.Run("CreatePRAndMerge", doMergeFork(httpContext, forkedUserCtx, "master", httpContext.Username+":master"))
-			rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
-			mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
-		})
+			httpContext := baseAPITestContext
+			httpContext.Reponame = "repo-tmp-17-" + objectFormat.Name()
+			forkedUserCtx.Reponame = httpContext.Reponame
 
-		t.Run("PushCreate", doPushCreate(httpContext, u))
-	})
-	t.Run("SSH", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		sshContext := baseAPITestContext
-		sshContext.Reponame = "repo-tmp-18"
-		keyname := "my-testing-key"
-		forkedUserCtx.Reponame = sshContext.Reponame
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false))
-		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, sshContext.Username, perm.AccessModeRead))
-		t.Run("ForkFromDifferentUser", doAPIForkRepository(sshContext, forkedUserCtx.Username))
-
-		// Setup key the user ssh key
-		withKeyFile(t, keyname, func(keyFile string) {
-			t.Run("CreateUserKey", doAPICreateUserKey(sshContext, "test-key", keyFile))
-
-			// Setup remote link
-			// TODO: get url from api
-			sshURL := createSSHUrl(sshContext.GitPath(), u)
-
-			// Setup clone folder
 			dstPath := t.TempDir()
 
-			t.Run("Clone", doGitClone(dstPath, sshURL))
+			t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, objectFormat))
+			t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
+
+			t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
+
+			u.Path = httpContext.GitPath()
+			u.User = url.UserPassword(username, userPassword)
+
+			t.Run("Clone", doGitClone(dstPath, u))
+
+			dstPath2 := t.TempDir()
+
+			t.Run("Partial Clone", doPartialGitClone(dstPath2, u))
 
 			little, big := standardCommitAndPushTest(t, dstPath)
 			littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
-			rawTest(t, &sshContext, little, big, littleLFS, bigLFS)
-			mediaTest(t, &sshContext, little, big, littleLFS, bigLFS)
+			rawTest(t, &httpContext, little, big, littleLFS, bigLFS)
+			mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
 
-			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "master", "test/head2"))
-			t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
-			t.Run("BranchProtectMerge", doBranchProtectPRMerge(&sshContext, dstPath))
+			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "test/head"))
+			t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
+			t.Run("BranchProtect", doBranchProtect(&httpContext, dstPath))
+			t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
+			t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
 			t.Run("MergeFork", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				t.Run("CreatePRAndMerge", doMergeFork(sshContext, forkedUserCtx, "master", sshContext.Username+":master"))
+				t.Run("CreatePRAndMerge", doMergeFork(httpContext, forkedUserCtx, "master", httpContext.Username+":master"))
 				rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
 				mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
 			})
 
-			t.Run("PushCreate", doPushCreate(sshContext, sshURL))
+			t.Run("PushCreate", doPushCreate(httpContext, u, objectFormat))
+		})
+	})
+	t.Run("SSH", func(t *testing.T) {
+		forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+			defer tests.PrintCurrentTest(t)()
+			sshContext := baseAPITestContext
+			sshContext.Reponame = "repo-tmp-18-" + objectFormat.Name()
+			keyname := "my-testing-key"
+			forkedUserCtx.Reponame = sshContext.Reponame
+			t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, objectFormat))
+			t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, sshContext.Username, perm.AccessModeRead))
+			t.Run("ForkFromDifferentUser", doAPIForkRepository(sshContext, forkedUserCtx.Username))
+
+			// Setup key the user ssh key
+			withKeyFile(t, keyname, func(keyFile string) {
+				t.Run("CreateUserKey", doAPICreateUserKey(sshContext, "test-key-"+objectFormat.Name(), keyFile))
+
+				// Setup remote link
+				// TODO: get url from api
+				sshURL := createSSHUrl(sshContext.GitPath(), u)
+
+				// Setup clone folder
+				dstPath := t.TempDir()
+
+				t.Run("Clone", doGitClone(dstPath, sshURL))
+
+				little, big := standardCommitAndPushTest(t, dstPath)
+				littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
+				rawTest(t, &sshContext, little, big, littleLFS, bigLFS)
+				mediaTest(t, &sshContext, little, big, littleLFS, bigLFS)
+
+				t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "test/head2"))
+				t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
+				t.Run("BranchProtect", doBranchProtect(&sshContext, dstPath))
+				t.Run("MergeFork", func(t *testing.T) {
+					defer tests.PrintCurrentTest(t)()
+					t.Run("CreatePRAndMerge", doMergeFork(sshContext, forkedUserCtx, "master", sshContext.Username+":master"))
+					rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
+					mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
+				})
+
+				t.Run("PushCreate", doPushCreate(sshContext, sshURL, objectFormat))
+			})
 		})
 	})
 }
@@ -333,9 +337,6 @@ func generateCommitWithNewData(size int, repoPath, email, fullName, prefix strin
 		}
 		written += n
 	}
-	if err != nil {
-		return "", err
-	}
 
 	// Commit
 	// Now here we should explicitly allow lfs filters to run
@@ -360,63 +361,86 @@ func generateCommitWithNewData(size int, repoPath, email, fullName, prefix strin
 	return filepath.Base(tmpFile.Name()), err
 }
 
-func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
+func doBranchProtect(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
 	return func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 		t.Run("CreateBranchProtected", doGitCreateBranch(dstPath, "protected"))
 		t.Run("PushProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
 
 		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame, auth_model.AccessTokenScopeWriteRepository)
-		t.Run("ProtectProtectedBranchNoWhitelist", doProtectBranch(ctx, "protected", "", ""))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
-		})
-		t.Run("FailToPushToProtectedBranch", doGitPushTestRepositoryFail(dstPath, "origin", "protected"))
-		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "protected:unprotected"))
-		var pr api.PullRequest
-		var err error
-		t.Run("CreatePullRequest", func(t *testing.T) {
-			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, "protected", "unprotected")(t)
-			assert.NoError(t, err)
-		})
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
-		})
-		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "protected:unprotected-2"))
-		var pr2 api.PullRequest
-		t.Run("CreatePullRequest", func(t *testing.T) {
-			pr2, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, "unprotected", "unprotected-2")(t)
-			assert.NoError(t, err)
-		})
-		t.Run("MergePR2", doAPIMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, pr2.Index))
-		t.Run("MergePR", doAPIMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, pr.Index))
-		t.Run("PullProtected", doGitPull(dstPath, "origin", "protected"))
 
-		t.Run("ProtectProtectedBranchUnprotectedFilePaths", doProtectBranch(ctx, "protected", "", "unprotected-file-*"))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "unprotected-file-")
-			assert.NoError(t, err)
-		})
-		t.Run("PushUnprotectedFilesToProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
+		t.Run("FailToPushToProtectedBranch", func(t *testing.T) {
+			t.Run("ProtectProtectedBranch", doProtectBranch(ctx, "protected"))
+			t.Run("Create modified-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-protected-branch", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
 
-		t.Run("ProtectProtectedBranchWhitelist", doProtectBranch(ctx, "protected", baseCtx.Username, ""))
-
-		t.Run("CheckoutMaster", doGitCheckoutBranch(dstPath, "master"))
-		t.Run("CreateBranchForced", doGitCreateBranch(dstPath, "toforce"))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
+			doGitPushTestRepositoryFail(dstPath, "origin", "modified-protected-branch:protected")(t)
 		})
-		t.Run("FailToForcePushToProtectedBranch", doGitPushTestRepositoryFail(dstPath, "-f", "origin", "toforce:protected"))
-		t.Run("MergeProtectedToToforce", doGitMerge(dstPath, "protected"))
-		t.Run("PushToProtectedBranch", doGitPushTestRepository(dstPath, "origin", "toforce:protected"))
-		t.Run("CheckoutMasterAgain", doGitCheckoutBranch(dstPath, "master"))
+
+		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "modified-protected-branch:unprotected"))
+
+		t.Run("FailToPushProtectedFilesToProtectedBranch", func(t *testing.T) {
+			t.Run("Create modified-protected-file-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-protected-file-protected-branch", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "protected-file-")
+				assert.NoError(t, err)
+			})
+
+			t.Run("ProtectedFilePathsApplyToAdmins", doProtectBranch(ctx, "protected"))
+			doGitPushTestRepositoryFail(dstPath, "origin", "modified-protected-file-protected-branch:protected")(t)
+
+			doGitCheckoutBranch(dstPath, "protected")(t)
+			doGitPull(dstPath, "origin", "protected")(t)
+		})
+
+		t.Run("PushUnprotectedFilesToProtectedBranch", func(t *testing.T) {
+			t.Run("Create modified-unprotected-file-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-unprotected-file-protected-branch", "protected"))
+			t.Run("UnprotectedFilePaths", doProtectBranch(ctx, "protected", parameterProtectBranch{
+				"unprotected_file_patterns": "unprotected-file-*",
+			}))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "unprotected-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepository(dstPath, "origin", "modified-unprotected-file-protected-branch:protected")(t)
+			doGitCheckoutBranch(dstPath, "protected")(t)
+			doGitPull(dstPath, "origin", "protected")(t)
+		})
+
+		user, err := user_model.GetUserByName(db.DefaultContext, baseCtx.Username)
+		assert.NoError(t, err)
+		t.Run("WhitelistUsers", doProtectBranch(ctx, "protected", parameterProtectBranch{
+			"enable_push":      "whitelist",
+			"enable_whitelist": "on",
+			"whitelist_users":  strconv.FormatInt(user.ID, 10),
+		}))
+
+		t.Run("WhitelistedUserFailToForcePushToProtectedBranch", func(t *testing.T) {
+			t.Run("Create toforce", doGitCheckoutBranch(dstPath, "-b", "toforce", "master"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepositoryFail(dstPath, "-f", "origin", "toforce:protected")(t)
+		})
+
+		t.Run("WhitelistedUserPushToProtectedBranch", func(t *testing.T) {
+			t.Run("Create topush", doGitCheckoutBranch(dstPath, "-b", "topush", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepository(dstPath, "origin", "topush:protected")(t)
+		})
 	}
 }
 
-func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFilePatterns string) func(t *testing.T) {
+type parameterProtectBranch map[string]string
+
+func doProtectBranch(ctx APITestContext, branch string, addParameter ...parameterProtectBranch) func(t *testing.T) {
 	// We are going to just use the owner to set the protection.
 	return func(t *testing.T) {
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: ctx.Reponame, OwnerName: ctx.Username})
@@ -425,30 +449,20 @@ func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFil
 
 		csrf := GetCSRF(t, ctx.Session, fmt.Sprintf("/%s/%s/settings/branches", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)))
 
-		if userToWhitelist == "" {
-			// Change branch to protected
-			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
-				"_csrf":                     csrf,
-				"rule_id":                   strconv.FormatInt(rule.ID, 10),
-				"rule_name":                 branch,
-				"unprotected_file_patterns": unprotectedFilePatterns,
-			})
-			ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
-		} else {
-			user, err := user_model.GetUserByName(db.DefaultContext, userToWhitelist)
-			assert.NoError(t, err)
-			// Change branch to protected
-			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
-				"_csrf":                     csrf,
-				"rule_name":                 branch,
-				"rule_id":                   strconv.FormatInt(rule.ID, 10),
-				"enable_push":               "whitelist",
-				"enable_whitelist":          "on",
-				"whitelist_users":           strconv.FormatInt(user.ID, 10),
-				"unprotected_file_patterns": unprotectedFilePatterns,
-			})
-			ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
+		parameter := parameterProtectBranch{
+			"_csrf":     csrf,
+			"rule_id":   strconv.FormatInt(rule.ID, 10),
+			"rule_name": branch,
 		}
+		if len(addParameter) > 0 {
+			for k, v := range addParameter[0] {
+				parameter[k] = v
+			}
+		}
+
+		// Change branch to protected
+		req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), parameter)
+		ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
 		// Check if master branch has been locked successfully
 		flashCookie := ctx.Session.GetCookie(gitea_context.CookieNameFlash)
 		assert.NotNil(t, flashCookie)
@@ -589,8 +603,11 @@ func doEnsureDiffNoChange(ctx APITestContext, pr api.PullRequest, diffHash strin
 	}
 }
 
-func doPushCreate(ctx APITestContext, u *url.URL) func(t *testing.T) {
+func doPushCreate(ctx APITestContext, u *url.URL, objectFormat git.ObjectFormat) func(t *testing.T) {
 	return func(t *testing.T) {
+		if objectFormat == git.Sha256ObjectFormat {
+			t.Skipf("push-create not supported for %s, see https://codeberg.org/forgejo/forgejo/issues/3783", objectFormat)
+		}
 		defer tests.PrintCurrentTest(t)()
 
 		// create a context for a currently non-existent repository
@@ -601,7 +618,7 @@ func doPushCreate(ctx APITestContext, u *url.URL) func(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// Now create local repository to push as our test and set its origin
-		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir))
+		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir, objectFormat))
 		t.Run("AddRemote", doGitAddRemote(tmpDir, "origin", u))
 
 		// Disable "Push To Create" and attempt to push
@@ -750,7 +767,7 @@ func doInternalReferences(ctx *APITestContext, dstPath string) func(t *testing.T
 	}
 }
 
-func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headBranch string) func(t *testing.T) {
+func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, headBranch string) func(t *testing.T) {
 	return func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 

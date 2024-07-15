@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"html/template"
 	"io"
 	"net/http"
 	"net/url"
@@ -43,6 +44,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/fitbit"
+	"github.com/markbates/goth/providers/openidConnect"
+	"github.com/markbates/goth/providers/zoom"
 	go_oauth2 "golang.org/x/oauth2"
 )
 
@@ -471,8 +475,9 @@ func AuthorizeOAuth(ctx *context.Context) {
 		return
 	}
 
-	// Redirect if user already granted access
-	if grant != nil {
+	// Redirect if user already granted access and the application is confidential.
+	// I.e. always require authorization for public clients as recommended by RFC 6749 Section 10.2
+	if app.ConfidentialClient && grant != nil {
 		code, err := grant.GenerateNewAuthorizationCode(ctx, form.RedirectURI, form.CodeChallenge, form.CodeChallengeMethod)
 		if err != nil {
 			handleServerError(ctx, form.State, form.RedirectURI)
@@ -501,11 +506,11 @@ func AuthorizeOAuth(ctx *context.Context) {
 	ctx.Data["Scope"] = form.Scope
 	ctx.Data["Nonce"] = form.Nonce
 	if user != nil {
-		ctx.Data["ApplicationCreatorLinkHTML"] = fmt.Sprintf(`<a href="%s">@%s</a>`, html.EscapeString(user.HomeLink()), html.EscapeString(user.Name))
+		ctx.Data["ApplicationCreatorLinkHTML"] = template.HTML(fmt.Sprintf(`<a href="%s">@%s</a>`, html.EscapeString(user.HomeLink()), html.EscapeString(user.Name)))
 	} else {
-		ctx.Data["ApplicationCreatorLinkHTML"] = fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(setting.AppSubURL+"/"), html.EscapeString(setting.AppName))
+		ctx.Data["ApplicationCreatorLinkHTML"] = template.HTML(fmt.Sprintf(`<a href="%s">%s</a>`, html.EscapeString(setting.AppSubURL+"/"), html.EscapeString(setting.AppName)))
 	}
-	ctx.Data["ApplicationRedirectDomainHTML"] = "<strong>" + html.EscapeString(form.RedirectURI) + "</strong>"
+	ctx.Data["ApplicationRedirectDomainHTML"] = template.HTML("<strong>" + html.EscapeString(form.RedirectURI) + "</strong>")
 	// TODO document SESSION <=> FORM
 	err = ctx.Session.Set("client_id", app.ClientID)
 	if err != nil {
@@ -541,20 +546,45 @@ func GrantApplicationOAuth(ctx *context.Context) {
 		ctx.Error(http.StatusBadRequest)
 		return
 	}
+
+	if !form.Granted {
+		handleAuthorizeError(ctx, AuthorizeError{
+			State:            form.State,
+			ErrorDescription: "the request is denied",
+			ErrorCode:        ErrorCodeAccessDenied,
+		}, form.RedirectURI)
+		return
+	}
+
 	app, err := auth.GetOAuth2ApplicationByClientID(ctx, form.ClientID)
 	if err != nil {
 		ctx.ServerError("GetOAuth2ApplicationByClientID", err)
 		return
 	}
-	grant, err := app.CreateGrant(ctx, ctx.Doer.ID, form.Scope)
+	grant, err := app.GetGrantByUserID(ctx, ctx.Doer.ID)
 	if err != nil {
+		handleServerError(ctx, form.State, form.RedirectURI)
+		return
+	}
+	if grant == nil {
+		grant, err = app.CreateGrant(ctx, ctx.Doer.ID, form.Scope)
+		if err != nil {
+			handleAuthorizeError(ctx, AuthorizeError{
+				State:            form.State,
+				ErrorDescription: "cannot create grant for user",
+				ErrorCode:        ErrorCodeServerError,
+			}, form.RedirectURI)
+			return
+		}
+	} else if grant.Scope != form.Scope {
 		handleAuthorizeError(ctx, AuthorizeError{
 			State:            form.State,
-			ErrorDescription: "cannot create grant for user",
+			ErrorDescription: "a grant exists with different scope",
 			ErrorCode:        ErrorCodeServerError,
 		}, form.RedirectURI)
 		return
 	}
+
 	if len(form.Nonce) > 0 {
 		err := grant.SetNonce(ctx, form.Nonce)
 		if err != nil {
@@ -861,7 +891,7 @@ func SignInOAuth(ctx *context.Context) {
 		return
 	}
 
-	codeChallenge, err := generateCodeChallenge(ctx)
+	codeChallenge, err := generateCodeChallenge(ctx, provider)
 	if err != nil {
 		ctx.ServerError("SignIn", fmt.Errorf("could not generate code_challenge: %w", err))
 		return
@@ -1211,7 +1241,21 @@ func handleOAuth2SignIn(ctx *context.Context, source *auth.Source, u *user_model
 }
 
 // generateCodeChallenge stores a code verifier in the session and returns a S256 code challenge for PKCE
-func generateCodeChallenge(ctx *context.Context) (codeChallenge string, err error) {
+func generateCodeChallenge(ctx *context.Context, provider string) (codeChallenge string, err error) {
+	// the `code_verifier` is only forwarded by specific providers
+	// https://codeberg.org/forgejo/forgejo/issues/4033
+	p, ok := goth.GetProviders()[provider]
+	if !ok {
+		return "", nil
+	}
+	switch p.(type) {
+	default:
+		return "", nil
+	case *openidConnect.Provider, *fitbit.Provider, *zoom.Provider:
+		// those providers forward the `code_verifier`
+		// a code_challenge can be generated
+	}
+
 	codeVerifier, err := util.CryptoRandomString(43) // 256/log2(62) = 256 bits of entropy (each char having log2(62) of randomness)
 	if err != nil {
 		return "", err

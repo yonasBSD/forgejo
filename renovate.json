@@ -7,18 +7,26 @@
     "group:postcss",
     "group:linters",
     "schedule:daily",
-    "schedule:automergeDaily"
+    "schedule:automergeDaily",
+    "local>forgejo-contrib/forgejo-renovate//go.json"
   ],
   "ignorePresets": [
     ":semanticPrefixFixDepsChoreOthers",
     "docker:pinDigests",
     "helpers:pinGitHubActionDigests"
   ],
+  "baseBranches": [
+    "$default",
+    "/^v[7-9]\\.\\d+/forgejo$/",
+    "/^v\\d\\d+\\.\\d+\\/forgejo$/"
+  ],
   "semanticCommits": "disabled",
   "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 10,
   "internalChecksFilter": "strict",
+  "osvVulnerabilityAlerts": true,
+  "labels": ["dependency-upgrade"],
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
@@ -27,7 +35,8 @@
         "python",
         "golang",
         "docker.io/golang",
-        "docker.io/library/golang"
+        "docker.io/library/golang",
+        "mcr.microsoft.com/devcontainers/go"
       ],
       "matchUpdateTypes": ["minor"],
       "dependencyDashboardApproval": true
@@ -44,8 +53,26 @@
     },
     {
       "description": "Schedule some deps less frequently",
-      "matchDepNames": ["github.com/google/pprof"],
+      "matchDepNames": [
+        "github.com/google/pprof",
+        "github.com/golangci/misspell/cmd/misspell"
+      ],
       "extends": ["schedule:quarterly"]
+    },
+    {
+      "description": "elasticsearch CI images are published about once a month and do not use semantic versioning or short tags",
+      "matchDepNames": ["elasticsearch"],
+      "extends": ["schedule:quarterly"]
+    },
+    {
+      "description": "devcontainer is an optional tool used by some Forgejo contributors when working on the codebase",
+      "matchPackagePrefixes": [
+        "ghcr.io/devcontainers/features/",
+        "ghcr.io/devcontainers-contrib/features/"
+      ],
+      "groupName": "devcontainer packages",
+      "extends": ["schedule:quarterly"],
+      "automerge": true
     },
     {
       "description": "Group golang packages",
@@ -69,11 +96,30 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/visualon/renovate"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": true
+      "automerge": true,
+      "groupName": "renovate"
+    },
+    {
+      "description": "x/tools/* are used in the CI only and upgraded together",
+      "matchPackagePrefixes": [
+        "golang.org/x/tools"
+      ],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true,
+      "groupName": "x/tools"
     },
     {
       "description": "Split minor and patch updates",
-      "matchDepNames": ["vue", "github.com/urfave/cli/v2", "swagger-ui-dist"],
+      "matchDepNames": [
+        "docker.io/golang",
+        "docker.io/library/golang",
+        "github.com/urfave/cli/v2",
+        "go",
+        "golang",
+        "python",
+        "swagger-ui-dist",
+        "vue"
+      ],
       "separateMinorPatch": true
     },
     {
@@ -86,7 +132,20 @@
       "description": "Update renovate with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
+      "extends": ["schedule:weekly"],
       "prPriority": 10
+    },
+    {
+      "description": "Update go patch with higher prio to come through rate limit",
+      "matchDepNames": [
+        "go",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
+      "matchUpdateTypes": ["patch"],
+      "prPriority": 10,
+      "schedule": ["at any time"]
     },
     {
       "description": "Disable actions/cascading-pr for now <https://github.com/renovatebot/renovate/issues/28120>",
@@ -95,15 +154,44 @@
       "enabled": false
     },
     {
-      "description": "Automerge some packages when ci succeeds",
-      "extends": ["packages:linters"],
-      "matchDepNames": ["vitest"],
+      "description": "Automerge some packages when CI succeeds",
+      "extends": ["packages:linters", "packages:test"],
+      "matchDepNames": [
+        "github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker",
+        "github.com/golangci/golangci-lint/cmd/golangci-lint",
+        "github.com/go-testfixtures/testfixtures",
+        "github.com/PuerkitoBio/goquery",
+        "happy-dom",
+        "markdownlint-cli",
+        "mvdan.cc/gofumpt",
+        "updates",
+        "vite-string-plugin",
+        "@vue/test-utils"
+      ],
+      "matchPackagePrefixes": [
+        "@eslint-community/",
+        "@playwright/",
+        "@stoplight/spectral-cli",
+        "@stylistic/",
+        "mcr.microsoft.com/devcontainers/"
+      ],
       "automerge": true
     },
     {
       "description": "Hold back on some package updates for a few days",
       "matchDepNames": ["monaco-editor"],
       "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "disallow `eslint-plugin-no-use-extend-native` v0.6.0+, requires eslint v9",
+      "matchDepNames": ["eslint-plugin-no-use-extend-native"],
+      "allowedVersions": "<0.6.0"
+    },
+    {
+      "description": "Require approval for stable branches (must be last rule to override all others)",
+      "matchBaseBranches": ["/^v\\d+\\.\\d+\\/forgejo$/"],
+      "dependencyDashboardApproval": true,
+      "schedule": ["at any time"]
     }
   ],
   "customManagers": [
@@ -121,14 +209,15 @@
       "customType": "regex",
       "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
       "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
-      "depNameTemplate": "node"
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version"
     },
     {
       "description": "Update deps inside Makefile",
       "customType": "regex",
       "fileMatch": ["^Makefile$"],
       "matchStrings": [
-        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)\\s"
+        " \\?= (?<depName>.+?)@(?<currentValue>.+?) # renovate: datasource=(?<datasource>.+?)(?: packageName=(?<packageName>.+?))?( versioning=(?<versioning>.+?))?\\s"
       ]
     }
   ]

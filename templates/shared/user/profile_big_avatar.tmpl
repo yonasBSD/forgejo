@@ -11,7 +11,7 @@
 		</span>
 	{{end}}
 	</div>
-	<div class="content gt-word-break profile-avatar-name">
+	<div class="content tw-break-anywhere profile-avatar-name">
 		{{if .ContextUser.FullName}}<span class="header text center">{{.ContextUser.FullName}}</span>{{end}}
 		<span class="username text center">{{.ContextUser.Name}}{{if .ContextUser.Pronouns}} · {{.ContextUser.Pronouns}}{{end}} {{if .IsAdmin}}
 					<a class="muted" href="{{AppSubUrl}}/admin/users/{{.ContextUser.ID}}" data-tooltip-content="{{ctx.Locale.Tr "admin.users.details"}}">
@@ -20,12 +20,12 @@
 				{{end}}</span>
 		<div class="tw-mt-2">
 			<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-people" 18 "tw-mr-1"}}{{ctx.Locale.TrN .NumFollowers "user.followers_one" "user.followers_few" .NumFollowers}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{ctx.Locale.TrN .NumFollowing "user.following_one" "user.following_few" .NumFollowing}}</a>
-			{{if .EnableFeed}}
+			{{if and .EnableFeed (or .IsAdmin (eq .SignedUserID .ContextUser.ID) (not .ContextUser.KeepActivityPrivate))}}
 				<a href="{{.ContextUser.HomeLink}}.rss"><i class="ui text grey tw-ml-2" data-tooltip-content="{{ctx.Locale.Tr "rss_feed"}}">{{svg "octicon-rss" 18}}</i></a>
 			{{end}}
 		</div>
 	</div>
-	<div class="extra content gt-word-break">
+	<div class="extra content tw-break-anywhere">
 		<ul>
 			{{if .ContextUser.Location}}
 				<li>
@@ -38,29 +38,18 @@
 					{{end}}
 				</li>
 			{{end}}
-			{{if (eq .SignedUserID .ContextUser.ID)}}
-				<li>
-					{{svg "octicon-mail"}}
-					<a class="tw-flex-1" href="mailto:{{.ContextUser.Email}}" rel="nofollow">{{.ContextUser.Email}}</a>
-					<a href="{{AppSubUrl}}/user/settings#privacy-user-settings">
-						{{if .ShowUserEmail}}
-							<i data-tooltip-content="{{ctx.Locale.Tr "user.email_visibility.limited"}}">
-								{{svg "octicon-unlock"}}
-							</i>
-						{{else}}
-							<i data-tooltip-content="{{ctx.Locale.Tr "user.email_visibility.private"}}">
-								{{svg "octicon-lock"}}
-							</i>
-						{{end}}
-					</a>
-				</li>
-			{{else}}
-				{{if .ShowUserEmail}}
+			{{if .ShowUserEmail}}
 					<li>
 						{{svg "octicon-mail"}}
-						<a href="mailto:{{.ContextUser.Email}}" rel="nofollow">{{.ContextUser.Email}}</a>
+						<a class="tw-flex-1" href="mailto:{{.ContextUser.Email}}" rel="nofollow">{{.ContextUser.Email}}</a>
+						{{if (eq .SignedUserID .ContextUser.ID)}}
+							<a href="{{AppSubUrl}}/user/settings#privacy-user-settings">
+								<i data-tooltip-content="{{ctx.Locale.Tr "user.email_visibility.limited"}}">
+									{{svg "octicon-unlock"}}
+								</i>
+							</a>
+						{{end}}
 					</li>
-				{{end}}
 			{{end}}
 			{{if .ContextUser.Website}}
 				<li>

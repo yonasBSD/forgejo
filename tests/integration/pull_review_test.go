@@ -425,15 +425,15 @@ func TestPullView_GivenApproveOrRejectReviewOnClosedPR(t *testing.T) {
 			htmlDoc := NewHTMLParser(t, resp.Body)
 
 			// Submit an approve review on the PR.
-			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "approve", http.StatusUnprocessableEntity)
+			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "", "approve", http.StatusUnprocessableEntity)
 
 			// Submit a reject review on the PR.
-			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "reject", http.StatusUnprocessableEntity)
+			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "", "reject", http.StatusUnprocessableEntity)
 		})
 
 		t.Run("Submit approve/reject review on closed PR", func(t *testing.T) {
 			// Created a closed PR (made by user1) in the upstream repo1.
-			testEditFileToNewBranch(t, user1Session, "user1", "repo1", "master", "a-test-branch", "README.md", "Hello, World (Editied...again)\n")
+			testEditFileToNewBranch(t, user1Session, "user1", "repo1", "master", "a-test-branch", "README.md", "Hello, World (Edited...again)\n")
 			resp := testPullCreate(t, user1Session, "user1", "repo1", false, "master", "a-test-branch", "This is a pull title")
 			elem := strings.Split(test.RedirectURL(resp), "/")
 			assert.EqualValues(t, "pulls", elem[3])
@@ -445,18 +445,18 @@ func TestPullView_GivenApproveOrRejectReviewOnClosedPR(t *testing.T) {
 			htmlDoc := NewHTMLParser(t, resp.Body)
 
 			// Submit an approve review on the PR.
-			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "approve", http.StatusUnprocessableEntity)
+			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "", "approve", http.StatusUnprocessableEntity)
 
 			// Submit a reject review on the PR.
-			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "reject", http.StatusUnprocessableEntity)
+			testSubmitReview(t, user2Session, htmlDoc.GetCSRF(), "user2", "repo1", elem[4], "", "reject", http.StatusUnprocessableEntity)
 		})
 	})
 }
 
-func testSubmitReview(t *testing.T, session *TestSession, csrf, owner, repo, pullNumber, reviewType string, expectedSubmitStatus int) *httptest.ResponseRecorder {
+func testSubmitReview(t *testing.T, session *TestSession, csrf, owner, repo, pullNumber, commitID, reviewType string, expectedSubmitStatus int) *httptest.ResponseRecorder {
 	options := map[string]string{
 		"_csrf":     csrf,
-		"commit_id": "",
+		"commit_id": commitID,
 		"content":   "test",
 		"type":      reviewType,
 	}

@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -248,7 +249,7 @@ func CreatePost(ctx *context.Context) {
 		opts := repo_service.GenerateRepoOptions{
 			Name:            form.RepoName,
 			Description:     form.Description,
-			Private:         form.Private,
+			Private:         form.Private || setting.Repository.ForcePrivate,
 			GitContent:      form.GitContent,
 			Topics:          form.Topics,
 			GitHooks:        form.GitHooks,
@@ -332,7 +333,7 @@ func ActionWatch(watch bool) func(ctx *context.Context) {
 
 func ActionStar(star bool) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
-		err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, star)
+		err := repo_service.StarRepoAndSendLikeActivities(ctx, *ctx.Doer, ctx.Repo.Repository.ID, star)
 		if err != nil {
 			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
 			return
@@ -414,8 +415,9 @@ func RedirectDownload(ctx *context.Context) {
 	tagNames := []string{vTag}
 	curRepo := ctx.Repo.Repository
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
-		RepoID:   curRepo.ID,
-		TagNames: tagNames,
+		IncludeDrafts: ctx.Repo.CanWrite(unit.TypeReleases),
+		RepoID:        curRepo.ID,
+		TagNames:      tagNames,
 	})
 	if err != nil {
 		ctx.ServerError("RedirectDownload", err)
@@ -479,6 +481,12 @@ func Download(ctx *context.Context) {
 
 func download(ctx *context.Context, archiveName string, archiver *repo_model.RepoArchiver) {
 	downloadName := ctx.Repo.Repository.Name + "-" + archiveName
+
+	// Add nix format link header so tarballs lock correctly:
+	// https://github.com/nixos/nix/blob/56763ff918eb308db23080e560ed2ea3e00c80a7/doc/manual/src/protocols/tarball-fetcher.md
+	ctx.Resp.Header().Add("Link", fmt.Sprintf("<%s/archive/%s.tar.gz?rev=%s>; rel=\"immutable\"",
+		ctx.Repo.Repository.APIURL(),
+		archiver.CommitID, archiver.CommitID))
 
 	rPath := archiver.RelativePath()
 	if setting.RepoArchive.Storage.MinioConfig.ServeDirect {
@@ -621,7 +629,7 @@ func SearchRepo(ctx *context.Context) {
 		if len(sortOrder) == 0 {
 			sortOrder = "asc"
 		}
-		if searchModeMap, ok := repo_model.SearchOrderByMap[sortOrder]; ok {
+		if searchModeMap, ok := repo_model.OrderByMap[sortOrder]; ok {
 			if orderBy, ok := searchModeMap[sortMode]; ok {
 				opts.OrderBy = orderBy
 			} else {

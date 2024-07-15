@@ -470,7 +470,7 @@ func TestColorPreview(t *testing.T) {
 		// no backticks
 		"rgb(166, 32, 64)",
 		// typo
-		"`hsI(0, 100%, 50%)`",
+		"`hsI(0, 100%, 50%)`", // codespell-ignore
 		// looks like a color but not really
 		"`hsl(40, 60, 80)`",
 	}
@@ -547,6 +547,18 @@ func TestMathBlock(t *testing.T) {
 		{
 			`$$a`,
 			`<p>$$a</p>` + nl,
+		},
+		{
+			"$a$ ($b$) [$c$] {$d$}",
+			`<p><code class="language-math is-loading">a</code> (<code class="language-math is-loading">b</code>) [$c$] {$d$}</p>` + nl,
+		},
+		{
+			"$$a$$ test",
+			`<p><code class="language-math display is-loading">a</code> test</p>` + nl,
+		},
+		{
+			"test $$a$$",
+			`<p>test <code class="language-math display is-loading">a</code></p>` + nl,
 		},
 	}
 
@@ -1205,4 +1217,128 @@ func TestCustomMarkdownURL(t *testing.T) {
 	// Ensure that the schema itself without `:` is still made absolute.
 	test("[test](abp)",
 		`<p><a href="http://localhost:3000/gogits/gogs/src/branch/main/abp" rel="nofollow">test</a></p>`)
+}
+
+func TestYAMLMeta(t *testing.T) {
+	setting.AppURL = AppURL
+
+	test := func(input, expected string) {
+		buffer, err := markdown.RenderString(&markup.RenderContext{
+			Ctx: git.DefaultContext,
+		}, input)
+		assert.NoError(t, err)
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(string(buffer)))
+	}
+
+	test(`---
+include_toc: true
+---
+## Header`,
+		`<details><summary><i class="icon table"></i></summary><table>
+<thead>
+<tr>
+<th>include_toc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>true</td>
+</tr>
+</tbody>
+</table>
+</details><details><summary>toc</summary><ul>
+<li>
+<a href="#user-content-header" rel="nofollow">Header</a></li>
+</ul>
+</details><h2 id="user-content-header">Header</h2>`)
+
+	test(`---
+key: value
+---`,
+		`<details><summary><i class="icon table"></i></summary><table>
+<thead>
+<tr>
+<th>key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>value</td>
+</tr>
+</tbody>
+</table>
+</details>`)
+
+	test("---\n---\n",
+		`<hr/>
+<hr/>`)
+
+	test(`---
+gitea:
+  details_icon: smiley
+  include_toc: true
+---
+# Another header`,
+		`<details><summary><i class="icon smiley"></i></summary><table>
+<thead>
+<tr>
+<th>gitea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><table>
+<thead>
+<tr>
+<th>details_icon</th>
+<th>include_toc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>smiley</td>
+<td>true</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+</details><details><summary>toc</summary><ul>
+<li>
+<a href="#user-content-another-header" rel="nofollow">Another header</a></li>
+</ul>
+</details><h1 id="user-content-another-header">Another header</h1>`)
+
+	test(`---
+gitea:
+  meta: table
+key: value
+---`, `<table>
+<thead>
+<tr>
+<th>gitea</th>
+<th>key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><table>
+<thead>
+<tr>
+<th>meta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>table</td>
+</tr>
+</tbody>
+</table>
+</td>
+<td>value</td>
+</tr>
+</tbody>
+</table>`)
 }

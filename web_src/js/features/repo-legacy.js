@@ -16,6 +16,7 @@ import {initCitationFileCopyContent} from './citation.js';
 import {initCompLabelEdit} from './comp/LabelEdit.js';
 import {initRepoDiffConversationNav} from './repo-diff.js';
 import {createDropzone} from './dropzone.js';
+import {showErrorToast} from '../modules/toast.js';
 import {initCommentContent, initMarkupContent} from '../markup/content.js';
 import {initCompReactionSelector} from './comp/ReactionSelector.js';
 import {initRepoSettingBranches} from './repo-settings.js';
@@ -431,11 +432,17 @@ async function onEditContent(event) {
       const params = new URLSearchParams({
         content: comboMarkdownEditor.value(),
         context: editContentZone.getAttribute('data-context'),
+        content_version: editContentZone.getAttribute('data-content-version'),
       });
       for (const fileInput of dropzoneInst?.element.querySelectorAll('.files [name=files]')) params.append('files[]', fileInput.value);
 
       const response = await POST(editContentZone.getAttribute('data-update-url'), {data: params});
       const data = await response.json();
+      if (response.status === 400) {
+        showErrorToast(data.errorMessage);
+        return;
+      }
+      editContentZone.setAttribute('data-content-version', data.contentVersion);
       if (!data.content) {
         renderContent.innerHTML = document.getElementById('no-content').innerHTML;
         rawContent.textContent = '';
@@ -472,6 +479,9 @@ async function onEditContent(event) {
     editContentZone.addEventListener('ce-quick-submit', saveAndRefresh);
     editContentZone.querySelector('.cancel.button').addEventListener('click', cancelAndReset);
     editContentZone.querySelector('.save.button').addEventListener('click', saveAndRefresh);
+  } else {
+    const tabEditor = editContentZone.querySelector('.combo-markdown-editor').querySelector('.tabular.menu > a[data-tab-for=markdown-writer]');
+    tabEditor?.click();
   }
 
   // Show write/preview tab and copy raw content as needed

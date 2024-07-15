@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2017 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
@@ -386,6 +387,21 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	ctx.Data["HasAccess"] = true
 	ctx.Data["Permission"] = &ctx.Repo.Permission
 
+	followingRepoList, err := repo_model.FindFollowingReposByRepoID(ctx, repo.ID)
+	if err == nil {
+		followingRepoString := ""
+		for idx, followingRepo := range followingRepoList {
+			if idx > 0 {
+				followingRepoString += ";"
+			}
+			followingRepoString += followingRepo.URI
+		}
+		ctx.Data["FollowingRepos"] = followingRepoString
+	} else if err != repo_model.ErrMirrorNotExist {
+		ctx.ServerError("FindFollowingRepoByRepoID", err)
+		return
+	}
+
 	if repo.IsMirror {
 		pullMirror, err := repo_model.GetMirrorByRepoID(ctx, repo.ID)
 		if err == nil {
@@ -566,6 +582,7 @@ func RepoAssignment(ctx *Context) context.CancelFunc {
 
 	ctx.Data["Title"] = owner.Name + "/" + repo.Name
 	ctx.Data["Repository"] = repo
+	ctx.Data["RepositoryAPActorID"] = repo.APActorID()
 	ctx.Data["Owner"] = ctx.Repo.Repository.Owner
 	ctx.Data["IsRepositoryOwner"] = ctx.Repo.IsOwner()
 	ctx.Data["IsRepositoryAdmin"] = ctx.Repo.IsAdmin()
@@ -810,7 +827,7 @@ func (rt RepoRefType) RefTypeIncludesTags() bool {
 	return false
 }
 
-func getRefNameFromPath(ctx *Base, repo *Repository, path string, isExist func(string) bool) string {
+func getRefNameFromPath(repo *Repository, path string, isExist func(string) bool) string {
 	refName := ""
 	parts := strings.Split(path, "/")
 	for i, part := range parts {
@@ -846,7 +863,7 @@ func getRefName(ctx *Base, repo *Repository, pathType RepoRefType) string {
 		repo.TreePath = path
 		return repo.Repository.DefaultBranch
 	case RepoRefBranch:
-		ref := getRefNameFromPath(ctx, repo, path, repo.GitRepo.IsBranchExist)
+		ref := getRefNameFromPath(repo, path, repo.GitRepo.IsBranchExist)
 		if len(ref) == 0 {
 			// check if ref is HEAD
 			parts := strings.Split(path, "/")
@@ -856,7 +873,7 @@ func getRefName(ctx *Base, repo *Repository, pathType RepoRefType) string {
 			}
 
 			// maybe it's a renamed branch
-			return getRefNameFromPath(ctx, repo, path, func(s string) bool {
+			return getRefNameFromPath(repo, path, func(s string) bool {
 				b, exist, err := git_model.FindRenamedBranch(ctx, repo.Repository.ID, s)
 				if err != nil {
 					log.Error("FindRenamedBranch: %v", err)
@@ -876,7 +893,7 @@ func getRefName(ctx *Base, repo *Repository, pathType RepoRefType) string {
 
 		return ref
 	case RepoRefTag:
-		return getRefNameFromPath(ctx, repo, path, repo.GitRepo.IsTagExist)
+		return getRefNameFromPath(repo, path, repo.GitRepo.IsTagExist)
 	case RepoRefCommit:
 		parts := strings.Split(path, "/")
 

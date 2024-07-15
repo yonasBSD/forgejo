@@ -31,6 +31,7 @@ type InstallForm struct {
 	DbSchema string
 
 	AppName      string `binding:"Required" locale:"install.app_name"`
+	AppSlogan    string
 	RepoRootPath string `binding:"Required"`
 	LFSRootPath  string
 	RunUser      string `binding:"Required"`
@@ -162,6 +163,7 @@ func (f *AuthorizationForm) Validate(req *http.Request, errs binding.Errors) bin
 // GrantApplicationForm form for authorizing oauth2 clients
 type GrantApplicationForm struct {
 	ClientID    string `binding:"Required"`
+	Granted     bool
 	RedirectURI string
 	State       string
 	Scope       string

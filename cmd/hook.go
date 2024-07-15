@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/git/pushoptions"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/private"
 	repo_module "code.gitea.io/gitea/modules/repository"
@@ -192,7 +193,7 @@ Forgejo or set your environment appropriately.`, "")
 		GitAlternativeObjectDirectories: os.Getenv(private.GitAlternativeObjectDirectories),
 		GitObjectDirectory:              os.Getenv(private.GitObjectDirectory),
 		GitQuarantinePath:               os.Getenv(private.GitQuarantinePath),
-		GitPushOptions:                  pushOptions(),
+		GitPushOptions:                  pushoptions.New().ReadEnv().Map(),
 		PullRequestID:                   prID,
 		DeployKeyID:                     deployKeyID,
 		ActionPerm:                      int(actionPerm),
@@ -316,12 +317,12 @@ func runHookUpdate(c *cli.Context) error {
 		return nil
 	}
 
-	// Deletion of the ref means that the new commit ID is only composed of '0'.
-	if strings.ContainsFunc(newCommitID, func(e rune) bool { return e != '0' }) {
-		return nil
+	// Empty new commit ID means deletion.
+	if git.IsEmptyCommitID(newCommitID, nil) {
+		return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
 	}
 
-	return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
+	return nil
 }
 
 func runHookPostReceive(c *cli.Context) error {
@@ -366,6 +367,7 @@ Forgejo or set your environment appropriately.`, "")
 	isWiki, _ := strconv.ParseBool(os.Getenv(repo_module.EnvRepoIsWiki))
 	repoName := os.Getenv(repo_module.EnvRepoName)
 	pusherID, _ := strconv.ParseInt(os.Getenv(repo_module.EnvPusherID), 10, 64)
+	prID, _ := strconv.ParseInt(os.Getenv(repo_module.EnvPRID), 10, 64)
 	pusherName := os.Getenv(repo_module.EnvPusherName)
 
 	hookOptions := private.HookOptions{
@@ -374,7 +376,9 @@ Forgejo or set your environment appropriately.`, "")
 		GitAlternativeObjectDirectories: os.Getenv(private.GitAlternativeObjectDirectories),
 		GitObjectDirectory:              os.Getenv(private.GitObjectDirectory),
 		GitQuarantinePath:               os.Getenv(private.GitQuarantinePath),
-		GitPushOptions:                  pushOptions(),
+		GitPushOptions:                  pushoptions.New().ReadEnv().Map(),
+		PullRequestID:                   prID,
+		PushTrigger:                     repo_module.PushTrigger(os.Getenv(repo_module.EnvPushTrigger)),
 	}
 	oldCommitIDs := make([]string, hookBatchSize)
 	newCommitIDs := make([]string, hookBatchSize)
@@ -402,8 +406,7 @@ Forgejo or set your environment appropriately.`, "")
 		newCommitIDs[count] = string(fields[1])
 		refFullNames[count] = git.RefName(fields[2])
 
-		commitID, _ := git.NewIDFromString(newCommitIDs[count])
-		if refFullNames[count] == git.BranchPrefix+"master" && !commitID.IsZero() && count == total {
+		if refFullNames[count] == git.BranchPrefix+"master" && !git.IsEmptyCommitID(newCommitIDs[count], nil) && count == total {
 			masterPushed = true
 		}
 		count++
@@ -484,21 +487,6 @@ func hookPrintResults(results []private.HookPostReceiveBranchResult) {
 		fmt.Fprintln(os.Stderr, "")
 		_ = os.Stderr.Sync()
 	}
-}
-
-func pushOptions() map[string]string {
-	opts := make(map[string]string)
-	if pushCount, err := strconv.Atoi(os.Getenv(private.GitPushOptionCount)); err == nil {
-		for idx := 0; idx < pushCount; idx++ {
-			opt := os.Getenv(fmt.Sprintf("GIT_PUSH_OPTION_%d", idx))
-			key, value, found := strings.Cut(opt, "=")
-			if !found {
-				value = "true"
-			}
-			opts[key] = value
-		}
-	}
-	return opts
 }
 
 func runHookProcReceive(c *cli.Context) error {
@@ -625,6 +613,7 @@ Forgejo or set your environment appropriately.`, "")
 	hookOptions.GitPushOptions = make(map[string]string)
 
 	if hasPushOptions {
+		pushOptions := pushoptions.NewFromMap(&hookOptions.GitPushOptions)
 		for {
 			rs, err = readPktLine(ctx, reader, pktLineTypeUnknown)
 			if err != nil {
@@ -634,12 +623,7 @@ Forgejo or set your environment appropriately.`, "")
 			if rs.Type == pktLineTypeFlush {
 				break
 			}
-
-			key, value, found := strings.Cut(string(rs.Data), "=")
-			if !found {
-				value = "true"
-			}
-			hookOptions.GitPushOptions[key] = value
+			pushOptions.Parse(string(rs.Data))
 		}
 	}
 
@@ -694,8 +678,7 @@ Forgejo or set your environment appropriately.`, "")
 		if err != nil {
 			return err
 		}
-		commitID, _ := git.NewIDFromString(rs.OldOID)
-		if !commitID.IsZero() {
+		if !git.IsEmptyCommitID(rs.OldOID, nil) {
 			err = writeDataPktLine(ctx, os.Stdout, []byte("option old-oid "+rs.OldOID))
 			if err != nil {
 				return err

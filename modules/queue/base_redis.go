@@ -19,14 +19,34 @@ type baseRedis struct {
 	client   redis.UniversalClient
 	isUnique bool
 	cfg      *BaseConfig
+	prefix   string
 
 	mu sync.Mutex // the old implementation is not thread-safe, the queue operation and set operation should be protected together
 }
 
 var _ baseQueue = (*baseRedis)(nil)
 
-func newBaseRedisGeneric(cfg *BaseConfig, unique bool) (baseQueue, error) {
-	client := nosql.GetManager().GetRedisClient(cfg.ConnStr)
+func newBaseRedisGeneric(cfg *BaseConfig, unique bool, client redis.UniversalClient) (baseQueue, error) {
+	if client == nil {
+		client = nosql.GetManager().GetRedisClient(cfg.ConnStr)
+	}
+
+	prefix := ""
+	uri := nosql.ToRedisURI(cfg.ConnStr)
+
+	for key, value := range uri.Query() {
+		switch key {
+		case "prefix":
+			if len(value) > 0 {
+				prefix = value[0]
+
+				// As we are not checking any other values, if we found this one, we can
+				// exit from the loop.
+				// If a new key check is required, remove this break.
+				break
+			}
+		}
+	}
 
 	var err error
 	for i := 0; i < 10; i++ {
@@ -41,15 +61,19 @@ func newBaseRedisGeneric(cfg *BaseConfig, unique bool) (baseQueue, error) {
 		return nil, err
 	}
 
-	return &baseRedis{cfg: cfg, client: client, isUnique: unique}, nil
+	return &baseRedis{cfg: cfg, client: client, isUnique: unique, prefix: prefix}, nil
 }
 
 func newBaseRedisSimple(cfg *BaseConfig) (baseQueue, error) {
-	return newBaseRedisGeneric(cfg, false)
+	return newBaseRedisGeneric(cfg, false, nil)
 }
 
 func newBaseRedisUnique(cfg *BaseConfig) (baseQueue, error) {
-	return newBaseRedisGeneric(cfg, true)
+	return newBaseRedisGeneric(cfg, true, nil)
+}
+
+func (q *baseRedis) prefixedName(name string) string {
+	return q.prefix + name
 }
 
 func (q *baseRedis) PushItem(ctx context.Context, data []byte) error {
@@ -57,7 +81,7 @@ func (q *baseRedis) PushItem(ctx context.Context, data []byte) error {
 		q.mu.Lock()
 		defer q.mu.Unlock()
 
-		cnt, err := q.client.LLen(ctx, q.cfg.QueueFullName).Result()
+		cnt, err := q.client.LLen(ctx, q.prefixedName(q.cfg.QueueFullName)).Result()
 		if err != nil {
 			return false, err
 		}
@@ -66,7 +90,7 @@ func (q *baseRedis) PushItem(ctx context.Context, data []byte) error {
 		}
 
 		if q.isUnique {
-			added, err := q.client.SAdd(ctx, q.cfg.SetFullName, data).Result()
+			added, err := q.client.SAdd(ctx, q.prefixedName(q.cfg.SetFullName), data).Result()
 			if err != nil {
 				return false, err
 			}
@@ -74,7 +98,7 @@ func (q *baseRedis) PushItem(ctx context.Context, data []byte) error {
 				return false, ErrAlreadyInQueue
 			}
 		}
-		return false, q.client.RPush(ctx, q.cfg.QueueFullName, data).Err()
+		return false, q.client.RPush(ctx, q.prefixedName(q.cfg.QueueFullName), data).Err()
 	})
 }
 
@@ -83,7 +107,7 @@ func (q *baseRedis) PopItem(ctx context.Context) ([]byte, error) {
 		q.mu.Lock()
 		defer q.mu.Unlock()
 
-		data, err = q.client.LPop(ctx, q.cfg.QueueFullName).Bytes()
+		data, err = q.client.LPop(ctx, q.prefixedName(q.cfg.QueueFullName)).Bytes()
 		if err == redis.Nil {
 			return true, nil, nil
 		}
@@ -92,7 +116,7 @@ func (q *baseRedis) PopItem(ctx context.Context) ([]byte, error) {
 		}
 		if q.isUnique {
 			// the data has been popped, even if there is any error we can't do anything
-			_ = q.client.SRem(ctx, q.cfg.SetFullName, data).Err()
+			_ = q.client.SRem(ctx, q.prefixedName(q.cfg.SetFullName), data).Err()
 		}
 		return false, data, err
 	})
@@ -104,13 +128,13 @@ func (q *baseRedis) HasItem(ctx context.Context, data []byte) (bool, error) {
 	if !q.isUnique {
 		return false, nil
 	}
-	return q.client.SIsMember(ctx, q.cfg.SetFullName, data).Result()
+	return q.client.SIsMember(ctx, q.prefixedName(q.cfg.SetFullName), data).Result()
 }
 
 func (q *baseRedis) Len(ctx context.Context) (int, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	cnt, err := q.client.LLen(ctx, q.cfg.QueueFullName).Result()
+	cnt, err := q.client.LLen(ctx, q.prefixedName(q.cfg.QueueFullName)).Result()
 	return int(cnt), err
 }
 
@@ -124,10 +148,10 @@ func (q *baseRedis) RemoveAll(ctx context.Context) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	c1 := q.client.Del(ctx, q.cfg.QueueFullName)
+	c1 := q.client.Del(ctx, q.prefixedName(q.cfg.QueueFullName))
 	// the "set" must be cleared after the "list" because there is no transaction.
 	// it's better to have duplicate items than losing items.
-	c2 := q.client.Del(ctx, q.cfg.SetFullName)
+	c2 := q.client.Del(ctx, q.prefixedName(q.cfg.SetFullName))
 	if c1.Err() != nil {
 		return c1.Err()
 	}

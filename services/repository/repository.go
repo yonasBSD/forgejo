@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2019 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
@@ -21,6 +22,7 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
+	federation_service "code.gitea.io/gitea/services/federation"
 	notify_service "code.gitea.io/gitea/services/notify"
 	pull_service "code.gitea.io/gitea/services/pull"
 )
@@ -66,6 +68,10 @@ func DeleteRepository(ctx context.Context, doer *user_model.User, repo *repo_mod
 		return err
 	}
 
+	if err := federation_service.DeleteFollowingRepos(ctx, repo.ID); err != nil {
+		return err
+	}
+
 	return packages_model.UnlinkRepositoryFromAllPackages(ctx, repo.ID)
 }
 
@@ -85,7 +91,7 @@ func PushCreateRepo(ctx context.Context, authUser, owner *user_model.User, repoN
 
 	repo, err := CreateRepository(ctx, authUser, owner, CreateRepoOptions{
 		Name:      repoName,
-		IsPrivate: setting.Repository.DefaultPushCreatePrivate,
+		IsPrivate: setting.Repository.DefaultPushCreatePrivate || setting.Repository.ForcePrivate,
 	})
 	if err != nil {
 		return nil, err

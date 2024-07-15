@@ -44,6 +44,31 @@ func TestGrepSearch(t *testing.T) {
 		},
 	}, res)
 
+	res, err = GrepSearch(context.Background(), repo, "world", GrepOptions{MatchesPerFile: 1})
+	assert.NoError(t, err)
+	assert.Equal(t, []*GrepResult{
+		{
+			Filename:    "i-am-a-python.p",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"## This is a simple file to do a hello world"},
+		},
+		{
+			Filename:    "java-hello/main.java",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"public class HelloWorld"},
+		},
+		{
+			Filename:    "main.vendor.java",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"public class HelloWorld"},
+		},
+		{
+			Filename:    "python-hello/hello.py",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"## This is a simple file to do a hello world"},
+		},
+	}, res)
+
 	res, err = GrepSearch(context.Background(), repo, "no-such-content", GrepOptions{})
 	assert.NoError(t, err)
 	assert.Len(t, res, 0)
@@ -75,4 +100,34 @@ func TestGrepLongFiles(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, res, 1)
 	assert.Len(t, res[0].LineCodes[0], 65*1024)
+}
+
+func TestGrepRefs(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	err := InitRepository(DefaultContext, tmpDir, false, Sha1ObjectFormat.Name())
+	assert.NoError(t, err)
+
+	gitRepo, err := openRepositoryWithDefaultContext(tmpDir)
+	assert.NoError(t, err)
+	defer gitRepo.Close()
+
+	assert.NoError(t, os.WriteFile(path.Join(tmpDir, "README.md"), []byte{'A'}, 0o666))
+	assert.NoError(t, AddChanges(tmpDir, true))
+
+	err = CommitChanges(tmpDir, CommitChangesOptions{Message: "add A"})
+	assert.NoError(t, err)
+
+	assert.NoError(t, gitRepo.CreateTag("v1", "HEAD"))
+
+	assert.NoError(t, os.WriteFile(path.Join(tmpDir, "README.md"), []byte{'A', 'B', 'C', 'D'}, 0o666))
+	assert.NoError(t, AddChanges(tmpDir, true))
+
+	err = CommitChanges(tmpDir, CommitChangesOptions{Message: "add BCD"})
+	assert.NoError(t, err)
+
+	res, err := GrepSearch(context.Background(), gitRepo, "a", GrepOptions{RefName: "v1"})
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+	assert.Equal(t, res[0].LineCodes[0], "A")
 }

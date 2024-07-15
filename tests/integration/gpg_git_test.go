@@ -13,6 +13,7 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/process"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -35,7 +36,7 @@ func TestGPGGit(t *testing.T) {
 	defer os.Setenv("GNUPGHOME", oldGNUPGHome)
 
 	// Need to create a root key
-	rootKeyPair, err := importTestingKey(tmpDir, "gitea", "gitea@fake.local")
+	rootKeyPair, err := importTestingKey()
 	if !assert.NoError(t, err, "importTestingKey") {
 		return
 	}
@@ -56,7 +57,7 @@ func TestGPGGit(t *testing.T) {
 		t.Run("Unsigned-Initial", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			testCtx := NewAPITestContext(t, username, "initial-unsigned", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-			t.Run("CreateRepository", doAPICreateRepository(testCtx, false))
+			t.Run("CreateRepository", doAPICreateRepository(testCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 			t.Run("CheckMasterBranchUnsigned", doAPIGetBranch(testCtx, "master", func(t *testing.T, branch api.Branch) {
 				assert.NotNil(t, branch.Commit)
 				assert.NotNil(t, branch.Commit.Verification)
@@ -149,7 +150,7 @@ func TestGPGGit(t *testing.T) {
 		t.Run("AlwaysSign-Initial", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			testCtx := NewAPITestContext(t, username, "initial-always", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-			t.Run("CreateRepository", doAPICreateRepository(testCtx, false))
+			t.Run("CreateRepository", doAPICreateRepository(testCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 			t.Run("CheckMasterBranchSigned", doAPIGetBranch(testCtx, "master", func(t *testing.T, branch api.Branch) {
 				assert.NotNil(t, branch.Commit)
 				if branch.Commit == nil {
@@ -171,7 +172,7 @@ func TestGPGGit(t *testing.T) {
 		t.Run("AlwaysSign-Initial-CRUD-Never", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			testCtx := NewAPITestContext(t, username, "initial-always-never", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-			t.Run("CreateRepository", doAPICreateRepository(testCtx, false))
+			t.Run("CreateRepository", doAPICreateRepository(testCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 			t.Run("CreateCRUDFile-Never", crudActionCreateFile(
 				t, testCtx, user, "master", "never", "unsigned-never.txt", func(t *testing.T, response api.FileResponse) {
 					assert.False(t, response.Verification.Verified)
@@ -182,7 +183,7 @@ func TestGPGGit(t *testing.T) {
 		t.Run("AlwaysSign-Initial-CRUD-ParentSigned-On-Always", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			testCtx := NewAPITestContext(t, username, "initial-always-parent", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-			t.Run("CreateRepository", doAPICreateRepository(testCtx, false))
+			t.Run("CreateRepository", doAPICreateRepository(testCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 			t.Run("CreateCRUDFile-ParentSigned", crudActionCreateFile(
 				t, testCtx, user, "master", "parentsigned", "signed-parent.txt", func(t *testing.T, response api.FileResponse) {
 					assert.True(t, response.Verification.Verified)
@@ -198,7 +199,7 @@ func TestGPGGit(t *testing.T) {
 		t.Run("AlwaysSign-Initial-CRUD-Always", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			testCtx := NewAPITestContext(t, username, "initial-always-always", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-			t.Run("CreateRepository", doAPICreateRepository(testCtx, false))
+			t.Run("CreateRepository", doAPICreateRepository(testCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 			t.Run("CreateCRUDFile-Always", crudActionCreateFile(
 				t, testCtx, user, "master", "always", "signed-always.txt", func(t *testing.T, response api.FileResponse) {
 					assert.True(t, response.Verification.Verified)
@@ -262,7 +263,7 @@ func TestGPGGit(t *testing.T) {
 	})
 }
 
-func crudActionCreateFile(t *testing.T, ctx APITestContext, user *user_model.User, from, to, path string, callback ...func(*testing.T, api.FileResponse)) func(*testing.T) {
+func crudActionCreateFile(_ *testing.T, ctx APITestContext, user *user_model.User, from, to, path string, callback ...func(*testing.T, api.FileResponse)) func(*testing.T) {
 	return doAPICreateFile(ctx, path, &api.CreateFileOptions{
 		FileOptions: api.FileOptions{
 			BranchName:    from,
@@ -281,7 +282,7 @@ func crudActionCreateFile(t *testing.T, ctx APITestContext, user *user_model.Use
 	}, callback...)
 }
 
-func importTestingKey(tmpDir, name, email string) (*openpgp.Entity, error) {
+func importTestingKey() (*openpgp.Entity, error) {
 	if _, _, err := process.GetManager().Exec("gpg --import tests/integration/private-testing.key", "gpg", "--import", "tests/integration/private-testing.key"); err != nil {
 		return nil, err
 	}

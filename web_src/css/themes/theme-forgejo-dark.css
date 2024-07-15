@@ -1,5 +1,7 @@
 @import "../chroma/dark.css";
 @import "../codemirror/dark.css";
+@import "../markup/dark.css";
+
 :root {
   --steel-900: #10161d;
   --steel-850: #131a21;
@@ -178,6 +180,10 @@
   --color-orange-badge-bg: #ea580c22;
   --color-orange-badge-hover-bg: #ea580c44;
   --color-git: #f05133;
+  /* Icon colors (PR/Issue/...) */
+  --color-icon-green: #3fb950;
+  --color-icon-red: #f85149;
+  --color-icon-purple: #aa76ff;
   /* target-based colors */
   --color-body: var(--steel-800);
   --color-box-header: var(--steel-700);
@@ -226,6 +232,8 @@
   --color-tooltip-bg: #000000f0;
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
+  --color-nav-text: var(--color-text);
+  --color-secondary-nav-bg: var(--color-body);
   --color-label-text: #fff;
   --color-label-bg: var(--steel-600);
   --color-label-hover-bg: var(--steel-550);
@@ -236,6 +244,9 @@
   --color-highlight-fg: var(--color-primary-light-4);
   --color-highlight-bg: var(--color-primary-alpha-20);
   --color-overlay-backdrop: #080808c0;
+  /* pattern colors for image diff */
+  --checkerboard-color-1: #474747;
+  --checkerboard-color-2: #313131;
   accent-color: var(--color-accent);
   color-scheme: dark;
 }
@@ -261,9 +272,6 @@
 .emoji[aria-label="musical note"],
 .emoji[aria-label="musical notes"] {
   filter: invert(100%) hue-rotate(180deg);
-}
-.text.green.svg {
-  color: var(--color-green-light) !important;
 }
 i.grey.icon.icon.icon.icon {
   color: var(--steel-350) !important;

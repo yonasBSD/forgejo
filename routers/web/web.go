@@ -39,6 +39,7 @@ import (
 	"code.gitea.io/gitea/routers/web/repo/badges"
 	repo_flags "code.gitea.io/gitea/routers/web/repo/flags"
 	repo_setting "code.gitea.io/gitea/routers/web/repo/setting"
+	"code.gitea.io/gitea/routers/web/shared/project"
 	"code.gitea.io/gitea/routers/web/user"
 	user_setting "code.gitea.io/gitea/routers/web/user/setting"
 	"code.gitea.io/gitea/routers/web/user/setting/security"
@@ -55,6 +56,8 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var GzipMinSize = gzhttp.DefaultMinSize
 
 // optionsCorsHandler return a http handler which sets CORS options if enabled by config, it blocks non-CORS OPTIONS requests.
 func optionsCorsHandler() func(next http.Handler) http.Handler {
@@ -97,14 +100,14 @@ func optionsCorsHandler() func(next http.Handler) http.Handler {
 // The Session plugin is expected to be executed second, in order to skip authentication
 // for users that have already signed in.
 func buildAuthGroup() *auth_service.Group {
-	group := auth_service.NewGroup(
-		&auth_service.OAuth2{}, // FIXME: this should be removed and only applied in download and oauth related routers
-		&auth_service.Basic{},  // FIXME: this should be removed and only applied in download and git/lfs routers
-		&auth_service.Session{},
-	)
+	group := auth_service.NewGroup()
+	group.Add(&auth_service.OAuth2{}) // FIXME: this should be removed and only applied in download and oauth related routers
+	group.Add(&auth_service.Basic{})  // FIXME: this should be removed and only applied in download and git/lfs routers
+
 	if setting.Service.EnableReverseProxyAuth {
-		group.Add(&auth_service.ReverseProxy{})
+		group.Add(&auth_service.ReverseProxy{}) // reverseproxy should before Session, otherwise the header will be ignored if user has login
 	}
+	group.Add(&auth_service.Session{})
 
 	if setting.IsWindows && auth_model.IsSSPIEnabled(db.DefaultContext) {
 		group.Add(&auth_service.SSPI{}) // it MUST be the last, see the comment of SSPI
@@ -241,7 +244,7 @@ func Routes() *web.Route {
 	var mid []any
 
 	if setting.EnableGzip {
-		wrapper, err := gzhttp.NewWrapper(gzhttp.RandomJitter(32, 0, false))
+		wrapper, err := gzhttp.NewWrapper(gzhttp.RandomJitter(32, 0, false), gzhttp.MinSize(GzipMinSize))
 		if err != nil {
 			log.Fatal("gzhttp.NewWrapper failed: %v", err)
 		}
@@ -662,6 +665,7 @@ func registerRoutes(m *web.Route) {
 			m.Get("", admin.Config)
 			m.Post("", admin.ChangeConfig)
 			m.Post("/test_mail", admin.SendTestMail)
+			m.Post("/test_cache", admin.TestCache)
 			m.Get("/settings", admin.ConfigSettings)
 		})
 
@@ -975,17 +979,18 @@ func registerRoutes(m *web.Route) {
 				m.Get("/new", org.RenderNewProject)
 				m.Post("/new", web.Bind(forms.CreateProjectForm{}), org.NewProjectPost)
 				m.Group("/{id}", func() {
-					m.Post("", web.Bind(forms.EditProjectBoardForm{}), org.AddBoardToProjectPost)
+					m.Post("", web.Bind(forms.EditProjectColumnForm{}), org.AddColumnToProjectPost)
+					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", org.DeleteProject)
 
 					m.Get("/edit", org.RenderEditProject)
 					m.Post("/edit", web.Bind(forms.CreateProjectForm{}), org.EditProjectPost)
 					m.Post("/{action:open|close}", org.ChangeProjectStatus)
 
-					m.Group("/{boardID}", func() {
-						m.Put("", web.Bind(forms.EditProjectBoardForm{}), org.EditProjectBoard)
-						m.Delete("", org.DeleteProjectBoard)
-						m.Post("/default", org.SetDefaultProjectBoard)
+					m.Group("/{columnID}", func() {
+						m.Put("", web.Bind(forms.EditProjectColumnForm{}), org.EditProjectColumn)
+						m.Delete("", org.DeleteProjectColumn)
+						m.Post("/default", org.SetDefaultProjectColumn)
 
 						m.Post("/move", org.MoveIssues)
 					})
@@ -1348,17 +1353,18 @@ func registerRoutes(m *web.Route) {
 				m.Get("/new", repo.RenderNewProject)
 				m.Post("/new", web.Bind(forms.CreateProjectForm{}), repo.NewProjectPost)
 				m.Group("/{id}", func() {
-					m.Post("", web.Bind(forms.EditProjectBoardForm{}), repo.AddBoardToProjectPost)
+					m.Post("", web.Bind(forms.EditProjectColumnForm{}), repo.AddColumnToProjectPost)
+					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", repo.DeleteProject)
 
 					m.Get("/edit", repo.RenderEditProject)
 					m.Post("/edit", web.Bind(forms.CreateProjectForm{}), repo.EditProjectPost)
 					m.Post("/{action:open|close}", repo.ChangeProjectStatus)
 
-					m.Group("/{boardID}", func() {
-						m.Put("", web.Bind(forms.EditProjectBoardForm{}), repo.EditProjectBoard)
-						m.Delete("", repo.DeleteProjectBoard)
-						m.Post("/default", repo.SetDefaultProjectBoard)
+					m.Group("/{columnID}", func() {
+						m.Put("", web.Bind(forms.EditProjectColumnForm{}), repo.EditProjectColumn)
+						m.Delete("", repo.DeleteProjectColumn)
+						m.Post("/default", repo.SetDefaultProjectColumn)
 
 						m.Post("/move", repo.MoveIssues)
 					})
@@ -1370,6 +1376,7 @@ func registerRoutes(m *web.Route) {
 			m.Get("", actions.List)
 			m.Post("/disable", reqRepoAdmin, actions.DisableWorkflowFile)
 			m.Post("/enable", reqRepoAdmin, actions.EnableWorkflowFile)
+			m.Post("/manual", reqRepoAdmin, actions.ManualRunWorkflow)
 
 			m.Group("/runs", func() {
 				m.Get("/latest", actions.ViewLatest)
@@ -1414,6 +1421,7 @@ func registerRoutes(m *web.Route) {
 		})
 
 		m.Group("/wiki", func() {
+			m.Get("/search", repo.WikiSearchContent)
 			m.Get("/raw/*", repo.WikiRaw)
 		}, repo.MustEnableWiki)
 
@@ -1569,11 +1577,17 @@ func registerRoutes(m *web.Route) {
 
 	m.Group("/{username}/{reponame}", func() {
 		if !setting.Repository.DisableStars {
-			m.Get("/stars", repo.Stars)
+			m.Get("/stars", context.RepoRef(), repo.Stars)
 		}
-		m.Get("/watchers", repo.Watchers)
-		m.Get("/search", reqRepoCodeReader, repo.Search)
-	}, ignSignIn, context.RepoAssignment, context.RepoRef(), context.UnitTypes())
+		m.Get("/watchers", context.RepoRef(), repo.Watchers)
+		m.Group("/search", func() {
+			m.Get("", context.RepoRef(), repo.Search)
+			if !setting.Indexer.RepoIndexerEnabled {
+				m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.Search)
+				m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.Search)
+			}
+		}, reqRepoCodeReader)
+	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
 
 	m.Group("/{username}", func() {
 		m.Group("/{reponame}", func() {

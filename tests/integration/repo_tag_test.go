@@ -50,12 +50,13 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	req := NewRequestf(t, "GET", "/%s/releases/tag/no-release", repo.FullName())
 	resp := MakeRequest(t, req, http.StatusOK)
 
-	// Test that the tags sub-menu is active
+	// Test that the tags sub-menu is active and has a counter
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	htmlDoc.AssertElement(t, ".small-menu-items .active.item[href*='/tags']", true)
+	tagsTab := htmlDoc.Find(".small-menu-items .active.item[href$='/tags']")
+	assert.Contains(t, tagsTab.Text(), "4 tags")
 
 	// Test that the release sub-menu isn't active
-	releaseLink := htmlDoc.Find(".small-menu-items .item[href*='/releases']")
+	releaseLink := htmlDoc.Find(".small-menu-items .item[href$='/releases']")
 	assert.False(t, releaseLink.HasClass("active"))
 
 	// Test that the title is displayed
@@ -72,22 +73,10 @@ func TestCreateNewTagProtected(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
-	t.Run("API", func(t *testing.T) {
+	t.Run("Code", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		err := release.CreateNewTag(git.DefaultContext, owner, repo, "master", "v-1", "first tag")
-		assert.NoError(t, err)
-
-		err = git_model.InsertProtectedTag(db.DefaultContext, &git_model.ProtectedTag{
-			RepoID:      repo.ID,
-			NamePattern: "v-*",
-		})
-		assert.NoError(t, err)
-		err = git_model.InsertProtectedTag(db.DefaultContext, &git_model.ProtectedTag{
-			RepoID:           repo.ID,
-			NamePattern:      "v-1.1",
-			AllowlistUserIDs: []int64{repo.OwnerID},
-		})
+		err := release.CreateNewTag(git.DefaultContext, owner, repo, "master", "t-first", "first tag")
 		assert.NoError(t, err)
 
 		err = release.CreateNewTag(git.DefaultContext, owner, repo, "master", "v-2", "second tag")
@@ -100,13 +89,12 @@ func TestCreateNewTagProtected(t *testing.T) {
 
 	t.Run("Git", func(t *testing.T) {
 		onGiteaRun(t, func(t *testing.T, u *url.URL) {
-			username := "user2"
-			httpContext := NewAPITestContext(t, username, "repo1")
+			httpContext := NewAPITestContext(t, owner.Name, repo.Name)
 
 			dstPath := t.TempDir()
 
 			u.Path = httpContext.GitPath()
-			u.User = url.UserPassword(username, userPassword)
+			u.User = url.UserPassword(owner.Name, userPassword)
 
 			doGitClone(dstPath, u)(t)
 
