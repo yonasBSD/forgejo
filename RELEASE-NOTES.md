@@ -20,7 +20,7 @@ $ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forg
 <!--start release-notes-assistant-->
 <!--URL:https://codeberg.org/forgejo/forgejo-->
 - **Breaking**
-  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3040)</a>: <!--number 3040 --><!--number--><!--description -->Remove Microsoft SQL Server support see [the discussion](https://codeberg.org/forgejo/discussions/issues/122)<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3040)</a>: <!--number 3040 --><!--number--><!--description -->remove Microsoft SQL Server support see [the discussion](https://codeberg.org/forgejo/discussions/issues/122).<!--description-->
 - **User interface features & enhancements**
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4201)</a>: <!--number 4201 --><!--number--><!--description Make tooltip of Author label in comments more clear-->make the tooltip of the author label in comments clearer.<!--description-->
   - [PR](https://codeberg.org/forgejo/forgejo/pulls/4189)</a>: <!--number 4189 --><!--number--><!--description User profiles: only show RSS feed button and Public activity tab when the activity can be accessed, add messages about visibility-->only show the RSS feed button and Public activity tab in user profiles when the activity can be accessed and add messages about visibility.<!--description-->
