@@ -607,13 +607,16 @@ func TestEmailTo(t *testing.T) {
 		mail     string
 		result   string
 	}{
-		{"Awareness Hub", "awareness@hub.net", "Awareness Hub <awareness@hub.net>"},
+		{"Awareness Hub", "awareness@hub.net", `"Awareness Hub" <awareness@hub.net>`},
 		{"name@example.com", "name@example.com", "name@example.com"},
-		{"Hi Its <Mee>", "ee@mail.box", "Hi Its Mee <ee@mail.box>"},
-		{"Sinéad.O'Connor", "sinead.oconnor@gmail.com", "=?utf-8?q?Sin=C3=A9ad.O'Connor?= <sinead.oconnor@gmail.com>"},
+		{"Hi Its <Mee>", "ee@mail.box", `"Hi Its Mee" <ee@mail.box>`},
+		{"Sinéad.O'Connor", "sinead.oconnor@gmail.com", "=?utf-8?b?U2luw6lhZC5PJ0Nvbm5vcg==?= <sinead.oconnor@gmail.com>"},
 		{"Æsir", "aesir@gmx.de", "=?utf-8?q?=C3=86sir?= <aesir@gmx.de>"},
 		{"new😀user", "new.user@alo.com", "=?utf-8?q?new=F0=9F=98=80user?= <new.user@alo.com>"},
-		{`"quoted"`, "quoted@test.com", "quoted <quoted@test.com>"},
+		{`"quoted"`, "quoted@test.com", `"quoted" <quoted@test.com>`},
+		{`gusted`, "gusted@test.com", `"gusted" <gusted@test.com>`},
+		{`Joe Q. Public`, "john.q.public@example.com", `"Joe Q. Public" <john.q.public@example.com>`},
+		{`Who?`, "one@y.test", `"Who?" <one@y.test>`},
 	}
 
 	for _, testCase := range testCases {

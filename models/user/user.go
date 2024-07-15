@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"mime"
 	"net/mail"
 	"net/url"
 	"path/filepath"
@@ -460,13 +459,12 @@ func (u *User) EmailTo() string {
 		return u.Email
 	}
 
-	to := fmt.Sprintf("%s <%s>", sanitizedDisplayName, u.Email)
-	add, err := mail.ParseAddress(to)
+	address, err := mail.ParseAddress(fmt.Sprintf("%s <%s>", sanitizedDisplayName, u.Email))
 	if err != nil {
 		return u.Email
 	}
 
-	return fmt.Sprintf("%s <%s>", mime.QEncoding.Encode("utf-8", add.Name), add.Address)
+	return address.String()
 }
 
 // GetDisplayName returns full name if it's not empty and DEFAULT_SHOW_FULL_NAME is set,
