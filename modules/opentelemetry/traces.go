@@ -5,13 +5,13 @@ import (
 	"crypto/tls"
 
 	"code.gitea.io/gitea/modules/setting"
-	"google.golang.org/grpc/credentials"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"google.golang.org/grpc/credentials"
 )
 
 func newGrpcExporter(ctx context.Context) (sdktrace.SpanExporter, error) {

@@ -12,6 +12,7 @@ import (
 
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
