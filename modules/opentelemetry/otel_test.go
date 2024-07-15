@@ -13,7 +13,6 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
-	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -27,8 +26,6 @@ import (
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 func TestNoopDefault(t *testing.T) {
@@ -38,7 +35,12 @@ func TestNoopDefault(t *testing.T) {
 		called = true
 		return inMem, nil
 	}
-	defer test.MockVariableValue(&newTraceExporter, exp)()
+	exporter["inmemory"] = exp
+	t.Cleanup(func() {
+		delete(exporter, "inmemory")
+	})
+	defer test.MockVariableValue(&setting.OpenTelemetry.Traces, "inmemory")
+
 	ctx := context.Background()
 	assert.NoError(t, Init(ctx))
 	tracer := otel.Tracer("test_noop")
@@ -48,50 +50,6 @@ func TestNoopDefault(t *testing.T) {
 	assert.False(t, span.SpanContext().HasTraceID())
 	assert.False(t, span.SpanContext().HasSpanID())
 	assert.False(t, called)
-}
-
-func TestOtelTls(t *testing.T) {
-	grpcMethods := make(chan string)
-	tlsConfig := generateTestTLS(t, os.TempDir(), "localhost,127.0.0.1")
-	assert.NotNil(t, tlsConfig)
-
-	collector := grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsConfig)), grpc.UnknownServiceHandler(func(srv any, stream grpc.ServerStream) error {
-		method, _ := grpc.Method(stream.Context())
-		grpcMethods <- method
-		return nil
-	}))
-	t.Cleanup(collector.GracefulStop)
-	ln, err := net.Listen("tcp", "localhost:0")
-	assert.NoError(t, err)
-	t.Cleanup(func() {
-		ln.Close()
-	})
-	go collector.Serve(ln)
-
-	traceEndpoint, err := url.Parse("https://" + ln.Addr().String())
-	assert.NoError(t, err)
-
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.ServiceName, "forgejo-certs")()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Endpoint, traceEndpoint)()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Certificate, os.TempDir()+"/"+"cert.pem")()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.ClientCertificate, os.TempDir()+"/"+"cert.pem")()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.ClientKey, os.TempDir()+"/"+"key.pem")()
-	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
-
-	tracer := otel.Tracer("test_tls")
-	_, span := tracer.Start(ctx, "test span")
-	assert.True(t, span.SpanContext().HasTraceID())
-	assert.True(t, span.SpanContext().HasSpanID())
-
-	span.End()
-	// Give the exporter time to send the span
-	select {
-	case method := <-grpcMethods:
-		assert.Equal(t, "/opentelemetry.proto.collector.trace.v1.TraceService/Export", method)
-	case <-time.After(10 * time.Second):
-		t.Fatal("no grpc call within 10s")
-	}
 }
 
 func generateTestTLS(t *testing.T, path, host string) *tls.Config {

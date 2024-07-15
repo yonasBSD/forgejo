@@ -30,7 +30,7 @@ func TestResourceServiceName(t *testing.T) {
 	}
 	assert.True(t, serviceKeyPresent)
 	serviceKeyPresent = false
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.ServiceName, "non-default value")()
+	defer test.MockVariableValue(&setting.OpenTelemetry.ServiceName, "non-default value")()
 	resource, err = newResource(ctx)
 	assert.NoError(t, err)
 	for _, v := range resource.Attributes() {
@@ -44,13 +44,13 @@ func TestResourceServiceName(t *testing.T) {
 
 func TestResourceAttributes(t *testing.T) {
 	ctx := context.Background()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.EnabledDecoders, "foo")()
-	defer test.MockProtect(&setting.OpenTelemetry.Resource.Attributes)()
-	setting.OpenTelemetry.Resource.Attributes = "Test=LABEL,broken,unescape=%XXlabel"
+	defer test.MockVariableValue(&setting.OpenTelemetry.ResourceDetectors, "foo")()
+	defer test.MockProtect(&setting.OpenTelemetry.ResourceAttributes)()
+	setting.OpenTelemetry.ResourceAttributes = "Test=LABEL,broken,unescape=%XXlabel"
 	res, err := newResource(ctx)
 	assert.NoError(t, err)
 	expected, err := resource.New(ctx, resource.WithAttributes(
-		semconv.ServiceName(setting.OpenTelemetry.Resource.ServiceName),
+		semconv.ServiceName(setting.OpenTelemetry.ServiceName),
 		semconv.ServiceVersion(setting.ForgejoVersion),
 		attribute.String("Test", "LABEL"),
 		attribute.String("unescape", "%XXlabel"),
@@ -61,12 +61,14 @@ func TestResourceAttributes(t *testing.T) {
 
 func TestDecoderParity(t *testing.T) {
 	ctx := context.Background()
-	defer test.MockProtect(&setting.OpenTelemetry.Resource.EnabledDecoders)()
-	setting.OpenTelemetry.Resource.EnabledDecoders = "all"
-	res, err := newResource(ctx)
+	defer test.MockVariableValue(&setting.OpenTelemetry.ResourceDetectors, "sdk,process,os,host")()
+	exp, err := resource.New(
+		ctx, resource.WithTelemetrySDK(), resource.WithOS(), resource.WithProcess(), resource.WithHost(), resource.WithAttributes(
+			semconv.ServiceName(setting.OpenTelemetry.ServiceName), semconv.ServiceVersion(setting.ForgejoVersion),
+		),
+	)
 	assert.NoError(t, err)
-	setting.OpenTelemetry.Resource.EnabledDecoders = "sdk,process,os,host"
 	res2, err := newResource(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, res, res2)
+	assert.Equal(t, exp, res2)
 }

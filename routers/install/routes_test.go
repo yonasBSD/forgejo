@@ -22,6 +22,7 @@ import (
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoutes(t *testing.T) {
@@ -57,11 +58,16 @@ func TestOtelChi(t *testing.T) {
 		t.Skip("TEST_OTEL_URL not set")
 	}
 	traceEndpoint, err := url.Parse(otelURL)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	config := &setting.OtelExporter{
+		Endpoint: traceEndpoint,
+		Protocol: "grpc",
+	}
 
-	defer test.MockVariableValue(&setting.OpenTelemetry.Resource.ServiceName, ServiceName)()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Endpoint, traceEndpoint)()
-	defer test.MockVariableValue(&setting.OpenTelemetry.Traces.Insecure, true)()
+	defer test.MockVariableValue(&setting.OpenTelemetry.Enabled, true)()
+	defer test.MockVariableValue(&setting.OpenTelemetry.Traces, "otlp")() // Required due to lazy loading
+	defer test.MockVariableValue(&setting.OpenTelemetry.ServiceName, ServiceName)()
+	defer test.MockVariableValue(&setting.OpenTelemetry.OtelTraces, config)()
 
 	assert.NoError(t, opentelemetry.Init(context.Background()))
 	r := Routes()

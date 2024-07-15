@@ -25,27 +25,19 @@ const (
 
 func newResource(ctx context.Context) (*resource.Resource, error) {
 	opts := []resource.Option{
-		resource.WithAttributes(parseSettingAttributes(setting.OpenTelemetry.Resource.Attributes)...),
+		resource.WithAttributes(parseSettingAttributes(setting.OpenTelemetry.ResourceAttributes)...),
 	}
 	opts = append(opts, parseDecoderOpts()...)
 	opts = append(opts, resource.WithAttributes(
-		semconv.ServiceName(setting.OpenTelemetry.Resource.ServiceName),
+		semconv.ServiceName(setting.OpenTelemetry.ServiceName),
 		semconv.ServiceVersion(setting.ForgejoVersion),
 	))
 	return resource.New(ctx, opts...)
 }
 
 func parseDecoderOpts() []resource.Option {
-	if setting.OpenTelemetry.Resource.EnabledDecoders == "all" {
-		return []resource.Option{
-			resource.WithTelemetrySDK(),
-			resource.WithProcess(),
-			resource.WithOS(),
-			resource.WithHost(),
-		}
-	}
 	var opts []resource.Option
-	for _, v := range strings.Split(setting.OpenTelemetry.Resource.EnabledDecoders, ",") {
+	for _, v := range strings.Split(setting.OpenTelemetry.ResourceDetectors, ",") {
 		switch v {
 		case decoderTelemetrySdk:
 			opts = append(opts, resource.WithTelemetrySDK())

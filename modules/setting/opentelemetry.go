@@ -17,6 +17,8 @@ import (
 
 const (
 	opentelemetrySectionName string = "opentelemetry"
+	exporter                 string = ".exporter"
+	otlp                     string = ".otlp"
 	alwaysOn                 string = "always_on"
 	alwaysOff                string = "always_off"
 	traceIDRatio             string = "traceidratio"
@@ -25,100 +27,110 @@ const (
 	parentBasedTraceIDRatio  string = "parentbased_traceidratio"
 )
 
-// Opentelemetry settings
-var (
-	OpenTelemetry = struct {
-		Traces   traceConfig
-		Resource resourceConfig
-	}{
-		Traces:   traceConfig{Timeout: 10 * time.Second},
-		Resource: resourceConfig{ServiceName: "forgejo", EnabledDecoders: "all"},
-	}
-	compressions = []string{"gzip", ""}
-)
+var OpenTelemetry = struct {
+	// Inverse of OTEL_SDK_DISABLE, skips telemetry setup
+	Enabled            bool
+	ServiceName        string
+	ResourceAttributes string
+	ResourceDetectors  string
+	Sampler            sdktrace.Sampler
+	Traces             string
 
-type traceConfig struct {
-	Endpoint          *url.URL // A base endpoint URL for any signal type, with an optionally-specified port number
-	Headers           map[string]string
-	Insecure          bool          // Disable TLS
-	Compression       string        // Supported value - ""/"gzip"
-	Timeout           time.Duration // The timeout value for all outgoing data
-	Sampler           sdktrace.Sampler
-	Certificate       string
-	ClientKey         string
-	ClientCertificate string
+	OtelTraces *OtelExporter
+}{
+	ServiceName: "forgejo",
+	Traces:      "otel",
 }
-type resourceConfig struct {
-	ServiceName     string // Value of the service.name resource attribute, defaults to APP_NAME in lowercase
-	Attributes      string // unprocessed attributes for the resource
-	EnabledDecoders string
+
+type OtelExporter struct {
+	Endpoint          *url.URL          `ini:"ENDPOINT"`
+	Headers           map[string]string `ini:"-"`
+	Compression       string            `ini:"COMPRESSION"`
+	Certificate       string            `ini:"CERTIFICATE"`
+	ClientKey         string            `ini:"CLIENT_KEY"`
+	ClientCertificate string            `ini:"CLIENT_CERTIFICATE"`
+	Timeout           time.Duration     `ini:"TIMEOUT"`
+	Protocol          string            `ini:"-"`
+}
+
+func createOtlpExporterConfig(rootCfg ConfigProvider, section string) *OtelExporter {
+	protocols := []string{"http/protobuf", "grpc"}
+	endpoint, _ := url.Parse("http://localhost:4318/")
+	exp := &OtelExporter{
+		Endpoint: endpoint,
+		Timeout:  10 * time.Second,
+		Headers:  map[string]string{},
+		Protocol: "http/protobuf",
+	}
+
+	loadSection := func(name string) {
+		otlp := rootCfg.Section(name)
+		if otlp.HasKey("ENDPOINT") {
+			endpoint, err := url.Parse(otlp.Key("ENDPOINT").String())
+			if err != nil {
+				log.Warn("Endpoint parsing failed, section: %s, err %v", name, err)
+			} else {
+				exp.Endpoint = endpoint
+			}
+		}
+		if err := otlp.MapTo(exp); err != nil {
+			log.Warn("Mapping otlp settings failed, section: %s, err: %v", name, err)
+		}
+
+		exp.Protocol = otlp.Key("PROTOCOL").In(exp.Protocol, protocols)
+
+		headers := otlp.Key("HEADERS").String()
+		if headers != "" {
+			for k, v := range _stringToHeader(headers) {
+				exp.Headers[k] = v
+			}
+		}
+	}
+	loadSection("opentelemetry.exporter.otlp")
+
+	loadSection("opentelemetry.exporter.otlp" + section)
+
+	if len(exp.Certificate) > 0 && !filepath.IsAbs(exp.Certificate) {
+		exp.Certificate = filepath.Join(CustomPath, exp.Certificate)
+	}
+	if len(exp.ClientCertificate) > 0 && !filepath.IsAbs(exp.ClientCertificate) {
+		exp.ClientCertificate = filepath.Join(CustomPath, exp.ClientCertificate)
+	}
+	if len(exp.ClientKey) > 0 && !filepath.IsAbs(exp.ClientKey) {
+		exp.ClientKey = filepath.Join(CustomPath, exp.ClientKey)
+	}
+
+	return exp
 }
 
 func loadOpenTelemetryFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section(opentelemetrySectionName)
-	loadResourceConfig(sec)
-	loadTraceConfig(sec)
-}
-
-func loadResourceConfig(sec ConfigSection) {
-	OpenTelemetry.Resource.ServiceName = sec.Key("SERVICE_NAME").MustString(OpenTelemetry.Resource.ServiceName)
-	OpenTelemetry.Resource.Attributes = sec.Key("RESOURCE_ATTRIBUTES").String()
-	OpenTelemetry.Resource.EnabledDecoders = sec.Key("ENABLE_DECODERS").MustString(OpenTelemetry.Resource.EnabledDecoders)
-	OpenTelemetry.Resource.EnabledDecoders = strings.ToLower(strings.TrimSpace(OpenTelemetry.Resource.EnabledDecoders))
-}
-
-func loadTraceConfig(rootSec ConfigSection) {
-	endpoint := rootSec.Key("EXPORTER_OTLP_ENDPOINT").String()
-
-	if endpoint == "" {
+	OpenTelemetry.Enabled = sec.Key("ENABLED").MustBool(false)
+	if !OpenTelemetry.Enabled {
 		return
 	}
 
-	if ep, err := url.Parse(endpoint); err == nil && ep.Host != "" {
-		OpenTelemetry.Traces.Endpoint = ep
-	} else if err != nil {
-		log.Warn("Otel trace endpoint parsing failure, err=%s", err)
-		return
-	} else {
-		log.Warn("Otel trace endpoint parsing failure, no host was detected")
-		return
-	}
+	// Load resource related settings
+	OpenTelemetry.ServiceName = sec.Key("SERVICE_NAME").MustString("forgejo")
+	OpenTelemetry.ResourceAttributes = sec.Key("RESOURCE_ATTRIBUTES").String()
+	OpenTelemetry.ResourceDetectors = strings.ToLower(sec.Key("RESOURCE_DETECTORS").String())
 
-	if OpenTelemetry.Traces.Endpoint.Scheme == "http" || OpenTelemetry.Traces.Endpoint.Scheme == "unix" {
-		OpenTelemetry.Traces.Insecure = true
-	}
-	OpenTelemetry.Traces.Insecure = rootSec.Key("EXPORTER_OTLP_INSECURE").MustBool(OpenTelemetry.Traces.Insecure)
-
-	OpenTelemetry.Traces.Compression = rootSec.Key("EXPORTER_OTLP_COMPRESSION").In(OpenTelemetry.Traces.Compression, compressions)
-
-	OpenTelemetry.Traces.Timeout = rootSec.Key("EXPORTER_OTLP_TIMEOUT").MustDuration(OpenTelemetry.Traces.Timeout)
+	// Load tracing related settings
 	samplers := make([]string, 0, len(sampler))
 	for k := range sampler {
 		samplers = append(samplers, k)
 	}
-	samplerName := rootSec.Key("TRACES_SAMPLER").In(parentBasedAlwaysOn, samplers)
-	samplerArg := rootSec.Key("TRACES_SAMPLER_ARG").MustString("")
-	OpenTelemetry.Traces.Sampler = sampler[samplerName](samplerArg)
 
-	OpenTelemetry.Traces.Headers = map[string]string{}
-	headers := rootSec.Key("EXPORTER_OTLP_HEADERS").String()
-	if headers != "" {
-		for k, v := range _stringToHeader(headers) {
-			OpenTelemetry.Traces.Headers[k] = v
-		}
-	}
+	samplerName := sec.Key("TRACES_SAMPLER").In(parentBasedAlwaysOn, samplers)
+	samplerArg := sec.Key("TRACES_SAMPLER_ARG").MustString("")
+	OpenTelemetry.Sampler = sampler[samplerName](samplerArg)
 
-	OpenTelemetry.Traces.Certificate = rootSec.Key("EXPORTER_OTLP_CERTIFICATE").String()
-	OpenTelemetry.Traces.ClientCertificate = rootSec.Key("EXPORTER_OTLP_CLIENT_CERTIFICATE").String()
-	OpenTelemetry.Traces.ClientKey = rootSec.Key("EXPORTER_OTLP_CLIENT_KEY").String()
-	if len(OpenTelemetry.Traces.Certificate) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.Certificate) {
-		OpenTelemetry.Traces.Certificate = filepath.Join(CustomPath, OpenTelemetry.Traces.Certificate)
-	}
-	if len(OpenTelemetry.Traces.ClientCertificate) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.ClientCertificate) {
-		OpenTelemetry.Traces.ClientCertificate = filepath.Join(CustomPath, OpenTelemetry.Traces.ClientCertificate)
-	}
-	if len(OpenTelemetry.Traces.ClientKey) > 0 && !filepath.IsAbs(OpenTelemetry.Traces.ClientKey) {
-		OpenTelemetry.Traces.ClientKey = filepath.Join(CustomPath, OpenTelemetry.Traces.ClientKey)
+	switch sec.Key("TRACES_EXPORTER").MustString("otlp") {
+	case "none":
+		OpenTelemetry.Traces = "none"
+	default:
+		OpenTelemetry.Traces = "otlp"
+		OpenTelemetry.OtelTraces = createOtlpExporterConfig(rootCfg, ".traces")
 	}
 }
 
@@ -183,5 +195,5 @@ func _stringToHeader(value string) map[string]string {
 }
 
 func IsOpenTelemetryEnabled() bool {
-	return OpenTelemetry.Traces.Endpoint != nil
+	return OpenTelemetry.Enabled
 }
