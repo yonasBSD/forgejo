@@ -437,7 +437,7 @@ func (c *Commit) GetBranchName() (string, error) {
 
 // GetAllBranches returns a slice with all branches that contains this commit
 func (c *Commit) GetAllBranches() ([]string, error) {
-	return c.repo.getBranches(c, 1)
+	return c.repo.getBranches(c, -1)
 }
 
 // CommitFileStatus represents status of files in a commit.
