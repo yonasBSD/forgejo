@@ -71,7 +71,7 @@ func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 				resp := MakeRequest(t, req, http.StatusOK)
 				var reviews []*api.PullReview
 				DecodeJSON(t, resp, &reviews)
-				require.EqualValues(t, count, len(reviews))
+				require.Len(t, reviews, count)
 			}
 
 			{

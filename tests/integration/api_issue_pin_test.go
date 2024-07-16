@@ -154,7 +154,7 @@ func TestAPIListPinnedIssues(t *testing.T) {
 	var issueList []api.Issue
 	DecodeJSON(t, resp, &issueList)
 
-	assert.Equal(t, 1, len(issueList))
+	assert.Len(t, issueList, 1)
 	assert.Equal(t, issue.ID, issueList[0].ID)
 }
 

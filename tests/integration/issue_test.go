@@ -204,7 +204,7 @@ func TestViewIssuesSearchOptions(t *testing.T) {
 			issue := getIssue(t, repo.ID, selection)
 			found[issue.ID] = true
 		})
-		assert.EqualValues(t, 2, len(found))
+		assert.Len(t, found, 2)
 		assert.True(t, found[1])
 		assert.True(t, found[5])
 	})

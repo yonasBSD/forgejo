@@ -25,11 +25,11 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		token, err := runMainApp("forgejo-cli", "actions", "generate-runner-token")
 		require.NoError(t, err)
-		assert.EqualValues(t, 40, len(token))
+		assert.Len(t, token, 40)
 
 		secret, err := runMainApp("forgejo-cli", "actions", "generate-secret")
 		require.NoError(t, err)
-		assert.EqualValues(t, 40, len(secret))
+		assert.Len(t, secret, 40)
 
 		_, err = runMainApp("forgejo-cli", "actions", "register")
 		var exitErr *exec.ExitError

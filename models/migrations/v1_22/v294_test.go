@@ -40,7 +40,7 @@ func Test_AddUniqueIndexForProjectIssue(t *testing.T) {
 
 	tables, err := x.DBMetas()
 	require.NoError(t, err)
-	assert.EqualValues(t, 1, len(tables))
+	assert.Len(t, tables, 1)
 	found := false
 	for _, index := range tables[0].Indexes {
 		if index.Type == schemas.UniqueType {

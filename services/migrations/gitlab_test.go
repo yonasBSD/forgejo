@@ -49,7 +49,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 
 	topics, err := downloader.GetTopics()
 	require.NoError(t, err)
-	assert.True(t, len(topics) == 2)
+	assert.Len(t, topics, 2)
 	assert.EqualValues(t, []string{"migration", "test"}, topics)
 
 	milestones, err := downloader.GetMilestones()
@@ -364,7 +364,7 @@ func TestGitlabSkippedIssueNumber(t *testing.T) {
 	assert.True(t, isEnd)
 
 	// the only issue in this repository has number 2
-	assert.EqualValues(t, 1, len(issues))
+	assert.Len(t, issues, 1)
 	assert.EqualValues(t, 2, issues[0].Number)
 	assert.EqualValues(t, "vpn unlimited errors", issues[0].Title)
 
@@ -373,7 +373,7 @@ func TestGitlabSkippedIssueNumber(t *testing.T) {
 	// the only merge request in this repository has number 1,
 	// but we offset it by the maximum issue number so it becomes
 	// pull request 3 in Forgejo
-	assert.EqualValues(t, 1, len(prs))
+	assert.Len(t, prs, 1)
 	assert.EqualValues(t, 3, prs[0].Number)
 	assert.EqualValues(t, "Review", prs[0].Title)
 }
