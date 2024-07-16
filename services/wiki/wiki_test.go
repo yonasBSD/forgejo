@@ -105,11 +105,11 @@ func TestGitPathToWebPath(t *testing.T) {
 		"wrongfileextension.txt",
 	} {
 		_, err := GitPathToWebPath(badFilename)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.True(t, repo_model.IsErrWikiInvalidFileName(err))
 	}
 	_, err := GitPathToWebPath("badescaping%%.md")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.False(t, repo_model.IsErrWikiInvalidFileName(err))
 }
 
@@ -183,7 +183,7 @@ func TestRepository_AddWikiPage(t *testing.T) {
 		t.Parallel()
 		// test for already-existing wiki name
 		err := AddWikiPage(git.DefaultContext, doer, repo, "Home", wikiContent, commitMsg)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.True(t, repo_model.IsErrWikiAlreadyExist(err))
 	})
 
@@ -191,7 +191,7 @@ func TestRepository_AddWikiPage(t *testing.T) {
 		t.Parallel()
 		// test for reserved wiki name
 		err := AddWikiPage(git.DefaultContext, doer, repo, "_edit", wikiContent, commitMsg)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.True(t, repo_model.IsErrWikiReservedName(err))
 	})
 }
@@ -224,7 +224,7 @@ func TestRepository_EditWikiPage(t *testing.T) {
 
 		if newWikiName != "Home" {
 			_, err := masterTree.GetTreeEntryByPath("Home.md")
-			assert.Error(t, err)
+			require.Error(t, err)
 		}
 		gitRepo.Close()
 	}
@@ -244,7 +244,7 @@ func TestRepository_DeleteWikiPage(t *testing.T) {
 	require.NoError(t, err)
 	gitPath := WebPathToGitPath("Home")
 	_, err = masterTree.GetTreeEntryByPath(gitPath)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestPrepareWikiFileName(t *testing.T) {

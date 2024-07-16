@@ -14,9 +14,9 @@ import (
 
 func TestDecodeJwtSecret(t *testing.T) {
 	_, err := DecodeJwtSecret("abcd")
-	assert.ErrorContains(t, err, "invalid base64 decoded length")
+	require.ErrorContains(t, err, "invalid base64 decoded length")
 	_, err = DecodeJwtSecret(strings.Repeat("a", 64))
-	assert.ErrorContains(t, err, "invalid base64 decoded length")
+	require.ErrorContains(t, err, "invalid base64 decoded length")
 
 	str32 := strings.Repeat("x", 32)
 	encoded32 := base64.RawURLEncoding.EncodeToString([]byte(str32))

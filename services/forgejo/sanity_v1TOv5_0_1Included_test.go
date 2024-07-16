@@ -11,7 +11,6 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/log"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -111,6 +110,6 @@ func verifyForgejoV1TOv5_0_1Included(t *testing.T, config, message string) {
 	} {
 		cfg := configFixture(t, testCase.config)
 		semver.SetVersionString(ctx, testCase.semver)
-		assert.ErrorContains(t, v1TOv5_0_1Included(e, testCase.dbVersion, cfg), message)
+		require.ErrorContains(t, v1TOv5_0_1Included(e, testCase.dbVersion, cfg), message)
 	}
 }

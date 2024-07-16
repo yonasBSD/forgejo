@@ -111,14 +111,14 @@ func TestAddEmailAddresses(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
-	assert.Error(t, AddEmailAddresses(db.DefaultContext, user, []string{" invalid email "}))
+	require.Error(t, AddEmailAddresses(db.DefaultContext, user, []string{" invalid email "}))
 
 	emails := []string{"user1234@example.com", "user5678@example.com"}
 
 	require.NoError(t, AddEmailAddresses(db.DefaultContext, user, emails))
 
 	err := AddEmailAddresses(db.DefaultContext, user, emails)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrEmailAlreadyUsed(err))
 }
 
@@ -130,7 +130,7 @@ func TestReplaceInactivePrimaryEmail(t *testing.T) {
 		UID:   9999999,
 	}
 	err := ReplaceInactivePrimaryEmail(db.DefaultContext, "user10@example.com", email)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrUserNotExist(err))
 
 	email = &user_model.EmailAddress{
@@ -155,13 +155,13 @@ func TestDeleteEmailAddresses(t *testing.T) {
 	require.NoError(t, err)
 
 	err = DeleteEmailAddresses(db.DefaultContext, user, emails)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrEmailAddressNotExist(err))
 
 	emails = []string{"user2@example.com"}
 
 	err = DeleteEmailAddresses(db.DefaultContext, user, emails)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrPrimaryEmailCannotDelete(err))
 }
 

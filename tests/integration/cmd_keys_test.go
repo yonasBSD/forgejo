@@ -43,7 +43,7 @@ func Test_CmdKeys(t *testing.T) {
 					t.Log(string(exitErr.Stderr))
 				}
 				if tt.wantErr {
-					assert.Error(t, err)
+					require.Error(t, err)
 				} else {
 					require.NoError(t, err)
 				}

@@ -39,7 +39,7 @@ func TestManager(t *testing.T) {
 DATADIR = temp-dir
 CONN_STR = redis://
 `)
-	assert.ErrorContains(t, err, "invalid leveldb connection string")
+	require.ErrorContains(t, err, "invalid leveldb connection string")
 
 	// test default config
 	q, err := newQueueFromConfig("default", "")

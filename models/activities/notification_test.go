@@ -104,9 +104,9 @@ func TestSetNotificationStatus(t *testing.T) {
 		&activities_model.Notification{ID: notf.ID, Status: activities_model.NotificationStatusPinned})
 
 	_, err = activities_model.SetNotificationStatus(db.DefaultContext, 1, user, activities_model.NotificationStatusRead)
-	assert.Error(t, err)
+	require.Error(t, err)
 	_, err = activities_model.SetNotificationStatus(db.DefaultContext, unittest.NonexistentID, user, activities_model.NotificationStatusRead)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestUpdateNotificationStatuses(t *testing.T) {

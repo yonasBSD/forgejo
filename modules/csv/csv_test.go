@@ -116,8 +116,8 @@ func (r *mockReader) Read(buf []byte) (int, error) {
 
 func TestDetermineDelimiterShortBufferError(t *testing.T) {
 	rd, err := CreateReaderAndDetermineDelimiter(nil, &mockReader{})
-	assert.Error(t, err, "CreateReaderAndDetermineDelimiter() should throw an error")
-	assert.ErrorIs(t, err, io.ErrShortBuffer)
+	require.Error(t, err, "CreateReaderAndDetermineDelimiter() should throw an error")
+	require.ErrorIs(t, err, io.ErrShortBuffer)
 	assert.Nil(t, rd, "CSV reader should be mnil")
 }
 
@@ -131,8 +131,8 @@ func TestDetermineDelimiterReadAllError(t *testing.T) {
 	require.NoError(t, err, "CreateReaderAndDetermineDelimiter() shouldn't throw error")
 	assert.NotNil(t, rd, "CSV reader should not be mnil")
 	rows, err := rd.ReadAll()
-	assert.Error(t, err, "RaadAll() should throw error")
-	assert.ErrorIs(t, err, csv.ErrFieldCount)
+	require.Error(t, err, "RaadAll() should throw error")
+	require.ErrorIs(t, err, csv.ErrFieldCount)
 	assert.Empty(t, rows, "rows should be empty")
 }
 
@@ -581,7 +581,7 @@ func TestFormatError(t *testing.T) {
 	for n, c := range cases {
 		message, err := FormatError(c.err, &translation.MockLocale{})
 		if c.expectsError {
-			assert.Error(t, err, "case %d: expected an error to be returned", n)
+			require.Error(t, err, "case %d: expected an error to be returned", n)
 		} else {
 			require.NoError(t, err, "case %d: no error was expected, got error: %v", n, err)
 			assert.EqualValues(t, c.expectedMessage, message, "case %d: messages should be equal, expected '%s' got '%s'", n, c.expectedMessage, message)

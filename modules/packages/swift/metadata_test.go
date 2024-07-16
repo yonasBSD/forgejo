@@ -40,7 +40,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, data.Size(), nil)
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrMissingManifestFile)
+		require.ErrorIs(t, err, ErrMissingManifestFile)
 	})
 
 	t.Run("ManifestFileTooLarge", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, data.Size(), nil)
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrManifestFileTooLarge)
+		require.ErrorIs(t, err, ErrManifestFileTooLarge)
 	})
 
 	t.Run("WithoutMetadata", func(t *testing.T) {

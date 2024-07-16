@@ -108,7 +108,7 @@ func TestGetWebhookByRepoID(t *testing.T) {
 	assert.Equal(t, int64(1), hook.ID)
 
 	_, err = GetWebhookByRepoID(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrWebhookNotExist(err))
 }
 
@@ -119,7 +119,7 @@ func TestGetWebhookByOwnerID(t *testing.T) {
 	assert.Equal(t, int64(3), hook.ID)
 
 	_, err = GetWebhookByOwnerID(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrWebhookNotExist(err))
 }
 
@@ -196,7 +196,7 @@ func TestDeleteWebhookByRepoID(t *testing.T) {
 	unittest.AssertNotExistsBean(t, &Webhook{ID: 2, RepoID: 1})
 
 	err := DeleteWebhookByRepoID(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrWebhookNotExist(err))
 }
 
@@ -207,7 +207,7 @@ func TestDeleteWebhookByOwnerID(t *testing.T) {
 	unittest.AssertNotExistsBean(t, &Webhook{ID: 3, OwnerID: 3})
 
 	err := DeleteWebhookByOwnerID(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrWebhookNotExist(err))
 }
 

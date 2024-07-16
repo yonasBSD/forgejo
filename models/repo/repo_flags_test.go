@@ -55,7 +55,7 @@ func TestRepositoryFlags(t *testing.T) {
 
 	// Adding it again fails
 	err = repo.AddFlag(db.DefaultContext, "foo")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Listing flags includes the one we added
 	flags, err = repo.ListFlags(db.DefaultContext)

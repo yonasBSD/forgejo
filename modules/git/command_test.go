@@ -29,11 +29,11 @@ func TestRunWithContextStd(t *testing.T) {
 
 	cmd = NewCommand(context.Background())
 	cmd.AddDynamicArguments("-test")
-	assert.ErrorIs(t, cmd.Run(&RunOpts{}), ErrBrokenCommand)
+	require.ErrorIs(t, cmd.Run(&RunOpts{}), ErrBrokenCommand)
 
 	cmd = NewCommand(context.Background())
 	cmd.AddDynamicArguments("--test")
-	assert.ErrorIs(t, cmd.Run(&RunOpts{}), ErrBrokenCommand)
+	require.ErrorIs(t, cmd.Run(&RunOpts{}), ErrBrokenCommand)
 
 	subCmd := "version"
 	cmd = NewCommand(context.Background()).AddDynamicArguments(subCmd) // for test purpose only, the sub-command should never be dynamic for production

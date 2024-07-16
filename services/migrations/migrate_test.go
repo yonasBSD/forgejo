@@ -12,7 +12,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +26,7 @@ func TestMigrateWhiteBlocklist(t *testing.T) {
 	require.NoError(t, Init())
 
 	err := IsMigrateURLAllowed("https://gitlab.com/gitlab/gitlab.git", nonAdminUser)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	err = IsMigrateURLAllowed("https://github.com/go-gitea/gitea.git", nonAdminUser)
 	require.NoError(t, err)
@@ -43,10 +42,10 @@ func TestMigrateWhiteBlocklist(t *testing.T) {
 	require.NoError(t, err)
 
 	err = IsMigrateURLAllowed("https://github.com/go-gitea/gitea.git", nonAdminUser)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	err = IsMigrateURLAllowed("https://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	setting.Migrations.AllowLocalNetworks = true
 	require.NoError(t, Init())
@@ -57,7 +56,7 @@ func TestMigrateWhiteBlocklist(t *testing.T) {
 	setting.ImportLocalPaths = false
 
 	err = IsMigrateURLAllowed("/home/foo/bar/goo", adminUser)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	setting.ImportLocalPaths = true
 	abs, err := filepath.Abs(".")
@@ -67,7 +66,7 @@ func TestMigrateWhiteBlocklist(t *testing.T) {
 	require.NoError(t, err)
 
 	err = IsMigrateURLAllowed(abs, nonAdminUser)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	nonAdminUser.AllowImportLocal = true
 	err = IsMigrateURLAllowed(abs, nonAdminUser)
@@ -87,7 +86,7 @@ func TestAllowBlockList(t *testing.T) {
 	// default, allow all external, block none, no local networks
 	init("", "", false)
 	require.NoError(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("1.2.3.4")}))
-	assert.Error(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("127.0.0.1")}))
+	require.Error(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("127.0.0.1")}))
 
 	// allow all including local networks (it could lead to SSRF in production)
 	init("", "", true)
@@ -98,8 +97,8 @@ func TestAllowBlockList(t *testing.T) {
 	init("*.domain.com", "blocked.domain.com", false)
 	require.NoError(t, checkByAllowBlockList("sub.domain.com", []net.IP{net.ParseIP("1.2.3.4")}))
 	require.NoError(t, checkByAllowBlockList("sub.domain.com", []net.IP{net.ParseIP("127.0.0.1")}))
-	assert.Error(t, checkByAllowBlockList("blocked.domain.com", []net.IP{net.ParseIP("1.2.3.4")}))
-	assert.Error(t, checkByAllowBlockList("sub.other.com", []net.IP{net.ParseIP("1.2.3.4")}))
+	require.Error(t, checkByAllowBlockList("blocked.domain.com", []net.IP{net.ParseIP("1.2.3.4")}))
+	require.Error(t, checkByAllowBlockList("sub.other.com", []net.IP{net.ParseIP("1.2.3.4")}))
 
 	// allow wildcard (it could lead to SSRF in production)
 	init("*", "", false)
@@ -109,7 +108,7 @@ func TestAllowBlockList(t *testing.T) {
 	// local network can still be blocked
 	init("*", "127.0.0.*", false)
 	require.NoError(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("1.2.3.4")}))
-	assert.Error(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("127.0.0.1")}))
+	require.Error(t, checkByAllowBlockList("domain.com", []net.IP{net.ParseIP("127.0.0.1")}))
 
 	// reset
 	init("", "", false)

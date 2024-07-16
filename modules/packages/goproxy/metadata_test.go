@@ -34,7 +34,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, int64(data.Len()))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidStructure)
+		require.ErrorIs(t, err, ErrInvalidStructure)
 	})
 
 	t.Run("InvalidNameOrVersionStructure", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, int64(data.Len()))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidStructure)
+		require.ErrorIs(t, err, ErrInvalidStructure)
 	})
 
 	t.Run("GoModFileInWrongDirectory", func(t *testing.T) {

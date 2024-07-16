@@ -59,7 +59,7 @@ func TestConvertHits(t *testing.T) {
 	_, err := convertHits(&meilisearch.SearchResponse{
 		Hits: []any{"aa", "bb", "cc", "dd"},
 	})
-	assert.ErrorIs(t, err, ErrMalformedResponse)
+	require.ErrorIs(t, err, ErrMalformedResponse)
 
 	validResponse := &meilisearch.SearchResponse{
 		Hits: []any{

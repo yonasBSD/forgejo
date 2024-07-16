@@ -40,17 +40,17 @@ func TestArchive_Basic(t *testing.T) {
 	// Check a series of bogus requests.
 	// Step 1, valid commit with a bad extension.
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".dilbert")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, bogusReq)
 
 	// Step 2, missing commit.
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, "dbffff.zip")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, bogusReq)
 
 	// Step 3, doesn't look like branch/tag/commit.
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, "db.zip")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, bogusReq)
 
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, "master.zip")

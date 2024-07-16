@@ -31,7 +31,7 @@ func TestNewContext(t *testing.T) {
 		Conn:     "false conf",
 		Interval: 100,
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, con)
 }
 
@@ -47,7 +47,7 @@ func TestGetString(t *testing.T) {
 	data, err := GetString("key", func() (string, error) {
 		return "", fmt.Errorf("some error")
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "", data)
 
 	data, err = GetString("key", func() (string, error) {
@@ -83,7 +83,7 @@ func TestGetInt(t *testing.T) {
 	data, err := GetInt("key", func() (int, error) {
 		return 0, fmt.Errorf("some error")
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, 0, data)
 
 	data, err = GetInt("key", func() (int, error) {
@@ -119,7 +119,7 @@ func TestGetInt64(t *testing.T) {
 	data, err := GetInt64("key", func() (int64, error) {
 		return 0, fmt.Errorf("some error")
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.EqualValues(t, 0, data)
 
 	data, err = GetInt64("key", func() (int64, error) {

@@ -57,11 +57,11 @@ func TestReadPatch(t *testing.T) {
 	defer repo.Close()
 	// This patch doesn't exist
 	noFile, err := repo.ReadPatchCommit(0)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// This patch is an empty one (sometimes it's a 404)
 	noCommit, err := repo.ReadPatchCommit(1)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// This patch is legit and should return a commit
 	oldCommit, err := repo.ReadPatchCommit(2)
@@ -96,7 +96,7 @@ func TestReadWritePullHead(t *testing.T) {
 
 	// Try to open non-existing Pull
 	_, err = repo.GetRefCommitID(PullPrefix + "0/head")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Write a fake sha1 with only 40 zeros
 	newCommit := "feaf4ba6bc635fec442f46ddd4512416ec43c2c2"

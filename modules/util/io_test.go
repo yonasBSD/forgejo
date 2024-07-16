@@ -53,7 +53,7 @@ func TestReadWithLimit(t *testing.T) {
 	assert.Equal(t, []byte("0123456789"), buf)
 
 	buf, err = readWithLimit(&readerWithError{bytes.NewBuffer(bs)}, 5, 100)
-	assert.ErrorContains(t, err, "test error")
+	require.ErrorContains(t, err, "test error")
 	assert.Empty(t, buf)
 
 	// test public function

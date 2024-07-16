@@ -10,7 +10,6 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/services/doctor"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
@@ -28,7 +27,7 @@ func TestDoctorRun(t *testing.T) {
 	err := app.Run([]string{"./gitea", "check", "--run", "test-check"})
 	require.NoError(t, err)
 	err = app.Run([]string{"./gitea", "check", "--run", "no-such"})
-	assert.ErrorContains(t, err, `unknown checks: "no-such"`)
+	require.ErrorContains(t, err, `unknown checks: "no-such"`)
 	err = app.Run([]string{"./gitea", "check", "--run", "test-check,no-such"})
-	assert.ErrorContains(t, err, `unknown checks: "no-such"`)
+	require.ErrorContains(t, err, `unknown checks: "no-such"`)
 }

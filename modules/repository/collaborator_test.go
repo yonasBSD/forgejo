@@ -44,14 +44,14 @@ func TestRepository_AddCollaborator_IsBlocked(t *testing.T) {
 
 		// Owner blocked user.
 		unittest.AssertSuccessfulInsert(t, &user_model.BlockedUser{UserID: repo.OwnerID, BlockID: userID})
-		assert.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
+		require.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
 		unittest.CheckConsistencyFor(t, &repo_model.Repository{ID: repoID}, &user_model.User{ID: userID})
 		_, err := db.DeleteByBean(db.DefaultContext, &user_model.BlockedUser{UserID: repo.OwnerID, BlockID: userID})
 		require.NoError(t, err)
 
 		// User has owner blocked.
 		unittest.AssertSuccessfulInsert(t, &user_model.BlockedUser{UserID: userID, BlockID: repo.OwnerID})
-		assert.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
+		require.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
 		unittest.CheckConsistencyFor(t, &repo_model.Repository{ID: repoID}, &user_model.User{ID: userID})
 	}
 	// Ensure idempotency (public repository).

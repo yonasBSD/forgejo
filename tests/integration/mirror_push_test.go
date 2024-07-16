@@ -83,7 +83,7 @@ func testMirrorPush(t *testing.T, u *url.URL) {
 
 	// ...then ensure that trying to get its remote address fails
 	_, err = repo_model.GetPushMirrorRemoteAddress(srcRepo.OwnerName, srcRepo.Name, mirrors[0].RemoteName)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// ...and that we can fix it.
 	err = doctor.FixPushMirrorsWithoutGitRemote(db.DefaultContext, nil, true)

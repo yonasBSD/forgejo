@@ -64,7 +64,7 @@ func TestHandleError(t *testing.T) {
 		require.NoError(t, err)
 		tmpl := template.New("test")
 		_, err = tmpl.Parse(s)
-		assert.Error(t, err)
+		require.Error(t, err)
 		msg := h(err)
 		assert.EqualValues(t, strings.TrimSpace(expect), strings.TrimSpace(msg))
 	}

@@ -47,7 +47,7 @@ func TestUserDeleteAvatar(t *testing.T) {
 		// fail to delete ...
 		storage.Avatars = storage.UninitializedStorage
 		err = DeleteAvatar(db.DefaultContext, user)
-		assert.Error(t, err)
+		require.Error(t, err)
 
 		// ... the avatar is not removed from the database
 		verification = unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})

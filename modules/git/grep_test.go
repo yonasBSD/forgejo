@@ -75,7 +75,7 @@ func TestGrepSearch(t *testing.T) {
 	assert.Empty(t, res)
 
 	res, err = GrepSearch(context.Background(), &Repository{Path: "no-such-git-repo"}, "no-such-content", GrepOptions{})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, res)
 }
 

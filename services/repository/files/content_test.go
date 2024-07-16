@@ -159,15 +159,14 @@ func TestGetContentsErrors(t *testing.T) {
 	t.Run("bad treePath", func(t *testing.T) {
 		badTreePath := "bad/tree.md"
 		fileContentResponse, err := GetContents(ctx, repo, badTreePath, ref, false)
-		assert.Error(t, err)
-		assert.EqualError(t, err, "object does not exist [id: , rel_path: bad]")
+		require.EqualError(t, err, "object does not exist [id: , rel_path: bad]")
 		assert.Nil(t, fileContentResponse)
 	})
 
 	t.Run("bad ref", func(t *testing.T) {
 		badRef := "bad_ref"
 		fileContentResponse, err := GetContents(ctx, repo, treePath, badRef, false)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.EqualError(t, err, "object does not exist [id: "+badRef+", rel_path: ]")
 		assert.Nil(t, fileContentResponse)
 	})
@@ -190,16 +189,14 @@ func TestGetContentsOrListErrors(t *testing.T) {
 	t.Run("bad treePath", func(t *testing.T) {
 		badTreePath := "bad/tree.md"
 		fileContentResponse, err := GetContentsOrList(ctx, repo, badTreePath, ref)
-		assert.Error(t, err)
-		assert.EqualError(t, err, "object does not exist [id: , rel_path: bad]")
+		require.EqualError(t, err, "object does not exist [id: , rel_path: bad]")
 		assert.Nil(t, fileContentResponse)
 	})
 
 	t.Run("bad ref", func(t *testing.T) {
 		badRef := "bad_ref"
 		fileContentResponse, err := GetContentsOrList(ctx, repo, treePath, badRef)
-		assert.Error(t, err)
-		assert.EqualError(t, err, "object does not exist [id: "+badRef+", rel_path: ]")
+		require.EqualError(t, err, "object does not exist [id: "+badRef+", rel_path: ]")
 		assert.Nil(t, fileContentResponse)
 	})
 }

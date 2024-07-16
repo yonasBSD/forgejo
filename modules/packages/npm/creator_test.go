@@ -35,14 +35,14 @@ func TestParsePackage(t *testing.T) {
 	t.Run("InvalidUpload", func(t *testing.T) {
 		p, err := ParsePackage(bytes.NewReader([]byte{0}))
 		assert.Nil(t, p)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("InvalidUploadNoData", func(t *testing.T) {
 		b, _ := json.Marshal(packageUpload{})
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidPackage)
+		require.ErrorIs(t, err, ErrInvalidPackage)
 	})
 
 	t.Run("InvalidPackageName", func(t *testing.T) {
@@ -61,7 +61,7 @@ func TestParsePackage(t *testing.T) {
 
 			p, err := ParsePackage(bytes.NewReader(b))
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidPackageName)
+			require.ErrorIs(t, err, ErrInvalidPackageName)
 		}
 
 		test(t, " test ")
@@ -100,7 +100,7 @@ func TestParsePackage(t *testing.T) {
 
 			p, err := ParsePackage(bytes.NewReader(b))
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidPackageVersion)
+			require.ErrorIs(t, err, ErrInvalidPackageVersion)
 		}
 
 		test(t, "test")
@@ -132,7 +132,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidPackageVersion)
+		require.ErrorIs(t, err, ErrInvalidPackageVersion)
 	})
 
 	t.Run("InvalidAttachment", func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidAttachment)
+		require.ErrorIs(t, err, ErrInvalidAttachment)
 	})
 
 	t.Run("InvalidData", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidAttachment)
+		require.ErrorIs(t, err, ErrInvalidAttachment)
 	})
 
 	t.Run("InvalidIntegrity", func(t *testing.T) {
@@ -207,7 +207,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidIntegrity)
+		require.ErrorIs(t, err, ErrInvalidIntegrity)
 	})
 
 	t.Run("InvalidIntegrity2", func(t *testing.T) {
@@ -235,7 +235,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidIntegrity)
+		require.ErrorIs(t, err, ErrInvalidIntegrity)
 	})
 
 	t.Run("Valid", func(t *testing.T) {

@@ -61,7 +61,7 @@ func TestGetCommitWithBadCommitID(t *testing.T) {
 
 	commit, err := bareRepo1.GetCommit("bad_branch")
 	assert.Nil(t, commit)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrNotExist(err))
 }
 

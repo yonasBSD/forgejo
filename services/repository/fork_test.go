@@ -29,7 +29,7 @@ func TestForkRepository(t *testing.T) {
 		Description: "test",
 	})
 	assert.Nil(t, fork)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, IsErrForkAlreadyExist(err))
 
 	// user not reached maximum limit of repositories

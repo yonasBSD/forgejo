@@ -136,7 +136,7 @@ func TestGetRepositoryByURL(t *testing.T) {
 		repo, err := repo_model.GetRepositoryByURL(db.DefaultContext, "something")
 
 		assert.Nil(t, repo)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("ValidHttpURL", func(t *testing.T) {

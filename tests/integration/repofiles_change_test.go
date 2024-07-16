@@ -489,7 +489,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts := getUpdateRepoFilesOptions(repo)
 			opts.OldBranch = "bad_branch"
 			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Nil(t, filesResponse)
 			expectedError := "branch does not exist [name: " + opts.OldBranch + "]"
 			assert.EqualError(t, err, expectedError)
@@ -501,7 +501,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts.Files[0].SHA = "bad_sha"
 			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 			assert.Nil(t, filesResponse)
-			assert.Error(t, err)
+			require.Error(t, err)
 			expectedError := "sha does not match [given: " + opts.Files[0].SHA + ", expected: " + origSHA + "]"
 			assert.EqualError(t, err, expectedError)
 		})
@@ -511,7 +511,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts.NewBranch = "develop"
 			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 			assert.Nil(t, filesResponse)
-			assert.Error(t, err)
+			require.Error(t, err)
 			expectedError := "branch already exists [name: " + opts.NewBranch + "]"
 			assert.EqualError(t, err, expectedError)
 		})
@@ -521,7 +521,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts.Files[0].TreePath = ""
 			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 			assert.Nil(t, filesResponse)
-			assert.Error(t, err)
+			require.Error(t, err)
 			expectedError := "path contains a malformed path component [path: ]"
 			assert.EqualError(t, err, expectedError)
 		})
@@ -531,7 +531,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts.Files[0].TreePath = ".git"
 			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 			assert.Nil(t, filesResponse)
-			assert.Error(t, err)
+			require.Error(t, err)
 			expectedError := "path contains a malformed path component [path: " + opts.Files[0].TreePath + "]"
 			assert.EqualError(t, err, expectedError)
 		})
@@ -541,7 +541,7 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			opts.Files[0].TreePath = "README.md" // already exists
 			fileResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 			assert.Nil(t, fileResponse)
-			assert.Error(t, err)
+			require.Error(t, err)
 			expectedError := "repository file already exists [path: " + opts.Files[0].TreePath + "]"
 			assert.EqualError(t, err, expectedError)
 		})

@@ -140,7 +140,7 @@ func TestDisableSaving(t *testing.T) {
 
 	cfg.DisableSaving()
 	err = cfg.Save()
-	assert.ErrorIs(t, err, errDisableSaving)
+	require.ErrorIs(t, err, errDisableSaving)
 
 	saveCfg, err := cfg.PrepareSaving()
 	require.NoError(t, err)

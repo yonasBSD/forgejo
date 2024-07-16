@@ -76,7 +76,7 @@ func TestWebhookProxy(t *testing.T) {
 
 			u, err := webhookProxy(allowedHostMatcher)(req)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				return
 			}
 

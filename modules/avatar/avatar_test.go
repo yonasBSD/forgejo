@@ -18,7 +18,7 @@ import (
 
 func Test_RandomImageSize(t *testing.T) {
 	_, err := RandomImageSize(0, []byte("gitea@local"))
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, err = RandomImageSize(64, []byte("gitea@local"))
 	require.NoError(t, err)
@@ -126,12 +126,12 @@ func Test_ProcessAvatarImage(t *testing.T) {
 	// do not support unknown image formats, eg: SVG may contain embedded JS
 	origin = []byte("<svg></svg>")
 	_, err = processAvatarImage(origin, 262144)
-	assert.ErrorContains(t, err, "image: unknown format")
+	require.ErrorContains(t, err, "image: unknown format")
 
 	// make sure the canvas size limit works
 	setting.Avatar.MaxWidth = 5
 	setting.Avatar.MaxHeight = 5
 	origin = newImgData(10)
 	_, err = processAvatarImage(origin, 262144)
-	assert.ErrorContains(t, err, "image width is too large: 10 > 5")
+	require.ErrorContains(t, err, "image width is too large: 10 > 5")
 }

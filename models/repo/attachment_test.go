@@ -58,7 +58,7 @@ func TestDeleteAttachments(t *testing.T) {
 	require.NoError(t, err)
 
 	attachment, err := repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, repo_model.IsErrAttachmentNotExist(err))
 	assert.Nil(t, attachment)
 }

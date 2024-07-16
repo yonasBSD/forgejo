@@ -32,7 +32,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(&buf)
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrMissingMetadataFile)
+		require.ErrorIs(t, err, ErrMissingMetadataFile)
 	})
 
 	t.Run("Valid", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestParseChefMetadata(t *testing.T) {
 		for _, name := range []string{" test", "test "} {
 			p, err := ParseChefMetadata(strings.NewReader(`{"name":"` + name + `","version":"1.0.0"}`))
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidName)
+			require.ErrorIs(t, err, ErrInvalidName)
 		}
 	})
 
@@ -75,7 +75,7 @@ func TestParseChefMetadata(t *testing.T) {
 		for _, version := range []string{"1", "1.2.3.4", "1.0.0 "} {
 			p, err := ParseChefMetadata(strings.NewReader(`{"name":"test","version":"` + version + `"}`))
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidVersion)
+			require.ErrorIs(t, err, ErrInvalidVersion)
 		}
 	})
 

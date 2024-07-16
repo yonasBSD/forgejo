@@ -136,7 +136,7 @@ func TestGogsDownloadRepo(t *testing.T) {
 
 	// downloader.GetPullRequests()
 	_, _, err = downloader.GetPullRequests(1, 3)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestGogsDownloaderFactory_New(t *testing.T) {

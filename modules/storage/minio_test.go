@@ -109,7 +109,7 @@ func TestS3StorageBadRequest(t *testing.T) {
 		}
 	}
 	_, err := NewStorage(setting.MinioStorageType, cfg)
-	assert.ErrorContains(t, err, message)
+	require.ErrorContains(t, err, message)
 }
 
 func TestMinioCredentials(t *testing.T) {

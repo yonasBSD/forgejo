@@ -25,11 +25,11 @@ func TestEval(t *testing.T) {
 	assert.True(t, math.IsNaN(n.Value.(float64)))
 
 	_, err = Expr(nil)
-	assert.ErrorContains(t, err, "unsupported token type")
+	require.ErrorContains(t, err, "unsupported token type")
 	_, err = Expr([]string{})
-	assert.ErrorContains(t, err, "unsupported token type")
+	require.ErrorContains(t, err, "unsupported token type")
 	_, err = Expr(struct{}{})
-	assert.ErrorContains(t, err, "unsupported token type")
+	require.ErrorContains(t, err, "unsupported token type")
 
 	cases := []struct {
 		expr string
@@ -89,6 +89,6 @@ func TestEval(t *testing.T) {
 	}
 	for _, c := range bads {
 		_, err = Expr(tokens(c.expr)...)
-		assert.ErrorContains(t, err, c.errMsg, "expr: %s", c.expr)
+		require.ErrorContains(t, err, c.errMsg, "expr: %s", c.expr)
 	}
 }

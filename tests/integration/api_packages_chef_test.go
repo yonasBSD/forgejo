@@ -106,7 +106,7 @@ nwIDAQAB
 				SetHeader("X-Ops-Userid", "not-existing-user")
 			u, err := auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 		})
 
 		t.Run("Timestamp", func(t *testing.T) {
@@ -116,12 +116,12 @@ nwIDAQAB
 				SetHeader("X-Ops-Userid", user.Name)
 			u, err := auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			req.SetHeader("X-Ops-Timestamp", "2023-01-01T00:00:00Z")
 			u, err = auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 		})
 
 		t.Run("SigningVersion", func(t *testing.T) {
@@ -132,27 +132,27 @@ nwIDAQAB
 				SetHeader("X-Ops-Timestamp", time.Now().UTC().Format(time.RFC3339))
 			u, err := auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			req.SetHeader("X-Ops-Sign", "version=none")
 			u, err = auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			req.SetHeader("X-Ops-Sign", "version=1.4")
 			u, err = auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			req.SetHeader("X-Ops-Sign", "version=1.0;algorithm=sha2")
 			u, err = auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			req.SetHeader("X-Ops-Sign", "version=1.0;algorithm=sha256")
 			u, err = auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 		})
 
 		t.Run("SignedHeaders", func(t *testing.T) {
@@ -168,7 +168,7 @@ nwIDAQAB
 				SetHeader("X-Ops-Authorization-4", "dummy")
 			u, err := auth.Verify(req.Request, nil, nil, nil)
 			assert.Nil(t, u)
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			signRequest := func(rw *RequestWrapper, version string) {
 				req := rw.Request
@@ -541,7 +541,7 @@ nwIDAQAB
 
 			pv, err := packages.GetVersionByNameAndVersion(db.DefaultContext, user.ID, packages.TypeChef, packageName, "1.0.2")
 			assert.Nil(t, pv)
-			assert.Error(t, err)
+			require.Error(t, err)
 		})
 
 		t.Run("Package", func(t *testing.T) {

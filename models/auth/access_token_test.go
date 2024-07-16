@@ -28,7 +28,7 @@ func TestNewAccessToken(t *testing.T) {
 		UID:  2,
 		Name: "Token F",
 	}
-	assert.Error(t, auth_model.NewAccessToken(db.DefaultContext, invalidToken))
+	require.Error(t, auth_model.NewAccessToken(db.DefaultContext, invalidToken))
 }
 
 func TestAccessTokenByNameExists(t *testing.T) {
@@ -76,11 +76,11 @@ func TestGetAccessTokenBySHA(t *testing.T) {
 	assert.Equal(t, "e4efbf36", token.TokenLastEight)
 
 	_, err = auth_model.GetAccessTokenBySHA(db.DefaultContext, "notahash")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, auth_model.IsErrAccessTokenNotExist(err))
 
 	_, err = auth_model.GetAccessTokenBySHA(db.DefaultContext, "")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, auth_model.IsErrAccessTokenEmpty(err))
 }
 
@@ -128,6 +128,6 @@ func TestDeleteAccessTokenByID(t *testing.T) {
 	unittest.AssertNotExistsBean(t, token)
 
 	err = auth_model.DeleteAccessTokenByID(db.DefaultContext, 100, 100)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, auth_model.IsErrAccessTokenNotExist(err))
 }

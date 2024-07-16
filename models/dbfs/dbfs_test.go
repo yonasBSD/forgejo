@@ -100,7 +100,7 @@ func TestDbfsBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = OpenFile(db.DefaultContext, "test.txt", os.O_RDONLY)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	f, err = OpenFile(db.DefaultContext, "test2.txt", os.O_RDONLY)
 	require.NoError(t, err)
@@ -111,7 +111,7 @@ func TestDbfsBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = OpenFile(db.DefaultContext, "test2.txt", os.O_RDONLY)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// test stat
 	f, err = OpenFile(db.DefaultContext, "test/test.txt", os.O_RDWR|os.O_CREATE)
@@ -147,7 +147,7 @@ func TestDbfsReadWrite(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, "line 1\n", line)
 	_, err = f2r.ReadString('\n')
-	assert.ErrorIs(t, err, io.EOF)
+	require.ErrorIs(t, err, io.EOF)
 
 	_, err = f1.Write([]byte("line 2\n"))
 	require.NoError(t, err)
@@ -156,7 +156,7 @@ func TestDbfsReadWrite(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, "line 2\n", line)
 	_, err = f2r.ReadString('\n')
-	assert.ErrorIs(t, err, io.EOF)
+	require.ErrorIs(t, err, io.EOF)
 }
 
 func TestDbfsSeekWrite(t *testing.T) {

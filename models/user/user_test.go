@@ -319,7 +319,7 @@ func TestCreateUserInvalidEmail(t *testing.T) {
 	}
 
 	err := user_model.CreateUser(db.DefaultContext, user)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrEmailCharIsNotSupported(err))
 }
 
@@ -333,7 +333,7 @@ func TestCreateUserEmailAlreadyUsed(t *testing.T) {
 	user.LowerName = strings.ToLower(user.Name)
 	user.ID = 0
 	err := user_model.CreateUser(db.DefaultContext, user)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrEmailAlreadyUsed(err))
 }
 
@@ -399,7 +399,7 @@ func TestGetUserIDsByNames(t *testing.T) {
 
 	// ignore non existing
 	IDs, err = user_model.GetUserIDsByNames(db.DefaultContext, []string{"user1", "do_not_exist"}, false)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, []int64(nil), IDs)
 }
 
@@ -501,8 +501,8 @@ func TestFollowUser(t *testing.T) {
 	require.NoError(t, user_model.FollowUser(db.DefaultContext, 2, 2))
 
 	// Blocked user.
-	assert.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 1, 4))
-	assert.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 4, 1))
+	require.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 1, 4))
+	require.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 4, 1))
 	unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: 1, FollowID: 4})
 	unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: 4, FollowID: 1})
 
@@ -630,7 +630,7 @@ func Test_NormalizeUserFromEmail(t *testing.T) {
 		if testCase.IsNormalizedValid {
 			require.NoError(t, user_model.IsUsableUsername(normalizedName))
 		} else {
-			assert.Error(t, user_model.IsUsableUsername(normalizedName))
+			require.Error(t, user_model.IsUsableUsername(normalizedName))
 		}
 	}
 }

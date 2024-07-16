@@ -81,7 +81,7 @@ func TestCreateNewTagProtected(t *testing.T) {
 		require.NoError(t, err)
 
 		err = release.CreateNewTag(git.DefaultContext, owner, repo, "master", "v-2", "second tag")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.True(t, models.IsErrProtectedTagName(err))
 
 		err = release.CreateNewTag(git.DefaultContext, owner, repo, "master", "v-1.1", "third tag")
@@ -103,7 +103,7 @@ func TestCreateNewTagProtected(t *testing.T) {
 			require.NoError(t, err)
 
 			_, _, err = git.NewCommand(git.DefaultContext, "push", "--tags").RunStdString(&git.RunOpts{Dir: dstPath})
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Contains(t, err.Error(), "Tag v-2 is protected")
 		})
 	})

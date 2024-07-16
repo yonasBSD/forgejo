@@ -101,7 +101,7 @@ func TestTotalTimesForEachUser(t *testing.T) {
 		} else if user.ID == 1 {
 			assert.EqualValues(t, 20, time)
 		} else {
-			assert.Error(t, assert.AnError)
+			require.Error(t, assert.AnError)
 		}
 	}
 

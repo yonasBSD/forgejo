@@ -49,7 +49,7 @@ func TestFileURLToPath(t *testing.T) {
 		u, _ := url.Parse(c.url)
 		p, err := FileURLToPath(u)
 		if c.haserror {
-			assert.Error(t, err, "case %d: should return error", n)
+			require.Error(t, err, "case %d: should return error", n)
 		} else {
 			require.NoError(t, err, "case %d: should not return error", n)
 			assert.Equal(t, c.expected, p, "case %d: should be equal", n)

@@ -47,7 +47,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := parsePackageTar(buf)
 		assert.Nil(t, p)
-		assert.ErrorIs(t, err, ErrInvalidStructure)
+		require.ErrorIs(t, err, ErrInvalidStructure)
 	})
 
 	t.Run("MissingAboutFile", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestParsePackage(t *testing.T) {
 
 			p, err := parsePackageTar(buf)
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidName)
+			require.ErrorIs(t, err, ErrInvalidName)
 		}
 	})
 
@@ -78,7 +78,7 @@ func TestParsePackage(t *testing.T) {
 
 			p, err := parsePackageTar(buf)
 			assert.Nil(t, p)
-			assert.ErrorIs(t, err, ErrInvalidVersion)
+			require.ErrorIs(t, err, ErrInvalidVersion)
 		}
 	})
 

@@ -95,7 +95,7 @@ func TestRepositoryTransfer(t *testing.T) {
 	require.NoError(t, CancelRepositoryTransfer(db.DefaultContext, repo))
 
 	transfer, err = models.GetPendingRepositoryTransfer(db.DefaultContext, repo)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, transfer)
 	assert.True(t, models.IsErrNoPendingTransfer(err))
 
@@ -112,12 +112,12 @@ func TestRepositoryTransfer(t *testing.T) {
 
 	// Only transfer can be started at any given time
 	err = models.CreatePendingRepositoryTransfer(db.DefaultContext, doer, org6, repo.ID, nil)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, models.IsErrRepoTransferInProgress(err))
 
 	// Unknown user
 	err = models.CreatePendingRepositoryTransfer(db.DefaultContext, doer, &user_model.User{ID: 1000, LowerName: "user1000"}, repo.ID, nil)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Cancel transfer
 	require.NoError(t, CancelRepositoryTransfer(db.DefaultContext, repo))

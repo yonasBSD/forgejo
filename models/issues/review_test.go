@@ -24,7 +24,7 @@ func TestGetReviewByID(t *testing.T) {
 	assert.Equal(t, issues_model.ReviewTypeApprove, review.Type)
 
 	_, err = issues_model.GetReviewByID(db.DefaultContext, 23892)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrReviewNotExist(err), "IsErrReviewNotExist")
 }
 
@@ -36,10 +36,10 @@ func TestReview_LoadAttributes(t *testing.T) {
 	assert.NotNil(t, review.Reviewer)
 
 	invalidReview1 := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 2})
-	assert.Error(t, invalidReview1.LoadAttributes(db.DefaultContext))
+	require.Error(t, invalidReview1.LoadAttributes(db.DefaultContext))
 
 	invalidReview2 := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 3})
-	assert.Error(t, invalidReview2.LoadAttributes(db.DefaultContext))
+	require.Error(t, invalidReview2.LoadAttributes(db.DefaultContext))
 }
 
 func TestReview_LoadCodeComments(t *testing.T) {
@@ -98,7 +98,7 @@ func TestGetCurrentReview(t *testing.T) {
 
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 7})
 	review2, err := issues_model.GetCurrentReview(db.DefaultContext, user2, issue)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrReviewNotExist(err))
 	assert.Nil(t, review2)
 }
@@ -253,7 +253,7 @@ func TestDeleteReview(t *testing.T) {
 	require.NoError(t, issues_model.DeleteReview(db.DefaultContext, review2))
 
 	_, err = issues_model.GetReviewByID(db.DefaultContext, review2.ID)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrReviewNotExist(err), "IsErrReviewNotExist")
 
 	review1, err = issues_model.GetReviewByID(db.DefaultContext, review1.ID)
@@ -309,13 +309,13 @@ func TestAddReviewRequest(t *testing.T) {
 	require.NoError(t, pull.UpdateCols(db.DefaultContext, "has_merged"))
 	issue.IsClosed = true
 	_, err = issues_model.AddReviewRequest(db.DefaultContext, issue, reviewer, &user_model.User{})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrReviewRequestOnClosedPR(err))
 
 	pull.HasMerged = true
 	require.NoError(t, pull.UpdateCols(db.DefaultContext, "has_merged"))
 	issue.IsClosed = false
 	_, err = issues_model.AddReviewRequest(db.DefaultContext, issue, reviewer, &user_model.User{})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrReviewRequestOnClosedPR(err))
 }

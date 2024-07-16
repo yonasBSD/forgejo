@@ -85,7 +85,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, cp)
-		assert.ErrorIs(t, err, ErrMissingComposerFile)
+		require.ErrorIs(t, err, ErrMissingComposerFile)
 	})
 
 	t.Run("MissingComposerFileInRoot", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, cp)
-		assert.ErrorIs(t, err, ErrMissingComposerFile)
+		require.ErrorIs(t, err, ErrMissingComposerFile)
 	})
 
 	t.Run("InvalidComposerFile", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, cp)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("InvalidPackageName", func(t *testing.T) {
@@ -109,7 +109,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, cp)
-		assert.ErrorIs(t, err, ErrInvalidName)
+		require.ErrorIs(t, err, ErrInvalidName)
 	})
 
 	t.Run("InvalidPackageVersion", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, cp)
-		assert.ErrorIs(t, err, ErrInvalidVersion)
+		require.ErrorIs(t, err, ErrInvalidVersion)
 	})
 
 	t.Run("InvalidReadmePath", func(t *testing.T) {

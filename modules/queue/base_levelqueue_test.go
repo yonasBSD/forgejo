@@ -17,10 +17,10 @@ import (
 
 func TestBaseLevelDB(t *testing.T) {
 	_, err := newBaseLevelQueueGeneric(&BaseConfig{ConnStr: "redis://"}, false)
-	assert.ErrorContains(t, err, "invalid leveldb connection string")
+	require.ErrorContains(t, err, "invalid leveldb connection string")
 
 	_, err = newBaseLevelQueueGeneric(&BaseConfig{DataFullDir: "relative"}, false)
-	assert.ErrorContains(t, err, "invalid leveldb data dir")
+	require.ErrorContains(t, err, "invalid leveldb data dir")
 
 	testQueueBasic(t, newBaseLevelQueueSimple, toBaseConfig("baseLevelQueue", setting.QueueSettings{Datadir: t.TempDir() + "/queue-test", Length: 10}), false)
 	testQueueBasic(t, newBaseLevelQueueUnique, toBaseConfig("baseLevelQueueUnique", setting.QueueSettings{ConnStr: "leveldb://" + t.TempDir() + "/queue-test", Length: 10}), true)
@@ -55,7 +55,7 @@ func TestCorruptedLevelQueue(t *testing.T) {
 	require.NoError(t, db.Delete(itemKey, nil))
 	// now the queue is corrupted, it never works again
 	_, err = lq.LPop()
-	assert.ErrorIs(t, err, levelqueue.ErrNotFound)
+	require.ErrorIs(t, err, levelqueue.ErrNotFound)
 	require.NoError(t, lq.Close())
 
 	// remove all the queue related keys to reset the queue

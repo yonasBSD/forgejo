@@ -37,10 +37,10 @@ func TestBasicAuthDecode(t *testing.T) {
 	assert.Equal(t, "bar", pass)
 
 	_, _, err = BasicAuthDecode("aW52YWxpZA==")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, _, err = BasicAuthDecode("invalid")
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestVerifyTimeLimitCode(t *testing.T) {
@@ -154,7 +154,7 @@ func TestStringsToInt64s(t *testing.T) {
 
 	ints, err := StringsToInt64s([]string{"-1", "a"})
 	assert.Empty(t, ints)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestInt64sToStrings(t *testing.T) {

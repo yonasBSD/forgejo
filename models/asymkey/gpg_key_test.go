@@ -191,9 +191,9 @@ Unknown GPG key with good email
 	err = verifySign(goodSig, goodHash, key)
 	require.NoError(t, err, "Could not validate a good signature")
 	err = verifySign(badSig, badHash, key)
-	assert.Error(t, err, "Validate a bad signature")
+	require.Error(t, err, "Validate a bad signature")
 	err = verifySign(goodSig, goodHash, cannotsignkey)
-	assert.Error(t, err, "Validate a bad signature with a kay that can not sign")
+	require.Error(t, err, "Validate a bad signature with a kay that can not sign")
 }
 
 func TestCheckGPGUserEmail(t *testing.T) {

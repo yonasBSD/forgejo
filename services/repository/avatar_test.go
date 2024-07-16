@@ -42,7 +42,7 @@ func TestUploadBigAvatar(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 10})
 
 	err := UploadAvatar(db.DefaultContext, repo, buff.Bytes())
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestDeleteAvatar(t *testing.T) {

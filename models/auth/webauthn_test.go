@@ -23,7 +23,7 @@ func TestGetWebAuthnCredentialByID(t *testing.T) {
 	assert.Equal(t, "WebAuthn credential", res.Name)
 
 	_, err = auth_model.GetWebAuthnCredentialByID(db.DefaultContext, 342432)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, auth_model.IsErrWebAuthnCredentialNotExist(err))
 }
 

@@ -36,7 +36,7 @@ func TestDismissReview(t *testing.T) {
 	require.NoError(t, issues_model.UpdateIssueCols(db.DefaultContext, issue, "is_closed"))
 	require.NoError(t, pull.UpdateCols(db.DefaultContext, "has_merged"))
 	_, err = pull_service.DismissReview(db.DefaultContext, review.ID, issue.RepoID, "", &user_model.User{}, false, false)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, pull_service.IsErrDismissRequestOnClosedPR(err))
 
 	pull.HasMerged = true
@@ -44,6 +44,6 @@ func TestDismissReview(t *testing.T) {
 	require.NoError(t, issues_model.UpdateIssueCols(db.DefaultContext, issue, "is_closed"))
 	require.NoError(t, pull.UpdateCols(db.DefaultContext, "has_merged"))
 	_, err = pull_service.DismissReview(db.DefaultContext, review.ID, issue.RepoID, "", &user_model.User{}, false, false)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, pull_service.IsErrDismissRequestOnClosedPR(err))
 }

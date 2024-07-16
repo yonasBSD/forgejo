@@ -51,7 +51,7 @@ func TestGarbageCollectLFSMetaObjects(t *testing.T) {
 
 	// lfs meta has been deleted
 	_, err = git_model.GetLFSMetaObjectByOid(db.DefaultContext, repo.ID, lfsOid)
-	assert.ErrorIs(t, err, git_model.ErrLFSObjectNotExist)
+	require.ErrorIs(t, err, git_model.ErrLFSObjectNotExist)
 
 	remainingLFSObjects, err := db.GetEngine(db.DefaultContext).Count(git_model.LFSMetaObject{RepositoryID: repo.ID})
 	require.NoError(t, err)

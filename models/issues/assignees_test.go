@@ -79,7 +79,7 @@ func TestMakeIDsFromAPIAssigneesToAdd(t *testing.T) {
 	assert.Equal(t, []int64{}, IDs)
 
 	_, err = issues_model.MakeIDsFromAPIAssigneesToAdd(db.DefaultContext, "", []string{"none_existing_user"})
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	IDs, err = issues_model.MakeIDsFromAPIAssigneesToAdd(db.DefaultContext, "user1", []string{"user1"})
 	require.NoError(t, err)

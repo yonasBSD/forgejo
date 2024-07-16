@@ -52,7 +52,7 @@ func TestParsePackage(t *testing.T) {
 
 			cp, err := ParsePackage(data)
 			assert.Nil(t, cp)
-			assert.ErrorIs(t, err, ErrInvalidName)
+			require.ErrorIs(t, err, ErrInvalidName)
 		}
 	})
 
@@ -62,7 +62,7 @@ func TestParsePackage(t *testing.T) {
 
 			cp, err := ParsePackage(data)
 			assert.Nil(t, cp)
-			assert.ErrorIs(t, err, ErrInvalidVersion)
+			require.ErrorIs(t, err, ErrInvalidVersion)
 		}
 	})
 

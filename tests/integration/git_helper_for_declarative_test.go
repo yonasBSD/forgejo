@@ -114,7 +114,7 @@ func doGitCloneFail(u *url.URL) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
 		tmpDir := t.TempDir()
-		assert.Error(t, git.Clone(git.DefaultContext, u.String(), tmpDir, git.CloneRepoOptions{}))
+		require.Error(t, git.Clone(git.DefaultContext, u.String(), tmpDir, git.CloneRepoOptions{}))
 		exist, err := util.IsExist(filepath.Join(tmpDir, "README.md"))
 		require.NoError(t, err)
 		assert.False(t, exist)
@@ -164,7 +164,7 @@ func doGitPushTestRepositoryFail(dstPath string, args ...string) func(*testing.T
 	return func(t *testing.T) {
 		t.Helper()
 		_, _, err := git.NewCommand(git.DefaultContext, "push").AddArguments(git.ToTrustedCmdArgs(args)...).RunStdString(&git.RunOpts{Dir: dstPath})
-		assert.Error(t, err)
+		require.Error(t, err)
 	}
 }
 

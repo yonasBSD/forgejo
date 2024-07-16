@@ -123,6 +123,6 @@ func Test_NewColumn(t *testing.T) {
 		Title:     "column-21",
 		ProjectID: project1.ID,
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "maximum number of columns reached"))
 }

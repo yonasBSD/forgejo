@@ -61,7 +61,7 @@ func TestPktLine(t *testing.T) {
 		s = strings.NewReader("0004")
 		r = bufio.NewReader(s)
 		result, err = readPktLine(ctx, r, pktLineTypeData)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, result)
 
 		data := strings.Repeat("x", 65516)
@@ -73,7 +73,7 @@ func TestPktLine(t *testing.T) {
 
 		r = bufio.NewReader(strings.NewReader("fff1a"))
 		result, err = readPktLine(ctx, r, pktLineTypeData)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, result)
 	})
 
@@ -96,7 +96,7 @@ func TestPktLine(t *testing.T) {
 
 		w.Reset()
 		err = writeDataPktLine(ctx, w, nil)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Empty(t, w.Bytes())
 
 		w.Reset()
@@ -107,7 +107,7 @@ func TestPktLine(t *testing.T) {
 
 		w.Reset()
 		err = writeDataPktLine(ctx, w, bytes.Repeat([]byte{0x64}, 65516+1))
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Empty(t, w.Bytes())
 	})
 }
@@ -174,7 +174,7 @@ func TestRunHookUpdate(t *testing.T) {
 
 		err := app.Run([]string{"./forgejo", "update", "refs/pull/1/head", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000000"})
 		out := finish()
-		assert.Error(t, err)
+		require.Error(t, err)
 
 		assert.Contains(t, out, "The deletion of refs/pull/1/head is skipped as it's an internal reference.")
 	})

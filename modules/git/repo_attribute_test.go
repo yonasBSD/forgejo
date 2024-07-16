@@ -214,7 +214,7 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = ac.CheckPath("i-am-a-python.p")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Contains(t, err.Error(), `git check-attr (stderr: ""):`)
 	})
 
@@ -254,7 +254,7 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = ac.CheckPath("i-am-a-python.p")
-		assert.ErrorIs(t, err, context.Canceled)
+		require.ErrorIs(t, err, context.Canceled)
 	})
 
 	t.Run("Cancelled/DuringRun", func(t *testing.T) {
@@ -286,7 +286,7 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Error("CheckPath did not complete within 1s")
 		case err = <-errCh:
-			assert.ErrorIs(t, err, context.Canceled)
+			require.ErrorIs(t, err, context.Canceled)
 		}
 	})
 
@@ -300,7 +300,7 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		require.NoError(t, ac.Close())
 
 		_, err = ac.CheckPath("i-am-a-python.p")
-		assert.ErrorIs(t, err, fs.ErrClosed)
+		require.ErrorIs(t, err, fs.ErrClosed)
 	})
 
 	t.Run("Closed/DuringRun", func(t *testing.T) {
@@ -317,7 +317,7 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		require.NoError(t, ac.Close())
 
 		_, err = ac.CheckPath("i-am-a-python.p")
-		assert.ErrorIs(t, err, fs.ErrClosed)
+		require.ErrorIs(t, err, fs.ErrClosed)
 	})
 }
 

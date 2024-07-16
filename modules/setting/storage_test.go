@@ -318,7 +318,7 @@ PATH = archives
 `)
 	require.NoError(t, err)
 
-	assert.Error(t, loadRepoArchiveFrom(cfg))
+	require.Error(t, loadRepoArchiveFrom(cfg))
 }
 
 func Test_getStorageConfiguration21(t *testing.T) {
@@ -348,7 +348,7 @@ MINIO_SECRET_ACCESS_KEY = my_secret_key
 	require.NoError(t, err)
 
 	_, err = getStorage(cfg, "", "", nil)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	require.NoError(t, loadRepoArchiveFrom(cfg))
 	cp := RepoArchive.Storage.ToShadowCopy()
@@ -366,7 +366,7 @@ STORAGE_TYPE = my_archive
 PATH = archives
 `)
 	require.NoError(t, err)
-	assert.Error(t, loadRepoArchiveFrom(cfg))
+	require.Error(t, loadRepoArchiveFrom(cfg))
 }
 
 func Test_getStorageConfiguration25(t *testing.T) {
@@ -380,7 +380,7 @@ STORAGE_TYPE = unknown // should be local or minio
 PATH = archives
 `)
 	require.NoError(t, err)
-	assert.Error(t, loadRepoArchiveFrom(cfg))
+	require.Error(t, loadRepoArchiveFrom(cfg))
 }
 
 func Test_getStorageConfiguration26(t *testing.T) {
@@ -393,7 +393,7 @@ MINIO_SECRET_ACCESS_KEY = my_secret_key
 MINIO_USE_SSL = abc
 `)
 	require.NoError(t, err)
-	// assert.Error(t, loadRepoArchiveFrom(cfg))
+	// require.Error(t, loadRepoArchiveFrom(cfg))
 	// FIXME: this should return error but now ini package's MapTo() doesn't check type
 	require.NoError(t, loadRepoArchiveFrom(cfg))
 }

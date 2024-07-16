@@ -48,6 +48,6 @@ func TestGetNonExistentNotes(t *testing.T) {
 
 	note := Note{}
 	err = GetNote(context.Background(), bareRepo1, "non_existent_sha", &note)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.IsType(t, ErrNotExist{}, err)
 }

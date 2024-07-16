@@ -41,7 +41,7 @@ func TestDict(t *testing.T) {
 	}
 	for _, c := range bads {
 		_, err := dict(c.args...)
-		assert.Error(t, err)
+		require.Error(t, err)
 	}
 }
 
@@ -75,5 +75,5 @@ func TestUtils(t *testing.T) {
 	template.Must(tmpl.Parse("{{SliceUtils.Contains .Slice .Value}}"))
 	// error is like this: `template: test:1:12: executing "test" at <SliceUtils.Contains>: error calling Contains: ...`
 	err := tmpl.Execute(io.Discard, map[string]any{"Slice": struct{}{}})
-	assert.ErrorContains(t, err, "invalid type, expected slice or array")
+	require.ErrorContains(t, err, "invalid type, expected slice or array")
 }

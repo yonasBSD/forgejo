@@ -63,7 +63,7 @@ func TestExpandVars(t *testing.T) {
 			res, err := Expand(kase.tmpl, kase.data)
 			assert.EqualValues(t, kase.out, res)
 			if kase.error {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}

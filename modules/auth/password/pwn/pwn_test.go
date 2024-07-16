@@ -21,7 +21,7 @@ func TestPassword(t *testing.T) {
 	defer gock.Off()
 
 	count, err := client.CheckPassword("", false)
-	assert.ErrorIs(t, err, ErrEmptyPassword, "blank input should return ErrEmptyPassword")
+	require.ErrorIs(t, err, ErrEmptyPassword, "blank input should return ErrEmptyPassword")
 	assert.Equal(t, -1, count)
 
 	gock.New("https://api.pwnedpasswords.com").Get("/range/5c1d8").Times(1).Reply(200).BodyString("EAF2F254732680E8AC339B84F3266ECCBB5:1\r\nFC446EB88938834178CB9322C1EE273C2A7:2")

@@ -61,7 +61,7 @@ func TestIssue_DeleteIssue(t *testing.T) {
 	assert.Len(t, attachments, 2)
 	for i := range attachments {
 		attachment, err := repo_model.GetAttachmentByUUID(db.DefaultContext, attachments[i].UUID)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.True(t, repo_model.IsErrAttachmentNotExist(err))
 		assert.Nil(t, attachment)
 	}

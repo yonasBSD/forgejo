@@ -55,7 +55,7 @@ func TestRemoveOrgUser(t *testing.T) {
 	testSuccess(3, 4)
 
 	err := RemoveOrgUser(db.DefaultContext, 7, 5)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, organization.IsErrLastOrgOwner(err))
 	unittest.AssertExistsAndLoadBean(t, &organization.OrgUser{OrgID: 7, UID: 5})
 	unittest.CheckConsistencyFor(t, &user_model.User{}, &organization.Team{})

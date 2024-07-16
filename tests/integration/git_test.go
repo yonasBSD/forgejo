@@ -761,7 +761,7 @@ func doInternalReferences(ctx *APITestContext, dstPath string) func(t *testing.T
 		pr1 := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{HeadRepoID: repo.ID})
 
 		_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments(fmt.Sprintf(":refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
-		assert.Error(t, gitErr)
+		require.Error(t, gitErr)
 		assert.Contains(t, stdErr, fmt.Sprintf("remote: Forgejo: The deletion of refs/pull/%d/head is skipped as it's an internal reference.", pr1.Index))
 		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] refs/pull/%d/head (hook declined)", pr1.Index))
 	}
@@ -1016,7 +1016,7 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, headBranch string
 				defer tests.PrintCurrentTest(t)()
 
 				_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
-				assert.Error(t, gitErr)
+				require.Error(t, gitErr)
 
 				assert.Contains(t, stdErr, "-o force-push=true")
 
@@ -1046,7 +1046,7 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, headBranch string
 			require.NoError(t, gitErr)
 
 			_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-already-contains").RunStdString(&git.RunOpts{Dir: dstPath})
-			assert.Error(t, gitErr)
+			require.Error(t, gitErr)
 
 			assert.Contains(t, stdErr, "already contains this commit")
 		})

@@ -36,7 +36,7 @@ func TestDeleteUser(t *testing.T) {
 		require.NoError(t, db.GetEngine(db.DefaultContext).Find(&ownedRepos, &repo_model.Repository{OwnerID: userID}))
 		if len(ownedRepos) > 0 {
 			err := DeleteUser(db.DefaultContext, user, false)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.True(t, models.IsErrUserOwnRepos(err))
 			return
 		}
@@ -59,7 +59,7 @@ func TestDeleteUser(t *testing.T) {
 	test(11)
 
 	org := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
-	assert.Error(t, DeleteUser(db.DefaultContext, org, false))
+	require.Error(t, DeleteUser(db.DefaultContext, org, false))
 }
 
 func TestPurgeUser(t *testing.T) {
@@ -79,7 +79,7 @@ func TestPurgeUser(t *testing.T) {
 	test(11)
 
 	org := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
-	assert.Error(t, DeleteUser(db.DefaultContext, org, false))
+	require.Error(t, DeleteUser(db.DefaultContext, org, false))
 }
 
 func TestCreateUser(t *testing.T) {
@@ -106,7 +106,7 @@ func TestRenameUser(t *testing.T) {
 			Type:      user_model.UserTypeIndividual,
 			LoginType: auth.OAuth2,
 		}
-		assert.ErrorIs(t, RenameUser(db.DefaultContext, u, "user_rename"), user_model.ErrUserIsNotLocal{})
+		require.ErrorIs(t, RenameUser(db.DefaultContext, u, "user_rename"), user_model.ErrUserIsNotLocal{})
 	})
 
 	t.Run("Same username", func(t *testing.T) {
@@ -117,8 +117,8 @@ func TestRenameUser(t *testing.T) {
 		usernames := []string{"--diff", "aa.png", ".well-known", "search", "aaa.atom"}
 		for _, username := range usernames {
 			t.Run(username, func(t *testing.T) {
-				assert.Error(t, user_model.IsUsableUsername(username))
-				assert.Error(t, RenameUser(db.DefaultContext, user, username))
+				require.Error(t, user_model.IsUsableUsername(username))
+				require.Error(t, RenameUser(db.DefaultContext, user, username))
 			})
 		}
 	})
@@ -137,10 +137,10 @@ func TestRenameUser(t *testing.T) {
 	t.Run("Already exists", func(t *testing.T) {
 		existUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
-		assert.ErrorIs(t, RenameUser(db.DefaultContext, user, existUser.Name), user_model.ErrUserAlreadyExist{Name: existUser.Name})
-		assert.ErrorIs(t, RenameUser(db.DefaultContext, user, existUser.LowerName), user_model.ErrUserAlreadyExist{Name: existUser.LowerName})
+		require.ErrorIs(t, RenameUser(db.DefaultContext, user, existUser.Name), user_model.ErrUserAlreadyExist{Name: existUser.Name})
+		require.ErrorIs(t, RenameUser(db.DefaultContext, user, existUser.LowerName), user_model.ErrUserAlreadyExist{Name: existUser.LowerName})
 		newUsername := fmt.Sprintf("uSEr%d", existUser.ID)
-		assert.ErrorIs(t, RenameUser(db.DefaultContext, user, newUsername), user_model.ErrUserAlreadyExist{Name: newUsername})
+		require.ErrorIs(t, RenameUser(db.DefaultContext, user, newUsername), user_model.ErrUserAlreadyExist{Name: newUsername})
 	})
 
 	t.Run("Normal", func(t *testing.T) {

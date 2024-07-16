@@ -51,7 +51,7 @@ func TestParsePackageMetaData(t *testing.T) {
 	t.Run("InvalidFile", func(t *testing.T) {
 		m, err := ParsePackageMetaData(strings.NewReader(""))
 		assert.Nil(t, m)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("Valid", func(t *testing.T) {

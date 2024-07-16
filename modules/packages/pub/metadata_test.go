@@ -66,7 +66,7 @@ func TestParsePackage(t *testing.T) {
 
 		pp, err := ParsePackage(data)
 		assert.Nil(t, pp)
-		assert.ErrorIs(t, err, ErrMissingPubspecFile)
+		require.ErrorIs(t, err, ErrMissingPubspecFile)
 	})
 
 	t.Run("PubspecFileTooLarge", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestParsePackage(t *testing.T) {
 
 		pp, err := ParsePackage(data)
 		assert.Nil(t, pp)
-		assert.ErrorIs(t, err, ErrPubspecFileTooLarge)
+		require.ErrorIs(t, err, ErrPubspecFileTooLarge)
 	})
 
 	t.Run("InvalidPubspecFile", func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestParsePackage(t *testing.T) {
 
 		pp, err := ParsePackage(data)
 		assert.Nil(t, pp)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("Valid", func(t *testing.T) {
@@ -109,7 +109,7 @@ func TestParsePubspecMetadata(t *testing.T) {
 		for _, name := range []string{"123abc", "ab-cd"} {
 			pp, err := ParsePubspecMetadata(strings.NewReader(`name: ` + name))
 			assert.Nil(t, pp)
-			assert.ErrorIs(t, err, ErrInvalidName)
+			require.ErrorIs(t, err, ErrInvalidName)
 		}
 	})
 
@@ -117,7 +117,7 @@ func TestParsePubspecMetadata(t *testing.T) {
 		pp, err := ParsePubspecMetadata(strings.NewReader(`name: dummy
 version: invalid`))
 		assert.Nil(t, pp)
-		assert.ErrorIs(t, err, ErrInvalidVersion)
+		require.ErrorIs(t, err, ErrInvalidVersion)
 	})
 
 	t.Run("Valid", func(t *testing.T) {

@@ -231,7 +231,7 @@ func TestDetectEncoding(t *testing.T) {
 	// invalid bytes
 	b = []byte{0xfa}
 	_, err = DetectEncoding(b)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func stringMustStartWith(t *testing.T, expected, value string) {

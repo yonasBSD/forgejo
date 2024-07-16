@@ -95,5 +95,5 @@ func TestScopedTemplateSetUnsafe(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = newScopedTemplateSet(all, "test")
-	assert.ErrorContains(t, err, "appears in an ambiguous context within a URL")
+	require.ErrorContains(t, err, "appears in an ambiguous context within a URL")
 }

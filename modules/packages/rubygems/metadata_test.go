@@ -33,7 +33,7 @@ func TestParsePackageMetaData(t *testing.T) {
 		data := createArchive("dummy.txt", []byte{0})
 
 		rp, err := ParsePackageMetaData(data)
-		assert.ErrorIs(t, err, ErrMissingMetadataFile)
+		require.ErrorIs(t, err, ErrMissingMetadataFile)
 		assert.Nil(t, rp)
 	})
 

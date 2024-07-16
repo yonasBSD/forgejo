@@ -302,11 +302,11 @@ func TestCantMergeConflict(t *testing.T) {
 		require.NoError(t, err)
 
 		err = pull.Merge(context.Background(), pr, user1, gitRepo, repo_model.MergeStyleMerge, "", "CONFLICT", false)
-		assert.Error(t, err, "Merge should return an error due to conflict")
+		require.Error(t, err, "Merge should return an error due to conflict")
 		assert.True(t, models.IsErrMergeConflicts(err), "Merge error is not a conflict error")
 
 		err = pull.Merge(context.Background(), pr, user1, gitRepo, repo_model.MergeStyleRebase, "", "CONFLICT", false)
-		assert.Error(t, err, "Merge should return an error due to conflict")
+		require.Error(t, err, "Merge should return an error due to conflict")
 		assert.True(t, models.IsErrRebaseConflicts(err), "Merge error is not a conflict error")
 		gitRepo.Close()
 	})
@@ -401,7 +401,7 @@ func TestCantMergeUnrelated(t *testing.T) {
 		})
 
 		err = pull.Merge(context.Background(), pr, user1, gitRepo, repo_model.MergeStyleMerge, "", "UNRELATED", false)
-		assert.Error(t, err, "Merge should return an error due to unrelated")
+		require.Error(t, err, "Merge should return an error due to unrelated")
 		assert.True(t, models.IsErrMergeUnrelatedHistories(err), "Merge error is not a unrelated histories error")
 		gitRepo.Close()
 	})
@@ -484,7 +484,7 @@ func TestCantFastForwardOnlyMergeDiverging(t *testing.T) {
 
 		err = pull.Merge(context.Background(), pr, user1, gitRepo, repo_model.MergeStyleFastForwardOnly, "", "DIVERGING", false)
 
-		assert.Error(t, err, "Merge should return an error due to being for a diverging branch")
+		require.Error(t, err, "Merge should return an error due to being for a diverging branch")
 		assert.True(t, models.IsErrMergeDivergingFastForwardOnly(err), "Merge error is not a diverging fast-forward-only error")
 
 		gitRepo.Close()
@@ -885,7 +885,7 @@ func TestPullAutoMergeAfterCommitStatusSucceed(t *testing.T) {
 
 		// second time insert automerge record, return false because it does exist
 		scheduled, err = automerge.ScheduleAutoMerge(db.DefaultContext, user1, pr, repo_model.MergeStyleMerge, "auto merge test")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.False(t, scheduled)
 
 		// reload pr again
@@ -969,7 +969,7 @@ func TestPullAutoMergeAfterCommitStatusSucceedAndApproval(t *testing.T) {
 
 		// second time insert automerge record, return false because it does exist
 		scheduled, err = automerge.ScheduleAutoMerge(db.DefaultContext, user1, pr, repo_model.MergeStyleMerge, "auto merge test")
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.False(t, scheduled)
 
 		// reload pr again

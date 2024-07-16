@@ -78,7 +78,7 @@ func TestParsePackageMetaData(t *testing.T) {
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, np)
-		assert.ErrorIs(t, err, ErrMissingNuspecFile)
+		require.ErrorIs(t, err, ErrMissingNuspecFile)
 	})
 
 	t.Run("MissingNuspecFileInRoot", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestParsePackageMetaData(t *testing.T) {
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, np)
-		assert.ErrorIs(t, err, ErrMissingNuspecFile)
+		require.ErrorIs(t, err, ErrMissingNuspecFile)
 	})
 
 	t.Run("InvalidNuspecFile", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestParsePackageMetaData(t *testing.T) {
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, np)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("InvalidPackageId", func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestParsePackageMetaData(t *testing.T) {
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, np)
-		assert.ErrorIs(t, err, ErrNuspecInvalidID)
+		require.ErrorIs(t, err, ErrNuspecInvalidID)
 	})
 
 	t.Run("InvalidPackageVersion", func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestParsePackageMetaData(t *testing.T) {
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
 		assert.Nil(t, np)
-		assert.ErrorIs(t, err, ErrNuspecInvalidVersion)
+		require.ErrorIs(t, err, ErrNuspecInvalidVersion)
 	})
 
 	t.Run("MissingReadme", func(t *testing.T) {

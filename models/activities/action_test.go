@@ -260,9 +260,8 @@ func TestConsistencyUpdateAction(t *testing.T) {
 	// XORM returns an error when created_unix is a string
 	//
 	err = db.GetEngine(db.DefaultContext).Where("id = ?", id).Find(&actions)
-	if assert.Error(t, err) {
-		assert.Contains(t, err.Error(), "type string to a int64: invalid syntax")
-	}
+	require.ErrorContains(t, err, "type string to a int64: invalid syntax")
+
 	//
 	// Get rid of incorrectly set created_unix
 	//

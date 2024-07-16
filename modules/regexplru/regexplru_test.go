@@ -22,6 +22,6 @@ func TestRegexpLru(t *testing.T) {
 	assert.EqualValues(t, 1, lruCache.Len())
 
 	_, err = GetCompiled("(")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.EqualValues(t, 2, lruCache.Len())
 }

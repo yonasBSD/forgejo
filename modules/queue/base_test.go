@@ -37,7 +37,7 @@ func testQueueBasic(t *testing.T, newFn func(cfg *BaseConfig) (baseQueue, error)
 		if !isUnique {
 			require.NoError(t, err)
 		} else {
-			assert.ErrorIs(t, err, ErrAlreadyInQueue)
+			require.ErrorIs(t, err, ErrAlreadyInQueue)
 		}
 
 		// check the duplicate item
@@ -76,14 +76,14 @@ func testQueueBasic(t *testing.T, newFn func(cfg *BaseConfig) (baseQueue, error)
 		// pop an empty queue (timeout, cancel)
 		ctxTimed, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
 		it, err = q.PopItem(ctxTimed)
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 		assert.Nil(t, it)
 		cancel()
 
 		ctxTimed, cancel = context.WithTimeout(ctx, 10*time.Millisecond)
 		cancel()
 		it, err = q.PopItem(ctxTimed)
-		assert.ErrorIs(t, err, context.Canceled)
+		require.ErrorIs(t, err, context.Canceled)
 		assert.Nil(t, it)
 
 		// test blocking push if queue is full
@@ -93,7 +93,7 @@ func testQueueBasic(t *testing.T, newFn func(cfg *BaseConfig) (baseQueue, error)
 		}
 		ctxTimed, cancel = context.WithTimeout(ctx, 10*time.Millisecond)
 		err = q.PushItem(ctxTimed, []byte("item-full"))
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 		cancel()
 
 		// test blocking push if queue is full (with custom pushBlockTime)
@@ -101,7 +101,7 @@ func testQueueBasic(t *testing.T, newFn func(cfg *BaseConfig) (baseQueue, error)
 		timeStart := time.Now()
 		pushBlockTime = 30 * time.Millisecond
 		err = q.PushItem(ctx, []byte("item-full"))
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 		assert.True(t, time.Since(timeStart) >= pushBlockTime*2/3)
 		pushBlockTime = oldPushBlockTime
 

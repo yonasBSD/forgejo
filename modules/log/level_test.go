@@ -48,7 +48,7 @@ func TestLevelMarshalUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, INFO.String(), Level(1001).String())
 
 	err = json.Unmarshal([]byte(`{"level":{}`), &testLevel.Level)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func makeTestLevelBytes(level string) []byte {

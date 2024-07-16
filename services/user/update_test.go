@@ -22,7 +22,7 @@ func TestUpdateUser(t *testing.T) {
 
 	admin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
-	assert.Error(t, UpdateUser(db.DefaultContext, admin, &UpdateOptions{
+	require.Error(t, UpdateUser(db.DefaultContext, admin, &UpdateOptions{
 		IsAdmin: optional.Some(false),
 	}))
 
@@ -115,7 +115,7 @@ func TestUpdateAuth(t *testing.T) {
 	}))
 	assert.True(t, user.ProhibitLogin)
 
-	assert.ErrorIs(t, UpdateAuth(db.DefaultContext, user, &UpdateAuthOptions{
+	require.ErrorIs(t, UpdateAuth(db.DefaultContext, user, &UpdateAuthOptions{
 		Password: optional.Some("aaaa"),
 	}), password_module.ErrMinLength)
 }

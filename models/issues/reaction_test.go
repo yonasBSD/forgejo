@@ -58,7 +58,7 @@ func TestIssueAddDuplicateReaction(t *testing.T) {
 		IssueID: issue1ID,
 		Type:    "heart",
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, issues_model.ErrReactionAlreadyExist{Reaction: "heart"}, err)
 
 	existingR := unittest.AssertExistsAndLoadBean(t, &issues_model.Reaction{Type: "heart", UserID: user1.ID, IssueID: issue1ID})

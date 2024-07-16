@@ -80,7 +80,7 @@ func TestSyncMaxResourceIndex(t *testing.T) {
 		assert.EqualValues(t, 84, maxIndex)
 		return errors.New("test rollback")
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	maxIndex, err = getCurrentResourceIndex(db.DefaultContext, "test_index", 10)
 	require.NoError(t, err)
 	assert.EqualValues(t, 73, maxIndex) // the max index doesn't change because the transaction was rolled back
@@ -120,7 +120,7 @@ func TestGetNextResourceIndex(t *testing.T) {
 		assert.EqualValues(t, 4, maxIndex)
 		return errors.New("test rollback")
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	maxIndex, err = getCurrentResourceIndex(db.DefaultContext, "test_index", 20)
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, maxIndex) // the max index doesn't change because the transaction was rolled back

@@ -499,7 +499,7 @@ func TestPackageCleanup(t *testing.T) {
 		unittest.AssertNotExistsBean(t, &packages_model.Package{Name: "cleanup-test"})
 
 		_, err = packages_model.GetInternalVersionByNameAndVersion(db.DefaultContext, user.ID, packages_model.TypeContainer, "cleanup-test", container_model.UploadVersion)
-		assert.ErrorIs(t, err, packages_model.ErrPackageNotExist)
+		require.ErrorIs(t, err, packages_model.ErrPackageNotExist)
 	})
 
 	t.Run("CleanupRules", func(t *testing.T) {
@@ -636,7 +636,7 @@ func TestPackageCleanup(t *testing.T) {
 						err = packages_service.DeletePackageVersionAndReferences(db.DefaultContext, pv)
 						require.NoError(t, err)
 					} else {
-						assert.ErrorIs(t, err, packages_model.ErrPackageNotExist)
+						require.ErrorIs(t, err, packages_model.ErrPackageNotExist)
 					}
 				}
 

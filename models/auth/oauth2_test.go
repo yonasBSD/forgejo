@@ -93,7 +93,7 @@ func TestGetOAuth2ApplicationByClientID(t *testing.T) {
 	assert.Equal(t, "da7da3ba-9a13-4167-856f-3899de0b0138", app.ClientID)
 
 	app, err = auth_model.GetOAuth2ApplicationByClientID(db.DefaultContext, "invalid client id")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, app)
 }
 

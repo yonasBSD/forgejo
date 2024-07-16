@@ -81,9 +81,9 @@ func TestGetTeam(t *testing.T) {
 	testSuccess(3, "team1")
 
 	_, err := organization.GetTeam(db.DefaultContext, 3, "nonexistent")
-	assert.Error(t, err)
+	require.Error(t, err)
 	_, err = organization.GetTeam(db.DefaultContext, unittest.NonexistentID, "Owners")
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestGetTeamByID(t *testing.T) {
@@ -100,7 +100,7 @@ func TestGetTeamByID(t *testing.T) {
 	testSuccess(4)
 
 	_, err := organization.GetTeamByID(db.DefaultContext, unittest.NonexistentID)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestIsTeamMember(t *testing.T) {

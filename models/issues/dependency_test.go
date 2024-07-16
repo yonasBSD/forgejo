@@ -34,12 +34,12 @@ func TestCreateIssueDependency(t *testing.T) {
 
 	// Do it again to see if it will check if the dependency already exists
 	err = issues_model.CreateIssueDependency(db.DefaultContext, user1, issue1, issue2)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrDependencyExists(err))
 
 	// Check for circular dependencies
 	err = issues_model.CreateIssueDependency(db.DefaultContext, user1, issue2, issue1)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrCircularDependency(err))
 
 	_ = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{Type: issues_model.CommentTypeAddDependency, PosterID: user1.ID, IssueID: issue1.ID})

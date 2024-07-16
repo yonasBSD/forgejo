@@ -38,7 +38,7 @@ func TestIncomingEmail(t *testing.T) {
 		comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 1})
 
 		_, err := incoming_payload.CreateReferencePayload(user)
-		assert.Error(t, err)
+		require.Error(t, err)
 
 		issuePayload, err := incoming_payload.CreateReferencePayload(issue)
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestIncomingEmail(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = incoming_payload.GetReferenceFromPayload(db.DefaultContext, []byte{1, 2, 3})
-		assert.Error(t, err)
+		require.Error(t, err)
 
 		ref, err := incoming_payload.GetReferenceFromPayload(db.DefaultContext, issuePayload)
 		require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestIncomingEmail(t *testing.T) {
 
 				handler := &incoming.ReplyHandler{}
 
-				assert.Error(t, handler.Handle(db.DefaultContext, &incoming.MailContent{}, nil, payload))
+				require.Error(t, handler.Handle(db.DefaultContext, &incoming.MailContent{}, nil, payload))
 				require.NoError(t, handler.Handle(db.DefaultContext, &incoming.MailContent{}, user, payload))
 
 				content := &incoming.MailContent{

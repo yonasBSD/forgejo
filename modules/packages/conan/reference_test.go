@@ -44,7 +44,7 @@ func TestNewRecipeReference(t *testing.T) {
 			require.NoError(t, err, "case %d, should be invalid", i)
 			assert.NotNil(t, rref, "case %d, should not be nil", i)
 		} else {
-			assert.Error(t, err, "case %d, should be valid", i)
+			require.Error(t, err, "case %d, should be valid", i)
 		}
 	}
 }
@@ -114,7 +114,7 @@ func TestNewPackageReference(t *testing.T) {
 			require.NoError(t, err, "case %d, should be invalid", i)
 			assert.NotNil(t, pref, "case %d, should not be nil", i)
 		} else {
-			assert.Error(t, err, "case %d, should be valid", i)
+			require.Error(t, err, "case %d, should be valid", i)
 		}
 	}
 }

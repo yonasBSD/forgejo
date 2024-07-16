@@ -8,7 +8,6 @@ import (
 
 	migration_tests "code.gitea.io/gitea/models/migrations/test"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestEnsureUpToDate(t *testing.T) {
 
 	// Ensure error if there's no row in Forgejo Version.
 	err := EnsureUpToDate(x)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Insert 'good' Forgejo Version row.
 	_, err = x.InsertOne(&ForgejoVersion{ID: 1, Version: ExpectedVersion()})
@@ -36,5 +35,5 @@ func TestEnsureUpToDate(t *testing.T) {
 	require.NoError(t, err)
 
 	err = EnsureUpToDate(x)
-	assert.Error(t, err)
+	require.Error(t, err)
 }

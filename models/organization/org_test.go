@@ -483,7 +483,7 @@ func TestCreateOrganization2(t *testing.T) {
 
 	unittest.AssertNotExistsBean(t, &organization.Organization{Name: newOrgName, Type: user_model.UserTypeOrganization})
 	err := organization.CreateOrganization(db.DefaultContext, org, owner)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, organization.IsErrUserNotAllowedCreateOrg(err))
 	unittest.AssertNotExistsBean(t, &organization.Organization{Name: newOrgName, Type: user_model.UserTypeOrganization})
 	unittest.CheckConsistencyFor(t, &organization.Organization{}, &organization.Team{})
@@ -497,7 +497,7 @@ func TestCreateOrganization3(t *testing.T) {
 	org := &organization.Organization{Name: "org3"}                       // should already exist
 	unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: org.Name}) // sanity check
 	err := organization.CreateOrganization(db.DefaultContext, org, owner)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, user_model.IsErrUserAlreadyExist(err))
 	unittest.CheckConsistencyFor(t, &user_model.User{}, &organization.Team{})
 }
@@ -508,7 +508,7 @@ func TestCreateOrganization4(t *testing.T) {
 
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	err := organization.CreateOrganization(db.DefaultContext, &organization.Organization{Name: "assets"}, owner)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, db.IsErrNameReserved(err))
 	unittest.CheckConsistencyFor(t, &organization.Organization{}, &organization.Team{})
 }

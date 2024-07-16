@@ -133,7 +133,7 @@ func TestGetUnmergedPullRequest(t *testing.T) {
 	assert.Equal(t, int64(2), pr.ID)
 
 	_, err = issues_model.GetUnmergedPullRequest(db.DefaultContext, 1, 9223372036854775807, "branch1", "master", issues_model.PullRequestFlowGithub)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrPullRequestNotExist(err))
 }
 
@@ -273,11 +273,11 @@ func TestGetPullRequestByIndex(t *testing.T) {
 	assert.Equal(t, int64(2), pr.Index)
 
 	_, err = issues_model.GetPullRequestByIndex(db.DefaultContext, 9223372036854775807, 9223372036854775807)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrPullRequestNotExist(err))
 
 	_, err = issues_model.GetPullRequestByIndex(db.DefaultContext, 1, 0)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrPullRequestNotExist(err))
 }
 
@@ -289,7 +289,7 @@ func TestGetPullRequestByID(t *testing.T) {
 	assert.Equal(t, int64(2), pr.IssueID)
 
 	_, err = issues_model.GetPullRequestByID(db.DefaultContext, 9223372036854775807)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrPullRequestNotExist(err))
 }
 
@@ -300,7 +300,7 @@ func TestGetPullRequestByIssueID(t *testing.T) {
 	assert.Equal(t, int64(2), pr.IssueID)
 
 	_, err = issues_model.GetPullRequestByIssueID(db.DefaultContext, 9223372036854775807)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.True(t, issues_model.IsErrPullRequestNotExist(err))
 }
 
@@ -442,9 +442,9 @@ func TestGetPullRequestByMergedCommit(t *testing.T) {
 	assert.EqualValues(t, 1, pr.ID)
 
 	_, err = issues_model.GetPullRequestByMergedCommit(db.DefaultContext, 0, "1a8823cd1a9549fde083f992f6b9b87a7ab74fb3")
-	assert.ErrorAs(t, err, &issues_model.ErrPullRequestNotExist{})
+	require.ErrorAs(t, err, &issues_model.ErrPullRequestNotExist{})
 	_, err = issues_model.GetPullRequestByMergedCommit(db.DefaultContext, 1, "")
-	assert.ErrorAs(t, err, &issues_model.ErrPullRequestNotExist{})
+	require.ErrorAs(t, err, &issues_model.ErrPullRequestNotExist{})
 }
 
 func TestMigrate_InsertPullRequests(t *testing.T) {

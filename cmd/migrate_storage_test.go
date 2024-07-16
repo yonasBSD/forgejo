@@ -127,8 +127,8 @@ func TestMigrateActionsArtifacts(t *testing.T) {
 	assert.Equal(t, exists, string(buf))
 
 	_, err = dstStorage.Stat(expired)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, err = dstStorage.Stat(notFound)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
