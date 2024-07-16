@@ -84,17 +84,17 @@ func TestGetUserByName(t *testing.T) {
 	{
 		user, err := user_model.GetUserByName(db.DefaultContext, "USER2")
 		require.NoError(t, err)
-		assert.Equal(t, user.Name, "user2")
+		assert.Equal(t, "user2", user.Name)
 	}
 	{
 		user, err := user_model.GetUserByName(db.DefaultContext, "org3")
 		require.NoError(t, err)
-		assert.Equal(t, user.Name, "org3")
+		assert.Equal(t, "org3", user.Name)
 	}
 	{
 		user, err := user_model.GetUserByName(db.DefaultContext, "remote01")
 		require.NoError(t, err)
-		assert.Equal(t, user.Name, "remote01")
+		assert.Equal(t, "remote01", user.Name)
 	}
 }
 
@@ -289,7 +289,7 @@ func TestNewGitSig(t *testing.T) {
 		assert.NotContains(t, sig.Name, "<")
 		assert.NotContains(t, sig.Name, ">")
 		assert.NotContains(t, sig.Name, "\n")
-		assert.NotEqual(t, len(strings.TrimSpace(sig.Name)), 0)
+		assert.NotEmpty(t, strings.TrimSpace(sig.Name))
 	}
 }
 
@@ -304,7 +304,7 @@ func TestDisplayName(t *testing.T) {
 		if len(strings.TrimSpace(user.FullName)) == 0 {
 			assert.Equal(t, user.Name, displayName)
 		}
-		assert.NotEqual(t, len(strings.TrimSpace(displayName)), 0)
+		assert.NotEmpty(t, strings.TrimSpace(displayName))
 	}
 }
 
@@ -410,15 +410,15 @@ func TestGetMaileableUsersByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 	if len(results) > 1 {
-		assert.Equal(t, results[0].ID, 1)
+		assert.Equal(t, 1, results[0].ID)
 	}
 
 	results, err = user_model.GetMaileableUsersByIDs(db.DefaultContext, []int64{1, 4}, true)
 	require.NoError(t, err)
 	assert.Len(t, results, 2)
 	if len(results) > 2 {
-		assert.Equal(t, results[0].ID, 1)
-		assert.Equal(t, results[1].ID, 4)
+		assert.Equal(t, 1, results[0].ID)
+		assert.Equal(t, 4, results[1].ID)
 	}
 }
 
@@ -681,11 +681,11 @@ func TestDisabledUserFeatures(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
-	assert.Len(t, setting.Admin.UserDisabledFeatures.Values(), 0)
+	assert.Empty(t, setting.Admin.UserDisabledFeatures.Values())
 
 	// no features should be disabled with a plain login type
 	assert.LessOrEqual(t, user.LoginType, auth.Plain)
-	assert.Len(t, user_model.DisabledFeaturesWithLoginType(user).Values(), 0)
+	assert.Empty(t, user_model.DisabledFeaturesWithLoginType(user).Values())
 	for _, f := range testValues.Values() {
 		assert.False(t, user_model.IsFeatureDisabledWithLoginType(user, f))
 	}

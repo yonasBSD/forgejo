@@ -198,7 +198,7 @@ func TestFindOrgs(t *testing.T) {
 		IncludePrivate: false,
 	})
 	require.NoError(t, err)
-	assert.Len(t, orgs, 0)
+	assert.Empty(t, orgs)
 
 	total, err := db.Count[organization.Organization](db.DefaultContext, organization.FindOrgOptions{
 		UserID:         4,
@@ -244,7 +244,7 @@ func TestGetOrgUsersByOrgID(t *testing.T) {
 		PublicOnly:  false,
 	})
 	require.NoError(t, err)
-	assert.Len(t, orgUsers, 0)
+	assert.Empty(t, orgUsers)
 }
 
 func TestChangeOrgUserStatus(t *testing.T) {

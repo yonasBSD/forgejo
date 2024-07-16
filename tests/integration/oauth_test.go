@@ -528,7 +528,7 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 	})()
 	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
 	resp := MakeRequest(t, req, http.StatusSeeOther)
-	assert.Equal(t, test.RedirectURL(resp), "/")
+	assert.Equal(t, "/", test.RedirectURL(resp))
 	userAfterLogin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
 	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
 }
@@ -710,7 +710,7 @@ func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
 	})()
 	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
 	resp := MakeRequest(t, req, http.StatusSeeOther)
-	assert.Equal(t, test.RedirectURL(resp), "/user/link_account")
+	assert.Equal(t, "/user/link_account", test.RedirectURL(resp))
 }
 
 func TestOAuth_GrantApplicationOAuth(t *testing.T) {

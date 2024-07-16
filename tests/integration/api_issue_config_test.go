@@ -55,7 +55,7 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 		issueConfig := getIssueConfig(t, owner.Name, repo.Name)
 
 		assert.True(t, issueConfig.BlankIssuesEnabled)
-		assert.Len(t, issueConfig.ContactLinks, 0)
+		assert.Empty(t, issueConfig.ContactLinks)
 	})
 
 	t.Run("DisableBlankIssues", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 		issueConfig := getIssueConfig(t, owner.Name, repo.Name)
 
 		assert.False(t, issueConfig.BlankIssuesEnabled)
-		assert.Len(t, issueConfig.ContactLinks, 0)
+		assert.Empty(t, issueConfig.ContactLinks)
 	})
 
 	t.Run("ContactLinks", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestAPIRepoIssueConfigPaths(t *testing.T) {
 				issueConfig := getIssueConfig(t, owner.Name, repo.Name)
 
 				assert.False(t, issueConfig.BlankIssuesEnabled)
-				assert.Len(t, issueConfig.ContactLinks, 0)
+				assert.Empty(t, issueConfig.ContactLinks)
 
 				_, err = deleteFileInBranch(owner, repo, fullPath, repo.DefaultBranch)
 				require.NoError(t, err)

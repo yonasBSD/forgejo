@@ -50,7 +50,7 @@ func TestRepository_GetStargazers2(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 3})
 	gazers, err := repo_model.GetStargazers(db.DefaultContext, repo, db.ListOptions{Page: 0})
 	require.NoError(t, err)
-	assert.Len(t, gazers, 0)
+	assert.Empty(t, gazers)
 }
 
 func TestClearRepoStars(t *testing.T) {
@@ -68,5 +68,5 @@ func TestClearRepoStars(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	gazers, err := repo_model.GetStargazers(db.DefaultContext, repo, db.ListOptions{Page: 0})
 	require.NoError(t, err)
-	assert.Len(t, gazers, 0)
+	assert.Empty(t, gazers)
 }

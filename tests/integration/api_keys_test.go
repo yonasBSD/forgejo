@@ -169,7 +169,7 @@ func TestCreateUserKey(t *testing.T) {
 	resp = MakeRequest(t, req, http.StatusOK)
 
 	DecodeJSON(t, resp, &fingerprintPublicKeys)
-	assert.Len(t, fingerprintPublicKeys, 0)
+	assert.Empty(t, fingerprintPublicKeys)
 
 	// Fail searching for wrong users key
 	req = NewRequest(t, "GET", fmt.Sprintf("/api/v1/users/%s/keys?fingerprint=%s", "user2", newPublicKey.Fingerprint)).
@@ -177,7 +177,7 @@ func TestCreateUserKey(t *testing.T) {
 	resp = MakeRequest(t, req, http.StatusOK)
 
 	DecodeJSON(t, resp, &fingerprintPublicKeys)
-	assert.Len(t, fingerprintPublicKeys, 0)
+	assert.Empty(t, fingerprintPublicKeys)
 
 	// Now login as user 2
 	session2 := loginUser(t, "user2")
@@ -209,5 +209,5 @@ func TestCreateUserKey(t *testing.T) {
 	resp = MakeRequest(t, req, http.StatusOK)
 
 	DecodeJSON(t, resp, &fingerprintPublicKeys)
-	assert.Len(t, fingerprintPublicKeys, 0)
+	assert.Empty(t, fingerprintPublicKeys)
 }

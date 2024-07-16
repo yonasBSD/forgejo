@@ -129,16 +129,16 @@ tasks:
 		p := &api.DeletePayload{}
 
 		pl, err := pc.Delete(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Fork", func(t *testing.T) {
 		p := &api.ForkPayload{}
 
 		pl, err := pc.Fork(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Push/simple", func(t *testing.T) {
@@ -250,29 +250,29 @@ triggers:
 
 		p.Action = api.HookIssueOpened
 		pl, err := pc.Issue(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 
 		p.Action = api.HookIssueClosed
 		pl, err = pc.Issue(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("IssueComment", func(t *testing.T) {
 		p := &api.IssueCommentPayload{}
 
 		pl, err := pc.IssueComment(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("PullRequest", func(t *testing.T) {
 		p := &api.PullRequestPayload{}
 
 		pl, err := pc.PullRequest(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("PullRequestComment", func(t *testing.T) {
@@ -281,8 +281,8 @@ triggers:
 		}
 
 		pl, err := pc.IssueComment(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Review", func(t *testing.T) {
@@ -290,24 +290,24 @@ triggers:
 		p.Action = api.HookIssueReviewed
 
 		pl, err := pc.Review(p, webhook_module.HookEventPullRequestReviewApproved)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Repository", func(t *testing.T) {
 		p := &api.RepositoryPayload{}
 
 		pl, err := pc.Repository(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Package", func(t *testing.T) {
 		p := &api.PackagePayload{}
 
 		pl, err := pc.Package(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Wiki", func(t *testing.T) {
@@ -315,26 +315,26 @@ triggers:
 
 		p.Action = api.HookWikiCreated
 		pl, err := pc.Wiki(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 
 		p.Action = api.HookWikiEdited
 		pl, err = pc.Wiki(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 
 		p.Action = api.HookWikiDeleted
 		pl, err = pc.Wiki(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 
 	t.Run("Release", func(t *testing.T) {
 		p := &api.ReleasePayload{}
 
 		pl, err := pc.Release(p)
-		require.Equal(t, err, shared.ErrPayloadTypeNotSupported)
-		require.Equal(t, pl, graphqlPayload[buildsVariables]{})
+		require.Equal(t, shared.ErrPayloadTypeNotSupported, err)
+		require.Equal(t, graphqlPayload[buildsVariables]{}, pl)
 	})
 }
 

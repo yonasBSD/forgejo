@@ -103,7 +103,7 @@ func testMirrorPush(t *testing.T, u *url.URL) {
 	doRemovePushMirror(ctx, fmt.Sprintf("%s%s/%s", u.String(), url.PathEscape(ctx.Username), url.PathEscape(mirrorRepo.Name)), user.LowerName, userPassword, int(mirrors[0].ID))(t)
 	mirrors, _, err = repo_model.GetPushMirrorsByRepoID(db.DefaultContext, srcRepo.ID, db.ListOptions{})
 	require.NoError(t, err)
-	assert.Len(t, mirrors, 0)
+	assert.Empty(t, mirrors)
 }
 
 func doCreatePushMirror(ctx APITestContext, address, username, password string) func(t *testing.T) {

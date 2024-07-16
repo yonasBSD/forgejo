@@ -57,5 +57,5 @@ func TestSettings(t *testing.T) {
 	require.NoError(t, err)
 	settings, err = user_model.GetUserAllSettings(db.DefaultContext, 99)
 	require.NoError(t, err)
-	assert.Len(t, settings, 0)
+	assert.Empty(t, settings)
 }

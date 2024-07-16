@@ -67,7 +67,7 @@ func TestGetFeeds(t *testing.T) {
 		OnlyPerformedBy: false,
 	})
 	require.NoError(t, err)
-	assert.Len(t, actions, 0)
+	assert.Empty(t, actions)
 	assert.Equal(t, int64(0), count)
 }
 
@@ -83,7 +83,7 @@ func TestGetFeedsForRepos(t *testing.T) {
 		IncludePrivate: true,
 	})
 	require.NoError(t, err)
-	assert.Len(t, actions, 0)
+	assert.Empty(t, actions)
 	assert.Equal(t, int64(0), count)
 
 	// public repo & no login
@@ -145,7 +145,7 @@ func TestGetFeeds2(t *testing.T) {
 		IncludeDeleted:  true,
 	})
 	require.NoError(t, err)
-	assert.Len(t, actions, 0)
+	assert.Empty(t, actions)
 	assert.Equal(t, int64(0), count)
 }
 
@@ -240,7 +240,7 @@ func TestGetFeedsCorrupted(t *testing.T) {
 		IncludePrivate: true,
 	})
 	require.NoError(t, err)
-	assert.Len(t, actions, 0)
+	assert.Empty(t, actions)
 	assert.Equal(t, int64(0), count)
 }
 

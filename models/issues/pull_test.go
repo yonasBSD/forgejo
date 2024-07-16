@@ -87,7 +87,7 @@ func TestLoadRequestedReviewers(t *testing.T) {
 	require.NoError(t, pull.LoadIssue(db.DefaultContext))
 	issue := pull.Issue
 	require.NoError(t, issue.LoadRepo(db.DefaultContext))
-	assert.Len(t, pull.RequestedReviewers, 0)
+	assert.Empty(t, pull.RequestedReviewers)
 
 	user1, err := user_model.GetUserByID(db.DefaultContext, 1)
 	require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestGetUnmergedPullRequestsByHeadInfoMax(t *testing.T) {
 	branch := "branchmax"
 	prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
 	require.NoError(t, err)
-	assert.Len(t, prs, 0)
+	assert.Empty(t, prs)
 	olderThan = time.Now().UnixNano()
 	require.NoError(t, err)
 	prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
@@ -239,7 +239,7 @@ func TestGetUnmergedPullRequestsByHeadInfoMax(t *testing.T) {
 			require.NoError(t, err)
 			prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
 			require.NoError(t, err)
-			assert.Len(t, prs, 0)
+			assert.Empty(t, prs)
 
 			// expect one match
 			_, err = db.GetEngine(db.DefaultContext).Exec(update, testCase.match, testCase.id)

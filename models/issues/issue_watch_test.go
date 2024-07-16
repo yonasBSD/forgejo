@@ -49,17 +49,17 @@ func TestGetIssueWatchers(t *testing.T) {
 	iws, err := issues_model.GetIssueWatchers(db.DefaultContext, 1, db.ListOptions{})
 	require.NoError(t, err)
 	// Watcher is inactive, thus 0
-	assert.Len(t, iws, 0)
+	assert.Empty(t, iws)
 
 	iws, err = issues_model.GetIssueWatchers(db.DefaultContext, 2, db.ListOptions{})
 	require.NoError(t, err)
 	// Watcher is explicit not watching
-	assert.Len(t, iws, 0)
+	assert.Empty(t, iws)
 
 	iws, err = issues_model.GetIssueWatchers(db.DefaultContext, 5, db.ListOptions{})
 	require.NoError(t, err)
 	// Issue has no Watchers
-	assert.Len(t, iws, 0)
+	assert.Empty(t, iws)
 
 	iws, err = issues_model.GetIssueWatchers(db.DefaultContext, 7, db.ListOptions{})
 	require.NoError(t, err)

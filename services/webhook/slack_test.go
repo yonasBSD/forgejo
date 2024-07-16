@@ -217,11 +217,12 @@ func TestSlackMetadata(t *testing.T) {
 		Meta: `{"channel": "foo", "username": "username", "color": "blue"}`,
 	}
 	slackHook := slackHandler{}.Metadata(w)
-	assert.Equal(t, *slackHook.(*SlackMeta), SlackMeta{
+	assert.Equal(t, SlackMeta{
 		Channel:  "foo",
 		Username: "username",
 		Color:    "blue",
-	})
+	},
+		*slackHook.(*SlackMeta))
 }
 
 func TestSlackToHook(t *testing.T) {
@@ -244,7 +245,7 @@ func TestSlackToHook(t *testing.T) {
 	h, err := ToHook("repoLink", w)
 	require.NoError(t, err)
 
-	assert.Equal(t, h.Config, map[string]string{
+	assert.Equal(t, map[string]string{
 		"url":          "https://slack.example.com",
 		"content_type": "json",
 
@@ -252,13 +253,13 @@ func TestSlackToHook(t *testing.T) {
 		"color":    "blue",
 		"icon_url": "",
 		"username": "username",
-	})
-	assert.Equal(t, h.URL, "https://slack.example.com")
-	assert.Equal(t, h.ContentType, "json")
-	assert.Equal(t, h.Metadata, &SlackMeta{
+	}, h.Config)
+	assert.Equal(t, "https://slack.example.com", h.URL)
+	assert.Equal(t, "json", h.ContentType)
+	assert.Equal(t, &SlackMeta{
 		Channel:  "foo",
 		Username: "username",
 		IconURL:  "",
 		Color:    "blue",
-	})
+	}, h.Metadata)
 }

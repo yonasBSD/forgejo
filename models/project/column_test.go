@@ -67,7 +67,7 @@ func Test_moveIssuesToAnotherColumn(t *testing.T) {
 
 	issues, err = column1.GetIssues(db.DefaultContext)
 	require.NoError(t, err)
-	assert.Len(t, issues, 0)
+	assert.Empty(t, issues)
 
 	issues, err = column2.GetIssues(db.DefaultContext)
 	require.NoError(t, err)

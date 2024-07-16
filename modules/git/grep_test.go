@@ -72,11 +72,11 @@ func TestGrepSearch(t *testing.T) {
 
 	res, err = GrepSearch(context.Background(), repo, "no-such-content", GrepOptions{})
 	require.NoError(t, err)
-	assert.Len(t, res, 0)
+	assert.Empty(t, res)
 
 	res, err = GrepSearch(context.Background(), &Repository{Path: "no-such-git-repo"}, "no-such-content", GrepOptions{})
 	assert.Error(t, err)
-	assert.Len(t, res, 0)
+	assert.Empty(t, res)
 }
 
 func TestGrepLongFiles(t *testing.T) {
@@ -130,5 +130,5 @@ func TestGrepRefs(t *testing.T) {
 	res, err := GrepSearch(context.Background(), gitRepo, "a", GrepOptions{RefName: "v1"})
 	require.NoError(t, err)
 	assert.Len(t, res, 1)
-	assert.Equal(t, res[0].LineCodes[0], "A")
+	assert.Equal(t, "A", res[0].LineCodes[0])
 }

@@ -67,15 +67,15 @@ func TestRemote_MaybePromoteUserSuccess(t *testing.T) {
 	userAfterSignIn := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userBeforeSignIn.ID})
 
 	// both are about the same user
-	assert.Equal(t, userAfterSignIn.ID, userBeforeSignIn.ID)
+	assert.Equal(t, userBeforeSignIn.ID, userAfterSignIn.ID)
 	// the login time was updated, proof the login succeeded
 	assert.Greater(t, userAfterSignIn.LastLoginUnix, userBeforeSignIn.LastLoginUnix)
 	// the login type was promoted from Remote to OAuth2
-	assert.Equal(t, userBeforeSignIn.LoginType, auth_model.Remote)
-	assert.Equal(t, userAfterSignIn.LoginType, auth_model.OAuth2)
+	assert.Equal(t, auth_model.Remote, userBeforeSignIn.LoginType)
+	assert.Equal(t, auth_model.OAuth2, userAfterSignIn.LoginType)
 	// the OAuth2 email was used to set the missing user email
-	assert.Equal(t, userBeforeSignIn.Email, "")
-	assert.Equal(t, userAfterSignIn.Email, gitlabEmail)
+	assert.Equal(t, "", userBeforeSignIn.Email)
+	assert.Equal(t, gitlabEmail, userAfterSignIn.Email)
 }
 
 func TestRemote_MaybePromoteUserFail(t *testing.T) {

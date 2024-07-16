@@ -251,7 +251,7 @@ func TestGetLabelsByIssueID(t *testing.T) {
 
 	labels, err = issues_model.GetLabelsByIssueID(db.DefaultContext, unittest.NonexistentID)
 	require.NoError(t, err)
-	assert.Len(t, labels, 0)
+	assert.Empty(t, labels)
 }
 
 func TestUpdateLabel(t *testing.T) {
@@ -274,7 +274,7 @@ func TestUpdateLabel(t *testing.T) {
 	assert.EqualValues(t, label.Color, newLabel.Color)
 	assert.EqualValues(t, label.Name, newLabel.Name)
 	assert.EqualValues(t, label.Description, newLabel.Description)
-	assert.EqualValues(t, newLabel.ArchivedUnix, 0)
+	assert.EqualValues(t, 0, newLabel.ArchivedUnix)
 	unittest.CheckConsistencyFor(t, &issues_model.Label{}, &repo_model.Repository{})
 }
 

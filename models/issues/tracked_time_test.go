@@ -51,7 +51,7 @@ func TestGetTrackedTimes(t *testing.T) {
 
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{IssueID: -1})
 	require.NoError(t, err)
-	assert.Len(t, times, 0)
+	assert.Empty(t, times)
 
 	// by User
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{UserID: 1})
@@ -61,7 +61,7 @@ func TestGetTrackedTimes(t *testing.T) {
 
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{UserID: 3})
 	require.NoError(t, err)
-	assert.Len(t, times, 0)
+	assert.Empty(t, times)
 
 	// by Repo
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{RepositoryID: 2})
@@ -70,7 +70,7 @@ func TestGetTrackedTimes(t *testing.T) {
 	assert.Equal(t, int64(1), times[0].Time)
 	issue, err := issues_model.GetIssueByID(db.DefaultContext, times[0].IssueID)
 	require.NoError(t, err)
-	assert.Equal(t, issue.RepoID, int64(2))
+	assert.Equal(t, int64(2), issue.RepoID)
 
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{RepositoryID: 1})
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestGetTrackedTimes(t *testing.T) {
 
 	times, err = issues_model.GetTrackedTimes(db.DefaultContext, &issues_model.FindTrackedTimesOptions{RepositoryID: 10})
 	require.NoError(t, err)
-	assert.Len(t, times, 0)
+	assert.Empty(t, times)
 }
 
 func TestTotalTimesForEachUser(t *testing.T) {

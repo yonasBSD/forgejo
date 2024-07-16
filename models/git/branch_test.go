@@ -191,5 +191,5 @@ func TestFindBranchesByRepoAndBranchName(t *testing.T) {
 	// With no repos or branches given, we find no branches.
 	branches, err := git_model.FindBranchesByRepoAndBranchName(db.DefaultContext, map[int64]string{})
 	require.NoError(t, err)
-	assert.Len(t, branches, 0)
+	assert.Empty(t, branches)
 }

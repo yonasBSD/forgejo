@@ -29,7 +29,7 @@ func TestCurrentTime(t *testing.T) {
 	date := CurrentTime()
 	_, err := time.Parse(http.TimeFormat, date)
 	require.NoError(t, err)
-	assert.Equal(t, date[len(date)-3:], "GMT")
+	assert.Equal(t, "GMT", date[len(date)-3:])
 }
 
 /* ToDo: Set Up tests for http get requests
@@ -116,7 +116,7 @@ func TestActivityPubSignedPost(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Regexp(t, regexp.MustCompile("^"+setting.Federation.DigestAlgorithm), r.Header.Get("Digest"))
 		assert.Contains(t, r.Header.Get("Signature"), pubID)
-		assert.Equal(t, r.Header.Get("Content-Type"), ActivityStreamsContentType)
+		assert.Equal(t, ActivityStreamsContentType, r.Header.Get("Content-Type"))
 		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		assert.Equal(t, expected, string(body))

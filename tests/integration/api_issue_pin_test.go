@@ -170,7 +170,7 @@ func TestAPIListPinnedPullrequests(t *testing.T) {
 	var prList []api.PullRequest
 	DecodeJSON(t, resp, &prList)
 
-	assert.Equal(t, 0, len(prList))
+	assert.Empty(t, prList)
 }
 
 func TestAPINewPinAllowed(t *testing.T) {
