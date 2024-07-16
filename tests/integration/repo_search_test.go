@@ -27,7 +27,7 @@ func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
 
 	result := make([]string, resultSelections.Length())
 	resultSelections.Each(func(i int, selection *goquery.Selection) {
-		assert.True(t, resultSelections.Find("div ol li").Length() > 0)
+		assert.Positive(t, resultSelections.Find("div ol li").Length(), 0)
 		result[i] = selection.
 			Find(".header").
 			Find("span.file a.file-link").

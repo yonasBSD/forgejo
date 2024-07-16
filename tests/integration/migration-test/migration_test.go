@@ -64,7 +64,7 @@ func initMigrationTest(t *testing.T) func() {
 
 	unittest.InitSettings()
 
-	assert.True(t, len(setting.RepoRootPath) != 0)
+	assert.NotEmpty(t, setting.RepoRootPath)
 	require.NoError(t, util.RemoveAll(setting.RepoRootPath))
 	require.NoError(t, unittest.CopyDir(path.Join(filepath.Dir(setting.AppPath), "tests/gitea-repositories-meta"), setting.RepoRootPath))
 	ownerDirs, err := os.ReadDir(setting.RepoRootPath)

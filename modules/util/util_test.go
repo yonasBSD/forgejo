@@ -123,8 +123,8 @@ func Test_NormalizeEOL(t *testing.T) {
 
 func Test_RandomInt(t *testing.T) {
 	randInt, err := CryptoRandomInt(255)
-	assert.True(t, randInt >= 0)
-	assert.True(t, randInt <= 255)
+	assert.GreaterOrEqual(t, randInt, 0)
+	assert.LessOrEqual(t, randInt, 255)
 	require.NoError(t, err)
 }
 
@@ -232,9 +232,9 @@ func TestToPointer(t *testing.T) {
 	assert.Equal(t, "abc", *ToPointer("abc"))
 	assert.Equal(t, 123, *ToPointer(123))
 	abc := "abc"
-	assert.False(t, &abc == ToPointer(abc))
+	assert.NotSame(t, &abc, ToPointer(abc))
 	val123 := 123
-	assert.False(t, &val123 == ToPointer(val123))
+	assert.NotSame(t, &val123, ToPointer(val123))
 }
 
 func TestReserveLineBreakForTextarea(t *testing.T) {

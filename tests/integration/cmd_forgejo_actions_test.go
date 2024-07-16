@@ -4,7 +4,6 @@ package integration
 
 import (
 	gocontext "context"
-	"errors"
 	"io"
 	"net/url"
 	"os"
@@ -33,7 +32,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 
 		_, err = runMainApp("forgejo-cli", "actions", "register")
 		var exitErr *exec.ExitError
-		assert.True(t, errors.As(err, &exitErr))
+		require.ErrorAs(t, err, &exitErr)
 		assert.Contains(t, string(exitErr.Stderr), "at least one of the --secret")
 
 		for _, testCase := range []struct {
@@ -72,7 +71,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 				assert.EqualValues(t, "", output)
 
 				var exitErr *exec.ExitError
-				assert.True(t, errors.As(err, &exitErr))
+				require.ErrorAs(t, err, &exitErr)
 				assert.Contains(t, string(exitErr.Stderr), testCase.errorMessage)
 			})
 		}

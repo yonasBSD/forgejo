@@ -18,12 +18,12 @@ func TestNotHandleTwice(t *testing.T) {
 	msg := imap.NewMessage(90, []imap.FetchItem{imap.FetchBody})
 
 	handled := isAlreadyHandled(handledSet, msg)
-	assert.Equal(t, false, handled)
+	assert.False(t, handled)
 
 	handledSet.AddNum(msg.SeqNum)
 
 	handled = isAlreadyHandled(handledSet, msg)
-	assert.Equal(t, true, handled)
+	assert.True(t, handled)
 }
 
 func TestIsAutomaticReply(t *testing.T) {

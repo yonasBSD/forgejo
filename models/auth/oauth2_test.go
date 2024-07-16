@@ -22,7 +22,7 @@ func TestOAuth2Application_GenerateClientSecret(t *testing.T) {
 	app := unittest.AssertExistsAndLoadBean(t, &auth_model.OAuth2Application{ID: 1})
 	secret, err := app.GenerateClientSecret(db.DefaultContext)
 	require.NoError(t, err)
-	assert.True(t, len(secret) > 0)
+	assert.Positive(t, len(secret) > 0)
 	unittest.AssertExistsAndLoadBean(t, &auth_model.OAuth2Application{ID: 1, ClientSecret: app.ClientSecret})
 }
 
@@ -169,7 +169,7 @@ func TestOAuth2Grant_GenerateNewAuthorizationCode(t *testing.T) {
 	code, err := grant.GenerateNewAuthorizationCode(db.DefaultContext, "https://example2.com/callback", "CjvyTLSdR47G5zYenDA-eDWW4lRrO8yvjcWwbD_deOg", "S256")
 	require.NoError(t, err)
 	assert.NotNil(t, code)
-	assert.True(t, len(code.Code) > 32) // secret length > 32
+	assert.Greater(t, len(code.Code), 32) // secret length > 32
 }
 
 func TestOAuth2Grant_TableName(t *testing.T) {

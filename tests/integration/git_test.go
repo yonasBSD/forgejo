@@ -582,7 +582,7 @@ func doEnsureCanSeePull(ctx APITestContext, pr api.PullRequest, editable bool) f
 		doc := NewHTMLParser(t, resp.Body)
 		editButtonCount := doc.doc.Find("div.diff-file-header-actions a[href*='/_edit/']").Length()
 		if editable {
-			assert.Greater(t, editButtonCount, 0, "Expected to find a button to edit a file in the PR diff view but there were none")
+			assert.Positive(t, editButtonCount, 0, "Expected to find a button to edit a file in the PR diff view but there were none")
 		} else {
 			assert.Equal(t, 0, editButtonCount, "Expected not to find any buttons to edit files in PR diff view but there were some")
 		}

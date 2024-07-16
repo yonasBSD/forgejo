@@ -33,12 +33,12 @@ func TestLabel_LoadSelectedLabelsAfterClick(t *testing.T) {
 	// First test : with negative and scope
 	label.LoadSelectedLabelsAfterClick([]int64{1, -8}, []string{"", "scope"})
 	assert.Equal(t, "1", label.QueryString)
-	assert.Equal(t, true, label.IsSelected)
+	assert.True(t, label.IsSelected)
 
 	// Second test : with duplicates
 	label.LoadSelectedLabelsAfterClick([]int64{1, 7, 1, 7, 7}, []string{"", "scope", "", "scope", "scope"})
 	assert.Equal(t, "1,8", label.QueryString)
-	assert.Equal(t, false, label.IsSelected)
+	assert.False(t, label.IsSelected)
 
 	// Third test : empty set
 	label.LoadSelectedLabelsAfterClick([]int64{}, []string{})

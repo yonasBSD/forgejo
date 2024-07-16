@@ -658,7 +658,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 
 	schemaFilePath := filepath.Join(filepath.Dir(setting.AppPath), "tests", "integration", "schemas", schemaFile)
 	_, schemaFileErr := os.Stat(schemaFilePath)
-	assert.Nil(t, schemaFileErr)
+	require.NoError(t, schemaFileErr)
 
 	schema, err := jsonschema.NewCompiler().Compile(schemaFilePath)
 	require.NoError(t, err)
@@ -668,7 +668,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	require.NoError(t, err)
 
 	schemaValidation := schema.Validate(data)
-	assert.Nil(t, schemaValidation)
+	assert.NoError(t, schemaValidation)
 }
 
 func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {

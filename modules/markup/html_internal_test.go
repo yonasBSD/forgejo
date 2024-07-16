@@ -311,7 +311,7 @@ func TestRender_AutoLink(t *testing.T) {
 			},
 			Metas: localMetas,
 		}, strings.NewReader(input), &buffer)
-		assert.Equal(t, err, nil)
+		require.NoError(t, err, nil)
 		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer.String()))
 
 		buffer.Reset()
@@ -323,7 +323,7 @@ func TestRender_AutoLink(t *testing.T) {
 			Metas:  localMetas,
 			IsWiki: true,
 		}, strings.NewReader(input), &buffer)
-		assert.Equal(t, err, nil)
+		require.NoError(t, err)
 		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer.String()))
 	}
 

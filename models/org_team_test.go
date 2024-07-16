@@ -115,7 +115,7 @@ func TestDeleteTeam(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 3})
 	accessMode, err := access_model.AccessLevel(db.DefaultContext, user, repo)
 	require.NoError(t, err)
-	assert.True(t, accessMode < perm.AccessModeWrite)
+	assert.Less(t, accessMode, perm.AccessModeWrite)
 }
 
 func TestAddTeamMember(t *testing.T) {

@@ -647,7 +647,7 @@ func TestGetDiffRangeWithWhitespaceBehavior(t *testing.T) {
 			})
 		require.NoError(t, err, fmt.Sprintf("Error when diff with %s", behavior))
 		for _, f := range diffs.Files {
-			assert.True(t, len(f.Sections) > 0, fmt.Sprintf("%s should have sections", f.Name))
+			assert.Positive(t, len(f.Sections), fmt.Sprintf("%s should have sections", f.Name))
 		}
 	}
 }

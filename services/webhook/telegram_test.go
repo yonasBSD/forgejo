@@ -23,7 +23,7 @@ func TestTelegramPayload(t *testing.T) {
 		p := createTelegramPayload("testMsg ")
 
 		assert.Equal(t, "HTML", p.ParseMode)
-		assert.Equal(t, true, p.DisableWebPreview)
+		assert.True(t, p.DisableWebPreview)
 		assert.Equal(t, "testMsg", p.Message)
 	})
 

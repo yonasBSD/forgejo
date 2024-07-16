@@ -166,8 +166,7 @@ func TestGetContentsErrors(t *testing.T) {
 	t.Run("bad ref", func(t *testing.T) {
 		badRef := "bad_ref"
 		fileContentResponse, err := GetContents(ctx, repo, treePath, badRef, false)
-		require.Error(t, err)
-		assert.EqualError(t, err, "object does not exist [id: "+badRef+", rel_path: ]")
+		require.EqualError(t, err, "object does not exist [id: "+badRef+", rel_path: ]")
 		assert.Nil(t, fileContentResponse)
 	})
 }

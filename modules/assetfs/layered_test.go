@@ -59,7 +59,7 @@ func TestLayered(t *testing.T) {
 	assertRead := func(expected string, expectedErr error, elems ...string) {
 		bs, err := assets.ReadFile(elems...)
 		if err != nil {
-			require.ErrorAs(t, err, &expectedErr)
+			require.ErrorIs(t, err, expectedErr)
 		} else {
 			require.NoError(t, err)
 			assert.Equal(t, expected, string(bs))
