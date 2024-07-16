@@ -90,9 +90,7 @@ empty commit`
 
 	commitFromReader, err := CommitFromReader(gitRepo, sha, strings.NewReader(commitString))
 	require.NoError(t, err)
-	if !assert.NotNil(t, commitFromReader) {
-		return
-	}
+	require.NotNil(t, commitFromReader)
 	assert.EqualValues(t, sha, commitFromReader.ID)
 	assert.EqualValues(t, `-----BEGIN PGP SIGNATURE-----
 
@@ -158,9 +156,7 @@ ISO-8859-1`
 
 	commitFromReader, err := CommitFromReader(gitRepo, sha, strings.NewReader(commitString))
 	require.NoError(t, err)
-	if !assert.NotNil(t, commitFromReader) {
-		return
-	}
+	require.NotNil(t, commitFromReader)
 	assert.EqualValues(t, sha, commitFromReader.ID)
 	assert.EqualValues(t, `-----BEGIN PGP SIGNATURE-----
 

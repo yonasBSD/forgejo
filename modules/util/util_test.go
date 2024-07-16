@@ -123,8 +123,8 @@ func Test_NormalizeEOL(t *testing.T) {
 
 func Test_RandomInt(t *testing.T) {
 	randInt, err := CryptoRandomInt(255)
-	assert.GreaterOrEqual(t, randInt, 0)
-	assert.LessOrEqual(t, randInt, 255)
+	assert.GreaterOrEqual(t, randInt, int64(0))
+	assert.LessOrEqual(t, randInt, int64(255))
 	require.NoError(t, err)
 }
 

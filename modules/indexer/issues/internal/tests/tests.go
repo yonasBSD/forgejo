@@ -222,7 +222,7 @@ var cases = []*testIndexerCase{
 			IsClosed: optional.Some(false),
 		},
 		Expected: func(t *testing.T, data map[int64]*internal.IndexerData, result *internal.SearchResult) {
-			assert.Equal(t, 5, result.Hits)
+			assert.Len(t, result.Hits, 5)
 			for _, v := range result.Hits {
 				assert.False(t, data[v.ID].IsClosed)
 			}
