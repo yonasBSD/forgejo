@@ -20,6 +20,7 @@ linters:
     - staticcheck
     - stylecheck
     - tenv
+    - testifylint
     - typecheck
     - unconvert
     - unused
@@ -28,10 +29,6 @@ linters:
 
 run:
   timeout: 10m
-  skip-dirs:
-    - node_modules
-    - public
-    - web_src
 
 output:
   sort-results: true
