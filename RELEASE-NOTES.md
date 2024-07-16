@@ -10,12 +10,7 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 ## 8.0.0
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v8.0/forgejo) included in the `Forgejo v8.0.0` release can be reviewed from the command line with:
-
-```shell
-$ git clone https://codeberg.org/forgejo/forgejo/
-$ git -C forgejo log --oneline --no-merges origin/v7.0/forgejo..origin/v8.0/forgejo
-```
+A [companion blog post](https://forgejo.org/2024-07-release-v8-0/) provides additional context on this release. In addition to the pull requests listed below, you will find a complete list in the [v8.0 milestone](https://codeberg.org/forgejo/forgejo/milestone/6042).
 
 <!--start release-notes-assistant-->
 <!--URL:https://codeberg.org/forgejo/forgejo-->
