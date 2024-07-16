@@ -30,7 +30,7 @@ func TestCreateAuthorizationToken(t *testing.T) {
 	assert.Contains(t, scp, "Actions.Results:1:2")
 	taskIDClaim, ok := claims["TaskID"]
 	assert.True(t, ok, "Has TaskID claim in jwt token")
-	assert.Equal(t, float64(taskID), taskIDClaim, "Supplied taskid must match stored one")
+	assert.InDelta(t, float64(taskID), taskIDClaim, 0, "Supplied taskid must match stored one")
 	acClaim, ok := claims["ac"]
 	assert.True(t, ok, "Has ac claim in jwt token")
 	ac, ok := acClaim.(string)
