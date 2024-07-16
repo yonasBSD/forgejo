@@ -295,6 +295,7 @@ func TestIssue_ResolveMentions(t *testing.T) {
 
 func TestResourceIndex(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
+	t.Parallel()
 
 	beforeCount, err := issues_model.CountIssues(context.Background(), &issues_model.IssuesOptions{})
 	require.NoError(t, err)
