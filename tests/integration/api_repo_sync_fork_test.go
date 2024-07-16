@@ -60,7 +60,7 @@ func syncForkTest(t *testing.T, forkName, urlPart string) {
 
 	// Sync the fork
 	req = NewRequestf(t, "POST", "/api/v1/repos/%s/%s/%s", user.Name, forkName, urlPart).AddTokenAuth(token)
-	resp = MakeRequest(t, req, http.StatusNoContent)
+	MakeRequest(t, req, http.StatusNoContent)
 
 	req = NewRequestf(t, "GET", "/api/v1/repos/%s/%s/%s", user.Name, forkName, urlPart).AddTokenAuth(token)
 	resp = MakeRequest(t, req, http.StatusOK)
