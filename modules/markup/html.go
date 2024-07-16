@@ -73,6 +73,8 @@ var (
 
 	// EmojiShortCodeRegex find emoji by alias like :smile:
 	EmojiShortCodeRegex = regexp.MustCompile(`:[-+\w]+:`)
+
+	InlineCodeBlockRegex = regexp.MustCompile("`[^`]+`")
 )
 
 // CSS class for action keywords (e.g. "closes: #1")
@@ -258,9 +260,23 @@ func RenderIssueTitle(
 	title string,
 ) (string, error) {
 	return renderProcessString(ctx, []processor{
+		inlineCodeBlockProcessor,
 		issueIndexPatternProcessor,
 		commitCrossReferencePatternProcessor,
 		hashCurrentPatternProcessor,
+		emojiShortCodeProcessor,
+		emojiProcessor,
+	}, title)
+}
+
+// RenderRefIssueTitle to process title on places where an issue is referenced
+func RenderRefIssueTitle(
+	ctx *RenderContext,
+	title string,
+) (string, error) {
+	return renderProcessString(ctx, []processor{
+		inlineCodeBlockProcessor,
+		issueIndexPatternProcessor,
 		emojiShortCodeProcessor,
 		emojiProcessor,
 	}, title)
@@ -451,6 +467,24 @@ func createKeyword(content string) *html.Node {
 	span.AppendChild(text)
 
 	return span
+}
+
+func createInlineCode(content string) *html.Node {
+	code := &html.Node{
+		Type: html.ElementNode,
+		Data: atom.Code.String(),
+		Attr: []html.Attribute{},
+	}
+
+	code.Attr = append(code.Attr, html.Attribute{Key: "class", Val: "inline-code-block"})
+
+	text := &html.Node{
+		Type: html.TextNode,
+		Data: content,
+	}
+
+	code.AppendChild(text)
+	return code
 }
 
 func createEmoji(content, class, name string) *html.Node {
@@ -1091,6 +1125,21 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 		}
 
 		node = node.NextSibling
+	}
+}
+
+func inlineCodeBlockProcessor(ctx *RenderContext, node *html.Node) {
+	start := 0
+	next := node.NextSibling
+	for node != nil && node != next && start < len(node.Data) {
+		m := InlineCodeBlockRegex.FindStringSubmatchIndex(node.Data[start:])
+		if m == nil {
+			return
+		}
+
+		code := node.Data[m[0]+1 : m[1]-1]
+		replaceContent(node, m[0], m[1], createInlineCode(code))
+		node = node.NextSibling.NextSibling
 	}
 }
 
