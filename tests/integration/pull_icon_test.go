@@ -72,8 +72,6 @@ func TestPullRequestIcons(t *testing.T) {
 			testPullRequestIcon(t, session, pull, "purple", "octicon-git-merge")
 		})
 
-		time.Sleep(1 * time.Minute)
-
 		// List
 		req := NewRequest(t, "GET", repo.HTMLURL()+"/pulls?state=all")
 		resp := session.MakeRequest(t, req, http.StatusOK)
@@ -189,6 +187,8 @@ func createMergedPullRequest(ctx context.Context, t *testing.T, user *user_model
 	pull := createPullRequest(t, user, repo, "merged")
 
 	gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
+	defer gitRepo.Close()
+
 	assert.NoError(t, err)
 
 	err = pull_service.Merge(ctx, pull, user, gitRepo, repo_model.MergeStyleMerge, pull.HeadCommitID, "merge", false)
