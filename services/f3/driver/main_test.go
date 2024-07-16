@@ -9,6 +9,7 @@ import (
 
 	"code.gitea.io/gitea/models/unittest"
 	driver_options "code.gitea.io/gitea/services/f3/driver/options"
+	"github.com/stretchr/testify/require"
 
 	_ "code.gitea.io/gitea/models"
 	_ "code.gitea.io/gitea/models/actions"

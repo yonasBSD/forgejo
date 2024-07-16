@@ -82,7 +82,7 @@ func TestIssueList_LoadAttributes(t *testing.T) {
 }
 
 func TestIssueListLoadUser(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{})
 	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
@@ -121,7 +121,7 @@ func TestIssueListLoadUser(t *testing.T) {
 
 			issue.PosterID = testCase.poster
 			issue.Poster = nil
-			assert.NoError(t, list.LoadPosters(db.DefaultContext))
+			require.NoError(t, list.LoadPosters(db.DefaultContext))
 			require.NotNil(t, issue.Poster)
 			assert.Equal(t, testCase.user.ID, issue.Poster.ID)
 		})
