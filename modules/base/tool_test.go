@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncodeSha1(t *testing.T) {
@@ -33,15 +34,15 @@ func TestBasicAuthDecode(t *testing.T) {
 	assert.Equal(t, "illegal base64 data at input byte 0", err.Error())
 
 	user, pass, err := BasicAuthDecode("Zm9vOmJhcg==")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "foo", user)
 	assert.Equal(t, "bar", pass)
 
 	_, _, err = BasicAuthDecode("aW52YWxpZA==")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, _, err = BasicAuthDecode("invalid")
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestVerifyTimeLimitCode(t *testing.T) {
@@ -80,7 +81,7 @@ func testCreateTimeLimitCode(t *testing.T, data string, m int) string {
 	assert.Equal(t, result0, result1)
 	assert.NotEqual(t, result0, result2)
 
-	assert.True(t, len(result0) != 0)
+	assert.NotEmpty(t, result0)
 	return result0
 }
 
@@ -134,7 +135,7 @@ func TestTruncateString(t *testing.T) {
 func TestStringsToInt64s(t *testing.T) {
 	testSuccess := func(input []string, expected []int64) {
 		result, err := StringsToInt64s(input)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expected, result)
 	}
 	testSuccess(nil, nil)
@@ -143,8 +144,8 @@ func TestStringsToInt64s(t *testing.T) {
 	testSuccess([]string{"1", "4", "16", "64", "256"}, []int64{1, 4, 16, 64, 256})
 
 	ints, err := StringsToInt64s([]string{"-1", "a"})
-	assert.Len(t, ints, 0)
-	assert.Error(t, err)
+	assert.Empty(t, ints)
+	require.Error(t, err)
 }
 
 func TestInt64sToStrings(t *testing.T) {
