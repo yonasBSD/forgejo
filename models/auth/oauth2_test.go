@@ -22,7 +22,7 @@ func TestOAuth2Application_GenerateClientSecret(t *testing.T) {
 	app := unittest.AssertExistsAndLoadBean(t, &auth_model.OAuth2Application{ID: 1})
 	secret, err := app.GenerateClientSecret(db.DefaultContext)
 	require.NoError(t, err)
-	assert.Positive(t, len(secret) > 0)
+	assert.Positive(t, len(secret))
 	unittest.AssertExistsAndLoadBean(t, &auth_model.OAuth2Application{ID: 1, ClientSecret: app.ClientSecret})
 }
 

@@ -74,8 +74,7 @@ func TestListEmails(t *testing.T) {
 	}
 	emails, count, err := user_model.SearchEmails(db.DefaultContext, opts)
 	require.NoError(t, err)
-	assert.NotEqual(t, int64(0), count)
-	assert.Greater(t, count, 5)
+	assert.Greater(t, count, int64(5))
 
 	contains := func(match func(s *user_model.SearchEmailResult) bool) bool {
 		for _, v := range emails {

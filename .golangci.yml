@@ -98,6 +98,9 @@ linters-settings:
             desc: do not use the ini package, use gitea's config system instead
           - pkg: github.com/minio/sha256-simd
             desc: use crypto/sha256 instead, see https://codeberg.org/forgejo/forgejo/pulls/1528
+  testifylint:
+    disable:
+      - go-require
 
 issues:
   max-issues-per-linter: 0
