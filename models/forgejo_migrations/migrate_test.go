@@ -9,6 +9,7 @@ import (
 	migration_tests "code.gitea.io/gitea/models/migrations/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestEnsureUpToDate tests the behavior of EnsureUpToDate.
@@ -25,14 +26,14 @@ func TestEnsureUpToDate(t *testing.T) {
 
 	// Insert 'good' Forgejo Version row.
 	_, err = x.InsertOne(&ForgejoVersion{ID: 1, Version: ExpectedVersion()})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = EnsureUpToDate(x)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Modify forgejo version to have a lower version.
 	_, err = x.Exec("UPDATE `forgejo_version` SET version = ? WHERE id = 1", ExpectedVersion()-1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = EnsureUpToDate(x)
 	assert.Error(t, err)

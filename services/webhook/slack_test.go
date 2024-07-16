@@ -189,7 +189,7 @@ func TestSlackJSONPayload(t *testing.T) {
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	var body SlackPayload
 	err = json.NewDecoder(req.Body).Decode(&body)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "[<http://localhost:3000/test/repo|test/repo>:<http://localhost:3000/test/repo/src/branch/test|test>] 2 new commits pushed by user1", body.Text)
 }
 
@@ -242,7 +242,7 @@ func TestSlackToHook(t *testing.T) {
 		},
 	}
 	h, err := ToHook("repoLink", w)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, h.Config, map[string]string{
 		"url":          "https://slack.example.com",

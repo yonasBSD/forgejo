@@ -18,16 +18,17 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_CmdForgejo_Actions(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
 		token, err := runMainApp("forgejo-cli", "actions", "generate-runner-token")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.EqualValues(t, 40, len(token))
 
 		secret, err := runMainApp("forgejo-cli", "actions", "generate-secret")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.EqualValues(t, 40, len(secret))
 
 		_, err = runMainApp("forgejo-cli", "actions", "register")
@@ -101,14 +102,14 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 				testName: "secret from file",
 				secretOption: func() string {
 					secretFile := t.TempDir() + "/secret"
-					assert.NoError(t, os.WriteFile(secretFile, []byte(secret), 0o644))
+					require.NoError(t, os.WriteFile(secretFile, []byte(secret), 0o644))
 					return "--secret-file=" + secretFile
 				},
 			},
 		} {
 			t.Run(testCase.testName, func(t *testing.T) {
 				uuid, err := runMainAppWithStdin(testCase.stdin, "forgejo-cli", "actions", "register", testCase.secretOption(), "--scope=org26")
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.EqualValues(t, expecteduuid, uuid)
 			})
 		}
@@ -184,11 +185,11 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 				//
 				for i := 0; i < 2; i++ {
 					uuid, err := runMainApp("forgejo-cli", cmd...)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					if assert.EqualValues(t, testCase.uuid, uuid) {
 						ownerName, repoName, found := strings.Cut(testCase.scope, "/")
 						action, err := actions_model.GetRunnerByUUID(gocontext.Background(), uuid)
-						assert.NoError(t, err)
+						require.NoError(t, err)
 
 						user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: action.OwnerID})
 						assert.Equal(t, ownerName, user.Name, action.OwnerID)

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -88,7 +89,7 @@ func TestParsePackage(t *testing.T) {
 		data := createArchive(map[string][]byte{"pubspec.yaml": []byte(pubspecContent)})
 
 		pp, err := ParsePackage(data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, pp)
 		assert.Empty(t, pp.Metadata.Readme)
 	})
@@ -97,7 +98,7 @@ func TestParsePackage(t *testing.T) {
 		data := createArchive(map[string][]byte{"pubspec.yaml": []byte(pubspecContent), "README.md": []byte("readme")})
 
 		pp, err := ParsePackage(data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, pp)
 		assert.Equal(t, "readme", pp.Metadata.Readme)
 	})
@@ -121,7 +122,7 @@ version: invalid`))
 
 	t.Run("Valid", func(t *testing.T) {
 		pp, err := ParsePubspecMetadata(strings.NewReader(pubspecContent))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, pp)
 
 		assert.Equal(t, packageName, pp.Name)

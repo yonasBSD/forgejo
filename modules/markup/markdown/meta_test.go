@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 /*
@@ -31,7 +32,7 @@ func TestExtractMetadata(t *testing.T) {
 	t.Run("ValidFrontAndBody", func(t *testing.T) {
 		var meta IssueTemplate
 		body, err := ExtractMetadata(fmt.Sprintf("%s\n%s\n%s\n%s", sepTest, frontTest, sepTest, bodyTest), &meta)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, bodyTest, body)
 		assert.Equal(t, metaTest, meta)
 		assert.True(t, meta.Valid())
@@ -52,7 +53,7 @@ func TestExtractMetadata(t *testing.T) {
 	t.Run("NoBody", func(t *testing.T) {
 		var meta IssueTemplate
 		body, err := ExtractMetadata(fmt.Sprintf("%s\n%s\n%s", sepTest, frontTest, sepTest), &meta)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "", body)
 		assert.Equal(t, metaTest, meta)
 		assert.True(t, meta.Valid())
@@ -63,7 +64,7 @@ func TestExtractMetadataBytes(t *testing.T) {
 	t.Run("ValidFrontAndBody", func(t *testing.T) {
 		var meta IssueTemplate
 		body, err := ExtractMetadataBytes([]byte(fmt.Sprintf("%s\n%s\n%s\n%s", sepTest, frontTest, sepTest, bodyTest)), &meta)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, bodyTest, string(body))
 		assert.Equal(t, metaTest, meta)
 		assert.True(t, meta.Valid())
@@ -84,7 +85,7 @@ func TestExtractMetadataBytes(t *testing.T) {
 	t.Run("NoBody", func(t *testing.T) {
 		var meta IssueTemplate
 		body, err := ExtractMetadataBytes([]byte(fmt.Sprintf("%s\n%s\n%s", sepTest, frontTest, sepTest)), &meta)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "", string(body))
 		assert.Equal(t, metaTest, meta)
 		assert.True(t, meta.Valid())

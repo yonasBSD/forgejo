@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testSaltHasher string
@@ -76,7 +77,7 @@ func TestHashing(t *testing.T) {
 			t.Run(algorithmName, func(t *testing.T) {
 				output, err := Parse(algorithmName).Hash(password, salt)
 				if shouldPass {
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					assert.NotEmpty(t, output, "output for %s was empty", algorithmName)
 				} else {
 					assert.Error(t, err)

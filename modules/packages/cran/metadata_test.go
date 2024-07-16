@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -74,7 +75,7 @@ func TestParsePackage(t *testing.T) {
 			p, err := ParsePackage(buf, buf.Size())
 
 			assert.NotNil(t, p)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, packageName, p.Name)
 			assert.Equal(t, packageVersion, p.Version)
@@ -110,7 +111,7 @@ func TestParsePackage(t *testing.T) {
 
 			p, err := ParsePackage(buf, buf.Size())
 			assert.NotNil(t, p)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, packageName, p.Name)
 			assert.Equal(t, packageVersion, p.Version)
@@ -137,7 +138,7 @@ func TestParseDescription(t *testing.T) {
 
 	t.Run("Valid", func(t *testing.T) {
 		p, err := ParseDescription(createDescription(packageName, packageVersion))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, p)
 
 		assert.Equal(t, packageName, p.Name)

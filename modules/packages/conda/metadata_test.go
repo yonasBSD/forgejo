@@ -13,6 +13,7 @@ import (
 	"github.com/dsnet/compress/bzip2"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -54,7 +55,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := parsePackageTar(buf)
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, "name", p.Name)
 		assert.Equal(t, "1.0", p.Version)
@@ -89,7 +90,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := parsePackageTar(buf)
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)
@@ -114,7 +115,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackageBZ2(br)
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)
@@ -141,7 +142,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackageConda(br, int64(br.Len()))
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)

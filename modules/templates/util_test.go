@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDict(t *testing.T) {
@@ -27,9 +28,8 @@ func TestDict(t *testing.T) {
 
 	for _, c := range cases {
 		got, err := dict(c.args...)
-		if assert.NoError(t, err) {
-			assert.EqualValues(t, c.want, got)
-		}
+		require.NoError(t, err)
+		assert.EqualValues(t, c.want, got)
 	}
 
 	bads := []struct {
@@ -51,7 +51,7 @@ func TestUtils(t *testing.T) {
 		tmpl.Funcs(template.FuncMap{"SliceUtils": NewSliceUtils, "StringUtils": NewStringUtils})
 		template.Must(tmpl.Parse(code))
 		w := &strings.Builder{}
-		assert.NoError(t, tmpl.Execute(w, data))
+		require.NoError(t, tmpl.Execute(w, data))
 		return w.String()
 	}
 

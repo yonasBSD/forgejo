@@ -7,15 +7,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegexpLru(t *testing.T) {
 	r, err := GetCompiled("a")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, r.MatchString("a"))
 
 	r, err = GetCompiled("a")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, r.MatchString("a"))
 
 	assert.EqualValues(t, 1, lruCache.Len())

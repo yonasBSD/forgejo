@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testAPIGetBranch(t *testing.T, branchName string, exists bool) {
@@ -238,12 +239,12 @@ func TestAPICreateBranchWithSyncBranches(t *testing.T) {
 	branches, err := db.Find[git_model.Branch](db.DefaultContext, git_model.FindBranchOptions{
 		RepoID: 1,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, branches, 4)
 
 	// make a broke repository with no branch on database
 	_, err = db.DeleteByBean(db.DefaultContext, git_model.Branch{RepoID: 1})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
 		ctx := NewAPITestContext(t, "user2", "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
@@ -255,13 +256,13 @@ func TestAPICreateBranchWithSyncBranches(t *testing.T) {
 	branches, err = db.Find[git_model.Branch](db.DefaultContext, git_model.FindBranchOptions{
 		RepoID: 1,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, branches, 5)
 
 	branches, err = db.Find[git_model.Branch](db.DefaultContext, git_model.FindBranchOptions{
 		RepoID:  1,
 		Keyword: "new_branch",
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, branches, 1)
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseTreeEntriesLong(t *testing.T) {
@@ -55,7 +56,7 @@ func TestParseTreeEntriesLong(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		entries, err := ParseTreeEntries([]byte(testCase.Input))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, entries, len(testCase.Expected))
 		for i, entry := range entries {
 			assert.EqualValues(t, testCase.Expected[i], entry)
@@ -88,7 +89,7 @@ func TestParseTreeEntriesShort(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		entries, err := ParseTreeEntries([]byte(testCase.Input))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, entries, len(testCase.Expected))
 		for i, entry := range entries {
 			assert.EqualValues(t, testCase.Expected[i], entry)

@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParsePackage(t *testing.T) {
@@ -277,7 +278,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(bytes.NewReader(b))
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, packageFullName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)

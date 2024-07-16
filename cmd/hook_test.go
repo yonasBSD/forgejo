@@ -48,13 +48,13 @@ func TestPktLine(t *testing.T) {
 		s := strings.NewReader("0000")
 		r := bufio.NewReader(s)
 		result, err := readPktLine(ctx, r, pktLineTypeFlush)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, pktLineTypeFlush, result.Type)
 
 		s = strings.NewReader("0006a\n")
 		r = bufio.NewReader(s)
 		result, err = readPktLine(ctx, r, pktLineTypeData)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, pktLineTypeData, result.Type)
 		assert.Equal(t, []byte("a\n"), result.Data)
 
@@ -67,7 +67,7 @@ func TestPktLine(t *testing.T) {
 		data := strings.Repeat("x", 65516)
 		r = bufio.NewReader(strings.NewReader("fff0" + data))
 		result, err = readPktLine(ctx, r, pktLineTypeData)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, pktLineTypeData, result.Type)
 		assert.Equal(t, []byte(data), result.Data)
 
@@ -80,18 +80,18 @@ func TestPktLine(t *testing.T) {
 	t.Run("Write", func(t *testing.T) {
 		w := bytes.NewBuffer([]byte{})
 		err := writeFlushPktLine(ctx, w)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, []byte("0000"), w.Bytes())
 
 		w.Reset()
 		err = writeDataPktLine(ctx, w, []byte("a\nb"))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, []byte("0007a\nb"), w.Bytes())
 
 		w.Reset()
 		data := bytes.Repeat([]byte{0x05}, 288)
 		err = writeDataPktLine(ctx, w, data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, append([]byte("0124"), data...), w.Bytes())
 
 		w.Reset()
@@ -102,7 +102,7 @@ func TestPktLine(t *testing.T) {
 		w.Reset()
 		data = bytes.Repeat([]byte{0x64}, 65516)
 		err = writeDataPktLine(ctx, w, data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, append([]byte("fff0"), data...), w.Bytes())
 
 		w.Reset()
@@ -181,16 +181,16 @@ func TestRunHookUpdate(t *testing.T) {
 
 	t.Run("Update of internal reference", func(t *testing.T) {
 		err := app.Run([]string{"./forgejo", "update", "refs/pull/1/head", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000001"})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Removal of branch", func(t *testing.T) {
 		err := app.Run([]string{"./forgejo", "update", "refs/head/main", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000000"})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Not enough arguments", func(t *testing.T) {
 		err := app.Run([]string{"./forgejo", "update"})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 }

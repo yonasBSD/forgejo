@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func tokens(s string) (a []any) {
@@ -20,7 +21,7 @@ func tokens(s string) (a []any) {
 
 func TestEval(t *testing.T) {
 	n, err := Expr(0, "/", 0.0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, math.IsNaN(n.Value.(float64)))
 
 	_, err = Expr(nil)
@@ -69,9 +70,8 @@ func TestEval(t *testing.T) {
 
 	for _, c := range cases {
 		n, err := Expr(tokens(c.expr)...)
-		if assert.NoError(t, err, "expr: %s", c.expr) {
-			assert.Equal(t, c.want, n.Value)
-		}
+		require.NoError(t, err, "expr: %s", c.expr)
+		assert.Equal(t, c.want, n.Value)
 	}
 
 	bads := []struct {

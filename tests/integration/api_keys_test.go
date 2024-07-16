@@ -19,6 +19,7 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestViewDeployKeysNoLogin(t *testing.T) {
@@ -133,7 +134,7 @@ func TestCreateUserKey(t *testing.T) {
 	var newPublicKey api.PublicKey
 	DecodeJSON(t, resp, &newPublicKey)
 	fingerprint, err := asymkey_model.CalcFingerprint(rawKeyBody.Key)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	unittest.AssertExistsAndLoadBean(t, &asymkey_model.PublicKey{
 		ID:          newPublicKey.ID,
 		OwnerID:     user.ID,

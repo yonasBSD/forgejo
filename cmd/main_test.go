@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
 
@@ -141,7 +142,7 @@ func TestCliCmd(t *testing.T) {
 		}
 		args := strings.Split(c.cmd, " ") // for test only, "split" is good enough
 		r, err := runTestApp(app, args...)
-		assert.NoError(t, err, c.cmd)
+		require.NoError(t, err, c.cmd)
 		assert.NotEmpty(t, c.exp, c.cmd)
 		assert.Contains(t, r.Stdout, c.exp, c.cmd)
 	}
@@ -171,7 +172,7 @@ func TestCliCmdError(t *testing.T) {
 
 	app = newTestApp(func(ctx *cli.Context) error { return nil })
 	r, err = runTestApp(app, "./gitea", "test-cmd")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, -1, r.ExitCode) // the cli.OsExiter is not called
 	assert.Equal(t, "", r.Stdout)
 	assert.Equal(t, "", r.Stderr)

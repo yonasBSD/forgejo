@@ -14,6 +14,7 @@ import (
 	_ "code.gitea.io/gitea/models/actions"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -68,13 +69,13 @@ func TestGetContents(t *testing.T) {
 	t.Run("Get README.md contents with GetContents(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContents(ctx, ctx.Repo.Repository, treePath, ref, false)
 		assert.EqualValues(t, expectedContentsResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Get README.md contents with ref as empty string (should then use the repo's default branch) with GetContents(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContents(ctx, ctx.Repo.Repository, treePath, "", false)
 		assert.EqualValues(t, expectedContentsResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -103,13 +104,13 @@ func TestGetContentsOrListForDir(t *testing.T) {
 	t.Run("Get root dir contents with GetContentsOrList(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContentsOrList(ctx, ctx.Repo.Repository, treePath, ref)
 		assert.EqualValues(t, expectedContentsListResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Get root dir contents with ref as empty string (should then use the repo's default branch) with GetContentsOrList(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContentsOrList(ctx, ctx.Repo.Repository, treePath, "")
 		assert.EqualValues(t, expectedContentsListResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -131,13 +132,13 @@ func TestGetContentsOrListForFile(t *testing.T) {
 	t.Run("Get README.md contents with GetContentsOrList(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContentsOrList(ctx, ctx.Repo.Repository, treePath, ref)
 		assert.EqualValues(t, expectedContentsResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Get README.md contents with ref as empty string (should then use the repo's default branch) with GetContentsOrList(ctx, )", func(t *testing.T) {
 		fileContentResponse, err := GetContentsOrList(ctx, ctx.Repo.Repository, treePath, "")
 		assert.EqualValues(t, expectedContentsResponse, fileContentResponse)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -216,7 +217,7 @@ func TestGetContentsOrListOfEmptyRepos(t *testing.T) {
 
 	t.Run("empty repo", func(t *testing.T) {
 		contents, err := GetContentsOrList(ctx, repo, "", "")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Empty(t, contents)
 	})
 }
@@ -247,6 +248,6 @@ func TestGetBlobBySHA(t *testing.T) {
 		SHA:      "65f1bf27bc3bf70f64657658635e66094edbcb4d",
 		Size:     180,
 	}
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedGBR, gbr)
 }

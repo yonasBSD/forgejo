@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -294,7 +295,7 @@ func testRenderIssueIndexPattern(t *testing.T, input, expected string, ctx *Rend
 
 	var buf strings.Builder
 	err := postProcess(ctx, []processor{issueIndexPatternProcessor}, strings.NewReader(input), &buf)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, buf.String(), "input=%q", input)
 }
 
@@ -353,7 +354,7 @@ func TestRender_FullIssueURLs(t *testing.T) {
 			},
 			Metas: localMetas,
 		}, []processor{fullIssuePatternProcessor}, strings.NewReader(input), &result)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expected, result.String())
 	}
 	test("Here is a link https://git.osgeo.org/gogs/postgis/postgis/pulls/6",

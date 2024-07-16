@@ -15,14 +15,14 @@ func TestRepository_GetTags(t *testing.T) {
 	bareRepo1Path := filepath.Join(testReposDir, "repo1_bare")
 	bareRepo1, err := openRepositoryWithDefaultContext(bareRepo1Path)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	defer bareRepo1.Close()
 
 	tags, total, err := bareRepo1.GetTagInfos(0, 0)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	assert.Len(t, tags, 2)
@@ -40,13 +40,13 @@ func TestRepository_GetTag(t *testing.T) {
 
 	clonedPath, err := cloneRepo(t, bareRepo1Path)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 
 	bareRepo1, err := openRepositoryWithDefaultContext(clonedPath)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	defer bareRepo1.Close()
@@ -58,14 +58,14 @@ func TestRepository_GetTag(t *testing.T) {
 	// Create the lightweight tag
 	err = bareRepo1.CreateTag(lTagName, lTagCommitID)
 	if err != nil {
-		assert.NoError(t, err, "Unable to create the lightweight tag: %s for ID: %s. Error: %v", lTagName, lTagCommitID, err)
+		require.NoError(t, err, "Unable to create the lightweight tag: %s for ID: %s. Error: %v", lTagName, lTagCommitID, err)
 		return
 	}
 
 	// and try to get the Tag for lightweight tag
 	lTag, err := bareRepo1.GetTag(lTagName)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	if lTag == nil {
@@ -85,20 +85,20 @@ func TestRepository_GetTag(t *testing.T) {
 	// Create the annotated tag
 	err = bareRepo1.CreateAnnotatedTag(aTagName, aTagMessage, aTagCommitID)
 	if err != nil {
-		assert.NoError(t, err, "Unable to create the annotated tag: %s for ID: %s. Error: %v", aTagName, aTagCommitID, err)
+		require.NoError(t, err, "Unable to create the annotated tag: %s for ID: %s. Error: %v", aTagName, aTagCommitID, err)
 		return
 	}
 
 	// Now try to get the tag for the annotated Tag
 	aTagID, err := bareRepo1.GetTagID(aTagName)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 
 	aTag, err := bareRepo1.GetTag(aTagName)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	if aTag == nil {
@@ -118,20 +118,20 @@ func TestRepository_GetTag(t *testing.T) {
 
 	err = bareRepo1.CreateTag(rTagName, rTagCommitID)
 	if err != nil {
-		assert.NoError(t, err, "Unable to create the  tag: %s for ID: %s. Error: %v", rTagName, rTagCommitID, err)
+		require.NoError(t, err, "Unable to create the  tag: %s for ID: %s. Error: %v", rTagName, rTagCommitID, err)
 		return
 	}
 
 	rTagID, err := bareRepo1.GetTagID(rTagName)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	assert.EqualValues(t, rTagCommitID, rTagID)
 
 	oTagID, err := bareRepo1.GetTagID(lTagName)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	assert.EqualValues(t, lTagCommitID, oTagID)
@@ -142,13 +142,13 @@ func TestRepository_GetAnnotatedTag(t *testing.T) {
 
 	clonedPath, err := cloneRepo(t, bareRepo1Path)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 
 	bareRepo1, err := openRepositoryWithDefaultContext(clonedPath)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	defer bareRepo1.Close()
@@ -166,7 +166,7 @@ func TestRepository_GetAnnotatedTag(t *testing.T) {
 	// Try an annotated tag
 	tag, err := bareRepo1.GetAnnotatedTag(aTagID)
 	if err != nil {
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		return
 	}
 	assert.NotNil(t, tag)

@@ -13,6 +13,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -20,9 +21,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestDeleteOrganization(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 	org := unittest.AssertExistsAndLoadBean(t, &organization.Organization{ID: 6})
-	assert.NoError(t, DeleteOrganization(db.DefaultContext, org, false))
+	require.NoError(t, DeleteOrganization(db.DefaultContext, org, false))
 	unittest.AssertNotExistsBean(t, &organization.Organization{ID: 6})
 	unittest.AssertNotExistsBean(t, &organization.OrgUser{OrgID: 6})
 	unittest.AssertNotExistsBean(t, &organization.Team{OrgID: 6})

@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -49,20 +50,20 @@ const composerContent = `{
 
 func TestLicenseUnmarshal(t *testing.T) {
 	var l Licenses
-	assert.NoError(t, json.NewDecoder(strings.NewReader(`["MIT"]`)).Decode(&l))
+	require.NoError(t, json.NewDecoder(strings.NewReader(`["MIT"]`)).Decode(&l))
 	assert.Len(t, l, 1)
 	assert.Equal(t, "MIT", l[0])
-	assert.NoError(t, json.NewDecoder(strings.NewReader(`"MIT"`)).Decode(&l))
+	require.NoError(t, json.NewDecoder(strings.NewReader(`"MIT"`)).Decode(&l))
 	assert.Len(t, l, 1)
 	assert.Equal(t, "MIT", l[0])
 }
 
 func TestCommentsUnmarshal(t *testing.T) {
 	var c Comments
-	assert.NoError(t, json.NewDecoder(strings.NewReader(`["comment"]`)).Decode(&c))
+	require.NoError(t, json.NewDecoder(strings.NewReader(`["comment"]`)).Decode(&c))
 	assert.Len(t, c, 1)
 	assert.Equal(t, "comment", c[0])
-	assert.NoError(t, json.NewDecoder(strings.NewReader(`"comment"`)).Decode(&c))
+	require.NoError(t, json.NewDecoder(strings.NewReader(`"comment"`)).Decode(&c))
 	assert.Len(t, c, 1)
 	assert.Equal(t, "comment", c[0])
 }
@@ -123,7 +124,7 @@ func TestParsePackage(t *testing.T) {
 		data := createArchive(map[string]string{"composer.json": `{"name": "gitea/composer-package", "readme": "sub/README.md"}`})
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, cp)
 
 		assert.Empty(t, cp.Metadata.Readme)
@@ -133,7 +134,7 @@ func TestParsePackage(t *testing.T) {
 		data := createArchive(map[string]string{"composer.json": composerContent, "README.md": readme})
 
 		cp, err := ParsePackage(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, cp)
 
 		assert.Equal(t, name, cp.Name)

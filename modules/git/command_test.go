@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRunWithContextStd(t *testing.T) {
 	cmd := NewCommand(context.Background(), "--version")
 	stdout, stderr, err := cmd.RunStdString(&RunOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Empty(t, stderr)
 	assert.Contains(t, stdout, "git version")
 
@@ -37,7 +38,7 @@ func TestRunWithContextStd(t *testing.T) {
 	subCmd := "version"
 	cmd = NewCommand(context.Background()).AddDynamicArguments(subCmd) // for test purpose only, the sub-command should never be dynamic for production
 	stdout, stderr, err = cmd.RunStdString(&RunOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Empty(t, stderr)
 	assert.Contains(t, stdout, "git version")
 }

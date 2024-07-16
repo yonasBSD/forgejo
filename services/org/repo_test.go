@@ -12,15 +12,16 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTeam_AddRepository(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 
 	testSuccess := func(teamID, repoID int64) {
 		team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: teamID})
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: repoID})
-		assert.NoError(t, TeamAddRepository(db.DefaultContext, team, repo))
+		require.NoError(t, TeamAddRepository(db.DefaultContext, team, repo))
 		unittest.AssertExistsAndLoadBean(t, &organization.TeamRepo{TeamID: teamID, RepoID: repoID})
 		unittest.CheckConsistencyFor(t, &organization.Team{ID: teamID}, &repo_model.Repository{ID: repoID})
 	}

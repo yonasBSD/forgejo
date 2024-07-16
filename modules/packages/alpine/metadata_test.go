@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -92,7 +93,7 @@ func TestParsePackage(t *testing.T) {
 		data := createPackage(".PKGINFO", createPKGINFOContent(packageName, packageVersion))
 
 		p, err := ParsePackage(data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, p)
 
 		assert.Equal(t, "Q1SRYURM5+uQDqfHSwTnNIOIuuDVQ=", p.FileMetadata.Checksum)
@@ -120,7 +121,7 @@ func TestParsePackageInfo(t *testing.T) {
 		data := createPKGINFOContent(packageName, packageVersion)
 
 		p, err := ParsePackageInfo(bytes.NewReader(data))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, p)
 
 		assert.Equal(t, packageName, p.Name)

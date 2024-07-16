@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -53,7 +54,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, int64(data.Len()))
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)
 		assert.Equal(t, "module gitea.com/go-gitea/gitea", p.GoMod)
@@ -67,7 +68,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, int64(data.Len()))
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)
 		assert.Equal(t, "valid", p.GoMod)

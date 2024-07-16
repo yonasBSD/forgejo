@@ -13,10 +13,11 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestForkRepository(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 
 	// user 13 has already forked repo10
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 13})

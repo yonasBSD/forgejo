@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -63,7 +64,7 @@ func TestParsePackage(t *testing.T) {
 
 		p, err := ParsePackage(data, data.Size(), nil)
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.NotNil(t, p.Metadata)
 		assert.Empty(t, p.RepositoryURLs)
@@ -87,7 +88,7 @@ func TestParsePackage(t *testing.T) {
 			strings.NewReader(`{"name":"`+packageName+`","version":"`+packageVersion+`","description":"`+packageDescription+`","keywords":["swift","package"],"license":"`+packageLicense+`","codeRepository":"`+packageRepositoryURL+`","author":{"givenName":"`+packageAuthor+`"},"repositoryURLs":["`+packageRepositoryURL+`"]}`),
 		)
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.NotNil(t, p.Metadata)
 		assert.Len(t, p.Metadata.Manifests, 1)

@@ -13,6 +13,7 @@ import (
 	"github.com/blakesmith/ar"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/ulikunitz/xz"
 )
 
@@ -112,7 +113,7 @@ func TestParsePackage(t *testing.T) {
 
 				p, err := ParsePackage(data)
 				assert.NotNil(t, p)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, "gitea", p.Name)
 
 				t.Run("TrailingSlash", func(t *testing.T) {
@@ -120,7 +121,7 @@ func TestParsePackage(t *testing.T) {
 
 					p, err := ParsePackage(data)
 					assert.NotNil(t, p)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 					assert.Equal(t, "gitea", p.Name)
 				})
 			})
@@ -170,7 +171,7 @@ func TestParseControlFile(t *testing.T) {
 		full := content.String()
 
 		p, err := ParseControlFile(content)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, p)
 
 		assert.Equal(t, packageName, p.Name)

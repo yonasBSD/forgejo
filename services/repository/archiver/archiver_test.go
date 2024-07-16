@@ -15,6 +15,7 @@ import (
 	_ "code.gitea.io/gitea/models/actions"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -22,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestArchive_Basic(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 
 	ctx, _ := contexttest.MockContext(t, "user27/repo49")
 	firstCommit, secondCommit := "51f84af23134", "aacbdfe9e1c4"
@@ -32,7 +33,7 @@ func TestArchive_Basic(t *testing.T) {
 	defer ctx.Repo.GitRepo.Close()
 
 	bogusReq, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, bogusReq)
 	assert.EqualValues(t, firstCommit+".zip", bogusReq.GetArchiveName())
 
@@ -53,26 +54,26 @@ func TestArchive_Basic(t *testing.T) {
 	assert.Nil(t, bogusReq)
 
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, "master.zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, bogusReq)
 	assert.EqualValues(t, "master.zip", bogusReq.GetArchiveName())
 
 	bogusReq, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, "test/archive.zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, bogusReq)
 	assert.EqualValues(t, "test-archive.zip", bogusReq.GetArchiveName())
 
 	// Now two valid requests, firstCommit with valid extensions.
 	zipReq, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, zipReq)
 
 	tgzReq, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".tar.gz")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tgzReq)
 
 	secondReq, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, secondCommit+".zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, secondReq)
 
 	inFlight := make([]*ArchiveRequest, 3)
@@ -92,7 +93,7 @@ func TestArchive_Basic(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	zipReq2, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// This zipReq should match what's sitting in the queue, as we haven't
 	// let it release yet.  From the consumer's point of view, this looks like
 	// a long-running archive task.
@@ -107,12 +108,12 @@ func TestArchive_Basic(t *testing.T) {
 	// after we release it.  We should trigger both the timeout and non-timeout
 	// cases.
 	timedReq, err := NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, secondCommit+".tar.gz")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, timedReq)
 	ArchiveRepository(db.DefaultContext, timedReq)
 
 	zipReq2, err = NewRequest(ctx, ctx.Repo.Repository.ID, ctx.Repo.GitRepo, firstCommit+".zip")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// Now, we're guaranteed to have released the original zipReq from the queue.
 	// Ensure that we don't get handed back the released entry somehow, but they
 	// should remain functionally equivalent in all fields.  The exception here

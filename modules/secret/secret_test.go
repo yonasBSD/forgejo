@@ -7,16 +7,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
 	hex, err := EncryptSecret("foo", "baz")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	str, _ := DecryptSecret("foo", hex)
 	assert.Equal(t, "baz", str)
 
 	hex, err = EncryptSecret("bar", "baz")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	str, _ = DecryptSecret("foo", hex)
 	assert.NotEqual(t, "baz", str)
 

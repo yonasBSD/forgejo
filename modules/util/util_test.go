@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/optional"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestURLJoin(t *testing.T) {
@@ -124,34 +125,34 @@ func Test_RandomInt(t *testing.T) {
 	randInt, err := CryptoRandomInt(255)
 	assert.True(t, randInt >= 0)
 	assert.True(t, randInt <= 255)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func Test_RandomString(t *testing.T) {
 	str1, err := CryptoRandomString(32)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	matches, err := regexp.MatchString(`^[a-zA-Z0-9]{32}$`, str1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, matches)
 
 	str2, err := CryptoRandomString(32)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	matches, err = regexp.MatchString(`^[a-zA-Z0-9]{32}$`, str1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, matches)
 
 	assert.NotEqual(t, str1, str2)
 
 	str3, err := CryptoRandomString(256)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	matches, err = regexp.MatchString(`^[a-zA-Z0-9]{256}$`, str3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, matches)
 
 	str4, err := CryptoRandomString(256)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	matches, err = regexp.MatchString(`^[a-zA-Z0-9]{256}$`, str4)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, matches)
 
 	assert.NotEqual(t, str3, str4)
@@ -159,18 +160,18 @@ func Test_RandomString(t *testing.T) {
 
 func Test_RandomBytes(t *testing.T) {
 	bytes1, err := CryptoRandomBytes(32)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	bytes2, err := CryptoRandomBytes(32)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEqual(t, bytes1, bytes2)
 
 	bytes3, err := CryptoRandomBytes(256)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	bytes4, err := CryptoRandomBytes(256)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEqual(t, bytes3, bytes4)
 }

@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_CmdKeys(t *testing.T) {
@@ -44,7 +45,7 @@ func Test_CmdKeys(t *testing.T) {
 				if tt.wantErr {
 					assert.Error(t, err)
 				} else {
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				}
 				assert.Equal(t, tt.expectedOutput, out)
 			})

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const pdbContent = `QlNKQgEAAQAAAAAADAAAAFBEQiB2MS4wAAAAAAAABgB8AAAAWAAAACNQZGIAAAAA1AAAAAgBAAAj
@@ -48,7 +49,7 @@ func TestExtractPortablePdb(t *testing.T) {
 		data := createArchive("test.pdb", b)
 
 		pdbs, err := ExtractPortablePdb(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, pdbs, 1)
 		assert.Equal(t, "test.pdb", pdbs[0].Name)
 		assert.Equal(t, "d910bb6948bd4c6cb40155bcf52c3c94", pdbs[0].ID)
@@ -75,7 +76,7 @@ func TestParseDebugHeaderID(t *testing.T) {
 		b, _ := base64.StdEncoding.DecodeString(pdbContent)
 
 		id, err := ParseDebugHeaderID(bytes.NewReader(b))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "d910bb6948bd4c6cb40155bcf52c3c94", id)
 	})
 }

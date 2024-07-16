@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -70,7 +71,7 @@ func TestParsePackage(t *testing.T) {
 
 		cp, err := ParsePackage(data)
 		assert.NotNil(t, cp)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, "test", cp.Name)
 		assert.Equal(t, "1.0.0", cp.Version)

@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncodeSha256(t *testing.T) {
@@ -31,7 +32,7 @@ func TestBasicAuthDecode(t *testing.T) {
 	assert.Equal(t, "illegal base64 data at input byte 0", err.Error())
 
 	user, pass, err := BasicAuthDecode("Zm9vOmJhcg==")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "foo", user)
 	assert.Equal(t, "bar", pass)
 
@@ -143,7 +144,7 @@ func TestTruncateString(t *testing.T) {
 func TestStringsToInt64s(t *testing.T) {
 	testSuccess := func(input []string, expected []int64) {
 		result, err := StringsToInt64s(input)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expected, result)
 	}
 	testSuccess(nil, nil)

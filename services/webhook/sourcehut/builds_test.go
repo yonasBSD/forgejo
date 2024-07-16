@@ -32,7 +32,7 @@ func gitInit(t testing.TB) {
 		return
 	}
 	t.Cleanup(test.MockVariableValue(&setting.Git.HomePath, t.TempDir()))
-	assert.NoError(t, git.InitSimple(context.Background()))
+	require.NoError(t, git.InitSimple(context.Background()))
 }
 
 func TestSourcehutBuildsPayload(t *testing.T) {
@@ -388,7 +388,7 @@ func TestSourcehutJSONPayload(t *testing.T) {
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	var body graphqlPayload[buildsVariables]
 	err = json.NewDecoder(req.Body).Decode(&body)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "json test", body.Variables.Note)
 }
 
@@ -405,7 +405,7 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 		Readme:        "Default",
 		DefaultBranch: "main",
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, repo)
 	t.Cleanup(func() {
 		repo_service.DeleteRepository(db.DefaultContext, owner, repo, false)
@@ -421,7 +421,7 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 		}
 
 		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 
 	var sha string
@@ -444,7 +444,7 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 				Committer: time.Now(),
 			},
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, resp)
 
 		sha = resp.Commit.SHA

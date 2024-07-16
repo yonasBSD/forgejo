@@ -16,6 +16,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOrgCounts(t *testing.T) {
@@ -122,7 +123,7 @@ func doCheckOrgCounts(username string, orgCounts map[string]int, strict bool, ca
 			UserID:         user.ID,
 			IncludePrivate: true,
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		calcOrgCounts := map[string]int{}
 

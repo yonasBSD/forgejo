@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateAuthorizationToken(t *testing.T) {
@@ -36,7 +37,7 @@ func TestCreateAuthorizationToken(t *testing.T) {
 	assert.True(t, ok, "ac claim is a string for buildx gha cache")
 	scopes := []actionsCacheScope{}
 	err = json.Unmarshal([]byte(ac), &scopes)
-	assert.NoError(t, err, "ac claim is a json list for buildx gha cache")
+	require.NoError(t, err, "ac claim is a json list for buildx gha cache")
 	assert.GreaterOrEqual(t, len(scopes), 1, "Expected at least one action cache scope for buildx gha cache")
 }
 

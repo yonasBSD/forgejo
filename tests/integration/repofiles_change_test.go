@@ -20,6 +20,7 @@ import (
 	files_service "code.gitea.io/gitea/services/repository/files"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func getCreateRepoFilesOptions(repo *repo_model.Repository) *files_service.ChangeRepoFilesOptions {
@@ -262,7 +263,7 @@ func TestChangeRepoFilesForCreate(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 
 		// asserts
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		gitRepo, _ := gitrepo.OpenRepository(git.DefaultContext, repo)
 		defer gitRepo.Close()
 
@@ -299,7 +300,7 @@ func TestChangeRepoFilesForUpdate(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 
 		// asserts
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		gitRepo, _ := gitrepo.OpenRepository(git.DefaultContext, repo)
 		defer gitRepo.Close()
 
@@ -335,7 +336,7 @@ func TestChangeRepoFilesForUpdateWithFileMove(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 
 		// asserts
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		gitRepo, _ := gitrepo.OpenRepository(git.DefaultContext, repo)
 		defer gitRepo.Close()
 
@@ -351,7 +352,7 @@ func TestChangeRepoFilesForUpdateWithFileMove(t *testing.T) {
 			t.Fatalf("expected git.ErrNotExist, got:%v", err)
 		}
 		toEntry, err := commit.GetTreeEntryByPath(opts.Files[0].TreePath)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Nil(t, fromEntry)  // Should no longer exist here
 		assert.NotNil(t, toEntry) // Should exist here
 		// assert SHA has remained the same but paths use the new file name
@@ -386,7 +387,7 @@ func TestChangeRepoFilesWithoutBranchNames(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
 
 		// asserts
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		gitRepo, _ := gitrepo.OpenRepository(git.DefaultContext, repo)
 		defer gitRepo.Close()
 
@@ -417,7 +418,7 @@ func testDeleteRepoFiles(t *testing.T, u *url.URL) {
 
 	t.Run("Delete README.md file", func(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileResponse := getExpectedFileResponseForRepofilesDelete()
 		assert.NotNil(t, filesResponse)
 		assert.Nil(t, filesResponse.Files[0])
@@ -459,7 +460,7 @@ func testDeleteRepoFilesWithoutBranchNames(t *testing.T, u *url.URL) {
 
 	t.Run("Delete README.md without Branch Name", func(t *testing.T) {
 		filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		expectedFileResponse := getExpectedFileResponseForRepofilesDelete()
 		assert.NotNil(t, filesResponse)
 		assert.Nil(t, filesResponse.Files[0])

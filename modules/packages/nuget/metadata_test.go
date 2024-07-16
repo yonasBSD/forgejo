@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -124,7 +125,7 @@ func TestParsePackageMetaData(t *testing.T) {
 		data := createArchive(map[string]string{"package.nuspec": nuspecContent})
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, np)
 		assert.Empty(t, np.Metadata.Readme)
 	})
@@ -136,7 +137,7 @@ func TestParsePackageMetaData(t *testing.T) {
 		})
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, np)
 		assert.Equal(t, DependencyPackage, np.PackageType)
 
@@ -165,7 +166,7 @@ func TestParsePackageMetaData(t *testing.T) {
 				</package>`})
 
 			np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.NotNil(t, np)
 			assert.Equal(t, "1.4.5.2-rc.1", np.Version)
 		})
@@ -175,7 +176,7 @@ func TestParsePackageMetaData(t *testing.T) {
 		data := createArchive(map[string]string{"package.nuspec": symbolsNuspecContent})
 
 		np, err := ParsePackageMetaData(bytes.NewReader(data), int64(len(data)))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, np)
 		assert.Equal(t, SymbolsPackage, np.PackageType)
 

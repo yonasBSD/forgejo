@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -53,7 +54,7 @@ func TestParsePackage(t *testing.T) {
 		zw.Close()
 
 		p, err := ParsePackage(&buf)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, p)
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)
@@ -81,7 +82,7 @@ func TestParseChefMetadata(t *testing.T) {
 	t.Run("Valid", func(t *testing.T) {
 		p, err := ParseChefMetadata(strings.NewReader(`{"name":"` + packageName + `","version":"` + packageVersion + `","description":"` + packageDescription + `","maintainer":"` + packageAuthor + `","source_url":"` + packageRepositoryURL + `"}`))
 		assert.NotNil(t, p)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, packageName, p.Name)
 		assert.Equal(t, packageVersion, p.Version)

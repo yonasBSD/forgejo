@@ -35,6 +35,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func getIssuesSelection(t testing.TB, htmlDoc *HTMLDoc) *goquery.Selection {
@@ -48,7 +49,7 @@ func getIssue(t *testing.T, repoID int64, issueSelection *goquery.Selection) *is
 	assert.True(t, exists)
 	indexStr := href[strings.LastIndexByte(href, '/')+1:]
 	index, err := strconv.Atoi(indexStr)
-	assert.NoError(t, err, "Invalid issue href: %s", href)
+	require.NoError(t, err, "Invalid issue href: %s", href)
 	return unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repoID, Index: int64(index)})
 }
 
@@ -276,7 +277,7 @@ func testIssueAddComment(t *testing.T, session *TestSession, issueURL, content, 
 	idStr := idAttr[strings.LastIndexByte(idAttr, '-')+1:]
 	assert.True(t, has)
 	id, err := strconv.Atoi(idStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return int64(id)
 }
 
@@ -521,7 +522,7 @@ func TestIssueCommentAttachment(t *testing.T) {
 	idStr := idAttr[strings.LastIndexByte(idAttr, '-')+1:]
 	assert.True(t, has)
 	id, err := strconv.Atoi(idStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEqual(t, 0, id)
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/comments/%d/attachments", "user2", "repo1", id))
@@ -716,7 +717,7 @@ func testIssueWithBean(t *testing.T, user string, repoID int64, title, content s
 	issueURL := testNewIssue(t, session, user, fmt.Sprintf("repo%d", repoID), title, content)
 	indexStr := issueURL[strings.LastIndexByte(issueURL, '/')+1:]
 	index, err := strconv.Atoi(indexStr)
-	assert.NoError(t, err, "Invalid issue href: %s", issueURL)
+	require.NoError(t, err, "Invalid issue href: %s", issueURL)
 	issue := &issues_model.Issue{RepoID: repoID, Index: int64(index)}
 	unittest.AssertExistsAndLoadBean(t, issue)
 	return issueURL, issue
@@ -918,7 +919,7 @@ func TestGetIssueInfo(t *testing.T) {
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
-	assert.NoError(t, issue.LoadAttributes(db.DefaultContext))
+	require.NoError(t, issue.LoadAttributes(db.DefaultContext))
 	assert.Equal(t, int64(1019307200), int64(issue.DeadlineUnix))
 	assert.Equal(t, api.StateOpen, issue.State())
 
@@ -981,7 +982,7 @@ func TestUpdateIssueDeadline(t *testing.T) {
 	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 10})
 	repoBefore := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repoBefore.OwnerID})
-	assert.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
+	require.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
 	assert.Equal(t, int64(1019307200), int64(issueBefore.DeadlineUnix))
 	assert.Equal(t, api.StateOpen, issueBefore.State())
 
