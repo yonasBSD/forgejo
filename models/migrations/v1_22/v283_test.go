@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	migration_tests "code.gitea.io/gitea/models/migrations/test"
+
 	"github.com/stretchr/testify/require"
 )
 

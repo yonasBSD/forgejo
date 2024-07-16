@@ -14,6 +14,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
+
 	"github.com/stretchr/testify/require"
 )
 

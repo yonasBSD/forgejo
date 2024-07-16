@@ -30,6 +30,7 @@ import (
 	"code.gitea.io/gitea/modules/testlogger"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers"
+
 	"github.com/stretchr/testify/require"
 )
 

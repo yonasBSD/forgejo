@@ -11,10 +11,11 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	"github.com/stretchr/testify/require"
 
 	_ "code.gitea.io/gitea/models/actions"
 	_ "code.gitea.io/gitea/models/system"
+
+	"github.com/stretchr/testify/require"
 )
 
 // TestFixturesAreConsistent assert that test fixtures are consistent

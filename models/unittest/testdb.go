@@ -21,8 +21,8 @@ import (
 	"code.gitea.io/gitea/modules/setting/config"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/util"
-	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
 )
