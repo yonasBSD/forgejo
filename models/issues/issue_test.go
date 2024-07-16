@@ -308,14 +308,15 @@ func TestIssue_ResolveMentions(t *testing.T) {
 
 func TestResourceIndex(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
+	t.Parallel()
 
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
-		go func(i int) {
+		t.Run(fmt.Sprintf("issue %d", i+1), func(t *testing.T) {
 			testInsertIssue(t, fmt.Sprintf("issue %d", i+1), "my issue", 0)
 			wg.Done()
-		}(i)
+		})
 	}
 	wg.Wait()
 }
