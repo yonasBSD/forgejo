@@ -193,7 +193,7 @@ Djfa/2q5bH4699v++uMAAAAAAAAAAAAAAAAAAAAAAHbgA/eXQh8AKAAA`
 					resp := MakeRequest(t, req, http.StatusOK)
 
 					content, err := readIndexContent(resp.Body)
-					assert.NoError(t, err)
+					require.NoError(t, err)
 
 					assert.Contains(t, content, "C:Q1/se1PjO94hYXbfpNR1/61hVORIc=\n")
 					assert.Contains(t, content, "P:"+packageName+"\n")

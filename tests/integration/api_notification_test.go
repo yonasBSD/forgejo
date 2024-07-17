@@ -155,7 +155,7 @@ func TestAPINotification(t *testing.T) {
 		AddTokenAuth(token)
 	resp = MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &newStruct)
-	assert.Equal(t, 0, newStruct.New)
+	assert.Equal(t, int64(0), newStruct.New)
 }
 
 func TestAPINotificationPUT(t *testing.T) {
