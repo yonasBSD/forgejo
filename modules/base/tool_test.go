@@ -4,7 +4,6 @@
 package base
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -159,9 +158,9 @@ func TestInt64sToStrings(t *testing.T) {
 // TODO: Test EntryIcon
 
 func TestSetupGiteaRoot(t *testing.T) {
-	_ = os.Setenv("GITEA_ROOT", "test")
+	t.Setenv("GITEA_ROOT", "test")
 	assert.Equal(t, "test", SetupGiteaRoot())
-	_ = os.Setenv("GITEA_ROOT", "")
+	t.Setenv("GITEA_ROOT", "")
 	assert.NotEqual(t, "test", SetupGiteaRoot())
 }
 

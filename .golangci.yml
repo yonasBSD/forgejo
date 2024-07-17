@@ -19,6 +19,7 @@ linters:
     - staticcheck
     # - structcheck # deprecated - https://github.com/golangci/golangci-lint/issues/1841
     - stylecheck
+    - tenv
     - typecheck
     - unconvert
     - unused
