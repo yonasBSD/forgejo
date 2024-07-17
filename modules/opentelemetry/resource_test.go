@@ -5,12 +5,14 @@ package opentelemetry
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.25.0"
@@ -20,42 +22,39 @@ func TestResourceServiceName(t *testing.T) {
 	ctx := context.Background()
 
 	resource, err := newResource(ctx)
-	assert.NoError(t, err)
-	serviceKeyPresent := false
-	for _, v := range resource.Attributes() {
-		if v.Key == semconv.ServiceNameKey {
-			assert.Equal(t, "forgejo", v.Value.AsString())
-			serviceKeyPresent = true
-		}
-	}
-	assert.True(t, serviceKeyPresent)
-	serviceKeyPresent = false
+	require.NoError(t, err)
+	serviceKeyIdx := slices.IndexFunc(resource.Attributes(), func(v attribute.KeyValue) bool {
+		return v.Key == semconv.ServiceNameKey
+	})
+	require.NotEqual(t, -1, serviceKeyIdx)
+
+	assert.Equal(t, "forgejo", resource.Attributes()[serviceKeyIdx].Value.AsString())
+
 	defer test.MockVariableValue(&setting.OpenTelemetry.ServiceName, "non-default value")()
 	resource, err = newResource(ctx)
-	assert.NoError(t, err)
-	for _, v := range resource.Attributes() {
-		if v.Key == semconv.ServiceNameKey {
-			assert.Equal(t, "non-default value", v.Value.AsString())
-			serviceKeyPresent = true
-		}
-	}
-	assert.True(t, serviceKeyPresent)
+	require.NoError(t, err)
+
+	serviceKeyIdx = slices.IndexFunc(resource.Attributes(), func(v attribute.KeyValue) bool {
+		return v.Key == semconv.ServiceNameKey
+	})
+	require.NotEqual(t, -1, serviceKeyIdx)
+
+	assert.Equal(t, "non-default value", resource.Attributes()[serviceKeyIdx].Value.AsString())
 }
 
 func TestResourceAttributes(t *testing.T) {
 	ctx := context.Background()
 	defer test.MockVariableValue(&setting.OpenTelemetry.ResourceDetectors, "foo")()
-	defer test.MockProtect(&setting.OpenTelemetry.ResourceAttributes)()
-	setting.OpenTelemetry.ResourceAttributes = "Test=LABEL,broken,unescape=%XXlabel"
+	defer test.MockVariableValue(&setting.OpenTelemetry.ResourceAttributes, "Test=LABEL,broken,unescape=%XXlabel")()
 	res, err := newResource(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	expected, err := resource.New(ctx, resource.WithAttributes(
 		semconv.ServiceName(setting.OpenTelemetry.ServiceName),
 		semconv.ServiceVersion(setting.ForgejoVersion),
 		attribute.String("Test", "LABEL"),
 		attribute.String("unescape", "%XXlabel"),
 	))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
@@ -67,8 +66,8 @@ func TestDecoderParity(t *testing.T) {
 			semconv.ServiceName(setting.OpenTelemetry.ServiceName), semconv.ServiceVersion(setting.ForgejoVersion),
 		),
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	res2, err := newResource(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, exp, res2)
 }

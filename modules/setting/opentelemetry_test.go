@@ -73,7 +73,7 @@ TIMEOUT=5s
 	cfg, err = NewConfigProviderFromData(globalSetting + localSetting)
 	require.NoError(t, err)
 	exp = createOtlpExporterConfig(cfg, ".traces")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, exp)
 }
 
@@ -81,7 +81,7 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	defer test.MockProtect(&OpenTelemetry)()
 	iniStr := ``
 	cfg, err := NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 	assert.Nil(t, OpenTelemetry.OtelTraces)
 	assert.False(t, IsOpenTelemetryEnabled())
@@ -101,7 +101,7 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	HEADERS=foo=bar,overwrite=false
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 
 	assert.True(t, IsOpenTelemetryEnabled())
@@ -112,16 +112,16 @@ func TestOpenTelemetryConfiguration(t *testing.T) {
 	assert.Equal(t, sdktrace.AlwaysSample(), OpenTelemetry.Sampler)
 	assert.Equal(t, "http://jaeger:4317/", OpenTelemetry.OtelTraces.Endpoint.String())
 	assert.Contains(t, OpenTelemetry.OtelTraces.Headers, "foo")
-	assert.Equal(t, OpenTelemetry.OtelTraces.Headers["foo"], "bar")
+	assert.Equal(t, "bar", OpenTelemetry.OtelTraces.Headers["foo"])
 	assert.Contains(t, OpenTelemetry.OtelTraces.Headers, "overwrite")
-	assert.Equal(t, OpenTelemetry.OtelTraces.Headers["overwrite"], "false")
+	assert.Equal(t, "false", OpenTelemetry.OtelTraces.Headers["overwrite"])
 }
 
 func TestOpenTelemetryTraceDisable(t *testing.T) {
 	defer test.MockProtect(&OpenTelemetry)()
 	iniStr := ``
 	cfg, err := NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 	assert.False(t, OpenTelemetry.Enabled)
 	assert.False(t, IsOpenTelemetryEnabled())
@@ -132,7 +132,7 @@ func TestOpenTelemetryTraceDisable(t *testing.T) {
 	EXPORTER_OTLP_ENDPOINT =
 	`
 	cfg, err = NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 
 	assert.True(t, IsOpenTelemetryEnabled())
@@ -184,7 +184,7 @@ func TestSamplerCombinations(t *testing.T) {
 
 	for _, sampler := range testSamplers {
 		cfg, err := NewConfigProviderFromData(sampler.IniCfg)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		loadOpenTelemetryFrom(cfg)
 		assert.Equal(t, sampler.Expected, OpenTelemetry.Sampler)
 	}
@@ -200,7 +200,7 @@ func TestOpentelemetryBadConfigs(t *testing.T) {
 	ENDPOINT = jaeger:4317/
 	`
 	cfg, err := NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 
 	assert.True(t, IsOpenTelemetryEnabled())
@@ -208,7 +208,7 @@ func TestOpentelemetryBadConfigs(t *testing.T) {
 
 	iniStr = ``
 	cfg, err = NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 	assert.False(t, IsOpenTelemetryEnabled())
 
@@ -227,7 +227,8 @@ func TestOpentelemetryBadConfigs(t *testing.T) {
 	`
 
 	cfg, err = NewConfigProviderFromData(iniStr)
-	assert.NoError(t, err)
+
+	require.NoError(t, err)
 	loadOpenTelemetryFrom(cfg)
 	assert.True(t, IsOpenTelemetryEnabled())
 	assert.Equal(t, "forgejo", OpenTelemetry.ServiceName)

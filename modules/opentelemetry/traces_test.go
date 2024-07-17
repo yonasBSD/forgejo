@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -29,16 +30,16 @@ func TestTraceGrpcExporter(t *testing.T) {
 		grpcMethods <- method
 		return nil
 	}))
-	t.Cleanup(collector.GracefulStop)
+	defer collector.GracefulStop()
 	ln, err := net.Listen("tcp", "localhost:0")
-	assert.NoError(t, err)
-	t.Cleanup(func() {
+	require.NoError(t, err)
+	defer func() {
 		ln.Close()
-	})
+	}()
 	go collector.Serve(ln)
 
 	traceEndpoint, err := url.Parse("https://" + ln.Addr().String())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	config := &setting.OtelExporter{
 		Endpoint:          traceEndpoint,
 		Certificate:       os.TempDir() + "/cert.pem",
@@ -52,7 +53,7 @@ func TestTraceGrpcExporter(t *testing.T) {
 	defer test.MockVariableValue(&setting.OpenTelemetry.Traces, "otlp")()
 	defer test.MockVariableValue(&setting.OpenTelemetry.OtelTraces, config)()
 	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
+	require.NoError(t, Init(ctx))
 
 	tracer := otel.Tracer("test_tls")
 	_, span := tracer.Start(ctx, "test span")
@@ -81,7 +82,7 @@ func TestTraceHttpExporter(t *testing.T) {
 	server.TLS = tlsConfig
 
 	traceEndpoint, err := url.Parse("http://" + server.Listener.Addr().String())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	config := &setting.OtelExporter{
 		Endpoint:          traceEndpoint,
 		Certificate:       os.TempDir() + "/cert.pem",
@@ -95,7 +96,7 @@ func TestTraceHttpExporter(t *testing.T) {
 	defer test.MockVariableValue(&setting.OpenTelemetry.Traces, "otlp")()
 	defer test.MockVariableValue(&setting.OpenTelemetry.OtelTraces, config)()
 	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
+	require.NoError(t, Init(ctx))
 
 	tracer := otel.Tracer("test_tls")
 	_, span := tracer.Start(ctx, "test span")

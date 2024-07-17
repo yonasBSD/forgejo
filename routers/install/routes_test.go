@@ -5,14 +5,11 @@ package install
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +49,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestOtelChi(t *testing.T) {
-	ServiceName := "forgejo-otelchi" + fmt.Sprint(rand.Int())
+	ServiceName := "forgejo-otelchi" + uuid.NewString()
 
 	otelURL, ok := os.LookupEnv("TEST_OTEL_URL")
 	if !ok {
@@ -69,7 +67,7 @@ func TestOtelChi(t *testing.T) {
 	defer test.MockVariableValue(&setting.OpenTelemetry.ServiceName, ServiceName)()
 	defer test.MockVariableValue(&setting.OpenTelemetry.OtelTraces, config)()
 
-	assert.NoError(t, opentelemetry.Init(context.Background()))
+	require.NoError(t, opentelemetry.Init(context.Background()))
 	r := Routes()
 
 	w := httptest.NewRecorder()
@@ -79,20 +77,14 @@ func TestOtelChi(t *testing.T) {
 	traceEndpoint.Host = traceEndpoint.Hostname() + ":16686"
 	traceEndpoint.Path = "/api/services"
 
-	namePresent := false
-
-	for i := range []int{1, 1, 2, 3, 5, 8} {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		resp, err := http.Get(traceEndpoint.String())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		apiResponse, err := io.ReadAll(resp.Body)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		if strings.Contains(string(apiResponse), ServiceName) {
-			namePresent = true
-			break
-		}
-		time.Sleep(time.Duration(i) * time.Second)
-	}
-	assert.True(t, namePresent)
+		assert.Contains(collect, string(apiResponse), ServiceName)
+
+	}, 15*time.Second, 1*time.Second)
 }

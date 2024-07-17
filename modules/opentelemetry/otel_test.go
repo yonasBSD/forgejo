@@ -42,7 +42,7 @@ func TestNoopDefault(t *testing.T) {
 	defer test.MockVariableValue(&setting.OpenTelemetry.Traces, "inmemory")
 
 	ctx := context.Background()
-	assert.NoError(t, Init(ctx))
+	require.NoError(t, Init(ctx))
 	tracer := otel.Tracer("test_noop")
 
 	_, span := tracer.Start(ctx, "test span")

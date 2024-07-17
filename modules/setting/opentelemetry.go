@@ -172,18 +172,18 @@ func _stringToHeader(value string) map[string]string {
 	for _, header := range headersPairs {
 		n, v, found := strings.Cut(header, "=")
 		if !found {
-			log.Warn("Otel header ignored, err=\"missing '='\", input=%s", header)
+			log.Warn("Otel header ignored on %q: missing '='", header)
 			continue
 		}
 		name, err := url.PathUnescape(n)
 		if err != nil {
-			log.Warn("Otel header ignored, err=\"escape header key\", key=%s", n)
+			log.Warn("Otel header ignored on %q, invalid header key: %s", header, n)
 			continue
 		}
 		trimmedName := strings.TrimSpace(name)
 		value, err := url.PathUnescape(v)
 		if err != nil {
-			log.Warn("Otel header ignored, err=\"escape header value\", value=%s", v)
+			log.Warn("Otel header ignored on %q, invalid header value: %s", header, v)
 			continue
 		}
 		trimmedValue := strings.TrimSpace(value)

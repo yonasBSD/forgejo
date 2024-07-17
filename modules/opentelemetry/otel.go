@@ -30,14 +30,6 @@ func Init(ctx context.Context) error {
 	}))
 	var shutdownFuncs []func(context.Context) error
 	shutdownCtx := context.Background()
-	shutdown := func() {
-		for _, fn := range shutdownFuncs {
-			if err := fn(shutdownCtx); err != nil {
-				log.Warn("exporter shutdown failed, err=%s", err)
-			}
-		}
-		shutdownFuncs = nil
-	}
 
 	otel.SetTextMapPropagator(newPropagator())
 
@@ -52,7 +44,16 @@ func Init(ctx context.Context) error {
 	} else {
 		shutdownFuncs = append(shutdownFuncs, traceShutdown)
 	}
-	graceful.GetManager().RunAtShutdown(shutdownCtx, shutdown)
+
+	graceful.GetManager().RunAtShutdown(ctx, func() {
+		for _, fn := range shutdownFuncs {
+			if err := fn(shutdownCtx); err != nil {
+				log.Warn("exporter shutdown failed, err=%s", err)
+			}
+		}
+		shutdownFuncs = nil
+	})
+
 	return nil
 }
 
@@ -85,17 +86,7 @@ func withClientCert(nc, nk string, tlsConf *tls.Config) {
 		return
 	}
 
-	cert, err := os.ReadFile(nc)
-	if err != nil {
-		log.Warn("Otel: read tls client cert path=%s, err=%s", nc, err)
-		return
-	}
-	key, err := os.ReadFile(nk)
-	if err != nil {
-		log.Warn("Otel: read tls client key path=%s, err=%s", nk, err)
-		return
-	}
-	crt, err := tls.X509KeyPair(cert, key)
+	crt, err := tls.LoadX509KeyPair(nc, nk)
 	if err != nil {
 		log.Warn("Otel: create tls client key pair failed")
 		return

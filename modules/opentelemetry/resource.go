@@ -82,7 +82,7 @@ func parseSettingAttributes(s string) []attribute.KeyValue {
 		attrs = append(attrs, attribute.String(key, val))
 	}
 	if len(invalid) > 0 {
-		log.Warn("%s: %v", "Partial resource: missing values", invalid)
+		log.Warn("Partial resource, missing values: %v", invalid)
 	}
 
 	return attrs
