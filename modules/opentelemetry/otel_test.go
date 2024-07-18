@@ -46,6 +46,7 @@ func TestNoopDefault(t *testing.T) {
 	tracer := otel.Tracer("test_noop")
 
 	_, span := tracer.Start(ctx, "test span")
+	defer span.End()
 
 	assert.False(t, span.SpanContext().HasTraceID())
 	assert.False(t, span.SpanContext().HasSpanID())

@@ -85,6 +85,5 @@ func TestOtelChi(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(collect, string(apiResponse), ServiceName)
-
 	}, 15*time.Second, 1*time.Second)
 }
