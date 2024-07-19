@@ -120,11 +120,10 @@ func (l *Links) WikiRawLink() string {
 }
 
 func (l *Links) ResolveMediaLink(isWiki bool) string {
-	if isWiki {
-		return l.WikiRawLink()
-	} else if l.HasBranchInfo() {
+	if isWiki || l.HasBranchInfo() {
 		return l.MediaLink()
 	}
+
 	return l.Base
 }
 

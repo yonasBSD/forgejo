@@ -7,6 +7,7 @@ package common
 import (
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 
 	"code.gitea.io/gitea/modules/markup"
@@ -77,11 +78,14 @@ func RenderMarkup(ctx *context.Base, repo *context.Repository, mode, text, urlPr
 		meta["mode"] = "document"
 	}
 
+	repo.IsViewBranch = true
 	if err := markup.Render(&markup.RenderContext{
 		Ctx: ctx,
 		Links: markup.Links{
 			AbsolutePrefix: true,
-			Base:           urlPrefix,
+			Base:           repo.RepoLink,
+			BranchPath:     repo.BranchNameSubURL(),
+			TreePath:       path.Dir(filePath),
 		},
 		Metas:        meta,
 		IsWiki:       wiki,
