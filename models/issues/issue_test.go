@@ -314,9 +314,11 @@ func TestResourceIndex(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
+		wg.Add(1)
 		t.Run(fmt.Sprintf("issue %d", i+1), func(t *testing.T) {
 			t.Parallel()
 			testInsertIssue(t, fmt.Sprintf("issue %d", i+1), "my issue", 0)
+			wg.Done()
 		})
 	}
 
