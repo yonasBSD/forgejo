@@ -30,9 +30,8 @@ func TestGenerate(t *testing.T) {
 		img := imgMaker.Make([]byte(s))
 
 		f, err := os.Create(dir + "/" + s + ".png")
-		if !require.NoError(t, err) {
-			continue
-		}
+		require.NoError(t, err)
+
 		defer f.Close()
 		err = png.Encode(f, img)
 		require.NoError(t, err)
