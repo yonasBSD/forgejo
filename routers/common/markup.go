@@ -12,11 +12,7 @@ import (
 
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
-	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/context"
-
-	"mvdan.cc/xurls/v2"
 )
 
 // RenderMarkup renders markup text for the /markup and /markdown endpoints
@@ -55,15 +51,6 @@ func RenderMarkup(ctx *context.Base, repo *context.Repository, mode, text, urlPr
 	default:
 		ctx.Error(http.StatusUnprocessableEntity, fmt.Sprintf("Unknown mode: %s", mode))
 		return
-	}
-
-	if !strings.HasPrefix(setting.AppSubURL+"/", urlPrefix) {
-		// check if urlPrefix is already set to a URL
-		linkRegex, _ := xurls.StrictMatchingScheme("https?://")
-		m := linkRegex.FindStringIndex(urlPrefix)
-		if m == nil {
-			urlPrefix = util.URLJoin(setting.AppURL, urlPrefix)
-		}
 	}
 
 	meta := map[string]string{}

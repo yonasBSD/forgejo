@@ -5,6 +5,9 @@
 package misc
 
 import (
+	"net/http"
+	"strings"
+
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/common"
@@ -14,5 +17,19 @@ import (
 // Markup render markup document to HTML
 func Markup(ctx *context.Context) {
 	form := web.GetForm(ctx).(*api.MarkupOption)
-	common.RenderMarkup(ctx.Base, ctx.Repo, form.Mode, form.Text, form.Context, form.FilePath, form.Wiki)
+
+	urlPrefix := form.Context
+
+	if !form.Wiki {
+		branchName := urlPrefix[strings.LastIndex(urlPrefix, "/")+1:]
+
+		// Check write access for the current branch
+		if !ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, branchName) && !ctx.IsUserRepoAdmin() {
+			ctx.Error(http.StatusForbidden, "reqRepoBranchWriter", "user should have a permission to write to this branch")
+			return
+		}
+		ctx.Repo.BranchName = branchName
+	}
+
+	common.RenderMarkup(ctx.Base, ctx.Repo, form.Mode, form.Text, urlPrefix, form.FilePath, form.Wiki)
 }
