@@ -18,10 +18,10 @@ import (
 func Markup(ctx *context.Context) {
 	form := web.GetForm(ctx).(*api.MarkupOption)
 
-	urlPrefix := form.Context
+	relativePath := form.Context
 
 	if !form.Wiki {
-		branchName := urlPrefix[strings.LastIndex(urlPrefix, "/")+1:]
+		branchName := relativePath[strings.LastIndex(relativePath, "/")+1:]
 
 		// Check write access for the current branch
 		if !ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, branchName) && !ctx.IsUserRepoAdmin() {
@@ -31,5 +31,5 @@ func Markup(ctx *context.Context) {
 		ctx.Repo.BranchName = branchName
 	}
 
-	common.RenderMarkup(ctx.Base, ctx.Repo, form.Mode, form.Text, urlPrefix, form.FilePath, form.Wiki)
+	common.RenderMarkup(ctx.Base, ctx.Repo, form.Mode, form.Text, relativePath, form.FilePath, form.Wiki)
 }
