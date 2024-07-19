@@ -668,7 +668,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	require.NoError(t, err)
 
 	schemaValidation := schema.Validate(data)
-	assert.NoError(t, schemaValidation)
+	require.NoError(t, schemaValidation)
 }
 
 func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
