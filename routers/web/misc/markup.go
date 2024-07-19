@@ -5,7 +5,6 @@
 package misc
 
 import (
-	"net/http"
 	"strings"
 
 	api "code.gitea.io/gitea/modules/structs"
@@ -22,12 +21,6 @@ func Markup(ctx *context.Context) {
 
 	if !form.Wiki {
 		branchName := relativePath[strings.LastIndex(relativePath, "/")+1:]
-
-		// Check write access for the current branch
-		if !ctx.Repo.CanWriteToBranch(ctx, ctx.Doer, branchName) && !ctx.IsUserRepoAdmin() {
-			ctx.Error(http.StatusForbidden, "reqRepoBranchWriter", "user should have a permission to write to this branch")
-			return
-		}
 		ctx.Repo.BranchName = branchName
 	}
 
