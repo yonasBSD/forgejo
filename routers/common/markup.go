@@ -12,7 +12,10 @@ import (
 
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/services/context"
+	"mvdan.cc/xurls/v2"
 )
 
 // RenderMarkup renders markup text for the /markup and /markdown endpoints
@@ -53,6 +56,15 @@ func RenderMarkup(ctx *context.Base, repo *context.Repository, mode, text, urlPr
 		return
 	}
 
+	if !strings.HasPrefix(setting.AppSubURL+"/", urlPrefix) {
+		// check if urlPrefix is already set to a URL
+		linkRegex, _ := xurls.StrictMatchingScheme("https?://")
+		m := linkRegex.FindStringIndex(urlPrefix)
+		if m == nil {
+			urlPrefix = util.URLJoin(setting.AppURL, urlPrefix)
+		}
+	}
+
 	meta := map[string]string{}
 	if repo != nil && repo.Repository != nil {
 		if mode == "comment" {
@@ -65,15 +77,25 @@ func RenderMarkup(ctx *context.Base, repo *context.Repository, mode, text, urlPr
 		meta["mode"] = "document"
 	}
 
-	repo.IsViewBranch = true
-	if err := markup.Render(&markup.RenderContext{
-		Ctx: ctx,
-		Links: markup.Links{
+	var links markup.Links
+	if !wiki {
+		repo.IsViewBranch = true
+		links = markup.Links{
 			AbsolutePrefix: true,
 			Base:           repo.RepoLink,
 			BranchPath:     repo.BranchNameSubURL(),
 			TreePath:       path.Dir(filePath),
-		},
+		}
+	} else {
+		links = markup.Links{
+			AbsolutePrefix: true,
+			Base:           urlPrefix,
+		}
+	}
+
+	if err := markup.Render(&markup.RenderContext{
+		Ctx:          ctx,
+		Links:        links,
 		Metas:        meta,
 		IsWiki:       wiki,
 		Type:         markupType,

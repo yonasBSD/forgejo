@@ -412,10 +412,10 @@ func TestRender_ShortLinks(t *testing.T) {
 	urlWiki := util.URLJoin(markup.TestRepoURL, "wiki", "Link")
 	otherURLWiki := util.URLJoin(markup.TestRepoURL, "wiki", "Other-Link")
 	encodedURLWiki := util.URLJoin(markup.TestRepoURL, "wiki", "Link%3F")
-	imgurlWiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw", "Link.jpg")
-	otherImgurlWiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw", "Link+Other.jpg")
-	encodedImgurlWiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw", "Link+%23.jpg")
-	notencodedImgurlWiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw", "some", "path", "Link+#.jpg")
+	imgurlWiki := util.URLJoin(markup.TestRepoURL, "media", "Link.jpg")
+	otherImgurlWiki := util.URLJoin(markup.TestRepoURL, "media", "Link+Other.jpg")
+	encodedImgurlWiki := util.URLJoin(markup.TestRepoURL, "media", "Link+%23.jpg")
+	notencodedImgurlWiki := util.URLJoin(markup.TestRepoURL, "media", "some", "path", "Link+#.jpg")
 	favicon := "http://google.com/favicon.ico"
 
 	test(
@@ -514,7 +514,7 @@ func TestRender_RelativeImages(t *testing.T) {
 		assert.Equal(t, strings.TrimSpace(expectedWiki), strings.TrimSpace(string(buffer)))
 	}
 
-	rawwiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw")
+	rawwiki := util.URLJoin(markup.TestRepoURL, "media")
 	mediatree := util.URLJoin(markup.TestRepoURL, "media", "master")
 
 	test(
