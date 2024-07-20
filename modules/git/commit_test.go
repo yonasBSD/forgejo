@@ -5,10 +5,12 @@ package git
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommitsCount(t *testing.T) {
@@ -133,7 +135,7 @@ author KN4CK3R <admin@oldschoolhack.me> 1711702962 +0100
 committer KN4CK3R <admin@oldschoolhack.me> 1711702962 +0100
 encoding ISO-8859-1
 gpgsig -----BEGIN PGP SIGNATURE-----
- 
+
  iQGzBAABCgAdFiEE9HRrbqvYxPT8PXbefPSEkrowAa8FAmYGg7IACgkQfPSEkrow
  Aa9olwv+P0HhtCM6CRvlUmPaqswRsDPNR4i66xyXGiSxdI9V5oJL7HLiQIM7KrFR
  gizKa2COiGtugv8fE+TKqXKaJx6uJUJEjaBd8E9Af9PrAzjWj+A84lU6/PgPS8hq
@@ -371,4 +373,21 @@ func TestParseCommitRenames(t *testing.T) {
 
 		assert.Equal(t, testcase.renames, renames)
 	}
+}
+
+func TestGetAllBranches(t *testing.T) {
+	bareRepo1Path := filepath.Join(testReposDir, "repo1_bare")
+
+	bareRepo1, err := openRepositoryWithDefaultContext(bareRepo1Path)
+	require.NoError(t, err)
+
+	commit, err := bareRepo1.GetCommit("95bb4d39648ee7e325106df01a621c530863a653")
+	require.NoError(t, err)
+
+	branches, err := commit.GetAllBranches()
+	require.NoError(t, err)
+
+	slices.Sort(branches)
+
+	assert.Equal(t, []string{"branch1", "branch2", "master"}, branches)
 }

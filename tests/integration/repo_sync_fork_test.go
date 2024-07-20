@@ -14,15 +14,12 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func syncForkTest(t *testing.T, forkName, urlPart string) {
-	defer tests.PrepareTestEnv(t)()
-
+func syncForkTest(t *testing.T, forkName, urlPart string, webSync bool) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 20})
 
 	baseRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
@@ -59,8 +56,12 @@ func syncForkTest(t *testing.T, forkName, urlPart string) {
 	assert.NotEqual(t, syncForkInfo.BaseCommit, syncForkInfo.ForkCommit)
 
 	// Sync the fork
-	req = NewRequestf(t, "POST", "/api/v1/repos/%s/%s/%s", user.Name, forkName, urlPart).AddTokenAuth(token)
-	MakeRequest(t, req, http.StatusNoContent)
+	if webSync {
+		session.MakeRequest(t, NewRequestf(t, "GET", "/%s/%s/sync_fork/master", user.Name, forkName), http.StatusSeeOther)
+	} else {
+		req = NewRequestf(t, "POST", "/api/v1/repos/%s/%s/%s", user.Name, forkName, urlPart).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNoContent)
+	}
 
 	req = NewRequestf(t, "GET", "/api/v1/repos/%s/%s/%s", user.Name, forkName, urlPart).AddTokenAuth(token)
 	resp = MakeRequest(t, req, http.StatusOK)
@@ -74,12 +75,18 @@ func syncForkTest(t *testing.T, forkName, urlPart string) {
 
 func TestAPIRepoSyncForkDefault(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		syncForkTest(t, "SyncForkDefault", "sync_fork")
+		syncForkTest(t, "SyncForkDefault", "sync_fork", false)
 	})
 }
 
 func TestAPIRepoSyncForkBranch(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		syncForkTest(t, "SyncForkBranch", "sync_fork/master")
+		syncForkTest(t, "SyncForkBranch", "sync_fork/master", false)
+	})
+}
+
+func TestWebRepoSyncForkBranch(t *testing.T) {
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		syncForkTest(t, "SyncForkBranch", "sync_fork/master", true)
 	})
 }
