@@ -95,9 +95,9 @@ func TestAPISearchRepo(t *testing.T) {
 	}{
 		{
 			name: "RepositoriesMax50", requestURL: "/api/v1/repos/search?limit=50&private=false", expectedResults: expectedResults{
-				nil:   {count: 36},
-				user:  {count: 36},
-				user2: {count: 36},
+				nil:   {count: 37},
+				user:  {count: 37},
+				user2: {count: 37},
 			},
 		},
 		{
@@ -748,4 +748,18 @@ func TestAPIViewRepoObjectFormat(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &repo)
 	assert.EqualValues(t, "sha1", repo.ObjectFormatName)
+}
+
+func TestAPIRepoCommitPull(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	var pr api.PullRequest
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/1a8823cd1a9549fde083f992f6b9b87a7ab74fb3/pull")
+	resp := MakeRequest(t, req, http.StatusOK)
+
+	DecodeJSON(t, resp, &pr)
+	assert.EqualValues(t, 1, pr.ID)
+
+	req = NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/not-a-commit/pull")
+	MakeRequest(t, req, http.StatusNotFound)
 }

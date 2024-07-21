@@ -10,10 +10,6 @@
   align-items: center;
 }
 
-#git-graph-container .color-buttons {
-  margin-right: 0;
-}
-
 #git-graph-container .ui.header.dividing {
   padding-bottom: 10px;
 }
@@ -29,15 +25,6 @@
   max-width: 180px;
   display: inline-flex !important;
   align-items: center;
-}
-
-#git-graph-container #flow-select-refs-dropdown .ui.label .truncate {
-  display: inline-block;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: top;
-  white-space: nowrap;
 }
 
 #git-graph-container #flow-select-refs-dropdown .default.text {
@@ -69,7 +56,6 @@
 
 #git-graph-container li .time {
   color: var(--color-text-light-3);
-  font-size: 80%;
 }
 
 #git-graph-container li a:not(.ui):hover {
@@ -89,14 +75,9 @@
   float: left;
 }
 
-#git-graph-container #rev-container {
-  width: 100%;
-}
-
 #git-graph-container #rev-list {
   margin: 0;
   padding: 0;
-  width: 100%;
 }
 
 #git-graph-container #rev-list li.highlight.hover {

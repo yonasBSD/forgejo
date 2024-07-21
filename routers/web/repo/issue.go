@@ -201,6 +201,8 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 		keyword = ""
 	}
 
+	isFuzzy := ctx.FormBool("fuzzy")
+
 	var mileIDs []int64
 	if milestoneID > 0 || milestoneID == db.NoConditionID { // -1 to get those issues which have no any milestone assigned
 		mileIDs = []int64{milestoneID}
@@ -221,7 +223,7 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 		IssueIDs:          nil,
 	}
 	if keyword != "" {
-		allIssueIDs, err := issueIDsFromSearch(ctx, keyword, statsOpts)
+		allIssueIDs, err := issueIDsFromSearch(ctx, keyword, isFuzzy, statsOpts)
 		if err != nil {
 			if issue_indexer.IsAvailable(ctx) {
 				ctx.ServerError("issueIDsFromSearch", err)
@@ -289,7 +291,7 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 
 	var issues issues_model.IssueList
 	{
-		ids, err := issueIDsFromSearch(ctx, keyword, &issues_model.IssuesOptions{
+		ids, err := issueIDsFromSearch(ctx, keyword, isFuzzy, &issues_model.IssuesOptions{
 			Paginator: &db.ListOptions{
 				Page:     pager.Paginater.Current(),
 				PageSize: setting.UI.IssuePagingNum,
@@ -465,6 +467,7 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 	ctx.Data["ProjectID"] = projectID
 	ctx.Data["AssigneeID"] = assigneeID
 	ctx.Data["PosterID"] = posterID
+	ctx.Data["IsFuzzy"] = isFuzzy
 	ctx.Data["Keyword"] = keyword
 	switch {
 	case isShowClosed.Value():
@@ -486,12 +489,17 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 	pager.AddParam(ctx, "assignee", "AssigneeID")
 	pager.AddParam(ctx, "poster", "PosterID")
 	pager.AddParam(ctx, "archived", "ShowArchivedLabels")
+	pager.AddParam(ctx, "fuzzy", "IsFuzzy")
 
 	ctx.Data["Page"] = pager
 }
 
-func issueIDsFromSearch(ctx *context.Context, keyword string, opts *issues_model.IssuesOptions) ([]int64, error) {
-	ids, _, err := issue_indexer.SearchIssues(ctx, issue_indexer.ToSearchOptions(keyword, opts))
+func issueIDsFromSearch(ctx *context.Context, keyword string, fuzzy bool, opts *issues_model.IssuesOptions) ([]int64, error) {
+	ids, _, err := issue_indexer.SearchIssues(ctx, issue_indexer.ToSearchOptions(keyword, opts).Copy(
+		func(o *issue_indexer.SearchOptions) {
+			o.IsFuzzyKeyword = fuzzy
+		},
+	))
 	if err != nil {
 		return nil, fmt.Errorf("SearchIssues: %w", err)
 	}
@@ -1362,6 +1370,22 @@ func getBranchData(ctx *context.Context, issue *issues_model.Issue) {
 	}
 }
 
+func prepareHiddenCommentType(ctx *context.Context) {
+	var hiddenCommentTypes *big.Int
+	if ctx.IsSigned {
+		val, err := user_model.GetUserSetting(ctx, ctx.Doer.ID, user_model.SettingsKeyHiddenCommentTypes)
+		if err != nil {
+			ctx.ServerError("GetUserSetting", err)
+			return
+		}
+		hiddenCommentTypes, _ = new(big.Int).SetString(val, 10) // we can safely ignore the failed conversion here
+	}
+
+	ctx.Data["ShouldShowCommentType"] = func(commentType issues_model.CommentType) bool {
+		return hiddenCommentTypes == nil || hiddenCommentTypes.Bit(int(commentType)) == 0
+	}
+}
+
 // ViewIssue render issue view page
 func ViewIssue(ctx *context.Context) {
 	if ctx.Params(":type") == "issues" {
@@ -2011,21 +2035,13 @@ func ViewIssue(ctx *context.Context) {
 	ctx.Data["NewPinAllowed"] = pinAllowed
 	ctx.Data["PinEnabled"] = setting.Repository.Issue.MaxPinned != 0
 
-	var hiddenCommentTypes *big.Int
-	if ctx.IsSigned {
-		val, err := user_model.GetUserSetting(ctx, ctx.Doer.ID, user_model.SettingsKeyHiddenCommentTypes)
-		if err != nil {
-			ctx.ServerError("GetUserSetting", err)
-			return
-		}
-		hiddenCommentTypes, _ = new(big.Int).SetString(val, 10) // we can safely ignore the failed conversion here
+	prepareHiddenCommentType(ctx)
+	if ctx.Written() {
+		return
 	}
-	ctx.Data["ShouldShowCommentType"] = func(commentType issues_model.CommentType) bool {
-		return hiddenCommentTypes == nil || hiddenCommentTypes.Bit(int(commentType)) == 0
-	}
+
 	// For sidebar
 	PrepareBranchList(ctx)
-
 	if ctx.Written() {
 		return
 	}
@@ -2239,8 +2255,16 @@ func UpdateIssueContent(ctx *context.Context) {
 		return
 	}
 
-	if err := issue_service.ChangeContent(ctx, issue, ctx.Doer, ctx.Req.FormValue("content")); err != nil {
-		ctx.ServerError("ChangeContent", err)
+	if err := issue_service.ChangeContent(ctx, issue, ctx.Doer, ctx.Req.FormValue("content"), ctx.FormInt("content_version")); err != nil {
+		if errors.Is(err, issues_model.ErrIssueAlreadyChanged) {
+			if issue.IsPull {
+				ctx.JSONError(ctx.Tr("repo.pulls.edit.already_changed"))
+			} else {
+				ctx.JSONError(ctx.Tr("repo.issues.edit.already_changed"))
+			}
+		} else {
+			ctx.ServerError("ChangeContent", err)
+		}
 		return
 	}
 
@@ -2266,8 +2290,9 @@ func UpdateIssueContent(ctx *context.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, map[string]any{
-		"content":     content,
-		"attachments": attachmentsHTML(ctx, issue.Attachments, issue.Content),
+		"content":        content,
+		"contentVersion": issue.ContentVersion,
+		"attachments":    attachmentsHTML(ctx, issue.Attachments, issue.Content),
 	})
 }
 
@@ -2325,7 +2350,49 @@ func UpdateIssueMilestone(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSONOK()
+	if ctx.FormBool("htmx") {
+		renderMilestones(ctx)
+		if ctx.Written() {
+			return
+		}
+		prepareHiddenCommentType(ctx)
+		if ctx.Written() {
+			return
+		}
+
+		issue := issues[0]
+		var err error
+		if issue.MilestoneID > 0 {
+			issue.Milestone, err = issues_model.GetMilestoneByRepoID(ctx, ctx.Repo.Repository.ID, issue.MilestoneID)
+			if err != nil {
+				ctx.ServerError("GetMilestoneByRepoID", err)
+				return
+			}
+		} else {
+			issue.Milestone = nil
+		}
+
+		comment := &issues_model.Comment{}
+		has, err := db.GetEngine(ctx).Where("issue_id = ? AND type = ?", issue.ID, issues_model.CommentTypeMilestone).OrderBy("id DESC").Limit(1).Get(comment)
+		if !has || err != nil {
+			ctx.ServerError("GetLatestMilestoneComment", err)
+		}
+		if err := comment.LoadMilestone(ctx); err != nil {
+			ctx.ServerError("LoadMilestone", err)
+			return
+		}
+		if err := comment.LoadPoster(ctx); err != nil {
+			ctx.ServerError("LoadPoster", err)
+			return
+		}
+		issue.Comments = issues_model.CommentList{comment}
+
+		ctx.Data["Issue"] = issue
+		ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
+		ctx.HTML(http.StatusOK, "htmx/milestone_sidebar")
+	} else {
+		ctx.JSONOK()
+	}
 }
 
 // UpdateIssueAssignee change issue's or pull's assignee
@@ -2822,12 +2889,12 @@ func ListIssues(ctx *context.Context) {
 			Page:     ctx.FormInt("page"),
 			PageSize: convert.ToCorrectPageSize(ctx.FormInt("limit")),
 		},
-		Keyword:        keyword,
-		RepoIDs:        []int64{ctx.Repo.Repository.ID},
-		IsPull:         isPull,
-		IsClosed:       isClosed,
-		ProjectBoardID: projectID,
-		SortBy:         issue_indexer.SortByCreatedDesc,
+		Keyword:   keyword,
+		RepoIDs:   []int64{ctx.Repo.Repository.ID},
+		IsPull:    isPull,
+		IsClosed:  isClosed,
+		ProjectID: projectID,
+		SortBy:    issue_indexer.SortByCreatedDesc,
 	}
 	if since != 0 {
 		searchOpt.UpdatedAfterUnix = optional.Some(since)
@@ -3155,9 +3222,16 @@ func UpdateCommentContent(ctx *context.Context) {
 	}
 
 	oldContent := comment.Content
-	comment.Content = ctx.FormString("content")
-	if err = issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
-		ctx.ServerError("UpdateComment", err)
+	newContent := ctx.FormString("content")
+	contentVersion := ctx.FormInt("content_version")
+
+	comment.Content = newContent
+	if err = issue_service.UpdateComment(ctx, comment, contentVersion, ctx.Doer, oldContent); err != nil {
+		if errors.Is(err, issues_model.ErrCommentAlreadyChanged) {
+			ctx.JSONError(ctx.Tr("repo.comments.edit.already_changed"))
+		} else {
+			ctx.ServerError("UpdateComment", err)
+		}
 		return
 	}
 
@@ -3188,8 +3262,9 @@ func UpdateCommentContent(ctx *context.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, map[string]any{
-		"content":     content,
-		"attachments": attachmentsHTML(ctx, comment.Attachments, comment.Content),
+		"content":        content,
+		"contentVersion": comment.ContentVersion,
+		"attachments":    attachmentsHTML(ctx, comment.Attachments, comment.Content),
 	})
 }
 

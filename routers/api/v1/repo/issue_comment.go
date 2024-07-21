@@ -462,6 +462,11 @@ func GetIssueComment(ctx *context.APIContext) {
 		return
 	}
 
+	if err := comment.LoadAttachments(ctx); err != nil {
+		ctx.Error(http.StatusInternalServerError, "LoadAttachments", err)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, convert.ToAPIComment(ctx, ctx.Repo.Repository, comment))
 }
 
@@ -586,7 +591,7 @@ func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) 
 
 	oldContent := comment.Content
 	comment.Content = form.Body
-	if err := issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
+	if err := issue_service.UpdateComment(ctx, comment, comment.ContentVersion, ctx.Doer, oldContent); err != nil {
 		ctx.Error(http.StatusInternalServerError, "UpdateComment", err)
 		return
 	}

@@ -123,23 +123,7 @@ func (ctx *preReceiveContext) canChangeSettings() error {
 func (ctx *preReceiveContext) validatePushOptions() error {
 	opts := web.GetForm(ctx).(*private.HookOptions)
 
-	if len(opts.GitPushOptions) == 0 {
-		return nil
-	}
-
-	changesRepoSettings := false
-	for key := range opts.GitPushOptions {
-		switch key {
-		case private.GitPushOptionRepoPrivate, private.GitPushOptionRepoTemplate:
-			changesRepoSettings = true
-		case "topic", "force-push", "title", "description":
-			// Agit options
-		default:
-			return fmt.Errorf("unknown option %s", key)
-		}
-	}
-
-	if changesRepoSettings {
+	if opts.GetGitPushOptions().ChangeRepoSettings() {
 		return ctx.canChangeSettings()
 	}
 
@@ -397,9 +381,14 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 			return
 		}
 
+		// If we're an admin for the instance, we can ignore checks
+		if ctx.user.IsAdmin {
+			return
+		}
+
 		// It's not allowed t overwrite protected files. Unless if the user is an
 		// admin and the protected branch rule doesn't apply to admins.
-		if changedProtectedfiles && (!ctx.user.IsAdmin || protectBranch.ApplyToAdmins) {
+		if changedProtectedfiles && (!ctx.userPerm.IsAdmin() || protectBranch.ApplyToAdmins) {
 			log.Warn("Forbidden: Branch: %s in %-v is protected from changing file %s", branchName, repo, protectedFilePath)
 			ctx.JSON(http.StatusForbidden, private.Response{
 				UserMsg: fmt.Sprintf("branch %s is protected from changing file %s", branchName, protectedFilePath),
@@ -411,7 +400,7 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 		if pb, err := pull_service.CheckPullBranchProtections(ctx, pr, true); err != nil {
 			if models.IsErrDisallowedToMerge(err) {
 				// Allow this if the rule doesn't apply to admins and the user is an admin.
-				if ctx.user.IsAdmin && !pb.ApplyToAdmins {
+				if ctx.userPerm.IsAdmin() && !pb.ApplyToAdmins {
 					return
 				}
 				log.Warn("Forbidden: User %d is not allowed push to protected branch %s in %-v and pr #%d is not ready to be merged: %s", ctx.opts.UserID, branchName, repo, pr.Index, err.Error())
@@ -429,7 +418,7 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 	}
 }
 
-func preReceiveTag(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) {
+func preReceiveTag(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) { //nolint:unparam
 	if !ctx.AssertCanWriteCode() {
 		return
 	}
@@ -465,7 +454,7 @@ func preReceiveTag(ctx *preReceiveContext, oldCommitID, newCommitID string, refF
 	}
 }
 
-func preReceiveFor(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) {
+func preReceiveFor(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) { //nolint:unparam
 	if !ctx.AssertCreatePullRequest() {
 		return
 	}

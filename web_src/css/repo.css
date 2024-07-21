@@ -79,6 +79,11 @@
   white-space: nowrap;
 }
 
+.repository .issue-content-right .filter.menu {
+  max-height: 500px;
+  overflow-x: auto;
+}
+
 .repository .filter.menu.labels .label-filter .menu .info {
   display: inline-block;
   padding: 0.5rem 0;
@@ -581,11 +586,6 @@ td .commit-summary {
   font-size: 14px;
 }
 
-.repository.new.issue .comment.form .issue-content-right .filter.menu {
-  max-height: 500px;
-  overflow-x: auto;
-}
-
 .repository.view.issue .instruct-toggle {
   display: inline-block;
 }
@@ -601,7 +601,8 @@ td .commit-summary {
   align-items: center;
 }
 
-.repository.view.issue .top-right-buttons {
+.issue-title .button-row,
+.repository.releases .button-row {
   display: flex;
 }
 
@@ -609,7 +610,7 @@ td .commit-summary {
   .repository.view.issue .issue-title {
     flex-direction: column;
   }
-  .repository.view.issue .top-right-buttons {
+  .issue-title .button-row {
     width: 100%;
     margin-top: .5rem;
     justify-content: space-between;
@@ -1538,7 +1539,6 @@ td .commit-summary {
 .diff-detail-actions {
   display: flex;
   align-items: center;
-  gap: 0.25em;
   justify-content: end;
 }
 
@@ -1573,7 +1573,7 @@ td .commit-summary {
 }
 
 .repository .diff-detail-box .ui.button {
-  padding: 0 12px;
+  padding: 0 1.125em;
   height: 30px;
 }
 
@@ -1595,7 +1595,7 @@ td .commit-summary {
 }
 
 .repository .diff-box .header:not(.resolved-placeholder) .button {
-  padding: 0 12px;
+  padding: 0 1.125em;
   flex: 0 0 auto;
   margin-right: 0;
   height: 30px;
@@ -2068,11 +2068,6 @@ td .commit-summary {
   line-height: 1.4;
 }
 
-#cite-repo-modal #citation-panel .citation.button {
-  font-size: 13px;
-  padding: 7.5px 5px;
-}
-
 #cite-repo-modal #citation-panel #citation-copy-content {
   border-radius: 0;
   padding: 5px 10px;
@@ -2081,8 +2076,9 @@ td .commit-summary {
   flex: 1;
 }
 
-#cite-repo-modal #citation-panel #citation-copy-apa,
 #cite-repo-modal #citation-panel #citation-copy-bibtex {
+  font-size: 13px;
+  padding: 7.5px 5px;
   border-right: none;
 }
 
@@ -2106,7 +2102,7 @@ td .commit-summary {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 .user-cards .list .item {
@@ -2489,6 +2485,7 @@ tbody.commit-list {
   min-height: 12em;
   max-height: calc(100vh - 10.5rem);
   overflow-y: auto;
+  tab-size: 4;
 }
 
 .comment-diff-data pre {
@@ -2993,4 +2990,8 @@ tbody.commit-list {
 #issue-info-popup .emoji {
   font-size: inherit;
   line-height: inherit;
+}
+
+#repo-activity-top-authors-chart {
+  height: 150px; /* Pre-allocate the height that will be taken up by the chart, to avoid the container 'jumping'. */
 }

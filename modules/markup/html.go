@@ -48,7 +48,7 @@ var (
 	// hashCurrentPattern matches string that represents a commit SHA, e.g. d8a994ef243349f321568f9e36d5c3f444b99cae
 	// Although SHA1 hashes are 40 chars long, SHA256 are 64, the regex matches the hash from 7 to 64 chars in length
 	// so that abbreviated hash links can be used as well. This matches git and GitHub usability.
-	hashCurrentPattern = regexp.MustCompile(`(?:\s|^|\(|\[)([0-9a-f]{7,64})(?:\s|$|\)|\]|[.,](\s|$))`)
+	hashCurrentPattern = regexp.MustCompile(`(?:\s|^|\(|\[)([0-9a-f]{7,64})(?:\s|$|\)|\]|[.,:](\s|$))`)
 
 	// shortLinkPattern matches short but difficult to parse [[name|link|arg=test]] syntax
 	shortLinkPattern = regexp.MustCompile(`\[\[(.*?)\]\](\w*)`)
@@ -141,20 +141,6 @@ func CustomLinkURLSchemes(schemes []string) {
 		withAuth = append(withAuth, s)
 	}
 	common.LinkRegex, _ = xurls.StrictMatchingScheme(strings.Join(withAuth, "|"))
-}
-
-// IsSameDomain checks if given url string has the same hostname as current Gitea instance
-func IsSameDomain(s string) bool {
-	if strings.HasPrefix(s, "/") {
-		return true
-	}
-	if uapp, err := url.Parse(setting.AppURL); err == nil {
-		if u, err := url.Parse(s); err == nil {
-			return u.Host == uapp.Host
-		}
-		return false
-	}
-	return false
 }
 
 type postProcessError struct {
@@ -393,7 +379,7 @@ func visitNode(ctx *RenderContext, procs []processor, node *html.Node) {
 	// We ignore code and pre.
 	switch node.Type {
 	case html.TextNode:
-		textNode(ctx, procs, node)
+		processTextNodes(ctx, procs, node)
 	case html.ElementNode:
 		if node.Data == "img" {
 			for i, attr := range node.Attr {
@@ -436,15 +422,16 @@ func visitNode(ctx *RenderContext, procs []processor, node *html.Node) {
 		for n := node.FirstChild; n != nil; n = n.NextSibling {
 			visitNode(ctx, procs, n)
 		}
+	default:
 	}
 	// ignore everything else
 }
 
-// textNode runs the passed node through various processors, in order to handle
+// processTextNodes runs the passed node through various processors, in order to handle
 // all kinds of special links handled by the post-processing.
-func textNode(ctx *RenderContext, procs []processor, node *html.Node) {
-	for _, processor := range procs {
-		processor(ctx, node)
+func processTextNodes(ctx *RenderContext, procs []processor, node *html.Node) {
+	for _, p := range procs {
+		p(ctx, node)
 	}
 }
 

@@ -1,12 +1,198 @@
 # Release Notes
 
-A minor or major Forgejo release is published every [three months](https://forgejo.org/docs/latest/user/versions/), with more patch releases in between depending on the severity of the bug and security fixes it contains.
+A minor or major Forgejo release is published every [three months](https://forgejo.org/docs/latest/developer/release/#release-cycle), with more patch releases in between depending on the severity of the bug and security fixes it contains.
 
 A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading from v7.0.0 to v7.0.1 or v7.1.0) does not require manual intervention. But [major releases](https://semver.org/spec/v2.0.0.html#spec-item-8) where the first version number changes (e.g. upgrading from v1.21 to v7.0) contain breaking changes and the release notes explain how to deal with them.
 
 ## Upcoming releases (not available yet)
 
-- [8.0.0](release-notes/8.0.0/)
+- [9.0.0](release-notes/9.0.0/)
+
+## 8.0.0
+
+A [companion blog post](https://forgejo.org/2024-07-release-v8-0/) provides additional context on this release. In addition to the pull requests listed below, you will find a complete list in the [v8.0 milestone](https://codeberg.org/forgejo/forgejo/milestone/6042).
+
+<!--start release-notes-assistant-->
+<!--URL:https://codeberg.org/forgejo/forgejo-->
+- **Breaking**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3040)</a>: <!--number 3040 --><!--number--><!--description -->remove Microsoft SQL Server support see [the discussion](https://codeberg.org/forgejo/discussions/issues/122).<!--description-->
+- **User interface features & enhancements**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4201)</a>: <!--number 4201 --><!--number--><!--description Make tooltip of Author label in comments more clear-->make the tooltip of the author label in comments clearer.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4189)</a>: <!--number 4189 --><!--number--><!--description User profiles: only show RSS feed button and Public activity tab when the activity can be accessed, add messages about visibility-->only show the RSS feed button and Public activity tab in user profiles when the activity can be accessed and add messages about visibility.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4139)</a>: <!--number 4139 --><!--number--><!--description reorder repo tabs for better UX: (i) `Actions` is now the last tab (ii) `Packages` are located after Releases (iii) this puts Projects after Pull requests. (tab positions may depend on which units are enabled in the repo).-->reorder repo tabs for better UX: (i) `Actions` is now the last tab (ii) `Packages` are located after Releases (iii) this puts Projects after Pull requests. (tab positions may depend on which units are enabled in the repo).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4134)</a>: <!--number 4134 --><!--number--><!--description Code Search results are now displayed in a foldable box-->code search results are now displayed in a foldable box.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4095)</a>: <!--number 4095 --><!--number--><!--description Disable Subscribe button for guest users.-->disable the `Subscribe` button for guest users.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4072)</a>: <!--number 4072 --><!--number--><!--description multine placeholder-->
+    - Added Enter key handling to the new Markdown editor: Pressing Enter while in a list, quote or code block will copy the prefix to the new line - Ordered list index will be increased for the new line, and task list "checkbox" will be unchecked.
+    - Added indent/unindent function for a line or selection. Currently available as toolbar buttons ([#4263](https://codeberg.org/forgejo/forgejo/pulls/4263)).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3985)</a>: <!--number 3985 --><!--number--><!--description Added support for displaying images based on the users current color code by using an anchor of `#dark-mode-only` or `#light-mode-only` respectively. Also supporting the github variants (e.g. `#gh-dark-mode-only`).-->added support for displaying images based on the users current color code by using an anchor of `#dark-mode-only` or `#light-mode-only` respectively. Also supporting the github variants (e.g. `#gh-dark-mode-only`).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3870)</a>: <!--number 3870 --><!--number--><!--description Use CSS-native pattern for image diff background, add dark theme support-->use CSS-native pattern for image diff background, add dark theme support.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3642)</a>: <!--number 3642 --><!--number--><!--description Allow navigating to the organization dashboard from the organization view-->allow navigating to the organization dashboard from the organization view.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3434)</a>: <!--number 3434 --><!--number--><!--description When PDFs are displayed in the repository, the [full height of the screen](https://codeberg.org/forgejo/forgejo/pulls/3434) is now used instead of a predefined fixed height-->when PDFs are displayed in the repository, the full height of the screen is now used instead of a predefined fixed height.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3337)</a>: <!--number 3337 --><!--number--><!--description Added support for grouping of log-lines inside steps between the special `::group::{title}` and `::endgroup::` workflow commands. A runner of v3.4.2 or later is needed.-->added support for grouping of log-lines inside steps between the special `::group::{title}` and `::endgroup::` workflow commands. A runner of v3.4.2 or later is needed.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3285)</a>: <!--number 3285 --><!--number--><!--description The default for `[repository].USE_COMPAT_SSH_URI` has been changed to `true`. With this change, Forgejo defaults to using the same URL style for SSH clone URLs as for HTTPS ones, instead of the former scp-style.-->the default for `[repository].USE_COMPAT_SSH_URI` has been changed to `true`. With this change, Forgejo defaults to using the same URL style for SSH clone URLs as for HTTPS ones, instead of the former scp-style.<!--description-->
+- **Features & Enhancements**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4283)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4266)): <!--number 4283 --><!--number--><!--description - add support for LFS server implementations which have batch API responses in an older/deprecated schema-->add support for LFS server implementations which have batch API responses in an older/deprecated schema.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4262)</a>: <!--number 4262 --><!--number--><!--description Introduced branch/tag dropdown in code search page if using git-grep.-->introduce a branch/tag dropdown in the code search page if using git-grep.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4160)</a>: <!--number 4160 --><!--number--><!--description Added support for fuzzy searching issues and pulls - support for `/issues` and `/pulls` were ported from [`gitea#be5be0ac81`](https://github.com/go-gitea/gitea/commit/be5be0ac81ce50ad5adb079af6ca4e8c396aaece) - support for `/user/repo/issues` and `/user/repo/pulls` were added-->added support for fuzzy searching in `/user/repo/issues` and `/user/repo/pulls`.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4145)</a>: <!--number 4145 --><!--number--><!--description multine placeholder-->
+    - feat(perf): [commit](https://codeberg.org/forgejo/forgejo/commit/358cd67c4f316f2d4f1d3be6dcb891dc04a2ff07) reduce memory usage for chunked artifact uploads to S3.
+    - feat: [commit](https://codeberg.org/forgejo/forgejo/commit/b60e3ac7b4aeeb9b8760f43eea9576c0e23309e9) allow downloading draft releases assets.
+    - feat: [commit](https://codeberg.org/forgejo/forgejo/commit/1fca15529ac8fefb60d86b0c1f4bec8dae9a8566) API endpoints for managing tag protection.
+    - feat: [commit](https://codeberg.org/forgejo/forgejo/commit/4334c705b5f9388b16af23c7e75a69d027d07d5e) extract and display readme and comments for Composer packages.
+    - fix: [commit](https://codeberg.org/forgejo/forgejo/commit/364922c6e4f28264add9e2501a352c25ad6a0993) when a repository is adopted, its object format is not set in the database.
+    - fix: [commit](https://codeberg.org/forgejo/forgejo/commit/e7f332a55d6a48a3f3b4f2bfa43d18455ac00acc) during a migration from bitbucket, LFS downloads fail.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4143)</a>: <!--number 4143 --><!--number--><!--description a help overlay, triggered by "?" key can be displayed when viewing [asciinema](https://asciinema.org/) files (.cast extension) and [SGR color sequence](https://github.com/asciinema/avt/issues/9) are supported.-->a help overlay, triggered by "?" key can be displayed when viewing [asciinema](https://asciinema.org/) files (.cast extension) and [SGR color sequence](https://github.com/asciinema/avt/issues/9) are supported.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4136)</a>: <!--number 4136 --><!--number--><!--description - strikethrough in markdown can be achieved with [a single ~ in addition to ~~](https://github.github.com/gfm/#strikethrough-extension-)-->strikethrough in markdown can be achieved with [a single ~ in addition to ~~](https://github.github.com/gfm/#strikethrough-extension-).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4083)</a>: <!--number 4083 --><!--number--><!--description multine placeholder-->
+    - feat: add [Reviewed-on and Reviewed-by variables](https://codeberg.org/forgejo/forgejo/commit/4ddd9af50fbfcfb2ebf629697a803b3bce56c4af) to the merge template.
+    - feat(perf): [add the `[ui.csv].MAX_ROWS` setting](https://codeberg.org/forgejo/forgejo/commit/433b6c6910f8699dc41787ef8f5148b122b4677e) to avoid displaying a large number of lines (defaults to 2500).
+    - feat: [add a setting to override or add headers of all outgoing emails](https://codeberg.org/forgejo/forgejo/commit/1d4bff4f65d5e4a3969871ef91d3612daf272b45), for instance `Reply-To` or `In-Reply-To`.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4027)</a>: <!--number 4027 --><!--number--><!--description - Gitea/Forgejo webhook payload include additional fields (`html_url`, `additions`, `deletions`, `review_comments`...) for better compatbility with [OpenProject](https://www.openproject.org/), ported from [gitea#28435](https://github.com/go-gitea/gitea/pull/28435).-->the Gitea/Forgejo webhook payload includes additional fields (`html_url`, `additions`, `deletions`, `review_comments`...) for better compatbility with [OpenProject](https://www.openproject.org/).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4026)</a>: <!--number 4026 --><!--number--><!--description - when an OAuth grant request submitted to a Forgejo user is denied, the server from which the request originates is not notified that it has been denied-->when an OAuth grant request submitted to a Forgejo user is denied, the server from which the request originates is notified that it has been denied.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3989)</a>: <!--number 3989 --><!--number--><!--description multine placeholder-->
+    - feat: API endpoints that return a repository now [also include the topics](https://codeberg.org/forgejo/forgejo/commit/ee2247d77c0b13b0b45df704d7589b541db03899).
+    - feat: display an error when an issue comment is [edited simultaneously by two users](https://codeberg.org/forgejo/forgejo/commit/ca0921a95aa9a37d8820538458c15fd0a3b0c97c) instead of silently overriding one of them.
+    - feat: add [support for a credentials chain for minio](https://codeberg.org/forgejo/forgejo/commit/73706ae26d138684ef9da9e1164846a040fd4a7d).
+    - feat(perf): improve performances when [retrieving pull requests via the API](https://codeberg.org/forgejo/forgejo/commit/47a2102694c47bc30a2a7c673c328471839ef206).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3934)</a>: <!--number 3934 --><!--number--><!--description When installing Forgejo through the built-in installer, open (self-) registration is now disabled by default.-->when installing Forgejo through the built-in installer, open (self-) registration is now disabled by default.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3917)</a>: <!--number 3917 --><!--number--><!--description support [setting the default attribute of the issue template dropdown field](https://codeberg.org/forgejo/forgejo/commit/df15abd07264138fd07e003d0cf056f7da514b8f)-->support [setting the default attribute of the issue template dropdown field](https://codeberg.org/forgejo/forgejo/commit/df15abd07264138fd07e003d0cf056f7da514b8f)<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3886)</a>: <!--number 3886 --><!--number--><!--description For federated-star we introduce a new repository setting to define following repositories. That is a workaround till we find a better way to express repository federation.-->For federated-star we introduce a new repository setting to define following repositories. That is a workaround till we find a better way to express repository federation.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3847)</a>: <!--number 3847 --><!--number--><!--description Basic wiki content search using git-grep. The search results include the first ten matched files. Only the first three matches per file are displayed.-->Basic wiki content search using git-grep. The search results include the first ten matched files. Only the first three matches per file are displayed.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3838)</a>: <!--number 3838 --><!--number--><!--description - [Support using label names when changing issue labels](https://codeberg.org/forgejo/forgejo/commit/8e1de85980f1e4ae05b240cafbf9eaf33c94a203)-->support using label names when changing issue labels.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3836)</a>: <!--number 3836 --><!--number--><!--description Parse prefix parameter from redis URI for queues and use that as prefix to keys-->parse prefix parameter from redis URI for queues and use that as prefix to keys.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3830)</a>: <!--number 3830 --><!--number--><!--description Neutralize delete runners' UUID to prevent collisions with new records-->neutralize delete runners' UUID to prevent collisions with new records.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3811)</a>: <!--number 3811 --><!--number--><!--description Implement a non-caching version of the [RubyGems compact API](https://guides.rubygems.org/rubygems-org-compact-index-api/) for bundler dependency resolution.-->implement a non-caching version of the [RubyGems compact API](https://guides.rubygems.org/rubygems-org-compact-index-api/) for bundler dependency resolution.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3808)</a>: <!--number 3808 --><!--number--><!--description - Add support for the [reddit](https://github.com/markbates/goth/pull/523) and [Hubspot](https://github.com/markbates/goth/pull/531) OAuth providers.-->add support for the [reddit](https://github.com/markbates/goth/pull/523) and [Hubspot](https://github.com/markbates/goth/pull/531) OAuth providers.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3791)</a>: <!--number 3791 --><!--number--><!--description - when parsing [incoming emails](https://forgejo.org/docs/v8.0/user/incoming/), [remove tspecials from type/subtype](https://github.com/jhillyerd/enmime/pull/317). According to the RFC, content type and subtype cannot contain special characters and any such character will fail parsing. Removing the characters from the type/subtype can help successfully parsing the content type that contains some extra garbage.-->when parsing [incoming emails](https://forgejo.org/docs/v8.0/user/incoming/), [remove tspecials from type/subtype](https://github.com/jhillyerd/enmime/pull/317). According to the RFC, content type and subtype cannot contain special characters and any such character will fail parsing. Removing the characters from the type/subtype can help successfully parsing the content type that contains some extra garbage.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3752)</a>: <!--number 3752 --><!--number--><!--description There are a couple of new configs to define the name of the instance. The more important is `APP_SLOGAN`. It permits to configure a slogan for the site and it is optional. The other is `APP_DISPLAY_NAME_FORMAT` and permits to customize the aspect of the full display name for the instance used in some parts of the UI as: (i) Title page, (ii) Homepage head title (ii) Open Graph site and title meta tags. Its default value is `APP_NAME: APP_SLOGAN`. The config `APP_DISPLAY_NAME_FORMAT` is used only if `APP_SLOGAN` is set otherwise the full display name shows only `APP_NAME` value.-->there are a couple of new configs to define the name of the instance. The more important is `APP_SLOGAN`. It permits to configure a slogan for the site and it is optional. The other is `APP_DISPLAY_NAME_FORMAT` and permits to customize the aspect of the full display name for the instance used in some parts of the UI as: (i) Title page, (ii) Homepage head title (ii) Open Graph site and title meta tags. Its default value is `APP_NAME: APP_SLOGAN`. The config `APP_DISPLAY_NAME_FORMAT` is used only if `APP_SLOGAN` is set otherwise the full display name shows only `APP_NAME` value.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3729)</a>: <!--number 3729 --><!--number--><!--description multine placeholder-->
+    - feat: [commit](https://codeberg.org/forgejo/forgejo/commit/7028fe0b4d89c045b64ae891d2716e89965bc012): add actions-artifacts to the [storage migrate CLI](https://forgejo.org/docs/v8.0/admin/command-line/#migrate).
+    - fix: [commit](https://codeberg.org/forgejo/forgejo/commit/8f0f6bf89cdcd12cd4daa761aa259fdba7e32b50): pull request search shows closed pull requests in the open tab.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3724)</a>: <!--number 3724 --><!--number--><!--description multine placeholder-->
+    - [CERT management was improved](https://codeberg.org/forgejo/forgejo/pulls/3724) when [`ENABLE_ACME=true`](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#server-server)
+      -   Draft support for draft-03 of [ACME Renewal Information (ARI)](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/) which assists with deciding when to renew certificates. This augments CertMagic's already-advanced logic using cert lifetime and OCSP/revocation status.
+      -   New [`ZeroSSLIssuer`](https://pkg.go.dev/github.com/caddyserver/certmagic@v0.21.0#ZeroSSLIssuer) uses the [ZeroSSL API](https://zerossl.com/documentation/api/) to get certificates. ZeroSSL also has an ACME endpoint, which can still be accesed using the existing ACMEIssuer, as always. Their proprietary API is paid, but has extra features like IP certificates, better reliability, and support.
+      -   DNS challenges should be smoother in some cases as we've improved propagation checking.
+      -   In the odd case your ACME account disappears from the ACME server, CertMagic will automatically retry with a new account. (This happens in some test/dev environments.)
+      -   ACME accounts are identified only by their public keys, but CertMagic maps accounts by CA+email for practical/storage reasons. So now you can "pin" an account key to use by specifying your email and the account public key in your config, which is useful if you need to absolutely be sure to use a specific account (like if you get rate limit exemptions from a CA).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3723)</a>: <!--number 3723 --><!--number--><!--description multine placeholder-->
+    - With the go-enry upgrade to [v2.8.8](https://github.com/go-enry/go-enry/releases/tag/v2.8.8), language detection in the repository [now includes](https://github.com/github-linguist/linguist/releases/tag/v7.29.0):
+      - New languages
+        - [Roc](https://github.com/github-linguist/linguist/pull/6633)
+        - [BitBake](https://github.com/github-linguist/linguist/pull/6665) with `.bbappend`, `.bbclass` and `.inc` extensions
+        - [Glimmer TS](https://github.com/github-linguist/linguist/pull/6680)
+        - [Edge](https://github.com/github-linguist/linguist/pull/6695)
+        - [Pip Requirements](https://github.com/github-linguist/linguist/pull/6739)
+        - [Mojo](https://github.com/github-linguist/linguist/pull/6400)
+        - [Slint](https://github.com/github-linguist/linguist/pull/6750)
+        - [Oberon](https://github.com/github-linguist/linguist/pull/4645)
+      - New data formats
+        - [TextGrid](https://github.com/github-linguist/linguist/pull/6719)
+      - File names and extensions:
+        - The [rebornix.Ruby extension is deprecated in favor of Shopify.ruby-lsp](https://github.com/github-linguist/linguist/pull/6738)
+        - [Add .bicepparam to list of Bicep file extensions](https://github.com/github-linguist/linguist/pull/6664)
+        - [Add cs.pp extension to C#](https://github.com/github-linguist/linguist/pull/6679)
+        - [Add tmux.conf and .tmux.conf as shell filenames](https://github.com/github-linguist/linguist/pull/6726)
+        - [Add .env.sample as Dotenv filename](https://github.com/github-linguist/linguist/pull/6732)<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3654)</a>: <!--number 3654 --><!--number--><!--description Code Search for non-default branches and tags when repository indexer is disabled-->support Code Search for non-default branches and tags when the repository indexer is disabled.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3615)</a>: <!--number 3615 --><!--number--><!--description -->add an immutable tarball link to archive download headers for Nix.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3414)</a>: <!--number 3414 --><!--number--><!--description Allow to customize the domain name used as a fallback when synchronizing sources from ldap [`ldap: default domain name`](https://codeberg.org/forgejo/forgejo/pulls/3414)-->allow to customize the domain name used as a fallback when synchronizing sources from ldap default domain name.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3383)</a>: <!--number 3383 --><!--number--><!--description The default config for `database.MAX_OPEN_CONNS` changed from 0 (unlimited) to 100 to avoid problems if it exceeds the limit by the database server. If you require high concurrency, try to increase this value for both Forgejo **and your database server**. [`Limit database max connections by default`](https://codeberg.org/forgejo/forgejo/pulls/3383)-->the default config for `database.MAX_OPEN_CONNS` changed from 0 (unlimited) to 100 to avoid problems if it exceeds the limit by the database server. If you require high concurrency, try to increase this value for both Forgejo **and your database server**.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3366)</a>: <!--number 3366 --><!--number--><!--description -->infer the `[email.incoming].PORT` setting from `.USE_TLS`.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3363)</a>: <!--number 3363 --><!--number--><!--description Reverted the rootless container image path in `GITEA_APP_INI` from `/etc/gitea/app.ini` to its default value of `/var/lib/gitea/custom/conf/app.ini`. This allows container users to not have to mount two separate volumes (one for the configuration data and one for the configuration `.ini` file). A warning is issued for users with the legacy configuration on how to update to the new path.-->reverted the rootless container image path in `GITEA_APP_INI` from `/etc/gitea/app.ini` to its default value of `/var/lib/gitea/custom/conf/app.ini`. This allows container users to not have to mount two separate volumes (one for the configuration data and one for the configuration `.ini` file). A warning is issued for users with the legacy configuration on how to update to the new path.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3334)</a>: <!--number 3334 --><!--number--><!--description Added support for the `workflow_dispatch` workflow trigger-->added support for the [`workflow_dispatch` trigger](https://forgejo.org/docs/v8.0/user/actions/#onworkflow_dispatch) in Forgejo Actions.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3307)</a>: <!--number 3307 --><!--number--><!--description Support [Proof Key for Code Exchange (PKCE - RFC7636)](https://www.rfc-editor.org/rfc/rfc7636) for external login using the OpenID Connect authentication source.-->support [Proof Key for Code Exchange (PKCE - RFC7636)](https://www.rfc-editor.org/rfc/rfc7636) for external login using the OpenID Connect authentication source.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3139)</a>: <!--number 3139 --><!--number--><!--description Allow hiding auto generated release archives-->allow hiding auto generated release archives.<!--description-->
+- **Bug fixes**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4423)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4375)): <!--number 4423 --><!--number--><!--description the "View command line instructions" link in pull requests and the "Copy content" button in file editor are not accessible-->Fixed: the "View command line instructions" link in pull requests and the "Copy content" button in file editor are not accessible.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4288)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4253)): <!--number 4288 --><!--number--><!--description - unknown git push options are rejected instead of being ignored-->Fixed: unknown git push options are rejected instead of being ignored.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4240)</a>: <!--number 4240 --><!--number--><!--description - markdown `[*[a]*](b)` [is incorrectly rendered as `<p><a href="b"><em>[a]</em></a></p>`](https://github.com/yuin/goldmark/issues/457)-->Fixed: markdown `[*[a]*](b)` [is incorrectly rendered as `<p><a href="b"><em>[a]</em></a></p>`](https://github.com/yuin/goldmark/issues/457).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4222)</a>: <!--number 4222 --><!--number--><!--description - markdown files displayed in the UI that have an unescaped backtick in the image alt [could (accidentally) trigger an inline code](https://github.com/yuin/goldmark/issues/456)-->Fixed: markdown files displayed in the UI that have an unescaped backtick in the image alt [could (accidentally) trigger an inline code](https://github.com/yuin/goldmark/issues/456).<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3562)</a>: <!--number 3562 --><!--number--><!--description -->Fixed: when the git repository is empty, it is not possible to unsubscribe from an issue.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3442)</a>: <!--number 3442 --><!--number--><!--description Save updated empty comments instead of skipping the update silently, [which prevented the removal of attachments of such comments](https://codeberg.org/forgejo/forgejo/issues/3424).-->Fixed: it is not possible to remove attachments from an empty comment.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3430)</a>: <!--number 3430 --><!--number--><!--description Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use.-->Fixed: the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints is using a hardcoded "master" branch for the wiki, rather than the branch they really use.<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3379)</a>: <!--number 3379 --><!--number--><!--description -->Fixed: using the API to search for users, the results are not paged by default an the default paging limits are not respected.<!--description-->
+- **Localization**
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4445)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4330)): <!--number 4445 --><!--number--><!--description -->11 July updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4316)</a> ([backport](https://codeberg.org/forgejo/forgejo/pulls/4251)): <!--number 4316 --><!--number--><!--description -->4 July updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4168)</a>: <!--number 4168 --><!--number--><!--description -->18 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/4098)</a>: <!--number 4098 --><!--number--><!--description -->10 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3992)</a>: <!--number 3992 --><!--number--><!--description -->2 June updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3908)</a>: <!--number 3908 --><!--number--><!--description -->25 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3851)</a>: <!--number 3851 --><!--number--><!--description -->20 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3759)</a>: <!--number 3759 --><!--number--><!--description -->14 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3637)</a>: <!--number 3637 --><!--number--><!--description -->5 May updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3508)</a>: <!--number 3508 --><!--number--><!--description -->28 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3359)</a>: <!--number 3359 --><!--number--><!--description -->22 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3244)</a>: <!--number 3244 --><!--number--><!--description -->15 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3138)</a>: <!--number 3138 --><!--number--><!--description -->10 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/3064)</a>: <!--number 3064 --><!--number--><!--description -->5 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2982)</a>: <!--number 2982 --><!--number--><!--description -->3 April updates<!--description-->
+  - [PR](https://codeberg.org/forgejo/forgejo/pulls/2937)</a>: <!--number 2937 --><!--number--><!--description -->31 March updates<!--description-->
+<!--end release-notes-assistant-->
+
+## 7.0.5
+
+This is a security release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of pull requests](https://codeberg.org/forgejo/forgejo/pulls?milestone=6654) included in this release.
+
+* **regreSSHion**
+
+  Recommended action when running Forgejo from a:
+  * binary - upgrade the OpenSSH server that was installed independently.
+  * root OCI image - upgrade to [Forgejo 7.0.5](https://codeberg.org/forgejo/-/packages/container/forgejo/7.0.5).
+  * rootless OCI image - no upgrade is necessary.
+
+  [CVE-2024-6387](https://nvd.nist.gov/vuln/detail/CVE-2024-6387) also known as [regreSSHion](https://www.qualys.com/regresshion-cve-2024-6387/) is an Unauthenticated Remote Code Execution (RCE) vulnerability in OpenSSH’s server (sshd) on glibc-based Linux systems. It is **strongly recommended** that an OpenSSH server installed independently of Forgejo is upgraded as soon as possible.
+
+  All Forgejo OCI root images, including [7.0.5](https://codeberg.org/forgejo/-/packages/container/forgejo/7.0.5) contain an OpenSSH server. They are based on https://alpinelinux.org/ which relies on https://musl.libc.org/ and not https://en.wikipedia.org/wiki/Glibc. As a precaution the [Forgejo v7.0.5 root OCI image](https://codeberg.org/forgejo/-/packages/container/forgejo/7.0.5) contains an [updated OpenSSH server](https://pkgs.alpinelinux.org/packages?name=openssh&branch=v3.19) patched for [CVE-2024-6387](https://nvd.nist.gov/vuln/detail/CVE-2024-6387).
+
+  The Forgejo OCI rootless images, including [7.0.5](https://codeberg.org/forgejo/-/packages/container/forgejo/7.0.5-rootless), do not contain an OpenSSH server, they rely on the internal Forgejo implementation of the SSH protocol.
+
+* **Security:**
+  * Compiled with Go v1.22.5. Fixed: [CVE-2024-24791](https://nvd.nist.gov/vuln/detail/CVE-2024-24791) - [GO-2024-2963](https://pkg.go.dev/vuln/GO-2024-2963): Denial of service due to improper 100-continue handling in net/http. The net/http HTTP/1.1 client mishandled the case where a server responds to a request with an "Expect: 100-continue" header with a non-informational (200 or higher) status. This mishandling could leave a client connection in an invalid state, where the next request sent on the connection will fail. An attacker sending a request to a net/http/httputil.ReverseProxy proxy can exploit this mishandling to cause a denial of service by sending "Expect: 100-continue" requests which elicit a non-informational response from the backend. Each such request leaves the proxy with an invalid connection, and causes one subsequent request using that connection to fail.
+
+* **Bug fixes:**
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4059) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4194): Fixed: authentication Source Administration page wrongfully handles the "Custom URLs Instead of Default URLs" checkbox (missing checkbox, irrelevant fields).
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4151) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4149): Fixed: git push to an adopted repository fails.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4215) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4213) - [commit](https://codeberg.org/forgejo/forgejo/commit/4ed5044dea94872e025f585debf7a16e6bd6bbdb): Fixed: markdown doesn't render math within brackets
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4219) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4145) - [commit](https://codeberg.org/forgejo/forgejo/commit/9aa3ae955ff506d883737e576dd62f674a3ee372): Fixed: selecting the "No Project" filter in the issue/pull request list has no effect
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4248) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4241): Fixed: error 500 when processing crafted TIFF files.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4261) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4258): Fixed: wrong placeholder text in the form for adding repository collaborator.
+
+## 7.0.4
+
+This is a security release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.3...v7.0.4) included in this release.
+
+* **Security:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/4054). Fixed: [CVE-2024-24789](https://pkg.go.dev/vuln/GO-2024-2888): the archive/zip package's handling of certain types of invalid zip files differs from the behavior of most zip implementations. This misalignment could be exploited to create an zip file with contents that vary depending on the implementation reading the file.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3639) - ([fix](https://codeberg.org/forgejo/forgejo/commit/1b088fade6c69e63843d1bdf402454c363b22ce2) & [test](https://codeberg.org/forgejo/forgejo/pulls/4032)). Fixed: the OAuth2 implementation does not always require authentication for public clients, a requirement of [RFC 6749 Section 10.2](https://datatracker.ietf.org/doc/html/rfc6749#section-10.2). A malicious client can impersonate another client and obtain access to protected resources if the impersonated client fails to, or is unable to, keep its client credentials confidential.
+
+* **Bug fixes:**
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4086) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4085). Fixed: `forgejo migrate-storage --type actions-artifacts` always fails because it picks the wrong path.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4017) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4015). Fixed: avatar files can be found in storage while they do not exist in the database.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3997) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3976). Fixed: repository admins are always denied the right to force merge and instance admins are subject to restrictions to merge that must only apply to repository admins.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3946) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3615). Fixed: non conformance with the [Nix tarball fetcher immutable link protocol](https://github.com/nixos/nix/blob/56763ff918eb308db23080e560ed2ea3e00c80a7/doc/manual/src/protocols/tarball-fetcher.md).
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3936) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3935). Fixed: migrated activities (such as reviews) are mapped to the user who initiated the migration rather than the Ghost user, if the external user cannot be mapped to a local one. This mapping mismatch leads to internal server errors in some cases.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3906) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3904). Fixed: a v7.0.0 regression causes `[admin].SEND_NOTIFICATION_EMAIL_ON_NEW_USER=true` to always be ignored.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3888) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3865). Fixed: using a subquery for user deletion is a performance bottleneck when using mariadb 10 because only mariadb 11 takes advantage of the available index.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3887) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3885). Fixed: a v7.0.3 regression causes the expanding diffs in pull requests to fail with a 404 error.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3881) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3864). Fixed: SourceHut Builds webhook fail when the `triggers` field is used.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3877) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3242). Fixed: the label list rendering in the issue and pull request timeline is displayed on multiple lines instead of a single one.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4084) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4083) - [commit](https://codeberg.org/forgejo/forgejo/commit/c6e04c3c9eddfa6c4bec541f681c8d300b157cdb). Fixed: NuGet Package fails `choco info pkgname` when `pkgname` is also a substring of another package Id.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4004) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3989) - [commit](https://codeberg.org/forgejo/forgejo/commit/62448bfb931882859388b2fd472cb89428c25323). Fixed: "Git hooks of this repository seem to be broken." warning when pushing more than one branch at a time.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3942) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3917) - [commit](https://codeberg.org/forgejo/forgejo/commit/7d7ea45465d6cd1ea0ec549a71f67b4a8ff930cf). Fixed: automerge does not happen when the approval count reaches the required threshold.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3942) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3917) - [commit](https://codeberg.org/forgejo/forgejo/commit/a649610d6175d1994b838f5672261400df9fdb92). Fixed: the `FORCE_PRIVATE=true` setting is not consistently enforced.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3859) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3838) - [commit](https://codeberg.org/forgejo/forgejo/commit/193ac67176afc72e9d108bc1730c354bfbf9a442). Fixed: CSRF validation errors when OAuth is not enabled.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4107) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4076). Fixed: headlines in rendered org-mode do not have a margin on the top
+
+* **Localization:**
+  * Improvements to English locale: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3914), [[2]](https://codeberg.org/forgejo/forgejo/pulls/4114).
+  * Translation updates: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3907), [[2]](https://codeberg.org/forgejo/forgejo/pulls/3990), [[3]](https://codeberg.org/forgejo/forgejo/pulls/4099).
 
 ## 7.0.3
 
@@ -111,7 +297,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     * `process-description` to `processDescription`
     This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
   * The repository description [imposes additional restrictions on what it contains](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d) to prevent abuse. You may use [the v7.0 test instance](https://v7.next.forgejo.org/) to check how it will be modified.
-  * The [Gitea themes were renamed](https://codeberg.org/forgejo/forgejo/commit/023e937141dd891bce3370c869d4db2c60f971ed) and the `[ui].THEMES` setting must be changed as follows: 
+  * The [Gitea themes were renamed](https://codeberg.org/forgejo/forgejo/commit/023e937141dd891bce3370c869d4db2c60f971ed) and the `[ui].THEMES` setting must be changed as follows:
     * `gitea` is replaced by `gitea-light`
     * `arc-green` is replaced by `gitea-dark`
     * `auto` is replaced by `gitea-auto`
@@ -543,6 +729,28 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Fix merge base commit for fast-forwarded GitLab PRs](https://codeberg.org/forgejo/forgejo/commit/02dae3f84b80047bef391960eea1350d551e4d72).
   * [Align ISSUE_TEMPLATE with the new label system](https://codeberg.org/forgejo/forgejo/commit/248b7ee850ecdb538b22ddcfbe80b6f91be32b70).
   * [Improve the list header in milestone page](https://codeberg.org/forgejo/forgejo/commit/8abc1aae4ab5b03be0bcbdd390bb903b54ccd21a).
+
+## 1.21.11-2
+
+[The complete list of new commits included in the Forgejo v1.21.11-2 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.11-1...v1.21.11-2), or from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo
+$ git -C forgejo log --oneline --no-merges v1.21.11-1..v1.21.11-2
+```
+
+This stable release contains a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.13+0-gitea-1.21.10`
+
+* Security fix
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/4047). Fixed: the OAuth2 implementation does not always require authentication for public clients, a requirement of [RFC 6749 Section 10.2](https://datatracker.ietf.org/doc/html/rfc6749#section-10.2). A malicious client can impersonate another client and obtain access to protected resources if the impersonated client fails to, or is unable to, keep its client credentials confidential.
 
 ## 1.21.11-1
 

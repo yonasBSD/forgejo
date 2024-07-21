@@ -125,7 +125,7 @@ export function initRepoIssueSidebarList() {
             }
             filteredResponse.results.push({
               name: `#${issue.number} ${htmlEscape(issue.title)
-              }<div class="text small gt-word-break">${htmlEscape(issue.repository.full_name)}</div>`,
+              }<div class="text small tw-break-anywhere">${htmlEscape(issue.repository.full_name)}</div>`,
               value: issue.id,
             });
           });
@@ -287,12 +287,6 @@ export function initRepoPullRequestUpdate() {
         pullUpdateButton.setAttribute('data-do', url);
       }
     },
-  });
-}
-
-export function initRepoPullRequestMergeInstruction() {
-  $('.show-instruction').on('click', () => {
-    toggleElem($('.instruct-content'));
   });
 }
 

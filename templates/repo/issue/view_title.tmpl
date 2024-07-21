@@ -6,11 +6,11 @@
 <div class="issue-title-header">
 	{{$canEditIssueTitle := and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .Repository.IsArchived)}}
 	<div class="issue-title" id="issue-title-display">
-		<h1 class="gt-word-break">
+		<h1 class="tw-break-anywhere">
 			{{RenderIssueTitle $.Context .Issue.Title ($.Repository.ComposeMetas ctx) | RenderCodeBlock}}
 			<span class="index">#{{.Issue.Index}}</span>
 		</h1>
-		<div class="top-right-buttons">
+		<div class="button-row">
 			{{if $canEditIssueTitle}}
 			<button id="issue-title-edit-show" class="ui small basic button">{{ctx.Locale.Tr "repo.issues.edit"}}</button>
 			{{end}}
@@ -24,7 +24,7 @@
 		<div class="ui input tw-flex-1">
 			<input value="{{.Issue.Title}}" data-old-title="{{.Issue.Title}}" maxlength="255" autocomplete="off" class="js-quick-submit">
 		</div>
-		<div class="top-right-buttons">
+		<div class="button-row">
 			<button class="ui small basic cancel button">{{ctx.Locale.Tr "repo.issues.cancel"}}</button>
 			<button class="ui small primary button"
 					data-update-url="{{$.RepoLink}}/issues/{{.Issue.Index}}/title">
@@ -37,7 +37,7 @@
 		{{if .HasMerged}}
 			<div class="ui purple label issue-state-label">{{svg "octicon-git-merge" 16 "tw-mr-1"}} {{if eq .Issue.PullRequest.Status 3}}{{ctx.Locale.Tr "repo.pulls.manually_merged"}}{{else}}{{ctx.Locale.Tr "repo.pulls.merged"}}{{end}}</div>
 		{{else if .Issue.IsClosed}}
-			<div class="ui red label issue-state-label">{{if .Issue.IsPull}}{{svg "octicon-git-pull-request"}}{{else}}{{svg "octicon-issue-closed"}}{{end}} {{ctx.Locale.Tr "repo.issues.closed_title"}}</div>
+			<div class="ui red label issue-state-label">{{if .Issue.IsPull}}{{svg "octicon-git-pull-request-closed"}}{{else}}{{svg "octicon-issue-closed"}}{{end}} {{ctx.Locale.Tr "repo.issues.closed_title"}}</div>
 		{{else if .Issue.IsPull}}
 			{{if .IsPullWorkInProgress}}
 				<div class="ui grey label issue-state-label">{{svg "octicon-git-pull-request-draft"}} {{ctx.Locale.Tr "repo.issues.draft_title"}}</div>

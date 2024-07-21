@@ -8,9 +8,9 @@
 			<div class="ui attached segment">
 				{{template "base/alert" .}}
 
-				<p>{{ctx.Locale.Tr "install.docker_helper" "https://forgejo.org/docs/latest/admin/installation-docker/"}}</p>
-
 				<form class="ui form" action="{{AppSubUrl}}/" method="post">
+					<p class="tw-mt-0">{{ctx.Locale.Tr "install.docker_helper" "https://forgejo.org/docs/latest/admin/installation-docker/"}}</p>
+
 					<!-- Database Settings -->
 					<h4 class="ui dividing header">{{ctx.Locale.Tr "install.db_title"}}</h4>
 					<p>{{ctx.Locale.Tr "install.require_db_desc"}}</p>
@@ -107,6 +107,11 @@
 						<input id="app_name" name="app_name" value="{{.app_name}}" required>
 						<span class="help">{{ctx.Locale.Tr "install.app_name_helper"}}</span>
 					</div>
+					<div class="inline field">
+						<label for="app_slogan">{{ctx.Locale.Tr "install.app_slogan"}}</label>
+						<input id="app_slogan" name="app_slogan" value="{{.app_slogan}}">
+						<span class="help">{{ctx.Locale.Tr "install.app_slogan_helper"}}</span>
+					</div>
 					<div class="inline required field {{if .Err_RepoRootPath}}error{{end}}">
 						<label for="repo_root_path">{{ctx.Locale.Tr "install.repo_path"}}</label>
 						<input id="repo_root_path" name="repo_root_path" value="{{.repo_root_path}}" required>
@@ -149,7 +154,7 @@
 					</div>
 					<div class="inline field">
 						<div class="ui checkbox" id="disable-registration">
-							<label>{{ctx.Locale.Tr "install.disable_registration"}}</label>
+							<label class="{{if .Err_DisabledRegistration}}text red{{end}}">{{ctx.Locale.Tr "install.disable_registration"}}</label>
 							<input name="disable_registration" type="checkbox" {{if .disable_registration}}checked{{end}}>
 						</div>
 						<span class="help">{{ctx.Locale.Tr "install.disable_registration.description"}}</span>
@@ -166,8 +171,8 @@
 					<h4 class="ui dividing header">{{ctx.Locale.Tr "install.optional_title"}}</h4>
 
 					<!-- Email -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_SMTP}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2{{if .Err_SMTP}} text red{{end}}">
 							{{ctx.Locale.Tr "install.email_title"}}
 						</summary>
 						<div class="inline field">
@@ -206,8 +211,8 @@
 					</details>
 
 					<!-- Server and other services -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_Services}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2">
 							{{ctx.Locale.Tr "install.server_service_title"}}
 						</summary>
 						<div class="inline field">
@@ -309,8 +314,8 @@
 					</details>
 
 					<!-- Admin -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_Admin}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2{{if .Err_Admin}} text red{{end}}">
 							{{ctx.Locale.Tr "install.admin_title"}}
 						</summary>
 						<p class="center">{{ctx.Locale.Tr "install.admin_setting.description"}}</p>
@@ -347,10 +352,8 @@
 					</div>
 					{{end}}
 
+					<p>{{ctx.Locale.Tr "install.config_location_hint"}} {{.CustomConfFile}}</p>
 					<div class="inline field">
-						<div class="right-content">
-							{{ctx.Locale.Tr "install.config_location_hint"}} {{.CustomConfFile}}
-						</div>
 						<div class="tw-mt-4 tw-mb-2 tw-text-center">
 							<button class="ui primary button">{{ctx.Locale.Tr "install.install_btn_confirm"}}</button>
 						</div>

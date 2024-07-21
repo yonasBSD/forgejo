@@ -1,5 +1,6 @@
 @import "../chroma/light.css";
 @import "../codemirror/light.css";
+@import "../markup/light.css";
 
 :root {
   --is-dark-theme: false;
@@ -218,7 +219,7 @@
   --color-expand-button: #cfe8fa;
   --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--color-primary-light-6);
-  --color-project-board-bg: var(--color-secondary-light-4);
+  --color-project-column-bg: var(--color-secondary-light-4);
   --color-caret: var(--color-text-dark);
   --color-reaction-bg: #0000170a;
   --color-reaction-hover-bg: var(--color-primary-light-5);

@@ -1170,8 +1170,23 @@ func Routes() *web.Route {
 					m.Post("", reqToken(), reqRepoWriter(unit.TypeCode), mustNotBeArchived, bind(api.CreateTagOption{}), repo.CreateTag)
 					m.Delete("/*", reqToken(), reqRepoWriter(unit.TypeCode), mustNotBeArchived, repo.DeleteTag)
 				}, reqRepoReader(unit.TypeCode), context.ReferencesGitRepo(true))
+				m.Group("/tag_protections", func() {
+					m.Combo("").Get(repo.ListTagProtection).
+						Post(bind(api.CreateTagProtectionOption{}), mustNotBeArchived, repo.CreateTagProtection)
+					m.Group("/{id}", func() {
+						m.Combo("").Get(repo.GetTagProtection).
+							Patch(bind(api.EditTagProtectionOption{}), mustNotBeArchived, repo.EditTagProtection).
+							Delete(repo.DeleteTagProtection)
+					})
+				}, reqToken(), reqAdmin())
 				m.Group("/actions", func() {
 					m.Get("/tasks", repo.ListActionTasks)
+
+					m.Group("/workflows", func() {
+						m.Group("/{workflowname}", func() {
+							m.Post("/dispatches", reqToken(), reqRepoWriter(unit.TypeActions), mustNotBeArchived, bind(api.DispatchWorkflowOption{}), repo.DispatchWorkflow)
+						})
+					})
 				}, reqRepoReader(unit.TypeActions), context.ReferencesGitRepo(true))
 				m.Group("/keys", func() {
 					m.Combo("").Get(repo.ListDeployKeys).

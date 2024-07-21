@@ -54,9 +54,9 @@ import (
 	gouuid "github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	goth_gitlab "github.com/markbates/goth/providers/github"
-	goth_github "github.com/markbates/goth/providers/gitlab"
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	goth_github "github.com/markbates/goth/providers/github"
+	goth_gitlab "github.com/markbates/goth/providers/gitlab"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -323,6 +323,13 @@ func authSourcePayloadOAuth2(name string) map[string]string {
 		"name":      name,
 		"is_active": "on",
 	}
+}
+
+func authSourcePayloadOpenIDConnect(name, appURL string) map[string]string {
+	payload := authSourcePayloadOAuth2(name)
+	payload["oauth2_provider"] = "openidConnect"
+	payload["open_id_connect_auto_discovery_url"] = appURL + ".well-known/openid-configuration"
+	return payload
 }
 
 func authSourcePayloadGitLab(name string) map[string]string {
@@ -652,7 +659,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	_, schemaFileErr := os.Stat(schemaFilePath)
 	assert.Nil(t, schemaFileErr)
 
-	schema, err := jsonschema.Compile(schemaFilePath)
+	schema, err := jsonschema.NewCompiler().Compile(schemaFilePath)
 	assert.NoError(t, err)
 
 	var data any

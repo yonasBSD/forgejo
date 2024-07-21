@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -437,6 +438,33 @@ func (u *User) DisplayName() string {
 		return trimmed
 	}
 	return u.Name
+}
+
+var emailToReplacer = strings.NewReplacer(
+	"\n", "",
+	"\r", "",
+	"<", "",
+	">", "",
+	",", "",
+	":", "",
+	";", "",
+)
+
+// EmailTo returns a string suitable to be put into a e-mail `To:` header.
+func (u *User) EmailTo() string {
+	sanitizedDisplayName := emailToReplacer.Replace(u.DisplayName())
+
+	// should be an edge case but nice to have
+	if sanitizedDisplayName == u.Email {
+		return u.Email
+	}
+
+	address, err := mail.ParseAddress(fmt.Sprintf("%s <%s>", sanitizedDisplayName, u.Email))
+	if err != nil {
+		return u.Email
+	}
+
+	return address.String()
 }
 
 // GetDisplayName returns full name if it's not empty and DEFAULT_SHOW_FULL_NAME is set,
@@ -903,6 +931,10 @@ func GetUserByID(ctx context.Context, id int64) (*User, error) {
 
 // GetUserByIDs returns the user objects by given IDs if exists.
 func GetUserByIDs(ctx context.Context, ids []int64) ([]*User, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	users := make([]*User, 0, len(ids))
 	err := db.GetEngine(ctx).In("id", ids).
 		Table("user").

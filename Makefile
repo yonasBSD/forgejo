@@ -26,19 +26,20 @@ DIFF ?= diff --unified
 
 XGO_VERSION := go-1.21.x
 
-AIR_PACKAGE ?= github.com/cosmtrek/air@v1 # renovate: datasource=go
+AIR_PACKAGE ?= github.com/air-verse/air@v1 # renovate: datasource=go
 EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker@2.8.0 # renovate: datasource=go
 GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0 # renovate: datasource=go
-GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0 # renovate: datasource=go
+GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1 # renovate: datasource=go
 GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11 # renovate: datasource=go
-MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.5.1 # renovate: datasource=go
+MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.6.0 # renovate: datasource=go
 SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.31.0 # renovate: datasource=go
 XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
-ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
-DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
+DEADCODE_PACKAGE ?= golang.org/x/tools/cmd/deadcode@v0.23.0 # renovate: datasource=go
 GOMOCK_PACKAGE ?= go.uber.org/mock/mockgen@v0.4.0 # renovate: datasource=go
+GOPLS_PACKAGE ?= golang.org/x/tools/gopls@v0.16.1 # renovate: datasource=go
+RENOVATE_NPM_PACKAGE ?= renovate@37.431.4 # renovate: datasource=docker packageName=ghcr.io/visualon/renovate
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -124,6 +125,8 @@ LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 ifeq ($(HAS_GO), yes)
 	GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
 endif
+REMOTE_CACHER_MODULES ?= cache nosql session queue
+GO_TEST_REMOTE_CACHER_PACKAGES ?= $(addprefix code.gitea.io/gitea/modules/,$(REMOTE_CACHER_MODULES))
 
 FOMANTIC_WORK_DIR := web_src/fomantic
 
@@ -188,7 +191,7 @@ SWAGGER_NEWLINE_COMMAND := -e '$$a\'
 SWAGGER_SPEC_BRANDING := s|Gitea API|Forgejo API|g
 
 TEST_MYSQL_HOST ?= mysql:3306
-TEST_MYSQL_DBNAME ?= testgitea
+TEST_MYSQL_DBNAME ?= testgitea?multiStatements=true
 TEST_MYSQL_USERNAME ?= root
 TEST_MYSQL_PASSWORD ?=
 TEST_PGSQL_HOST ?= pgsql:5432
@@ -219,7 +222,6 @@ help:
 	@echo " - deps-py                          install python dependencies"
 	@echo " - lint                             lint everything"
 	@echo " - lint-fix                         lint everything and fix issues"
-	@echo " - lint-actions                     lint action workflow files"
 	@echo " - lint-frontend                    lint frontend files"
 	@echo " - lint-frontend-fix                lint frontend files and fix issues"
 	@echo " - lint-backend                     lint backend files"
@@ -230,6 +232,7 @@ help:
 	@echo " - lint-go                          lint go files"
 	@echo " - lint-go-fix                      lint go files and fix issues"
 	@echo " - lint-go-vet                      lint go files with vet"
+	@echo " - lint-go-gopls                    lint go files with gopls"
 	@echo " - lint-js                          lint js files"
 	@echo " - lint-js-fix                      lint js files and fix issues"
 	@echo " - lint-css                         lint css files"
@@ -237,6 +240,7 @@ help:
 	@echo " - lint-md                          lint markdown files"
 	@echo " - lint-swagger                     lint swagger files"
 	@echo " - lint-templates                   lint template files"
+	@echo " - lint-renovate                    lint renovate files"
 	@echo " - lint-yaml                        lint yaml files"
 	@echo " - lint-spell                       lint spelling"
 	@echo " - lint-spell-fix                   lint spelling and fix issues"
@@ -247,11 +251,10 @@ help:
 	@echo " - show-version-full                show the same version as the API endpoint"
 	@echo " - show-version-major               show major release number only"
 	@echo " - test-frontend                    test frontend files"
+	@echo " - test-frontend-coverage           test frontend files and display code coverage"
 	@echo " - test-backend                     test backend files"
+	@echo " - test-remote-cacher               test backend files that use a remote cache"
 	@echo " - test-e2e-sqlite[\#name.test.e2e] test end to end using playwright and sqlite"
-	@echo " - update                           update js and py dependencies"
-	@echo " - update-js                        update js dependencies"
-	@echo " - update-py                        update py dependencies"
 	@echo " - webpack                          build webpack files"
 	@echo " - svg                              build svg files"
 	@echo " - fomantic                         build fomantic files"
@@ -398,7 +401,7 @@ lint-frontend: lint-js lint-css
 lint-frontend-fix: lint-js-fix lint-css-fix
 
 .PHONY: lint-backend
-lint-backend: lint-go lint-go-vet lint-editorconfig
+lint-backend: lint-go lint-go-vet lint-editorconfig lint-renovate
 
 .PHONY: lint-backend-fix
 lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
@@ -435,6 +438,12 @@ lint-css-fix: node_modules
 lint-swagger: node_modules
 	npx spectral lint -q -F hint $(SWAGGER_SPEC)
 
+.PHONY: lint-renovate
+lint-renovate: node_modules
+	npx --yes --package $(RENOVATE_NPM_PACKAGE) -- renovate-config-validator --strict > .lint-renovate 2>&1 || true
+	@if grep --quiet --extended-regexp -e '^( WARN:|ERROR:)' .lint-renovate ; then cat .lint-renovate ; rm .lint-renovate ; exit 1 ; fi
+	@rm .lint-renovate
+
 .PHONY: lint-md
 lint-md: node_modules
 	npx markdownlint docs *.md
@@ -447,17 +456,19 @@ lint-spell: lint-codespell
 lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
 
+RUN_DEADCODE = $(GO) run $(DEADCODE_PACKAGE) -generated=false -f='{{println .Path}}{{range .Funcs}}{{printf "\t%s\n" .Name}}{{end}}{{println}}' -test code.gitea.io/gitea
+
 .PHONY: lint-go
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
-	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
+	$(RUN_DEADCODE) > .cur-deadcode-out
 	@$(DIFF) .deadcode-out .cur-deadcode-out \
 	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS) --fix
-	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .deadcode-out
+	$(RUN_DEADCODE) > .deadcode-out
 
 # workaround step for the lint-go-windows CI task because 'go run' can not
 # have distinct GOOS/GOARCH for its build and run steps
@@ -471,13 +482,14 @@ lint-go-vet:
 	@echo "Running go vet..."
 	@$(GO) vet ./...
 
+.PHONY: lint-go-gopls
+lint-go-gopls:
+	@echo "Running gopls check..."
+	@GO=$(GO) GOPLS_PACKAGE=$(GOPLS_PACKAGE) tools/lint-go-gopls.sh $(GO_SOURCES_NO_BINDATA)
+
 .PHONY: lint-editorconfig
 lint-editorconfig:
 	$(GO) run $(EDITORCONFIG_CHECKER_PACKAGE) templates .forgejo/workflows
-
-.PHONY: lint-actions
-lint-actions:
-	$(GO) run $(ACTIONLINT_PACKAGE)
 
 .PHONY: lint-templates
 lint-templates: .venv node_modules
@@ -509,9 +521,18 @@ test-backend:
 	@echo "Running go test with $(GOTESTFLAGS) -tags '$(TEST_TAGS)'..."
 	@$(GO) test $(GOTESTFLAGS) -tags='$(TEST_TAGS)' $(GO_TEST_PACKAGES)
 
+.PHONY: test-remote-cacher
+test-remote-cacher:
+	@echo "Running go test with $(GOTESTFLAGS) -tags '$(TEST_TAGS)'..."
+	@$(GO) test $(GOTESTFLAGS) -tags='$(TEST_TAGS)' $(GO_TEST_REMOTE_CACHER_PACKAGES)
+
 .PHONY: test-frontend
 test-frontend: node_modules
 	npx vitest
+
+.PHONY: test-frontend-coverage
+test-frontend-coverage: node_modules
+	npx vitest --coverage --coverage.include 'web_src/**'
 
 .PHONY: test-check
 test-check:
@@ -560,7 +581,7 @@ tidy-check: tidy
 go-licenses: $(GO_LICENSE_FILE)
 
 $(GO_LICENSE_FILE): go.mod go.sum
-	-$(GO) run $(GO_LICENSES_PACKAGE) save . --force --save_path=$(GO_LICENSE_TMP_DIR) 2>/dev/null
+	-$(shell $(GO) env GOROOT)/bin/go run $(GO_LICENSES_PACKAGE) save . --force --save_path=$(GO_LICENSE_TMP_DIR) 2>/dev/null
 	$(GO) run build/generate-go-licenses.go $(GO_LICENSE_TMP_DIR) $(GO_LICENSE_FILE)
 	@rm -rf $(GO_LICENSE_TMP_DIR)
 
@@ -885,32 +906,15 @@ deps-tools:
 	$(GO) install $(XGO_PACKAGE)
 	$(GO) install $(GO_LICENSES_PACKAGE)
 	$(GO) install $(GOVULNCHECK_PACKAGE)
-	$(GO) install $(ACTIONLINT_PACKAGE)
 	$(GO) install $(GOMOCK_PACKAGE)
+	$(GO) install $(GOPLS_PACKAGE)
 
 node_modules: package-lock.json
 	npm install --no-save
 	@touch node_modules
 
 .venv: poetry.lock
-	poetry install --no-root
-	@touch .venv
-
-.PHONY: update
-update: update-js update-py
-
-.PHONY: update-js
-update-js: node-check | node_modules
-	npx updates -u -f package.json
-	rm -rf node_modules package-lock.json
-	npm install --package-lock
-	@touch node_modules
-
-.PHONY: update-py
-update-py: node-check | node_modules
-	npx updates -u -f pyproject.toml
-	rm -rf .venv poetry.lock
-	poetry install --no-root
+	poetry install
 	@touch .venv
 
 .PHONY: fomantic
@@ -977,7 +981,7 @@ generate-gomock:
 
 .PHONY: generate-images
 generate-images: | node_modules
-	npm install --no-save fabric@6.0.0-beta20 imagemin-zopfli@7
+	npm install --no-save fabric@6 imagemin-zopfli@7
 	node tools/generate-images.js $(TAGS)
 
 .PHONY: generate-manpage

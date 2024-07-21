@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -230,6 +231,8 @@ func CreatePost(ctx *context.Context) {
 
 	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
 	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
+	ctx.Data["SupportedObjectFormats"] = git.SupportedObjectFormats
+	ctx.Data["DefaultObjectFormat"] = git.Sha1ObjectFormat
 
 	ctxUser := checkContextUser(ctx, form.UID)
 	if ctx.Written() {
@@ -332,7 +335,7 @@ func ActionWatch(watch bool) func(ctx *context.Context) {
 
 func ActionStar(star bool) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
-		err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, star)
+		err := repo_service.StarRepoAndSendLikeActivities(ctx, *ctx.Doer, ctx.Repo.Repository.ID, star)
 		if err != nil {
 			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
 			return
@@ -414,8 +417,9 @@ func RedirectDownload(ctx *context.Context) {
 	tagNames := []string{vTag}
 	curRepo := ctx.Repo.Repository
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
-		RepoID:   curRepo.ID,
-		TagNames: tagNames,
+		IncludeDrafts: ctx.Repo.CanWrite(unit.TypeReleases),
+		RepoID:        curRepo.ID,
+		TagNames:      tagNames,
 	})
 	if err != nil {
 		ctx.ServerError("RedirectDownload", err)
@@ -627,7 +631,7 @@ func SearchRepo(ctx *context.Context) {
 		if len(sortOrder) == 0 {
 			sortOrder = "asc"
 		}
-		if searchModeMap, ok := repo_model.SearchOrderByMap[sortOrder]; ok {
+		if searchModeMap, ok := repo_model.OrderByMap[sortOrder]; ok {
 			if orderBy, ok := searchModeMap[sortMode]; ok {
 				opts.OrderBy = orderBy
 			} else {
