@@ -139,7 +139,6 @@ func validateSecret(secret string) error {
 }
 
 func getLabels(cliCtx *cli.Context) (*[]string, error) {
-	fmt.Printf("yo %v %s\n", cliCtx.Bool("keep-labels"), cliCtx.String("labels"))
 	if !cliCtx.Bool("keep-labels") {
 		lblValue := strings.Split(cliCtx.String("labels"), ",")
 		return &lblValue, nil
