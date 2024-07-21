@@ -756,10 +756,7 @@ It needs some tricks to tweak the left/right borders with active state */
 }
 
 .no-border-radius-left {
-  border-top-right-radius:  var(--border-radius) !important;
-  border-bottom-right-radius:  var(--border-radius) !important;
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
+  border-radius:  0 var(--border-radius) var(--border-radius) 0 !important;
 }
 
 .no-margin-left {
