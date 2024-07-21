@@ -1,0 +1,23 @@
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+      - labeled
+
+jobs:
+  release-notes:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+      - if: contains(github.event.pull_request.labels.*.name, 'worth a release-note')
+        run: |
+          go run code.forgejo.org/forgejo/release-notes-assistant@main --config .release-notes-assistant.yaml --storage pr --storage-location ${{ github.event.pull_request.number }}  --forgejo-url $GITHUB_SERVER_URL --repository $GITHUB_ACTION_REPOSITORY --token $GITHUB_TOKEN preview ${{ github.event.pull_request.number }}
