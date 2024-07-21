@@ -1,3 +1,6 @@
+// Copyright 2024 TheFox0x7. All rights reserved.
+// SPDX-License-Identifier: EUPL-1.2
+
 package opentelemetry
 
 import (

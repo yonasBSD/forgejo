@@ -1,5 +1,5 @@
-// Copyright 2024 The Forgejo Authors. All rights reserved.
-// SPDX-License-Identifier: MIT
+// Copyright 2024 TheFox0x7. All rights reserved.
+// SPDX-License-Identifier: EUPL-1.2
 
 package opentelemetry
 
