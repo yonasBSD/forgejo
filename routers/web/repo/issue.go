@@ -2268,14 +2268,6 @@ func UpdateIssueContent(ctx *context.Context) {
 		return
 	}
 
-	// when update the request doesn't intend to update attachments (eg: change checkbox state), ignore attachment updates
-	if !ctx.FormBool("ignore_attachments") {
-		if err := updateAttachments(ctx, issue, ctx.FormStrings("files[]")); err != nil {
-			ctx.ServerError("UpdateAttachments", err)
-			return
-		}
-	}
-
 	content, err := markdown.RenderString(&markup.RenderContext{
 		Links: markup.Links{
 			Base: ctx.FormString("context"), // FIXME: <- IS THIS SAFE ?
@@ -3240,14 +3232,6 @@ func UpdateCommentContent(ctx *context.Context) {
 		return
 	}
 
-	// when the update request doesn't intend to update attachments (eg: change checkbox state), ignore attachment updates
-	if !ctx.FormBool("ignore_attachments") {
-		if err := updateAttachments(ctx, comment, ctx.FormStrings("files[]")); err != nil {
-			ctx.ServerError("UpdateAttachments", err)
-			return
-		}
-	}
-
 	content, err := markdown.RenderString(&markup.RenderContext{
 		Links: markup.Links{
 			Base: ctx.FormString("context"), // FIXME: <- IS THIS SAFE ?
@@ -3589,49 +3573,6 @@ func GetCommentAttachments(ctx *context.Context) {
 		attachments = append(attachments, convert.ToAttachment(ctx.Repo.Repository, comment.Attachments[i]))
 	}
 	ctx.JSON(http.StatusOK, attachments)
-}
-
-func updateAttachments(ctx *context.Context, item any, files []string) error {
-	var attachments []*repo_model.Attachment
-	switch content := item.(type) {
-	case *issues_model.Issue:
-		attachments = content.Attachments
-	case *issues_model.Comment:
-		attachments = content.Attachments
-	default:
-		return fmt.Errorf("unknown Type: %T", content)
-	}
-	for i := 0; i < len(attachments); i++ {
-		if util.SliceContainsString(files, attachments[i].UUID) {
-			continue
-		}
-		if err := repo_model.DeleteAttachment(ctx, attachments[i], true); err != nil {
-			return err
-		}
-	}
-	var err error
-	if len(files) > 0 {
-		switch content := item.(type) {
-		case *issues_model.Issue:
-			err = issues_model.UpdateIssueAttachments(ctx, content.ID, files)
-		case *issues_model.Comment:
-			err = content.UpdateAttachments(ctx, files)
-		default:
-			return fmt.Errorf("unknown Type: %T", content)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	switch content := item.(type) {
-	case *issues_model.Issue:
-		content.Attachments, err = repo_model.GetAttachmentsByIssueID(ctx, content.ID)
-	case *issues_model.Comment:
-		content.Attachments, err = repo_model.GetAttachmentsByCommentID(ctx, content.ID)
-	default:
-		return fmt.Errorf("unknown Type: %T", content)
-	}
-	return err
 }
 
 func attachmentsHTML(ctx *context.Context, attachments []*repo_model.Attachment, content string) template.HTML {
