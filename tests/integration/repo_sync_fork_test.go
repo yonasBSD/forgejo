@@ -90,3 +90,28 @@ func TestWebRepoSyncForkBranch(t *testing.T) {
 		syncForkTest(t, "SyncForkBranch", "sync_fork/master", true)
 	})
 }
+
+func TestWebRepoSyncForkHomepage(t *testing.T) {
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		forkName := "SyncForkHomepage"
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 20})
+
+		baseRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		baseUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: baseRepo.OwnerID})
+
+		session := loginUser(t, user.Name)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+		/// Create a new fork
+		req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/forks", baseUser.Name, baseRepo.LowerName), &api.CreateForkOption{Name: &forkName}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusAccepted)
+
+		// Make a commit on the base branch
+		err := createOrReplaceFileInBranch(baseUser, baseRepo, "sync_fork.txt", "master", "Hello")
+		require.NoError(t, err)
+
+		resp := session.MakeRequest(t, NewRequestf(t, "GET", "/%s/%s", user.Name, forkName), http.StatusOK)
+
+		assert.Contains(t, resp.Body.String(), "This branch is 1 commit behind <a href='http://localhost:3003/user2/repo1/src/branch/master'>user2/repo1:master</a>")
+	})
+}
