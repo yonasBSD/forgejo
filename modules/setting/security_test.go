@@ -18,13 +18,13 @@ func TestDisablePasswordRecoverySet(t *testing.T) {
 	}
 
 	testCases := []testCaseDef{
-		{input: "", expected: false},
-		{input: "DISABLE_PASSWORD_RECOVERY=true", expected: true},
-		{input: "DISABLE_PASSWORD_RECOVERY=false", expected: false},
+		{title: "default", input: "", expected: false},
+		{title: "set to true", input: "DISABLE_PASSWORD_RECOVERY=true", expected: true},
+		{title: "set to false", input: "DISABLE_PASSWORD_RECOVERY=false", expected: false},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.input, func(t *testing.T) {
+		t.Run(testCase.title, func(t *testing.T) {
 			cfg, err := NewConfigProviderFromData("[security]\n" + testCase.input)
 			require.NoError(t, err)
 			loadSecurityFrom(cfg)
