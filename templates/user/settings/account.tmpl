@@ -25,7 +25,9 @@
 
 				<div class="field">
 					<button class="ui primary button">{{ctx.Locale.Tr "settings.update_password"}}</button>
+					{{if not .DisablePasswordRecovery}}
 					<a href="{{AppSubUrl}}/user/forgot_password?email={{.Email}}">{{ctx.Locale.Tr "auth.forgot_password"}}</a>
+					{{end}}
 				</div>
 			</form>
 			{{else}}

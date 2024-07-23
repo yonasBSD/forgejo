@@ -27,7 +27,9 @@
 					<div class="inline field">
 						<label></label>
 						<button class="ui primary button">{{ctx.Locale.Tr "auth.openid_connect_submit"}}</button>
+						{{if not .DisablePasswordRecovery}}
 						<a href="{{AppSubUrl}}/user/forgot_password">{{ctx.Locale.Tr "auth.forgot_password"}}</a>
+						{{end}}
 					</div>
 					</form>
 				</div>

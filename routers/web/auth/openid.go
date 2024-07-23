@@ -29,6 +29,7 @@ const (
 // SignInOpenID render sign in page
 func SignInOpenID(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_in")
+	ctx.Data["DisablePasswordRecovery"] = setting.DisablePasswordRecovery
 
 	if ctx.FormString("openid.return_to") != "" {
 		signInOpenIDVerify(ctx)
@@ -74,6 +75,7 @@ func SignInOpenIDPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_in")
 	ctx.Data["PageIsSignIn"] = true
 	ctx.Data["PageIsLoginOpenID"] = true
+	ctx.Data["DisablePasswordRecovery"] = setting.DisablePasswordRecovery
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplSignInOpenID)

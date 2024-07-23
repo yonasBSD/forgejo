@@ -35,16 +35,18 @@ var (
 func ForgotPasswd(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("auth.forgot_password_title")
 
-	if setting.MailService == nil {
-		log.Warn("no mail service configured")
-		ctx.Data["IsResetDisable"] = true
-		ctx.HTML(http.StatusOK, tplForgotPassword)
+	if setting.DisablePasswordRecovery {
+		ctx.NotFound("ForgotPasswd", nil)
 		return
 	}
 
-	ctx.Data["Email"] = ctx.FormString("email")
+	if setting.MailService == nil {
+		ctx.Data["IsResetDisable"] = true
+	} else {
+		ctx.Data["Email"] = ctx.FormString("email")
+		ctx.Data["IsResetRequest"] = true
+	}
 
-	ctx.Data["IsResetRequest"] = true
 	ctx.HTML(http.StatusOK, tplForgotPassword)
 }
 
@@ -52,7 +54,7 @@ func ForgotPasswd(ctx *context.Context) {
 func ForgotPasswdPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("auth.forgot_password_title")
 
-	if setting.MailService == nil {
+	if setting.MailService == nil || setting.DisablePasswordRecovery {
 		ctx.NotFound("ForgotPasswdPost", nil)
 		return
 	}
@@ -98,6 +100,11 @@ func ForgotPasswdPost(ctx *context.Context) {
 }
 
 func commonResetPassword(ctx *context.Context) (*user_model.User, *auth.TwoFactor) {
+	if setting.DisablePasswordRecovery {
+		ctx.NotFound("reset password but recovery is disabled", nil)
+		return nil, nil
+	}
+
 	code := ctx.FormString("code")
 
 	ctx.Data["Title"] = ctx.Tr("auth.reset_password")

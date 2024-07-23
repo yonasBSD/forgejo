@@ -33,6 +33,7 @@ var (
 	PasswordComplexity                 []string
 	PasswordHashAlgo                   string
 	PasswordCheckPwn                   bool
+	DisablePasswordRecovery            bool
 	SuccessfulTokensCacheSize          int
 	DisableQueryAuthToken              bool
 	CSRFCookieName                     = "_csrf"
@@ -138,6 +139,7 @@ func loadSecurityFrom(rootCfg ConfigProvider) {
 
 	CSRFCookieHTTPOnly = sec.Key("CSRF_COOKIE_HTTP_ONLY").MustBool(true)
 	PasswordCheckPwn = sec.Key("PASSWORD_CHECK_PWN").MustBool(false)
+	DisablePasswordRecovery = sec.Key("DISABLE_PASSWORD_RECOVERY").MustBool(false)
 	SuccessfulTokensCacheSize = sec.Key("SUCCESSFUL_TOKENS_CACHE_SIZE").MustInt(20)
 
 	InternalToken = loadSecret(sec, "INTERNAL_TOKEN_URI", "INTERNAL_TOKEN")

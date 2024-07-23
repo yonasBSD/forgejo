@@ -19,7 +19,9 @@
 			{{if or (not .DisablePassword) .LinkAccountMode}}
 			<div class="required field {{if and (.Err_Password) (or (not .LinkAccountMode) (and .LinkAccountMode .LinkAccountModeSignIn))}}error{{end}} form-field-content-aside-label">
 				<label for="password">{{ctx.Locale.Tr "password"}}</label>
+				{{if not .DisablePasswordRecovery}}
 				<a href="{{AppSubUrl}}/user/forgot_password">{{ctx.Locale.Tr "auth.forgot_password"}}</a>
+				{{end}}
 				<input id="password" name="password" type="password" value="{{.password}}" autocomplete="current-password" required>
 			</div>
 			{{end}}
