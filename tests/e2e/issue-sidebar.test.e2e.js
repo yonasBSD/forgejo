@@ -67,7 +67,7 @@ test('Issue: Labels', async ({browser}, workerInfo) => {
   await expect(response?.status()).toBe(200);
   // preconditions
   await expect(labelList.filter({hasText: 'label1'})).toBeVisible();
-  await expect(labelList.filter({hasText: 'label2'})).not.toBeVisible();
+  await expect(labelList.filter({hasText: 'label2'})).toBeHidden();
   // add label2
   await page.locator('.select-label').click();
   // label search could be tested this way:
@@ -81,6 +81,30 @@ test('Issue: Labels', async ({browser}, workerInfo) => {
   await page.locator('.select-label .item').filter({hasText: 'label2'}).click();
   await page.locator('.select-label').click();
   await page.waitForLoadState('networkidle');
-  await expect(labelList.filter({hasText: 'label2'})).not.toBeVisible();
+  await expect(labelList.filter({hasText: 'label2'})).toBeHidden();
   await expect(labelList.filter({hasText: 'label1'})).toBeVisible();
+});
+
+test('Issue: Milestone', async ({browser}, workerInfo) => {
+  test.skip(workerInfo.project.name === 'Mobile Safari', 'Unable to get tests working on Safari Mobile, see https://codeberg.org/forgejo/forgejo/pulls/3445#issuecomment-1789636');
+  const page = await login({browser}, workerInfo);
+
+  const response = await page.goto('/user2/repo1/issues/1');
+  await expect(response?.status()).toBe(200);
+
+  const selectedMilestone = page.locator('.issue-content-right .select-milestone.list');
+  const milestoneDropdown = page.locator('.issue-content-right .select-milestone.dropdown');
+  await expect(selectedMilestone).toContainText('No milestone');
+
+  // Add milestone.
+  await milestoneDropdown.click();
+  await page.getByRole('option', {name: 'milestone1'}).click();
+  await expect(selectedMilestone).toContainText('milestone1');
+  await expect(page.locator('.timeline-item.event').last()).toContainText('user2 added this to the milestone1 milestone');
+
+  // Clear milestone.
+  await milestoneDropdown.click();
+  await page.getByText('Clear milestone', {exact: true}).click();
+  await expect(selectedMilestone).toContainText('No milestone');
+  await expect(page.locator('.timeline-item.event').last()).toContainText('user2 removed this from the milestone1 milestone');
 });
