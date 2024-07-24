@@ -1,5 +1,4 @@
-// Copyright 2017 The Gitea Authors. All rights reserved.
-// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
