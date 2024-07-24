@@ -51,10 +51,15 @@ func uploadArtifact(t *testing.T, body string) string {
 
 	// get upload url
 	idx := strings.Index(uploadResp.SignedUploadUrl, "/twirp/")
-	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block"
+	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block&blockid=AAAA"
 
 	// upload artifact chunk
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// upload blocklist
+	url = uploadResp.SignedUploadUrl[idx:] + "&comp=blocklist"
+	req = NewRequestWithBody(t, "PUT", url, strings.NewReader("<BlockList><Latest>AAAA</Latest></BlockList>"))
 	MakeRequest(t, req, http.StatusCreated)
 
 	t.Logf("Create artifact confirm")
@@ -83,6 +88,61 @@ func TestActionsArtifactV4UploadSingleFile(t *testing.T) {
 	uploadArtifact(t, body)
 }
 
+func TestActionsArtifactV4UploadMultipleBlocks(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	token, err := actions_service.CreateAuthorizationToken(48, 792, 193)
+	require.NoError(t, err)
+
+	// acquire artifact upload url
+	req := NewRequestWithBody(t, "POST", "/twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact", toProtoJSON(&actions.CreateArtifactRequest{
+		Version:                 4,
+		Name:                    "artifact",
+		WorkflowRunBackendId:    "792",
+		WorkflowJobRunBackendId: "193",
+	})).AddTokenAuth(token)
+	resp := MakeRequest(t, req, http.StatusOK)
+	var uploadResp actions.CreateArtifactResponse
+	protojson.Unmarshal(resp.Body.Bytes(), &uploadResp)
+	assert.True(t, uploadResp.Ok)
+	assert.Contains(t, uploadResp.SignedUploadUrl, "/twirp/github.actions.results.api.v1.ArtifactService/UploadArtifact")
+
+	body := []byte(strings.Repeat("A", 512) + strings.Repeat("B", 512))
+
+	// upload chunks out of order to test reassembly
+	// upload second block
+	idx := strings.Index(uploadResp.SignedUploadUrl, "/twirp/")
+	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block&blockid=BBBB"
+	req = NewRequestWithBody(t, "PUT", url, bytes.NewReader(body[512:]))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// upload first block
+	idx = strings.Index(uploadResp.SignedUploadUrl, "/twirp/")
+	url = uploadResp.SignedUploadUrl[idx:] + "&comp=block&blockid=AAAA"
+	req = NewRequestWithBody(t, "PUT", url, bytes.NewReader(body[:512]))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// upload blocklist
+	url = uploadResp.SignedUploadUrl[idx:] + "&comp=blocklist"
+	req = NewRequestWithBody(t, "PUT", url, strings.NewReader("<BlockList><Latest>AAAA</Latest><Latest>BBBB</Latest></BlockList>"))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// confirm artifact upload
+	sha := sha256.Sum256(body)
+	req = NewRequestWithBody(t, "POST", "/twirp/github.actions.results.api.v1.ArtifactService/FinalizeArtifact", toProtoJSON(&actions.FinalizeArtifactRequest{
+		Name:                    "artifact",
+		Size:                    int64(len(body)),
+		Hash:                    wrapperspb.String("sha256:" + hex.EncodeToString(sha[:])),
+		WorkflowRunBackendId:    "792",
+		WorkflowJobRunBackendId: "193",
+	})).
+		AddTokenAuth(token)
+	resp = MakeRequest(t, req, http.StatusOK)
+	var finalizeResp actions.FinalizeArtifactResponse
+	protojson.Unmarshal(resp.Body.Bytes(), &finalizeResp)
+	assert.True(t, finalizeResp.Ok)
+}
+
 func TestActionsArtifactV4UploadSingleFileWrongChecksum(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -104,11 +164,16 @@ func TestActionsArtifactV4UploadSingleFileWrongChecksum(t *testing.T) {
 
 	// get upload url
 	idx := strings.Index(uploadResp.SignedUploadUrl, "/twirp/")
-	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block"
+	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block&blockid=AAAA"
 
 	// upload artifact chunk
 	body := strings.Repeat("B", 1024)
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// upload blocklist
+	url = uploadResp.SignedUploadUrl[idx:] + "&comp=blocklist"
+	req = NewRequestWithBody(t, "PUT", url, strings.NewReader("<BlockList><Latest>AAAA</Latest></BlockList>"))
 	MakeRequest(t, req, http.StatusCreated)
 
 	t.Logf("Create artifact confirm")
@@ -149,11 +214,16 @@ func TestActionsArtifactV4UploadSingleFileWithRetentionDays(t *testing.T) {
 
 	// get upload url
 	idx := strings.Index(uploadResp.SignedUploadUrl, "/twirp/")
-	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block"
+	url := uploadResp.SignedUploadUrl[idx:] + "&comp=block&blockid=AAAA"
 
 	// upload artifact chunk
 	body := strings.Repeat("A", 1024)
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
+	MakeRequest(t, req, http.StatusCreated)
+
+	// upload blocklist
+	url = uploadResp.SignedUploadUrl[idx:] + "&comp=blocklist"
+	req = NewRequestWithBody(t, "PUT", url, strings.NewReader("<BlockList><Latest>AAAA</Latest></BlockList>"))
 	MakeRequest(t, req, http.StatusCreated)
 
 	t.Logf("Create artifact confirm")
@@ -178,8 +248,8 @@ func TestActionsArtifactV4UploadSingleFileWithRetentionDays(t *testing.T) {
 func TestActionsArtifactV4DownloadSingle(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	token, err := actions_service.CreateAuthorizationToken(48, 792, 193)
-	require.NoError(t, err)
+	body := strings.Repeat("A", 1024)
+	token := uploadArtifact(t, body)
 
 	// acquire artifact upload url
 	req := NewRequestWithBody(t, "POST", "/twirp/github.actions.results.api.v1.ArtifactService/ListArtifacts", toProtoJSON(&actions.ListArtifactsRequest{
@@ -206,7 +276,6 @@ func TestActionsArtifactV4DownloadSingle(t *testing.T) {
 
 	req = NewRequest(t, "GET", finalizeResp.SignedUrl)
 	resp = MakeRequest(t, req, http.StatusOK)
-	body := strings.Repeat("A", 1024)
 	assert.Equal(t, "bytes", resp.Header().Get("accept-ranges"))
 	assert.Equal(t, body, resp.Body.String())
 
@@ -258,8 +327,8 @@ func TestActionsArtifactV4DownloadRange(t *testing.T) {
 func TestActionsArtifactV4Delete(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	token, err := actions_service.CreateAuthorizationToken(48, 792, 193)
-	require.NoError(t, err)
+	body := strings.Repeat("A", 1024)
+	token := uploadArtifact(t, body)
 
 	// delete artifact by name
 	req := NewRequestWithBody(t, "POST", "/twirp/github.actions.results.api.v1.ArtifactService/DeleteArtifact", toProtoJSON(&actions.DeleteArtifactRequest{

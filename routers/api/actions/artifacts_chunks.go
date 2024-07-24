@@ -83,14 +83,6 @@ func saveUploadChunk(st storage.ObjectStorage, ctx *ArtifactContext,
 	return saveUploadChunkBase(st, ctx, artifact, contentSize, runID, start, end, length, true)
 }
 
-func appendUploadChunk(st storage.ObjectStorage, ctx *ArtifactContext,
-	artifact *actions.ActionArtifact,
-	start, contentSize, runID int64,
-) (int64, error) {
-	end := start + contentSize - 1
-	return saveUploadChunkBase(st, ctx, artifact, contentSize, runID, start, end, contentSize, false)
-}
-
 type chunkFileItem struct {
 	RunID      int64
 	ArtifactID int64

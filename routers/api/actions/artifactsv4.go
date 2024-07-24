@@ -82,10 +82,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/xml"
+	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -260,12 +265,31 @@ func (r *artifactV4Routes) createArtifact(ctx *ArtifactContext) {
 
 	artifactName := req.Name
 
+	// check for existing artifact, delete if found
+	artifact, err := r.getArtifactByName(ctx, ctx.ActionTask.Job.RunID, artifactName)
+	if err != nil {
+		if err != util.ErrNotExist {
+			log.Error("Error checking for existing artifact: %s, %v", artifactName, err)
+			ctx.Error(http.StatusInternalServerError, "Error checking for existing artifact")
+			return
+		}
+	} else {
+		if artifact.StoragePath != "" {
+			err := r.fs.Delete(artifact.StoragePath)
+			if err != nil && !os.IsNotExist(err) {
+				log.Error("Error deleting old artifact: %s, %v", artifact.StoragePath, err)
+				ctx.Error(http.StatusInternalServerError, "Error deleting old artifact")
+				return
+			}
+		}
+	}
+
 	rententionDays := setting.Actions.ArtifactRetentionDays
 	if req.ExpiresAt != nil {
 		rententionDays = int64(time.Until(req.ExpiresAt.AsTime()).Hours() / 24)
 	}
 	// create or get artifact with name and path
-	artifact, err := actions.CreateArtifact(ctx, ctx.ActionTask, artifactName, artifactName+".zip", rententionDays)
+	artifact, err = actions.CreateArtifact(ctx, ctx.ActionTask, artifactName, artifactName+".zip", rententionDays)
 	if err != nil {
 		log.Error("Error create or get artifact: %v", err)
 		ctx.Error(http.StatusInternalServerError, "Error create or get artifact")
@@ -288,11 +312,20 @@ func (r *artifactV4Routes) createArtifact(ctx *ArtifactContext) {
 func (r *artifactV4Routes) uploadArtifact(ctx *ArtifactContext) {
 	task, artifactName, ok := r.verifySignature(ctx, "UploadArtifact")
 	if !ok {
+		log.Error("Error signature invalid")
+		ctx.Error(http.StatusUnauthorized, "Error signature invalid")
+		return
+	}
+	// get artifact by name
+	artifact, err := r.getArtifactByName(ctx, task.Job.RunID, artifactName)
+	if err != nil {
+		log.Error("Error artifact not found: %v", err)
+		ctx.Error(http.StatusNotFound, "Error artifact not found")
 		return
 	}
 
 	// check the owner's quota
-	ok, err := quota_model.EvaluateForUser(ctx, task.OwnerID, quota_model.LimitSubjectSizeAssetsArtifacts)
+	ok, err = quota_model.EvaluateForUser(ctx, task.OwnerID, quota_model.LimitSubjectSizeAssetsArtifacts)
 	if err != nil {
 		log.Error("quota_model.EvaluateForUser: %v", err)
 		ctx.Error(http.StatusInternalServerError, "Error checking quota")
@@ -305,47 +338,51 @@ func (r *artifactV4Routes) uploadArtifact(ctx *ArtifactContext) {
 
 	comp := ctx.Req.URL.Query().Get("comp")
 	switch comp {
-	case "block", "appendBlock":
-		// get artifact by name
-		artifact, err := r.getArtifactByName(ctx, task.Job.RunID, artifactName)
-		if err != nil {
-			log.Error("Error artifact not found: %v", err)
-			ctx.Error(http.StatusNotFound, "Error artifact not found")
+	case "block":
+		blockid := ctx.Req.URL.Query().Get("blockid")
+		if blockid == "" {
+			ctx.Error(http.StatusBadRequest, "missing blockid")
 			return
 		}
 
-		if comp == "block" {
-			artifact.FileSize = 0
-			artifact.FileCompressedSize = 0
-		}
+		hashedBlockID := sha256.Sum256([]byte(blockid))
+		hashedBlockIDString := hex.EncodeToString(hashedBlockID[:])
 
-		_, err = appendUploadChunk(r.fs, ctx, artifact, artifact.FileSize, ctx.Req.ContentLength, artifact.RunID)
+		storagePath := fmt.Sprintf("tmp%d/%s", artifact.ID, hashedBlockIDString)
+		_, err = r.fs.Save(storagePath, ctx.Req.Body, ctx.Req.ContentLength)
 		if err != nil {
-			log.Error("Error runner api getting task: task is not running")
-			ctx.Error(http.StatusInternalServerError, "Error runner api getting task: task is not running")
+			ctx.Error(http.StatusInternalServerError, "Error save chunk failed")
 			return
 		}
-		artifact.FileCompressedSize += ctx.Req.ContentLength
-		artifact.FileSize += ctx.Req.ContentLength
-		if err := actions.UpdateArtifactByID(ctx, artifact.ID, artifact); err != nil {
-			log.Error("Error UpdateArtifactByID: %v", err)
-			ctx.Error(http.StatusInternalServerError, "Error UpdateArtifactByID")
-			return
-		}
-		ctx.JSON(http.StatusCreated, "appended")
+		ctx.JSON(http.StatusCreated, "created")
 	case "blocklist":
+		storagePath := fmt.Sprintf("tmp%d/blocklist", artifact.ID)
+		_, err = r.fs.Save(storagePath, ctx.Req.Body, ctx.Req.ContentLength)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "Error save blocklist failed")
+			return
+		}
 		ctx.JSON(http.StatusCreated, "created")
 	}
+}
+
+type BlockList struct {
+	XMLName xml.Name `xml:"BlockList"`
+	Latest  []string
 }
 
 func (r *artifactV4Routes) finalizeArtifact(ctx *ArtifactContext) {
 	var req FinalizeArtifactRequest
 
 	if ok := r.parseProtbufBody(ctx, &req); !ok {
+		log.Error("Error parse request body failed")
+		ctx.Error(http.StatusBadRequest, "Error parse request body failed")
 		return
 	}
 	_, runID, ok := validateRunIDV4(ctx, req.WorkflowRunBackendId)
 	if !ok {
+		log.Error("Error run id invalid")
+		ctx.Error(http.StatusBadRequest, "Error run id invalid")
 		return
 	}
 
@@ -356,33 +393,139 @@ func (r *artifactV4Routes) finalizeArtifact(ctx *ArtifactContext) {
 		ctx.Error(http.StatusNotFound, "Error artifact not found")
 		return
 	}
-	chunkMap, err := listChunksByRunID(r.fs, runID)
+
+	// read blocklist
+	blocklistPath := fmt.Sprintf("tmp%d/blocklist", artifact.ID)
+	object, err := r.fs.Open(blocklistPath)
 	if err != nil {
-		log.Error("Error merge chunks: %v", err)
-		ctx.Error(http.StatusInternalServerError, "Error merge chunks")
+		log.Error("Error blocklist not found: %v", err)
+		ctx.Error(http.StatusNotFound, "Error blocklist not found")
 		return
 	}
-	chunks, ok := chunkMap[artifact.ID]
-	if !ok {
-		log.Error("Error merge chunks")
-		ctx.Error(http.StatusInternalServerError, "Error merge chunks")
+	// parse blocklist
+	decoder := xml.NewDecoder(object)
+	decoder.Strict = true
+	var blocklist BlockList
+	err = decoder.Decode(&blocklist)
+	if err != nil {
+		log.Error("Error decode blocklist: %v", err)
+		ctx.Error(http.StatusInternalServerError, "Error decode blocklist")
 		return
 	}
+	err = object.Close()
+	if err != nil {
+		log.Error("Error close blocklist object: %v", err)
+		ctx.Error(http.StatusInternalServerError, "Error close blocklist object")
+		return
+	}
+
+	// extract the client computed checksum from the request
 	checksum := ""
 	if req.Hash != nil {
 		checksum = req.Hash.Value
 	}
-	if err := mergeChunksForArtifact(ctx, chunks, r.fs, artifact, checksum); err != nil {
-		log.Warn("Error merge chunks: %v", err)
-		ctx.Error(http.StatusInternalServerError, "Error merge chunks")
+
+	// merge the uploaded blocks
+	written, storagePath, err := r.mergeBlocks(artifact, &blocklist, checksum)
+	if err != nil {
+		// clean up potentially partially merged object
+		err2 := r.fs.Delete(storagePath)
+		if err2 != nil && !os.IsNotExist(err2) {
+			log.Error("Error delete partial merged artifact: %v", err)
+		}
+		log.Error("Error merge blocks failed: %v", err)
+		if os.IsNotExist(err) {
+			ctx.Error(http.StatusNotFound, "Error block or blocklist not found")
+		} else if err == errorChecksumMismatch {
+			ctx.Error(http.StatusInternalServerError, "Error checksum did not match")
+		} else {
+			ctx.Error(http.StatusInternalServerError, "Error merge blocks failed")
+		}
+	}
+
+	artifact.FileCompressedSize = written
+	artifact.FileSize = req.Size
+	artifact.StoragePath = storagePath
+	artifact.Status = int64(actions.ArtifactStatusUploadConfirmed)
+	if err := actions.UpdateArtifactByID(ctx, artifact.ID, artifact); err != nil {
+		log.Error("Error update artifact: %v", err)
+		ctx.Error(http.StatusInternalServerError, "Error update artifact")
 		return
 	}
+
+	// delete all block uploaded for this artifact
+	storagePrefix := fmt.Sprintf("tmp%d", artifact.ID)
+	// an error deleting block is not considered fatal to the upload
+	_ = r.fs.IterateObjects(storagePrefix, func(path string, _ storage.Object) error {
+		err := r.fs.Delete(path)
+		if err != nil {
+			log.Error("Error deleting block: %s, %v", path, err)
+		}
+		return err
+	})
 
 	respData := FinalizeArtifactResponse{
 		Ok:         true,
 		ArtifactId: artifact.ID,
 	}
 	r.sendProtbufBody(ctx, &respData)
+}
+
+var errorChecksumMismatch = errors.New("checksum did not match")
+
+func (r *artifactV4Routes) mergeBlocks(artifact *actions.ActionArtifact, blocklist *BlockList, checksum string) (int64, string, error) {
+	readers := make([]io.Reader, 0, len(blocklist.Latest))
+	closeReaders := func() {
+		for _, r := range readers {
+			// a cast is needed here as the slice has to be of type Reader (instead of ReadCloser)
+			// to be able to be used with MultiReader without copying the whole slice
+			_ = r.(io.Closer).Close()
+		}
+		readers = nil
+	}
+	defer closeReaders()
+	for _, blockid := range blocklist.Latest {
+		hashedBlockID := sha256.Sum256([]byte(blockid))
+		hashedBlockIDString := hex.EncodeToString(hashedBlockID[:])
+
+		path := fmt.Sprintf("tmp%d/%s", artifact.ID, hashedBlockIDString)
+		// be explicit about the type of block, as we cast it above
+		var block io.ReadCloser
+		var err error
+		block, err = r.fs.Open(path)
+		if err != nil {
+			return 0, "", err
+		}
+		readers = append(readers, block)
+	}
+	mergedReader := io.MultiReader(readers...)
+
+	// modify reader to calculate checksum if required
+	var hash hash.Hash
+	if strings.HasPrefix(checksum, "sha256:") {
+		hash = sha256.New()
+	}
+	if hash != nil {
+		mergedReader = io.TeeReader(mergedReader, hash)
+	}
+
+	// write the merged artifact
+	storagePath := fmt.Sprintf("%d/%d/%d.zip", artifact.RunID%255, artifact.ID%255, time.Now().UnixNano())
+	written, err := r.fs.Save(storagePath, mergedReader, -1)
+	if err != nil {
+		return written, "", err
+	}
+
+	// check the computed against the expected checksum
+	if hash != nil {
+		rawChecksum := hash.Sum(nil)
+		actualChecksum := hex.EncodeToString(rawChecksum)
+		if !strings.HasSuffix(checksum, actualChecksum) {
+			return written, "", errorChecksumMismatch
+		}
+	}
+
+	return written, storagePath, nil
 }
 
 func (r *artifactV4Routes) listArtifacts(ctx *ArtifactContext) {
