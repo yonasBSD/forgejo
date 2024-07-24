@@ -49,14 +49,15 @@ func (err ErrTwoFactorNotEnrolled) Unwrap() error {
 
 // TwoFactor represents a two-factor authentication token.
 type TwoFactor struct {
-	ID               int64 `xorm:"pk autoincr"`
-	UID              int64 `xorm:"UNIQUE"`
-	Secret           string
-	ScratchSalt      string
-	ScratchHash      string
-	LastUsedPasscode string             `xorm:"VARCHAR(10)"`
-	CreatedUnix      timeutil.TimeStamp `xorm:"INDEX created"`
-	UpdatedUnix      timeutil.TimeStamp `xorm:"INDEX updated"`
+	ID                       int64 `xorm:"pk autoincr"`
+	UID                      int64 `xorm:"UNIQUE"`
+	Secret                   string
+	ScratchSalt              string
+	ScratchHash              string
+	LastUsedPasscode         string             `xorm:"VARCHAR(10)"`
+	AllowRegenerationOverSSH bool               `xorm:"NOT NULL DEFAULT true"`
+	CreatedUnix              timeutil.TimeStamp `xorm:"INDEX created"`
+	UpdatedUnix              timeutil.TimeStamp `xorm:"INDEX updated"`
 }
 
 func init() {

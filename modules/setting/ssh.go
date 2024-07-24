@@ -50,6 +50,7 @@ var SSH = struct {
 	TrustedUserCAKeysParsed               []gossh.PublicKey  `ini:"-"`
 	PerWriteTimeout                       time.Duration      `ini:"SSH_PER_WRITE_TIMEOUT"`
 	PerWritePerKbTimeout                  time.Duration      `ini:"SSH_PER_WRITE_PER_KB_TIMEOUT"`
+	AllowTOTPRegeneration                 bool               `ini:"SSH_ALLOW_TOTP_REGENERATION"`
 }{
 	Disabled:                      false,
 	StartBuiltinServer:            false,
@@ -65,6 +66,7 @@ var SSH = struct {
 	AuthorizedKeysCommandTemplate: "{{.AppPath}} --config={{.CustomConf}} serv key-{{.Key.ID}}",
 	PerWriteTimeout:               PerWriteTimeout,
 	PerWritePerKbTimeout:          PerWritePerKbTimeout,
+	AllowTOTPRegeneration:         false,
 }
 
 func parseAuthorizedPrincipalsAllow(values []string) ([]string, bool) {

@@ -44,6 +44,11 @@ func (o *HookOptions) GetGitPushOptions() pushoptions.Interface {
 	return pushoptions.NewFromMap(&o.GitPushOptions)
 }
 
+type SSHTOTPRecoveryOption struct {
+	KeyID    int64
+	Password string
+}
+
 // SSHLogOption ssh log options
 type SSHLogOption struct {
 	IsError bool

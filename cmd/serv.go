@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net/url"
@@ -189,6 +190,63 @@ func runServ(c *cli.Context) error {
 				return nil
 			}
 		}
+
+		if cmd == "totp_recovery_codes" {
+			if !setting.SSH.AllowTOTPRegeneration {
+				fmt.Println("This feature is disabled on this instance.")
+				return nil
+			}
+
+			scanner := bufio.NewScanner(os.Stdin)
+			fmt.Println("Are you sure you want to generate new a TOTP recovery code?")
+
+			for {
+				fmt.Printf("The existing TOTP recovery code will no longer be valid. (y/n) ")
+
+				if !scanner.Scan() {
+					if err := scanner.Err(); err != nil {
+						return fail(ctx, "Couldn't read your response", "scanner.Scan: %v", scanner.Err())
+					}
+					return fail(ctx, "Couldn't read your response", "No input")
+				}
+				input := scanner.Text()
+
+				if strings.EqualFold(input, "y") || strings.EqualFold(input, "yes") {
+					break
+				}
+				if strings.EqualFold(input, "n") || strings.EqualFold(input, "no") {
+					fmt.Println("\nNo new TOTP recovery code has been generated. The existing one will remain valid.")
+					return nil
+				}
+			}
+
+			// It is tempting to use [term.ReadPassword] here to prevent the password
+			// from being echoed back. However, that is not possible here,
+			// ReadPassword will fail for a good reason; the device associated with
+			// [os.Stdin] is not a real terminal/console in the context of an SSH
+			// session. No PTY is assigned by the built-in SSH server, and Forgejo
+			// tells OpenSSH in authorised_keys not to assign a PTY either. Assigning
+			// PTYs for each SSH session can lead to security problems.
+			fmt.Printf("\nPlease enter the password of your account (echoed): ")
+
+			if !scanner.Scan() {
+				if err := scanner.Err(); err != nil {
+					return fail(ctx, "Couldn't read your response", "scanner.Scan: %v", scanner.Err())
+				}
+				return fail(ctx, "Couldn't read your response", "No input")
+			}
+			password := scanner.Text()
+
+			result, extra := private.ServTOTPRecovery(ctx, keyID, password)
+			if extra.HasError() {
+				return fail(ctx, extra.UserMsg, "ServTOTPRecovery failed: %v", extra.Error)
+			}
+
+			fmt.Println()
+			fmt.Printf("Your new scratch code is %q.\n", result.ScratchCode)
+			return nil
+		}
+
 		return fail(ctx, "Too few arguments", "Too few arguments in cmd: %s", cmd)
 	}
 

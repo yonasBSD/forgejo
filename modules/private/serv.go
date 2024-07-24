@@ -61,3 +61,17 @@ func ServCommand(ctx context.Context, keyID int64, ownerName, repoName string, m
 	req := newInternalRequest(ctx, reqURL, "GET")
 	return requestJSONResp(req, &ServCommandResults{})
 }
+
+type TOTPRecovery struct {
+	ScratchCode string `json:"scratch_code"`
+}
+
+// ServNoCommand returns information about the provided key
+func ServTOTPRecovery(ctx context.Context, keyID int64, password string) (*TOTPRecovery, ResponseExtra) {
+	reqURL := setting.LocalURL + "api/internal/serv/totp_recovery"
+	req := newInternalRequest(ctx, reqURL, "GET", map[string]any{
+		"keyID":    keyID,
+		"password": password,
+	})
+	return requestJSONResp(req, &TOTPRecovery{})
+}

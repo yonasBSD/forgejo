@@ -4,20 +4,34 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	asymkey_model "code.gitea.io/gitea/models/asymkey"
 	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/translation"
+	"code.gitea.io/gitea/services/mailer"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
 )
 
 func doCheckRepositoryEmptyStatus(ctx APITestContext, isEmpty bool) func(*testing.T) {
@@ -203,6 +217,188 @@ func testKeyOnlyOneType(t *testing.T, u *url.URL) {
 			t.Run("DeleteUserKey", doAPIDeleteUserKey(ctx, userKeyPublicKeyID))
 
 			t.Run("FailToClone", doGitCloneFail(sshURL))
+		})
+	})
+}
+
+func TestTOTPRecoveryCodes(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+		ctx := NewAPITestContext(t, user.Name, "repo4", auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
+
+		withKeyFile(t, "totp", func(keyFile string) {
+			keyName := "test-key-totp"
+			t.Run("CreateUserKey", func(t *testing.T) {
+				doAPICreateUserKey(ctx, keyName, keyFile)(t)
+
+				publicKey := unittest.AssertExistsAndLoadBean(t, &asymkey_model.PublicKey{OwnerID: user.ID})
+				publicKey.Verified = true
+				_, err := db.GetEngine(db.DefaultContext).ID(publicKey.ID).Cols("verified").Update(publicKey)
+				require.NoError(t, err)
+			})
+
+			privateKeyBytes, err := os.ReadFile(keyFile)
+			require.NoError(t, err)
+
+			privateKey, err := ssh.ParsePrivateKey(privateKeyBytes)
+			require.NoError(t, err)
+
+			config := &ssh.ClientConfig{
+				User:            setting.SSH.BuiltinServerUser,
+				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+				Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
+			}
+
+			client, err := ssh.Dial("tcp", net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), config)
+			require.NoError(t, err)
+			defer client.Close()
+
+			t.Run("Not enrolled into TOTP", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var b bytes.Buffer
+				session.Stderr = &b
+				session.Stdin = strings.NewReader("y\npassword\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+
+				require.Error(t, session.Wait())
+				assert.EqualValues(t, "Forgejo: You are not enrolled into TOTP.\n", b.String())
+			})
+
+			twoFactor := &auth_model.TwoFactor{UID: user.ID, ScratchSalt: "aaaaaaa", ScratchHash: "bbbbbbb"}
+			unittest.AssertSuccessfulInsert(t, twoFactor)
+
+			t.Run("Not allowed regeneration", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var b bytes.Buffer
+				session.Stderr = &b
+				session.Stdin = strings.NewReader("y\npassword\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+
+				require.Error(t, session.Wait())
+				assert.EqualValues(t, "Forgejo: You have not allowed regeneration of the TOTP recovery code via SSH.\n", b.String())
+			})
+
+			twoFactor.AllowRegenerationOverSSH = true
+			_, err = db.GetEngine(db.DefaultContext).ID(twoFactor.ID).Cols("allow_regeneration_over_ssh").Update(twoFactor)
+			require.NoError(t, err)
+
+			t.Run("Normal", func(t *testing.T) {
+				called := false
+				defer test.MockVariableValue(&mailer.SendAsync, func(msgs ...*mailer.Message) {
+					assert.Len(t, msgs, 1)
+					assert.Equal(t, user.EmailTo(), msgs[0].To)
+					assert.EqualValues(t, translation.NewLocale("en-US").Tr("mail.totp_regenerated_via_ssh.subject"), msgs[0].Subject)
+					assert.Contains(t, msgs[0].Body, keyName)
+					called = true
+				})()
+
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var stdOutBuf bytes.Buffer
+				session.Stdout = &stdOutBuf
+				session.Stdin = strings.NewReader("aaaa\nbbbbb\ny\npassword\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+				assert.NoError(t, session.Wait())
+
+				twoFactorAfter := unittest.AssertExistsAndLoadBean(t, &auth_model.TwoFactor{ID: twoFactor.ID})
+				scratchCode := strings.TrimFunc(regexp.MustCompile(`"[A-Z0-9]+"`).FindString(stdOutBuf.String()), func(r rune) bool { return r == '"' })
+				assert.Equal(t, twoFactorAfter.ScratchHash, auth_model.HashToken(scratchCode, twoFactorAfter.ScratchSalt))
+				assert.NotEqual(t, twoFactor.ScratchHash, twoFactorAfter.ScratchHash)
+				assert.NotEqual(t, twoFactor.ScratchSalt, twoFactorAfter.ScratchSalt)
+
+				assert.True(t, called)
+			})
+
+			t.Run("Incorrect password", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var b bytes.Buffer
+				session.Stderr = &b
+				session.Stdin = strings.NewReader("y\nblahaj00!\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+
+				require.Error(t, session.Wait())
+				assert.EqualValues(t, "Forgejo: Incorrect password. You are allowed to retry in 5 minutes.\n", b.String())
+			})
+
+			t.Run("Rate limimted", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var b bytes.Buffer
+				session.Stderr = &b
+				session.Stdin = strings.NewReader("y\npassword\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+
+				require.Error(t, session.Wait())
+				assert.Regexp(t, `Forgejo: You can retry in [0-9]{1,3} seconds\.`, b.String())
+			})
+
+			t.Run("Exit", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var stdOutBuf bytes.Buffer
+				session.Stdout = &stdOutBuf
+				session.Stdin = strings.NewReader("no\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+				assert.NoError(t, session.Wait())
+
+				assert.Contains(t, stdOutBuf.String(), "No new TOTP recovery code has been generated. The existing one will remain valid.")
+			})
+		})
+
+		withKeyFile(t, "totp-deploy", func(keyFile string) {
+			t.Run("CreateDeployKey", func(t *testing.T) {
+				doAPICreateDeployKey(ctx, "totp-deploy", keyFile, false)(t)
+
+				publicKey := unittest.AssertExistsAndLoadBean(t, &asymkey_model.PublicKey{Name: "totp-deploy", Type: asymkey_model.KeyTypeDeploy})
+				publicKey.Verified = true
+				_, err := db.GetEngine(db.DefaultContext).ID(publicKey.ID).Cols("verified").Update(publicKey)
+				require.NoError(t, err)
+			})
+
+			privateKeyBytes, err := os.ReadFile(keyFile)
+			require.NoError(t, err)
+
+			privateKey, err := ssh.ParsePrivateKey(privateKeyBytes)
+			require.NoError(t, err)
+
+			config := &ssh.ClientConfig{
+				User:            setting.SSH.BuiltinServerUser,
+				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+				Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
+			}
+
+			client, err := ssh.Dial("tcp", net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), config)
+			require.NoError(t, err)
+			defer client.Close()
+
+			t.Run("Incorrect SSH key type", func(t *testing.T) {
+				session, err := client.NewSession()
+				require.NoError(t, err)
+				defer session.Close()
+
+				var b bytes.Buffer
+				session.Stderr = &b
+				session.Stdin = strings.NewReader("y\npassword\n")
+				require.NoError(t, session.Start("totp_recovery_codes"))
+
+				require.Error(t, session.Wait())
+				assert.EqualValues(t, "Forgejo: Not a correct SSH key type.\n", b.String())
+			})
 		})
 	})
 }

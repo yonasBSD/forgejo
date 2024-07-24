@@ -78,6 +78,8 @@ var migrations = []*Migration{
 	NewMigration("Add external_url to attachment table", AddExternalURLColumnToAttachmentTable),
 	// v20 -> v21
 	NewMigration("Creating Quota-related tables", CreateQuotaTables),
+	// v21 -> v22
+	NewMigration("Add `allow_regeneration_over_ssh` column to the `two_factor` table", AddSSHRegenerationTwoFactor),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

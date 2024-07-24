@@ -55,12 +55,17 @@ func DeleteAccountLink(ctx *context.Context) {
 }
 
 func loadSecurityData(ctx *context.Context) {
-	enrolled, err := auth_model.HasTwoFactorByUID(ctx, ctx.Doer.ID)
-	if err != nil {
+	totp, err := auth_model.GetTwoFactorByUID(ctx, ctx.Doer.ID)
+	if err != nil && !auth_model.IsErrTwoFactorNotEnrolled(err) {
 		ctx.ServerError("SettingsTwoFactor", err)
 		return
 	}
-	ctx.Data["TOTPEnrolled"] = enrolled
+
+	ctx.Data["TOTPEnrolled"] = totp != nil
+	if totp != nil {
+		ctx.Data["InstanceAllowRegenerationOverSSH"] = setting.SSH.AllowTOTPRegeneration
+		ctx.Data["UserAllowRegenerationOverSSH"] = totp.AllowRegenerationOverSSH
+	}
 
 	credentials, err := auth_model.GetWebAuthnCredentialsByUID(ctx, ctx.Doer.ID)
 	if err != nil {

@@ -22,7 +22,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
-	gitea_context "code.gitea.io/gitea/services/context"
+	forgejo_context "code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/mailer"
 	"code.gitea.io/gitea/tests"
 
@@ -752,6 +752,90 @@ func TestUserSecurityKeyMail(t *testing.T) {
 	})
 }
 
+func TestUserTOTPVerificationSSH(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	session := loginUser(t, user.Name)
+
+	t.Run("Not enrolled", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithValues(t, "POST", "/user/settings/security/two_factor/ssh", map[string]string{
+			"_csrf": GetCSRF(t, session, "/user/settings/security"),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "error%3DYour%2Baccount%2Bis%2Bnot%2Bcurrently%2Benrolled%2Bin%2Btwo-factor%2Bauthentication.", flashCookie.Value)
+	})
+
+	twoFactor := &auth_model.TwoFactor{UID: user.ID, ScratchSalt: "aaaaaaa", ScratchHash: "bbbbbbb"}
+	unittest.AssertSuccessfulInsert(t, twoFactor)
+
+	t.Run("Enable it", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		called := false
+		defer test.MockVariableValue(&mailer.SendAsync, func(msgs ...*mailer.Message) {
+			assert.Len(t, msgs, 1)
+			assert.Equal(t, user.EmailTo(), msgs[0].To)
+			assert.EqualValues(t, translation.NewLocale("en-US").Tr("mail.totp_via_ssh_updated.subject"), msgs[0].Subject)
+			assert.Contains(t, msgs[0].Body, translation.NewLocale("en-US").Tr("mail.totp_via_ssh_updated.enabled"))
+			called = true
+		})()
+
+		req := NewRequest(t, "GET", "/user/settings/security")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		assert.Contains(t, resp.Body.String(), translation.NewLocale("en-US").Tr("settings.twofa_ssh_enable"))
+
+		req = NewRequestWithValues(t, "POST", "/user/settings/security/two_factor/ssh", map[string]string{
+			"_csrf": GetCSRF(t, session, "/user/settings/security"),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		assert.True(t, called)
+
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "success%3DTOTP%2Bregeneration%2Bvia%2BSSH%2Bis%2Bsuccesfully%2Benabled.", flashCookie.Value)
+
+		unittest.AssertExistsIf(t, true, &auth_model.TwoFactor{UID: user.ID, AllowRegenerationOverSSH: true})
+	})
+
+	t.Run("Disable it", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		called := false
+		defer test.MockVariableValue(&mailer.SendAsync, func(msgs ...*mailer.Message) {
+			assert.Len(t, msgs, 1)
+			assert.Equal(t, user.EmailTo(), msgs[0].To)
+			assert.EqualValues(t, translation.NewLocale("en-US").Tr("mail.totp_via_ssh_updated.subject"), msgs[0].Subject)
+			assert.Contains(t, msgs[0].Body, translation.NewLocale("en-US").Tr("mail.totp_via_ssh_updated.disabled"))
+			called = true
+		})()
+
+		req := NewRequest(t, "GET", "/user/settings/security")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		assert.Contains(t, resp.Body.String(), translation.NewLocale("en-US").Tr("settings.twofa_ssh_disable"))
+
+		req = NewRequestWithValues(t, "POST", "/user/settings/security/two_factor/ssh", map[string]string{
+			"_csrf": GetCSRF(t, session, "/user/settings/security"),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		assert.True(t, called)
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "success%3DTOTP%2Bregeneration%2Bvia%2BSSH%2Bis%2Bsuccesfully%2Bdisabled.", flashCookie.Value)
+
+		unittest.AssertExistsIf(t, true, &auth_model.TwoFactor{UID: user.ID}, "allow_regeneration_over_ssh = false")
+	})
+}
+
 func TestUserTOTPEnrolled(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -777,7 +861,7 @@ func TestUserTOTPEnrolled(t *testing.T) {
 		})
 		session.MakeRequest(t, req, http.StatusSeeOther)
 
-		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		flashCookie := session.GetCookie(forgejo_context.CookieNameFlash)
 		assert.NotNil(t, flashCookie)
 		assert.Contains(t, flashCookie.Value, "success%3DYour%2Baccount%2Bhas%2Bbeen%2Bsuccessfully%2Benrolled.")
 

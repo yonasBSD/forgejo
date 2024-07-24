@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/web"
@@ -256,5 +257,45 @@ func EnrollTwoFactorPost(ctx *context.Context) {
 	}
 
 	ctx.Flash.Success(ctx.Tr("settings.twofa_enrolled", token))
+	ctx.Redirect(setting.AppSubURL + "/user/settings/security")
+}
+
+// ToggleSSHRegeneration toggle
+func ToggleSSHRegeneration(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("settings")
+	ctx.Data["PageIsSettingsSecurity"] = true
+
+	if !setting.SSH.AllowTOTPRegeneration {
+		ctx.Redirect(setting.AppSubURL + "/user/settings/security")
+		return
+	}
+
+	t, err := auth.GetTwoFactorByUID(ctx, ctx.Doer.ID)
+	if err != nil {
+		if auth.IsErrTwoFactorNotEnrolled(err) {
+			ctx.Flash.Error(ctx.Tr("settings.twofa_not_enrolled"))
+			ctx.Redirect(setting.AppSubURL + "/user/settings/security")
+		}
+		ctx.ServerError("GetTwoFactorByUID", err)
+		return
+	}
+
+	t.AllowRegenerationOverSSH = !t.AllowRegenerationOverSSH
+
+	if _, err := db.GetEngine(ctx).ID(t.ID).Cols("allow_regeneration_over_ssh").Update(t); err != nil {
+		ctx.ServerError("Couldn't update two_factor", err)
+		return
+	}
+
+	if err := mailer.SendTOTPViaSSHUpdated(ctx, ctx.Doer, t.AllowRegenerationOverSSH); err != nil {
+		ctx.ServerError("SendTOTPViaSSHUpdated", err)
+		return
+	}
+
+	if t.AllowRegenerationOverSSH {
+		ctx.Flash.Success(ctx.Tr("settings.twofa_ssh_enabled"))
+	} else {
+		ctx.Flash.Success(ctx.Tr("settings.twofa_ssh_disabled"))
+	}
 	ctx.Redirect(setting.AppSubURL + "/user/settings/security")
 }

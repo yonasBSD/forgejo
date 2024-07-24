@@ -6,19 +6,25 @@ package private
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
+	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/perm"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/cache"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/private"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/mailer"
 	repo_service "code.gitea.io/gitea/services/repository"
 	wiki_service "code.gitea.io/gitea/services/wiki"
 )
@@ -30,6 +36,7 @@ func ServNoCommand(ctx *context.PrivateContext) {
 		ctx.JSON(http.StatusBadRequest, private.Response{
 			UserMsg: fmt.Sprintf("Bad key id: %d", keyID),
 		})
+		return
 	}
 	results := private.KeyAndOwner{}
 
@@ -394,4 +401,143 @@ func ServCommand(ctx *context.PrivateContext) {
 
 	ctx.JSON(http.StatusOK, results)
 	// We will update the keys in a different call.
+}
+
+func ServTOTPRecovery(ctx *context.PrivateContext) {
+	if !setting.SSH.AllowTOTPRegeneration {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "This feature is not enabled on this instance.",
+		})
+		return
+	}
+
+	opts := web.GetForm(ctx).(*private.SSHTOTPRecoveryOption)
+	if opts.KeyID <= 0 {
+		ctx.JSON(http.StatusBadRequest, private.Response{
+			UserMsg: fmt.Sprintf("Bad key id: %d", opts.KeyID),
+		})
+		return
+	}
+
+	results := private.TOTPRecovery{}
+
+	key, err := asymkey_model.GetPublicKeyByID(ctx, opts.KeyID)
+	if err != nil {
+		if asymkey_model.IsErrKeyNotExist(err) {
+			ctx.JSON(http.StatusInternalServerError, private.Response{
+				UserMsg: fmt.Sprintf("Cannot find key[id=%d]", opts.KeyID),
+			})
+			return
+		}
+		log.Error("Unable to get public key[id=%d]: %v", opts.KeyID, err)
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+
+	if key.Type != asymkey_model.KeyTypeUser && key.Type != asymkey_model.KeyTypePrincipal {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "Not a correct SSH key type.",
+		})
+		return
+	}
+
+	if !key.Verified {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "The SSH key is not verified.",
+		})
+		return
+	}
+
+	user, err := user_model.GetUserByID(ctx, key.OwnerID)
+	if err != nil {
+		if user_model.IsErrUserNotExist(err) {
+			ctx.JSON(http.StatusUnauthorized, private.Response{
+				UserMsg: fmt.Sprintf("Cannot find user[id=%d] for key[id=%d]", key.OwnerID, opts.KeyID),
+			})
+			return
+		}
+		log.Error("Unable to get owner[id=%d] for public key[id=%d]: %v", key.OwnerID, opts.KeyID, err)
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+
+	if !user.IsActive || user.ProhibitLogin {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "Your account is disabled.",
+		})
+		return
+	}
+
+	c := cache.GetCache()
+	if passwordLimit, ok := c.Get("SSHPasswordLimit_" + strconv.FormatInt(user.ID, 10)).(int64); ok {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: fmt.Sprintf("You can retry in %d seconds.", int(time.Until(time.Unix(passwordLimit, 0)).Seconds())),
+		})
+		return
+	}
+
+	if !user.ValidatePassword(opts.Password) {
+		if err := c.Put("SSHPasswordLimit_"+strconv.FormatInt(user.ID, 10), time.Now().Add(time.Minute*5).Unix(), 300); err != nil {
+			ctx.JSON(http.StatusForbidden, private.Response{
+				Err: err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "Incorrect password. You are allowed to retry in 5 minutes.",
+		})
+		return
+	}
+
+	t, err := auth.GetTwoFactorByUID(ctx, user.ID)
+	if err != nil {
+		if auth.IsErrTwoFactorNotEnrolled(err) {
+			ctx.JSON(http.StatusForbidden, private.Response{
+				UserMsg: "You are not enrolled into TOTP.",
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+
+	if !t.AllowRegenerationOverSSH {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: "You have not allowed regeneration of the TOTP recovery code via SSH.",
+		})
+		return
+	}
+
+	token, err := t.GenerateScratchToken()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+	results.ScratchCode = token
+
+	if err := auth.UpdateTwoFactor(ctx, t); err != nil {
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+
+	if err := mailer.SendRegeneratedTOTPSSH(ctx, user, key.Name); err != nil {
+		ctx.JSON(http.StatusInternalServerError, private.Response{
+			Err: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &results)
 }

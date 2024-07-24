@@ -10,6 +10,13 @@
 		<p>{{ctx.Locale.Tr "settings.regenerate_scratch_token_desc"}}</p>
 		<button class="ui primary button">{{ctx.Locale.Tr "settings.twofa_scratch_token_regenerate"}}</button>
 	</form>
+    {{if .InstanceAllowRegenerationOverSSH}}
+        <form class="ui form" action="{{AppSubUrl}}/user/settings/security/two_factor/ssh" method="post" enctype="multipart/form-data">
+              {{.CsrfTokenHtml}}
+              <p>{{ctx.Locale.Tr "settings.twofa_ssh_desc"}}</p>
+        <button class="ui button {{if .UserAllowRegenerationOverSSH}}red{{else}}primary{{end}}">{{if .UserAllowRegenerationOverSSH}}{{ctx.Locale.Tr "settings.twofa_ssh_disable"}}{{else}}{{ctx.Locale.Tr "settings.twofa_ssh_enable"}}{{end}}</button>
+	    </form>
+    {{end}}
 	<form class="ui form" action="{{AppSubUrl}}/user/settings/security/two_factor/disable" method="post" enctype="multipart/form-data" id="disable-form">
 		{{.CsrfTokenHtml}}
 		<p>{{ctx.Locale.Tr "settings.twofa_disable_note"}}</p>

@@ -45,6 +45,8 @@ const (
 	mailAuth2faDisabled        base.TplName = "auth/2fa_disabled"
 	mailAuthRemovedSecurityKey base.TplName = "auth/removed_security_key"
 	mailAuthTOTPEnrolled       base.TplName = "auth/totp_enrolled"
+	mailAuthTOTPRegeneratedSSH base.TplName = "auth/totp_regenerated_via_ssh"
+	mailAuthTOTPViaSSHUpdated  base.TplName = "auth/totp_via_ssh_updated"
 
 	mailNotifyCollaborator base.TplName = "notify/collaborator"
 
@@ -693,6 +695,62 @@ func SendRemovedSecurityKey(ctx context.Context, u *user_model.User, securityKey
 
 	msg := NewMessage(u.EmailTo(), locale.TrString("mail.removed_security_key.subject"), content.String())
 	msg.Info = fmt.Sprintf("UID: %d, security key removed notification", u.ID)
+
+	SendAsync(msg)
+	return nil
+}
+
+// SendRemovedWebAuthn informs the user their TOTP recovery code was regenerated via SSH.
+func SendRegeneratedTOTPSSH(ctx context.Context, u *user_model.User, sshKeyName string) error {
+	if setting.MailService == nil {
+		return nil
+	}
+	locale := translation.NewLocale(u.Language)
+
+	data := map[string]any{
+		"locale":      locale,
+		"SSHKeyName":  sshKeyName,
+		"DisplayName": u.DisplayName(),
+		"Username":    u.Name,
+		"Language":    locale.Language(),
+	}
+
+	var content bytes.Buffer
+
+	if err := bodyTemplates.ExecuteTemplate(&content, string(mailAuthTOTPRegeneratedSSH), data); err != nil {
+		return err
+	}
+
+	msg := NewMessage(u.EmailTo(), locale.TrString("mail.totp_regenerated_via_ssh.subject"), content.String())
+	msg.Info = fmt.Sprintf("UID: %d, TOTP regenerated via SSH notification", u.ID)
+
+	SendAsync(msg)
+	return nil
+}
+
+// SendTOTPViaSSHUpdated informs the user that TOTP recovery code via SSH was enabled or disabled.
+func SendTOTPViaSSHUpdated(ctx context.Context, u *user_model.User, newStatus bool) error {
+	if setting.MailService == nil {
+		return nil
+	}
+	locale := translation.NewLocale(u.Language)
+
+	data := map[string]any{
+		"locale":      locale,
+		"Status":      newStatus,
+		"DisplayName": u.DisplayName(),
+		"Username":    u.Name,
+		"Language":    locale.Language(),
+	}
+
+	var content bytes.Buffer
+
+	if err := bodyTemplates.ExecuteTemplate(&content, string(mailAuthTOTPViaSSHUpdated), data); err != nil {
+		return err
+	}
+
+	msg := NewMessage(u.EmailTo(), locale.TrString("mail.totp_via_ssh_updated.subject"), content.String())
+	msg.Info = fmt.Sprintf("UID: %d, TOTP regenerated via SSH  updated notification", u.ID)
 
 	SendAsync(msg)
 	return nil

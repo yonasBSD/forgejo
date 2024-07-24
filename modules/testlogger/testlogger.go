@@ -360,6 +360,16 @@ var ignoredErrorMessage = []string{
 
 	// TestDatabaseCollation
 	`[E] [Error SQL Query] INSERT INTO test_collation_tbl (txt) VALUES ('main') []`,
+
+	// TestTOTPRecoveryCodes
+	`:SSHLog() [E] ssh: You are not enrolled into TOTP. ServTOTPRecovery failed: internal API error response, status=403"`,
+	`:SSHLog() [E] ssh: Not a correct SSH key type. ServTOTPRecovery failed: internal API error response, status=403"`,
+	`:SSHLog() [E] ssh: Incorrect password. You are allowed to retry in 5 minutes. ServTOTPRecovery failed: internal API error response, status=403"`,
+	`:SSHLog() [E] ssh: You have not allowed regeneration of the TOTP recovery code via SSH. ServTOTPRecovery failed: internal API error response, status=403"`,
+	`:SSHLog() [E] ssh: You can retry in 299 seconds. ServTOTPRecovery failed: internal API error response, status=403"`,
+
+	// TestUserTOTPVerificationSSH
+	`:ToggleSSHRegeneration() [E] GetTwoFactorByUID: user not enrolled in 2FA [uid: 2]`,
 }
 
 func (w *testLoggerWriterCloser) recordError(msg string) {
