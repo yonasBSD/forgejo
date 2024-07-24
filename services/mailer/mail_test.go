@@ -493,7 +493,7 @@ func Test_createReference(t *testing.T) {
 
 func TestFromDisplayName(t *testing.T) {
 	template, err := texttmpl.New("mailFrom").Parse("{{ .DisplayName }}")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	setting.MailService = &setting.Mailer{FromDisplayNameFormatTemplate: template}
 	defer func() { setting.MailService = nil }()
 
@@ -524,7 +524,7 @@ func TestFromDisplayName(t *testing.T) {
 
 	t.Run("template with all available vars", func(t *testing.T) {
 		template, err = texttmpl.New("mailFrom").Parse("{{ .DisplayName }} (by {{ .AppName }} on [{{ .Domain }}])")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		setting.MailService = &setting.Mailer{FromDisplayNameFormatTemplate: template}
 		oldAppName := setting.AppName
 		setting.AppName = "Code IT"

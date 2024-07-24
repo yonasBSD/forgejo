@@ -37,7 +37,7 @@ func TestActions_RegisterRunner_TokenUpdate(t *testing.T) {
 	const recordID = 12345678
 	oldToken := "7e577e577e577e57feedfacefeedfacefeedface"
 	newToken := "7e577e577e577e57deadbeefdeadbeefdeadbeef"
-	assert.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, unittest.PrepareTestDatabase())
 	before := unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: recordID})
 	require.Equal(t,
 		before.TokenHash, auth_model.HashToken(oldToken, before.TokenSalt),
