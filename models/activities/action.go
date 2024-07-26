@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activities
@@ -351,6 +352,39 @@ func (a *Action) GetRefLink(ctx context.Context) string {
 	return git.RefURL(a.GetRepoLink(ctx), a.RefName)
 }
 
+// GetReleaseLink returns the action's release link.
+func (a *Action) GetReleaseLink(ctx context.Context) string {
+	rel, err := repo_model.GetRelease(ctx, a.RepoID, a.RefName)
+	if rel == nil || err != nil {
+		return "#"
+	}
+	err = rel.LoadAttributes(ctx)
+	if err != nil {
+		return "#"
+	}
+	return rel.Link()
+}
+
+// GetLink returns the action's link.
+func (a *Action) GetLink(ctx context.Context) string {
+	switch a.OpType {
+	case ActionCreateRepo, ActionRenameRepo, ActionStarRepo, ActionWatchRepo, ActionTransferRepo,
+		ActionDeleteTag, ActionDeleteBranch, ActionMirrorSyncDelete:
+		return a.GetRepoLink(ctx)
+	case ActionCommitRepo, ActionPushTag, ActionMirrorSyncPush, ActionMirrorSyncCreate:
+		return a.GetRefLink(ctx)
+	case ActionCreateIssue, ActionCommentIssue, ActionCloseIssue, ActionReopenIssue,
+		ActionCreatePullRequest, ActionMergePullRequest, ActionClosePullRequest, ActionReopenPullRequest,
+		ActionApprovePullRequest, ActionRejectPullRequest, ActionCommentPull,
+		ActionPullReviewDismissed, ActionPullRequestReadyForReview, ActionAutoMergePullRequest:
+		return a.GetCommentLink(ctx)
+	case ActionPublishRelease:
+		return a.GetReleaseLink(ctx)
+	default:
+		return "#"
+	}
+}
+
 // GetTag returns the action's repository tag.
 func (a *Action) GetTag() string {
 	return strings.TrimPrefix(a.RefName, git.TagPrefix)
@@ -380,12 +414,19 @@ func (a *Action) GetIssueInfos() []string {
 	return ret
 }
 
+// GetIssueIndex returns the issue index from action content as string
+func (a *Action) GetIssueIndex() string {
+	return a.GetIssueInfos()[0]
+}
+
+// GetIssueReviewer returns the issue review from the action content
+func (a *Action) GetIssueReviewer() string {
+	return a.GetIssueInfos()[1]
+}
+
+// getIssueIndex returns the issue index from action content as int64
 func (a *Action) getIssueIndex() int64 {
-	infos := a.GetIssueInfos()
-	if len(infos) == 0 {
-		return 0
-	}
-	index, _ := strconv.ParseInt(infos[0], 10, 64)
+	index, _ := strconv.ParseInt(a.GetIssueIndex(), 10, 64)
 	return index
 }
 
