@@ -29,6 +29,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
 	"xorm.io/xorm/schemas"
@@ -294,6 +295,20 @@ func (a *Action) GetRepoAbsoluteLink(ctx context.Context) string {
 	return setting.AppURL + url.PathEscape(a.GetRepoUserName(ctx)) + "/" + url.PathEscape(a.GetRepoName(ctx))
 }
 
+// GetIssueLink returns relative link to action's issue (or pull).
+func (a *Action) GetIssueLink(ctx context.Context) string {
+	if a == nil {
+		return "#"
+	}
+	if err := a.LoadIssue(ctx); err != nil || a.Issue == nil {
+		return "#"
+	}
+	if err := a.Issue.LoadRepo(ctx); err != nil {
+		return "#"
+	}
+	return a.Issue.Link()
+}
+
 func (a *Action) loadComment(ctx context.Context) (err error) {
 	if a.CommentID == 0 || a.Comment != nil {
 		return nil
@@ -322,7 +337,7 @@ func (a *Action) GetCommentHTMLURL(ctx context.Context) string {
 	return a.Issue.HTMLURL()
 }
 
-// GetCommentLink returns link to action comment.
+// GetCommentLink returns relative link to action comment.
 func (a *Action) GetCommentLink(ctx context.Context) string {
 	if a == nil {
 		return "#"
@@ -332,14 +347,7 @@ func (a *Action) GetCommentLink(ctx context.Context) string {
 		return a.Comment.Link(ctx)
 	}
 
-	if err := a.LoadIssue(ctx); err != nil || a.Issue == nil {
-		return "#"
-	}
-	if err := a.Issue.LoadRepo(ctx); err != nil {
-		return "#"
-	}
-
-	return a.Issue.Link()
+	return a.GetIssueLink(ctx)
 }
 
 // GetBranch returns the action's repository branch.
@@ -352,13 +360,23 @@ func (a *Action) GetRefLink(ctx context.Context) string {
 	return git.RefURL(a.GetRepoLink(ctx), a.RefName)
 }
 
+// GetRelease returns the action's release.
+func (a *Action) GetRelease(ctx context.Context) *repo_model.Release {
+	rel, err := repo_model.GetRelease(ctx, a.RepoID, a.RefName)
+	if err != nil {
+		log.Error("GetRelease: %v", err)
+		return nil
+	}
+	return rel
+}
+
 // GetReleaseLink returns the action's release link.
 func (a *Action) GetReleaseLink(ctx context.Context) string {
-	rel, err := repo_model.GetRelease(ctx, a.RepoID, a.RefName)
-	if rel == nil || err != nil {
+	rel := a.GetRelease(ctx)
+	if rel != nil {
 		return "#"
 	}
-	err = rel.LoadAttributes(ctx)
+	err := rel.LoadAttributes(ctx)
 	if err != nil {
 		return "#"
 	}
@@ -414,17 +432,12 @@ func (a *Action) GetIssueInfos() []string {
 	return ret
 }
 
-// GetIssueIndex returns the issue index from action content as string
+// GetIssueIndex returns the issue (or pull) index from action content as string
 func (a *Action) GetIssueIndex() string {
 	return a.GetIssueInfos()[0]
 }
 
-// GetIssueReviewer returns the issue review from the action content
-func (a *Action) GetIssueReviewer() string {
-	return a.GetIssueInfos()[1]
-}
-
-// getIssueIndex returns the issue index from action content as int64
+// getIssueIndex returns the issue (or pull) index from action content as int64
 func (a *Action) getIssueIndex() int64 {
 	index, _ := strconv.ParseInt(a.GetIssueIndex(), 10, 64)
 	return index
@@ -443,6 +456,18 @@ func (a *Action) LoadIssue(ctx context.Context) error {
 		a.Issue.Repo = a.Repo
 	}
 	return nil
+}
+
+func truncate(content string) string {
+	truncatedContent, truncatedRight := util.SplitStringAtByteN(content, 200)
+	if truncatedRight != "" {
+		// in case the content is in a Latin family language, we remove the last broken word.
+		lastSpaceIdx := strings.LastIndex(truncatedContent, " ")
+		if lastSpaceIdx != -1 && (len(truncatedContent)-lastSpaceIdx < 15) {
+			truncatedContent = truncatedContent[:lastSpaceIdx] + "…"
+		}
+	}
+	return truncatedContent
 }
 
 // GetIssueTitle returns the title of first issue associated with the action.
@@ -467,6 +492,42 @@ func (a *Action) GetIssueContent(ctx context.Context) string {
 		return "<Content not found>"
 	}
 	return a.Issue.Content
+}
+
+// GetIssueContentTruncated returns content of action's issue, truncated to 200 characters.
+func (a *Action) GetIssueContentTruncated(ctx context.Context) string {
+	return truncate(a.GetIssueContent(ctx))
+}
+
+// GetCommentContent returns content of action's comment.
+func (a *Action) GetCommentContent(ctx context.Context) string {
+	if err := a.loadComment(ctx); err != nil {
+		log.Error("LoadComment: %v", err)
+		return "<500 when get comment>"
+	}
+	if a.Comment == nil {
+		return "<Content not found>"
+	}
+	return a.Comment.Content
+}
+
+// GetCommentContentTruncated returns content of action's comment, truncated to 200 characters.
+func (a *Action) GetCommentContentTruncated(ctx context.Context) string {
+	return truncate(a.GetCommentContent(ctx))
+}
+
+// GetReleaseContent returns content of action's comment.
+func (a *Action) GetReleaseContent(ctx context.Context) string {
+	rel := a.GetRelease(ctx)
+	if rel == nil {
+		return "<Release not found>"
+	}
+	return rel.Note
+}
+
+// GetReleaseContentTruncated returns content of action's release, truncated to 200 characters.
+func (a *Action) GetReleaseContentTruncated(ctx context.Context) string {
+	return truncate(a.GetReleaseContent(ctx))
 }
 
 // GetFeedsOptions options for retrieving feeds
