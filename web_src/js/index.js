@@ -33,7 +33,7 @@ import {
   initRepoPullRequestAllowMaintainerEdit,
   initRepoPullRequestReview, initRepoIssueSidebarList, initArchivedLabelHandler,
 } from './features/repo-issue.js';
-import {initRepoEllipsisButton, initCommitStatuses} from './features/repo-commit.js';
+import {initRepoEllipsisButton, initCommitStatuses, initCommitNotes} from './features/repo-commit.js';
 import {
   initFootLanguageMenu,
   initGlobalButtonClickOnEnter,
@@ -178,6 +178,7 @@ onDomReady(() => {
   initRepoRecentCommits();
 
   initCommitStatuses();
+  initCommitNotes();
   initCaptcha();
 
   initUserAuthOauth2();

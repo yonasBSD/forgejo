@@ -219,4 +219,7 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	DispatchWorkflowOption api.DispatchWorkflowOption
+
+	// in:body
+	NoteOptions api.NoteOptions
 }
