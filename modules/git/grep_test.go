@@ -52,27 +52,27 @@ func TestGrepSearch(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []*GrepResult{
 		{
-			Filename:    "i-am-a-python.p",
-			LineNumbers: []int{1},
-			LineCodes:   []string{"## This is a simple file to do a hello world"},
+			Filename:          "i-am-a-python.p",
+			LineNumbers:       []int{1},
+			LineCodes:         []string{"## This is a simple file to do a hello world"},
 			HighlightedRanges: [][3]int{{0, 39, 44}},
 		},
 		{
-			Filename:    "java-hello/main.java",
-			LineNumbers: []int{1},
-			LineCodes:   []string{"public class HelloWorld"},
+			Filename:          "java-hello/main.java",
+			LineNumbers:       []int{1},
+			LineCodes:         []string{"public class HelloWorld"},
 			HighlightedRanges: [][3]int{{0, 18, 23}},
 		},
 		{
-			Filename:    "main.vendor.java",
-			LineNumbers: []int{1},
-			LineCodes:   []string{"public class HelloWorld"},
+			Filename:          "main.vendor.java",
+			LineNumbers:       []int{1},
+			LineCodes:         []string{"public class HelloWorld"},
 			HighlightedRanges: [][3]int{{0, 18, 23}},
 		},
 		{
-			Filename:    "python-hello/hello.py",
-			LineNumbers: []int{1},
-			LineCodes:   []string{"## This is a simple file to do a hello world"},
+			Filename:          "python-hello/hello.py",
+			LineNumbers:       []int{1},
+			LineCodes:         []string{"## This is a simple file to do a hello world"},
 			HighlightedRanges: [][3]int{{0, 39, 44}},
 		},
 	}, res)

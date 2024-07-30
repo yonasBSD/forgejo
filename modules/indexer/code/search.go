@@ -12,7 +12,6 @@ import (
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/indexer/code/internal"
 	"code.gitea.io/gitea/modules/timeutil"
-
 	"code.gitea.io/gitea/services/gitdiff"
 )
 
