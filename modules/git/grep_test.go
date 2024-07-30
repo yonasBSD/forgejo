@@ -24,14 +24,16 @@ func TestGrepSearch(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []*GrepResult{
 		{
-			Filename:    "java-hello/main.java",
-			LineNumbers: []int{3},
-			LineCodes:   []string{" public static void main(String[] args)"},
+			Filename:          "java-hello/main.java",
+			LineNumbers:       []int{3},
+			LineCodes:         []string{" public static void main(String[] args)"},
+			HighlightedRanges: [][3]int{{0, 15, 19}},
 		},
 		{
-			Filename:    "main.vendor.java",
-			LineNumbers: []int{3},
-			LineCodes:   []string{" public static void main(String[] args)"},
+			Filename:          "main.vendor.java",
+			LineNumbers:       []int{3},
+			LineCodes:         []string{" public static void main(String[] args)"},
+			HighlightedRanges: [][3]int{{0, 15, 19}},
 		},
 	}, res)
 
@@ -39,9 +41,10 @@ func TestGrepSearch(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []*GrepResult{
 		{
-			Filename:    "java-hello/main.java",
-			LineNumbers: []int{3},
-			LineCodes:   []string{" public static void main(String[] args)"},
+			Filename:          "java-hello/main.java",
+			LineNumbers:       []int{3},
+			LineCodes:         []string{" public static void main(String[] args)"},
+			HighlightedRanges: [][3]int{{0, 15, 19}},
 		},
 	}, res)
 
@@ -52,21 +55,25 @@ func TestGrepSearch(t *testing.T) {
 			Filename:    "i-am-a-python.p",
 			LineNumbers: []int{1},
 			LineCodes:   []string{"## This is a simple file to do a hello world"},
+			HighlightedRanges: [][3]int{{0, 39, 44}},
 		},
 		{
 			Filename:    "java-hello/main.java",
 			LineNumbers: []int{1},
 			LineCodes:   []string{"public class HelloWorld"},
+			HighlightedRanges: [][3]int{{0, 18, 23}},
 		},
 		{
 			Filename:    "main.vendor.java",
 			LineNumbers: []int{1},
 			LineCodes:   []string{"public class HelloWorld"},
+			HighlightedRanges: [][3]int{{0, 18, 23}},
 		},
 		{
 			Filename:    "python-hello/hello.py",
 			LineNumbers: []int{1},
 			LineCodes:   []string{"## This is a simple file to do a hello world"},
+			HighlightedRanges: [][3]int{{0, 39, 44}},
 		},
 	}, res)
 
