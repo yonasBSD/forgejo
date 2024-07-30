@@ -427,11 +427,11 @@ func TestAPIDuplicateAssetRelease(t *testing.T) {
 
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("attachment", filename)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	_, err = io.Copy(part, &buff)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = writer.Close()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	req := NewRequestWithBody(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/releases/%d/assets?name=test-asset&external_url=https%%3A%%2F%%2Fforgejo.org%%2F", owner.Name, repo.Name, r.ID), body).
 		AddTokenAuth(token)
