@@ -1549,8 +1549,8 @@ func registerRoutes(m *web.Route) {
 			m.Get("/graph", repo.Graph)
 			m.Get("/commit/{sha:([a-f0-9]{4,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
 			m.Get("/commit/{sha:([a-f0-9]{4,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
-			m.Post("/commit/{sha:([a-f0-9]{7,40})$}/notes", reqSignIn, reqRepoCodeWriter, web.Bind(forms.CommitNotesForm{}), repo.SetCommitNotes)
-			m.Get("/commit/{sha:([a-f0-9]{7,40})$}/notes/remove", reqSignIn, reqRepoCodeWriter, repo.RemoveCommitNotes)
+			m.Post("/commit/{sha:([a-f0-9]{4,64})$}/notes", reqSignIn, reqRepoCodeWriter, web.Bind(forms.CommitNotesForm{}), repo.SetCommitNotes)
+			m.Get("/commit/{sha:([a-f0-9]{4,64})$}/notes/remove", reqSignIn, reqRepoCodeWriter, repo.RemoveCommitNotes)
 			m.Get("/cherry-pick/{sha:([a-f0-9]{4,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
 		}, repo.MustBeNotEmpty, context.RepoRef(), reqRepoCodeReader)
 
