@@ -72,8 +72,8 @@ func writeStrings(buf *bytes.Buffer, strs ...string) error {
 }
 
 const (
-	highlightTagStart = "<span class=\"added-code\">"
-	highlightTagEnd   = "</span><!-- <span class=\"added-code\"> -->"
+	highlightTagStart = "<span class=\"search-highlight\">"
+	highlightTagEnd   = "</span><!-- <span class=\"search-highlight\"> -->"
 )
 
 func HighlightSearchResultCode(filename string, lineNums []int, highlightRanges [][3]int, code string) []ResultLine {

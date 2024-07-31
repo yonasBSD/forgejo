@@ -26,6 +26,6 @@ func TestExploreCodeSearchIndexer(t *testing.T) {
 	assert.EqualValues(t, 0, msg.Length())
 
 	doc.Find(".file-body").Each(func(i int, sel *goquery.Selection) {
-		assert.Positive(t, sel.Find(".code-inner").Find(".added-code").Length(), 0)
+		assert.Positive(t, sel.Find(".code-inner").Find(".search-highlight").Length(), 0)
 	})
 }
