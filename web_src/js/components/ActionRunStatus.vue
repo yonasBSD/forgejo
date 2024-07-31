@@ -34,6 +34,7 @@ export default {
     <SvgIcon name="octicon-clock" class="text yellow" :size="size" :class-name="className" v-else-if="status === 'waiting'"/>
     <SvgIcon name="octicon-blocked" class="text yellow" :size="size" :class-name="className" v-else-if="status === 'blocked'"/>
     <SvgIcon name="octicon-meter" class="text yellow" :size="size" :class-name="'job-status-rotate ' + className" v-else-if="status === 'running'"/>
-    <SvgIcon name="octicon-x-circle-fill" class="text red" :size="size" v-else-if="['failure', 'cancelled', 'unknown'].includes(status)"/>
+    <SvgIcon name="octicon-stop" class="text grey" :size="size" :class-name="className" v-else-if="status === 'cancelled'"/>
+    <SvgIcon name="octicon-x-circle-fill" class="text red" :size="size" v-else-if="['failure', 'unknown'].includes(status)"/>
   </span>
 </template>

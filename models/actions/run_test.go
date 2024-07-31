@@ -15,7 +15,7 @@ func TestJobStatusAggregation(t *testing.T) {
 		{
 			desc:           "All job skipped - aggregate skip",
 			runStatuses:    []Status{StatusSkipped},
-			expectedStatus: StatusSuccess, // Should be Skipped
+			expectedStatus: StatusSkipped,
 		},
 		{
 			desc:           "Job success, no fails - aggregate success",
@@ -30,7 +30,7 @@ func TestJobStatusAggregation(t *testing.T) {
 		{
 			desc:           "Any job cancelled - aggregate cancelled",
 			runStatuses:    []Status{StatusSuccess, StatusFailure, StatusCancelled, StatusSkipped},
-			expectedStatus: StatusFailure, // Should be Cancelled
+			expectedStatus: StatusCancelled,
 		},
 		{
 			desc:           "Any job running - aggregate running",
