@@ -152,19 +152,34 @@ func UpdateRunJob(ctx context.Context, job *ActionRunJob, cond builder.Cond, col
 	return affected, nil
 }
 
+// combine statuses of the runs into a single one in following order:
+// Unknown, Skipped, Success, Failure, Cancelled, Blocked, Waiting, Running
+// Returns last encountered status from the list above
 func aggregateJobStatus(jobs []*ActionRunJob) Status {
-	// Since the status is mostly in order except for the skipped status, use unknown as a workaround
+	// Start with most basic priority - 0
 	status := StatusUnknown
+	// setup flags for out of order statuses
+	hasSkip, hasBlock := false, false
 	for _, job := range jobs {
-		if job.Status.IsSkipped() {
+		// ignore skips and blocks as they are out of order
+		switch job.Status {
+		case StatusSkipped:
+			hasSkip = true
 			continue
-		}
-
-		if job.Status > status {
-			status = job.Status
+		case StatusBlocked:
+			hasBlock = true
+			continue
+		default:
+			// remaining states follow comparable ordering
+			if job.Status > status {
+				status = job.Status
+			}
 		}
 	}
-	if status.IsUnknown() {
+	// Blocked is more accurate to cancelled and higher on priority but on par waiting
+	if status < StatusWaiting && hasBlock {
+		status = StatusBlocked
+	} else if status.IsUnknown() && hasSkip { // Since unknown is the least significant status, skip overrides it
 		status = StatusSkipped
 	}
 	return status
