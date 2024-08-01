@@ -15,7 +15,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/sassoftware/go-rpmutils"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignPackage(t *testing.T) {
@@ -48,25 +48,25 @@ Mu0UFYgZ/bYnuvn/vz4wtCz8qMwsHUvP0PX3tbYFUctAPdrY6tiiDtcCddDECahx7SuVNP5dpmb5
 7tpp/pEjDS7cGPZ6BY430+7danDq6f42Nw49b9F7zp6BiKpJb9s5P0AYN2+L159cnrur636rx+v1
 7ae1K28QbMMcqI8CqwIrgwg9nTOp8Oj9q81plUY7ZuwXN8Vvs8wbAAA=`
 	rpmPackageContent, err := base64.StdEncoding.DecodeString(base64RpmPackageContent)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	zr, err := gzip.NewReader(bytes.NewReader(rpmPackageContent))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	content, err := io.ReadAll(zr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	privateKey, publicKey, err := generateKeypair()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	buf, err := packages.CreateHashedBufferFromReader(bytes.NewReader(content))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	body, err := SignPackage(buf, privateKey)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	signedBody, err := io.ReadAll(body)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	pub, err := openpgp.ReadArmoredKeyRing(strings.NewReader(publicKey))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	_, sigs, err := rpmutils.Verify(bytes.NewBuffer(signedBody), pub)
-	assert.NoError(t, err)
-	assert.NotEqual(t, len(sigs), 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, sigs)
 	_, sigs, err = rpmutils.Verify(bytes.NewBuffer(content), pub)
-	assert.NoError(t, err)
-	assert.Equal(t, len(sigs), 0)
+	require.NoError(t, err)
+	require.Empty(t, sigs)
 }
