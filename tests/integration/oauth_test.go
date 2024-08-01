@@ -753,9 +753,9 @@ func TestOAuthIntrospection(t *testing.T) {
 	}
 	parsed := new(response)
 
-	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), parsed))
-	assert.True(t, len(parsed.AccessToken) > 10)
-	assert.True(t, len(parsed.RefreshToken) > 10)
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), parsed))
+	assert.Greater(t, len(parsed.AccessToken), 10)
+	assert.Greater(t, len(parsed.RefreshToken), 10)
 
 	// successful request with a valid client_id/client_secret and a valid token
 	req = NewRequestWithValues(t, "POST", "/login/oauth/introspect", map[string]string{
@@ -769,7 +769,7 @@ func TestOAuthIntrospection(t *testing.T) {
 		Username string `json:"username"`
 	}
 	introspectParsed := new(introspectResponse)
-	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), introspectParsed))
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), introspectParsed))
 	assert.True(t, introspectParsed.Active)
 	assert.Equal(t, "user1", introspectParsed.Username)
 
@@ -780,7 +780,7 @@ func TestOAuthIntrospection(t *testing.T) {
 	req.Header.Add("Authorization", "Basic ZGE3ZGEzYmEtOWExMy00MTY3LTg1NmYtMzg5OWRlMGIwMTM4OjRNSzhOYTZSNTVzbWRDWTBXdUNDdW1aNmhqUlBuR1k1c2FXVlJISGpKaUE9")
 	resp = MakeRequest(t, req, http.StatusOK)
 	introspectParsed = new(introspectResponse)
-	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), introspectParsed))
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), introspectParsed))
 	assert.False(t, introspectParsed.Active)
 
 	// unsuccessful request with an invalid client_id/client_secret
