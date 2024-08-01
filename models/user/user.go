@@ -661,6 +661,11 @@ func createUser(ctx context.Context, u *User, createdByAdmin bool, overwriteDefa
 		return err
 	}
 
+	return createUserWithoutUsernameVerificatrion(ctx, u, createdByAdmin, overwriteDefault...)
+}
+
+// createUserWithoutUsernameVerificatrion creates record of a new user without checking usernames for illegal characters
+func createUserWithoutUsernameVerificatrion(ctx context.Context, u *User, createdByAdmin bool, overwriteDefault ...*CreateUserOverwriteOptions) (err error) {
 	// set system defaults
 	u.KeepEmailPrivate = setting.Service.DefaultKeepEmailPrivate
 	u.Visibility = setting.Service.DefaultUserVisibilityMode

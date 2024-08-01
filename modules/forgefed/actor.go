@@ -91,13 +91,11 @@ func (id PersonID) AsWebfinger() string {
 }
 
 func (id PersonID) AsLoginName() string {
-	result := fmt.Sprintf("%s%s", strings.ToLower(id.ID), id.HostSuffix())
-	return result
+	return strings.ToLower((id.ID))
 }
 
 func (id PersonID) HostSuffix() string {
-	result := fmt.Sprintf("-%s", strings.ToLower(id.Host))
-	return result
+	return strings.ToLower((id.Host))
 }
 
 func (id PersonID) Validate() []string {
