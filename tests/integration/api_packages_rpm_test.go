@@ -21,6 +21,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	rpm_module "code.gitea.io/gitea/modules/packages/rpm"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/tests"
 
@@ -431,6 +432,12 @@ gpgkey=%sapi/packages/%s/rpm/repository.key`,
 				req = NewRequest(t, "DELETE", fmt.Sprintf("%s/package/%s/%s/%s", groupURL, packageName, packageVersion, packageArchitecture)).
 					AddBasicAuth(user.Name)
 				MakeRequest(t, req, http.StatusNotFound)
+			})
+
+			t.Run("Sign", func(t *testing.T) {
+				defer test.MockVariableValue(&setting.Packages.RPMSignEnabled, true)()
+				// todo: testing ...
+
 			})
 		})
 	}
