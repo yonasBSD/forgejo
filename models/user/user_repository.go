@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/validation"
 )
@@ -32,7 +33,7 @@ func CreateFederatedUser(ctx context.Context, user *User, federatedUser *Federat
 	}
 	defer committer.Close()
 
-	if err := CreateUser(ctx, user, &overwrite); err != nil {
+	if err := createUserWithoutUsernameVerificatrion(ctx, user, true, &overwrite); err != nil {
 		return err
 	}
 
@@ -80,4 +81,20 @@ func FindFederatedUser(ctx context.Context, externalID string,
 func DeleteFederatedUser(ctx context.Context, userID int64) error {
 	_, err := db.GetEngine(ctx).Delete(&FederatedUser{UserID: userID})
 	return err
+}
+
+func FindFederatedUsers(ctx context.Context, page int) ([]*FederatedUser, error) {
+	limit := 1
+	offset := page * limit
+	var users []*FederatedUser
+
+	err := db.GetEngine(ctx).
+		Table("federated_user").
+		Limit(limit, offset).
+		Find(&users)
+	if err != nil {
+		log.Trace("Error: FindFederatedUsers: %w", err)
+		return nil, err
+	}
+	return users, nil
 }

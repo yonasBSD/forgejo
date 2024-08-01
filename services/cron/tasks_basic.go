@@ -20,6 +20,7 @@ import (
 	packages_cleanup_service "code.gitea.io/gitea/services/packages/cleanup"
 	repo_service "code.gitea.io/gitea/services/repository"
 	archiver_service "code.gitea.io/gitea/services/repository/archiver"
+	user_service "code.gitea.io/gitea/services/user"
 )
 
 func registerUpdateMirrorTask() {
@@ -190,4 +191,19 @@ func initBasicTasks() {
 	if setting.Actions.Enabled {
 		registerActionsCleanup()
 	}
+	if setting.Federation.Enabled {
+		registerUpdateRemotePersons()
+	}
+}
+
+func registerUpdateRemotePersons() {
+	RegisterTaskFatal("remote_actor_update", &OlderThanConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    true,
+			RunAtStart: true,
+			Schedule:   "@every 6h",
+		},
+	}, func(ctx context.Context, _ *user_model.User, config Config) error {
+		return user_service.UpdatePersonActor(ctx)
+	})
 }
