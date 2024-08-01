@@ -51,7 +51,7 @@ func UpdatePersonActor(ctx context.Context) error {
 			opts := UpdateOptions{}
 			UpdateUser(ctx, u, &opts)
 
-			avatar, err := federation.GetPersonAvatar(ctx, person)
+			avatar, err := federation.GetPersonAvatar(person)
 			if err != nil {
 				log.Error("Got error while fetching avatar: %w", err)
 				return err

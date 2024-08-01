@@ -4,7 +4,6 @@
 package federation
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -43,7 +42,7 @@ func GetActor(id string) (*ap.Actor, error) {
 	return actorObj, nil
 }
 
-func GetPersonAvatar(ctx context.Context, person *ap.Person) ([]byte, error) {
+func GetPersonAvatar(person *ap.Person) ([]byte, error) {
 	avatarObj := new(ap.Image)
 	_, err := ap.CopyItemProperties(avatarObj, person.Icon)
 	if err != nil {
