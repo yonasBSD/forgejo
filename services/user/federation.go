@@ -6,6 +6,7 @@ import (
 
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/services/federation"
 )
 
@@ -23,7 +24,7 @@ func UpdatePersonActor(ctx context.Context) error {
 
 		for _, f := range federatedUsers {
 			log.Info("Updating users, got %s", f.ExternalID)
-			u, err := user.GetUserByID(ctx, f.ID)
+			u, err := user.GetUserByID(ctx, f.UserID)
 			if err != nil {
 				log.Error("Got error while getting user: %w", err)
 				return err
@@ -39,17 +40,49 @@ func UpdatePersonActor(ctx context.Context) error {
 			if err != nil {
 				log.Error("Updating federated users: %w", err)
 				return err
-			}
-			u.LoginName = person.PreferredUsername.String()
-			u.Name = fmt.Sprintf("@%v@%v", person.PreferredUsername.String(), personUrl.Host)
-			if len(person.Name) == 0 {
-				u.FullName = u.Name
-			} else {
-				u.FullName = person.Name.String()
+
 			}
 
-			opts := UpdateOptions{}
-			UpdateUser(ctx, u, &opts)
+			name := fmt.Sprintf("@%v@%v", person.PreferredUsername.String(), personUrl.Host)
+
+			var fullname string
+			if len(person.Name) == 0 {
+				fullname = name
+			} else {
+				fullname = person.Name.String()
+			}
+
+			if u.Name != name {
+				log.Info("Updating username from %s to :%s", u.Name, name)
+				err = renameUserWithoutNameCheck(ctx, u, name)
+				if err != nil {
+					log.Error("Updating federated users: %w", err)
+					return err
+				}
+			}
+
+			if u.FullName != fullname {
+				err = UpdateUser(ctx, u,
+					&UpdateOptions{
+						FullName: optional.Option[string]{fullname},
+					})
+				if err != nil {
+					log.Error("Updating federated users: %w", err)
+					return err
+				}
+			}
+
+			if u.LoginName != name {
+				log.Info("Updating loginname")
+				err = UpdateAuth(ctx, u, &UpdateAuthOptions{
+					LoginName: optional.Option[string]{name},
+				})
+				if err != nil {
+					log.Error("Updating federated users: %w", err)
+					return err
+
+				}
+			}
 
 			avatar, err := federation.GetPersonAvatar(person)
 			if err != nil {
