@@ -49,6 +49,11 @@ func RenameUser(ctx context.Context, u *user_model.User, newUserName string) err
 		return err
 	}
 
+	return renameUserWithoutNameCheck(ctx, u, newUserName)
+}
+
+// RenameUser renames a user without checking for illegal characters in username
+func renameUserWithoutNameCheck(ctx context.Context, u *user_model.User, newUserName string) error {
 	onlyCapitalization := strings.EqualFold(newUserName, u.Name)
 	oldUserName := u.Name
 
