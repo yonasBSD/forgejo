@@ -20,31 +20,43 @@ func TestGrepSearch(t *testing.T) {
 	require.NoError(t, err)
 	defer repo.Close()
 
-	res, err := GrepSearch(context.Background(), repo, "void", GrepOptions{})
+	res, err := GrepSearch(context.Background(), repo, "public", GrepOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, []*GrepResult{
 		{
-			Filename:          "java-hello/main.java",
-			LineNumbers:       []int{3},
-			LineCodes:         []string{" public static void main(String[] args)"},
-			HighlightedRanges: [][3]int{{0, 15, 19}},
+			Filename:    "java-hello/main.java",
+			LineNumbers: []int{1, 3},
+			LineCodes: []string{
+				"public class HelloWorld",
+				" public static void main(String[] args)",
+			},
+			HighlightedRanges: [][3]int{{0, 0, 6}, {1, 1, 7}},
 		},
 		{
-			Filename:          "main.vendor.java",
-			LineNumbers:       []int{3},
-			LineCodes:         []string{" public static void main(String[] args)"},
-			HighlightedRanges: [][3]int{{0, 15, 19}},
+			Filename:    "main.vendor.java",
+			LineNumbers: []int{1, 3},
+			LineCodes: []string{
+				"public class HelloWorld",
+				" public static void main(String[] args)",
+			},
+			HighlightedRanges: [][3]int{{0, 0, 6}, {1, 1, 7}},
 		},
 	}, res)
 
-	res, err = GrepSearch(context.Background(), repo, "void", GrepOptions{MaxResultLimit: 1})
+	res, err = GrepSearch(context.Background(), repo, "void", GrepOptions{MaxResultLimit: 1, ContextLineNumber: 2})
 	require.NoError(t, err)
 	assert.Equal(t, []*GrepResult{
 		{
-			Filename:          "java-hello/main.java",
-			LineNumbers:       []int{3},
-			LineCodes:         []string{" public static void main(String[] args)"},
-			HighlightedRanges: [][3]int{{0, 15, 19}},
+			Filename:    "java-hello/main.java",
+			LineNumbers: []int{1, 2, 3, 4, 5},
+			LineCodes: []string{
+				"public class HelloWorld",
+				"{",
+				" public static void main(String[] args)",
+				" {",
+				"  System.out.println(\"Hello world!\");",
+			},
+			HighlightedRanges: [][3]int{{2, 15, 19}},
 		},
 	}, res)
 
