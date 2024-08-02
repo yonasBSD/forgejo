@@ -85,6 +85,4 @@ func TestUpdateFederationUser(t *testing.T) {
 
 	updatedUser, _, _ := user_model.FindFederatedUser(ctx, actorID, federationHost.ID)
 	assert.Equal(t, updatedUser.Name, fmt.Sprintf("@%s@example.com", username))
-
-	DeleteUser(ctx, updatedUser, false)
 }
