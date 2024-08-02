@@ -23,7 +23,6 @@ func UpdatePersonActor(ctx context.Context) error {
 		}
 
 		for _, f := range federatedUsers {
-			log.Info("Updating users, got %s", f.ExternalID)
 			u, err := user.GetUserByID(ctx, f.UserID)
 			if err != nil {
 				log.Error("Got error while getting user: %w", err)
@@ -53,7 +52,6 @@ func UpdatePersonActor(ctx context.Context) error {
 			}
 
 			if u.Name != name {
-				log.Info("Updating username from %s to :%s", u.Name, name)
 				err = renameUserWithoutNameCheck(ctx, u, name)
 				if err != nil {
 					log.Error("Updating federated users: %w", err)
@@ -73,7 +71,6 @@ func UpdatePersonActor(ctx context.Context) error {
 			}
 
 			if u.LoginName != name {
-				log.Info("Updating loginname")
 				err = UpdateAuth(ctx, u, &UpdateAuthOptions{
 					LoginName: optional.Option[string]{name},
 				})

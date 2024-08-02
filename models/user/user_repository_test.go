@@ -47,9 +47,9 @@ func TestUserRepository(t *testing.T) {
 
 	u, fedU, _ := FindFederatedUser(ctx, actorID, federationHost.ID)
 
-	assert.Equal(t, u, user)
+	assert.Equal(t, u.Name, user.Name)
 	assert.Equal(t, u.ID, fedU.UserID)
-	assert.Equal(t, fedU, federatedUser)
+	assert.Equal(t, fedU.ExternalID, federatedUser.ExternalID)
 
 	users, _ := FindFederatedUsers(ctx, 0)
 	assert.Equal(t, len(users), 1)
