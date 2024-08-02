@@ -35,14 +35,13 @@ func UpdatePersonActor(ctx context.Context) error {
 				return err
 			}
 
-			personUrl, err := person.ID.URL()
+			personURL, err := person.ID.URL()
 			if err != nil {
 				log.Error("Updating federated users: %w", err)
 				return err
-
 			}
 
-			name := fmt.Sprintf("@%v@%v", person.PreferredUsername.String(), personUrl.Host)
+			name := fmt.Sprintf("@%v@%v", person.PreferredUsername.String(), personURL.Host)
 
 			var fullname string
 			if len(person.Name) == 0 {
@@ -77,7 +76,6 @@ func UpdatePersonActor(ctx context.Context) error {
 				if err != nil {
 					log.Error("Updating federated users: %w", err)
 					return err
-
 				}
 			}
 

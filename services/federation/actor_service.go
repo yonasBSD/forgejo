@@ -4,10 +4,10 @@
 package federation
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 
 	ap "github.com/go-ap/activitypub"

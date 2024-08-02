@@ -6,7 +6,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/modules/optional"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,11 +51,11 @@ func TestUserRepository(t *testing.T) {
 	assert.Equal(t, fedU.ExternalID, federatedUser.ExternalID)
 
 	users, _ := FindFederatedUsers(ctx, 0)
-	assert.Equal(t, len(users), 1)
-	foundUser := optional.Option[FederatedUser]{}
+	assert.Len(t, users, 1)
+	var foundUser FederatedUser
 	for _, v := range users {
 		if v.UserID == u.ID {
-			foundUser = optional.Option[FederatedUser]{*v}
+			foundUser = *v
 		}
 	}
 
