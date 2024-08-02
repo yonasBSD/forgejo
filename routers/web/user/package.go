@@ -4,6 +4,9 @@
 package user
 
 import (
+	"fmt"
+	"net/http"
+
 	"code.gitea.io/gitea/models/db"
 	org_model "code.gitea.io/gitea/models/organization"
 	packages_model "code.gitea.io/gitea/models/packages"
@@ -27,8 +30,6 @@ import (
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	packages_service "code.gitea.io/gitea/services/packages"
-	"fmt"
-	"net/http"
 )
 
 const (
