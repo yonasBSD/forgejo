@@ -36,9 +36,7 @@ func TestTraceGrpcExporter(t *testing.T) {
 	defer collector.GracefulStop()
 	ln, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
-	defer func() {
-		ln.Close()
-	}()
+	defer ln.Close()
 	go collector.Serve(ln)
 
 	traceEndpoint, err := url.Parse("https://" + ln.Addr().String())

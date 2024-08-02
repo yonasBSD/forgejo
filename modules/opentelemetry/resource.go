@@ -47,6 +47,7 @@ func parseDecoderOpts() []resource.Option {
 			opts = append(opts, resource.WithOS())
 		case decoderHost:
 			opts = append(opts, resource.WithHost())
+		case "": // Don't warn on empty string
 		default:
 			log.Warn("Ignoring unknown resource decoder option: %s", v)
 		}
