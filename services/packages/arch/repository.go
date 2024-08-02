@@ -18,6 +18,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	packages_module "code.gitea.io/gitea/modules/packages"
 	arch_module "code.gitea.io/gitea/modules/packages/arch"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	packages_service "code.gitea.io/gitea/services/packages"
 
@@ -286,7 +287,12 @@ func GetOrCreateKeyPair(ctx context.Context, ownerID int64) (string, string, err
 	}
 
 	if priv == "" || pub == "" {
-		priv, pub, err = generateKeypair()
+		user, err := user_model.GetUserByID(ctx, ownerID)
+		if err != nil && !errors.Is(err, util.ErrNotExist) {
+			return "", "", err
+		}
+
+		priv, pub, err = generateKeypair(user.Name)
 		if err != nil {
 			return "", "", err
 		}
@@ -303,10 +309,13 @@ func GetOrCreateKeyPair(ctx context.Context, ownerID int64) (string, string, err
 	return priv, pub, nil
 }
 
-func generateKeypair() (string, string, error) {
-	e, err := openpgp.NewEntity("Arch Package Signer", "Arch Registry", "arch@localhost", &packet.Config{
-		RSABits: 4096,
-	})
+func generateKeypair(owner string) (string, string, error) {
+	e, err := openpgp.NewEntity(
+		owner,
+		"Arch Package signature only",
+		fmt.Sprintf("%s@noreply.%s", owner, setting.Packages.RegistryHost), &packet.Config{
+			RSABits: 4096,
+		})
 	if err != nil {
 		return "", "", err
 	}

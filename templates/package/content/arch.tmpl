@@ -9,10 +9,7 @@
 pacman-key --add sign.gpg
 
 # {{ctx.Locale.Tr "packages.arch.pacman.helper.gpg.id"}}
-pacman-key --lsign-key "Key ID"</code></pre>
-				<p>
-					{{ctx.Locale.Tr "packages.arch.pacman.helper.pacman" "https://wiki.archlinux.org/title/pacman" "https://wiki.archlinux.org/title/Pacman/Package_signing"}}
-				</p>
+pacman-key --lsign-key {key id}</code></pre>
 			</div>
 		</div>
 		<div class="field">
@@ -45,7 +42,7 @@ Server = <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.
 		</div>
 		<div class="field">
 			<label>{{ctx.Locale.Tr "packages.registry.documentation" "Arch"
-				"https://docs.gitea.com/usage/packages/arch/"}}</label>
+				"https://forgejo.org/docs/latest/user/packages/arch/"}}</label>
 		</div>
 	</div>
 </div>
