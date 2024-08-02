@@ -4,9 +4,6 @@
 package user
 
 import (
-	"net/http"
-	"net/url"
-
 	"code.gitea.io/gitea/models/db"
 	org_model "code.gitea.io/gitea/models/organization"
 	packages_model "code.gitea.io/gitea/models/packages"
@@ -30,6 +27,8 @@ import (
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	packages_service "code.gitea.io/gitea/services/packages"
+	"fmt"
+	"net/http"
 )
 
 const (
@@ -203,8 +202,8 @@ func ViewPackageVersion(ctx *context.Context) {
 		ctx.Data["Repositories"] = util.Sorted(repositories.Values())
 		ctx.Data["Architectures"] = util.Sorted(architectures.Values())
 	case packages_model.TypeArch:
-		registryAppURL, _ := url.Parse(setting.AppURL)
-		ctx.Data["RegistryHost"] = registryAppURL.Host
+		ctx.Data["RegistryHost"] = setting.Packages.RegistryHost
+		ctx.Data["SignMail"] = fmt.Sprintf("%s@noreply.%s", ctx.Package.Owner.Name, setting.Packages.RegistryHost)
 		groups := make(container.Set[string])
 		for _, f := range pd.Files {
 			for _, pp := range f.Properties {

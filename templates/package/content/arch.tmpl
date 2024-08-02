@@ -7,9 +7,7 @@
 			<div class="markup">
 				<pre class="code-block"><code>wget -O sign.gpg <origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/arch/repository.key"></origin-url>
 pacman-key --add sign.gpg
-
-# {{ctx.Locale.Tr "packages.arch.pacman.helper.gpg.id"}}
-pacman-key --lsign-key {key id}</code></pre>
+pacman-key --lsign-key '{{ $.SignMail }}'</code></pre>
 			</div>
 		</div>
 		<div class="field">
