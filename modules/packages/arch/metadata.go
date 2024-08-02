@@ -148,14 +148,12 @@ func ParsePackageInfo(r io.Reader) (*Package, error) {
 			continue
 		}
 
-		i := strings.IndexRune(line, '=')
-		if i == -1 {
+		key, value, find := strings.Cut(line, "=")
+		if !find {
 			continue
 		}
-
-		key := strings.TrimSpace(line[:i])
-		value := strings.TrimSpace(line[i+1:])
-
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
 		switch key {
 		case "pkgname":
 			p.Name = value

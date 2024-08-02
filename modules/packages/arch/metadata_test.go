@@ -97,12 +97,11 @@ arch = x86_64
 
 		archive := archiver.NewTarZstd()
 		archive.Create(&buf)
-
 		require.NoError(t, archive.Close())
+
 		reader, err := packages.CreateHashedBufferFromReader(&buf)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
+
 		defer reader.Close()
 		_, err = ParsePackage(reader)
 
@@ -128,9 +127,8 @@ arch = x86_64
 		})
 		require.NoError(t, errors.Join(pfile.Close(), archive.Close(), err))
 		reader, err := packages.CreateHashedBufferFromReader(&buf)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
+
 		defer reader.Close()
 		_, err = ParsePackage(reader)
 

@@ -87,7 +87,10 @@ func NewFileSign(ctx context.Context, ownerID int64, input io.Reader) (*packages
 	if err != nil {
 		return nil, err
 	}
-	pkgSig, _ := packages_module.NewHashedBuffer()
+	pkgSig, err := packages_module.NewHashedBuffer()
+	if err != nil {
+		return nil, err
+	}
 	defer pkgSig.Close()
 	if err := openpgp.DetachSign(pkgSig, e, input, nil); err != nil {
 		return nil, err
