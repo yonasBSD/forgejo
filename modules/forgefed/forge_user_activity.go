@@ -95,16 +95,9 @@ func (userActivity ForgeUserActivity) Validate() []string {
 	result = append(result, validation.ValidateNotEmpty(string(userActivity.Type), "type")...)
 	result = append(result, validation.ValidateOneOf(string(userActivity.Type), []any{"Create"}, "type")...)
 	result = append(result, validation.ValidateNotEmpty(string(userActivity.ID), "id")...)
-	// result = append(result, validation.ValidateNotEmpty(userActivity.Actor, "actor")...)
-	// result = append(result, validation.ValidateNotEmpty(userActivity.Published, "published")...)
-	// result = append(result, validation.ValidateNotEmpty(userActivity.To, "to")...)
-	// result = append(result, validation.ValidateNotEmpty(userActivity.CC, "cc")...)
 
 	if len(userActivity.To) == 0 {
 		result = append(result, "Missing To")
-	}
-	if len(userActivity.CC) == 0 {
-		result = append(result, "Missing CC")
 	}
 
 	return result
