@@ -10,6 +10,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	fm "code.gitea.io/gitea/modules/forgefed"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/timeutil"
 )
 
@@ -17,11 +18,12 @@ type FederatedUserActivity struct {
 	ID     int64 `xorm:"pk autoincr"`
 	UserID int64 `xorm:"NOT NULL"`
 
-	ExternalID string           `xorm:"NOT NULL"`
-	Actor      *user_model.User `xorm:"-"`
-	Note       string
-
+	ExternalID  string           `xorm:"NOT NULL"`
+	Actor       *user_model.User `xorm:"-"`
+	Note        string
 	OriginalURL string
+
+	Original string
 
 	Created timeutil.TimeStamp `xorm:"created"`
 }
@@ -65,12 +67,17 @@ func GetFollowersForUserID(ctx context.Context, userID int64) ([]*FederatedUserF
 }
 
 func AddUserActivity(ctx context.Context, userID int64, externalID string, activity *fm.ForgeUserActivityNote) error {
-	_, err := db.GetEngine(ctx).
+	json, err := json.Marshal(activity)
+	if err != nil {
+		return err
+	}
+	_, err = db.GetEngine(ctx).
 		Insert(&FederatedUserActivity{
 			UserID:      userID,
 			ExternalID:  externalID,
 			Note:        activity.Content.String(),
 			OriginalURL: activity.URL.GetID().String(),
+			Original:    string(json),
 		})
 	return err
 }
