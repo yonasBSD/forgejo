@@ -6,11 +6,14 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/validation"
+
+	"xorm.io/builder"
 )
 
 func init() {
@@ -22,7 +25,7 @@ func CreateFederatedUser(ctx context.Context, user *User, federatedUser *Federat
 		return err
 	}
 	overwrite := CreateUserOverwriteOptions{
-		IsActive:     optional.Some(false),
+		IsActive:     optional.Some(true),
 		IsRestricted: optional.Some(false),
 	}
 
@@ -94,6 +97,26 @@ func FindFederatedUsers(ctx context.Context, page int) ([]*FederatedUser, error)
 		Find(&users)
 	if err != nil {
 		log.Trace("Error: FindFederatedUsers: %w", err)
+		return nil, err
+	}
+	return users, nil
+}
+
+func FindFederatedUserWithNoFollowersAndNoStars(ctx context.Context, olderThan time.Duration, page int) ([]*User, error) {
+	limit := 40
+	offset := page * limit
+	var users []*User
+	err := db.GetEngine(ctx).
+		Table("user").
+		Where("num_followers = 0").
+		And(builder.Lt{"user.created_unix": time.Now().Add(-olderThan).Unix()}).
+		Join("inner", "federated_user", "federated_user.user_id = user.ID").
+		Join("left", "star", "star.uid = user.ID").
+		Where("star.uid IS NULL").
+		Limit(limit, offset).
+		Find(&users)
+	if err != nil {
+		log.Trace("Error: GetFederatedUsersWithNoFollowers: %w", err)
 		return nil, err
 	}
 	return users, nil
