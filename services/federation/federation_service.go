@@ -23,6 +23,20 @@ import (
 	"github.com/google/uuid"
 )
 
+func Init() error {
+	if err := initDeliveryQueue(); err != nil {
+		return err
+	}
+	if err := initRefreshQueue(); err != nil {
+		return err
+	}
+	if err := initPendingQueue(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func findOrCreateFederatedUser(ctx *context_service.APIContext, actorURI string) (*user.User, *user.FederatedUser, *forgefed.FederationHost, error) {
 	federationHost, err := getFederationHostForURI(ctx, actorURI)
 	if err != nil {

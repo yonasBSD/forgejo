@@ -104,6 +104,7 @@ import (
 	_ "code.gitea.io/gitea/routers/api/v1/swagger" // for swagger generation
 
 	"gitea.com/go-chi/binding"
+	ap "github.com/go-ap/activitypub"
 )
 
 func sudo() func(ctx *context.APIContext) {
@@ -798,7 +799,14 @@ func Routes() *web.Route {
 			m.Group("/activitypub", func() {
 				m.Group("/user-id/{user-id}", func() {
 					m.Get("", activitypub.Person)
-					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
+					m.Post("/inbox",
+						bind(ap.Activity{}),
+						// TODO: activitypub.ReqHTTPSignature(),
+						activitypub.PersonInbox)
+					m.Group("/activities/{activity-id}", func() {
+						m.Get("", activitypub.PersonActivityNote)
+						m.Get("/activity", activitypub.PersonActivity)
+					})
 				}, context.UserIDAssignmentAPI())
 				m.Group("/actor", func() {
 					m.Get("", activitypub.Actor)
