@@ -75,12 +75,21 @@ func AddUserActivity(ctx context.Context, userID int64, externalID string, activ
 	return err
 }
 
-func AddFollower(ctx context.Context, followedUserID, followingUserID int64) error {
+func AddFollower(ctx context.Context, followedUserID, followingUserID int64) (int64, error) {
+	follower := FederatedUserFollower{
+		LocalUserID:     followedUserID,
+		FederatedUserID: followingUserID,
+	}
 	_, err := db.GetEngine(ctx).
-		Insert(&FederatedUserFollower{
-			LocalUserID:     followedUserID,
-			FederatedUserID: followingUserID,
-		})
+		Insert(&follower)
+	return follower.ID, err
+}
+
+func RemoveFollower(ctx context.Context, localUserID, federatedUserID int64) error {
+	_, err := db.GetEngine(ctx).Delete(FederatedUserFollower{
+		LocalUserID:     localUserID,
+		FederatedUserID: federatedUserID,
+	})
 	return err
 }
 

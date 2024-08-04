@@ -14,7 +14,6 @@ import (
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-ap/jsonld"
-	"github.com/google/uuid"
 )
 
 func processPersonFollow(ctx *context_service.APIContext, activity *ap.Activity) {
@@ -34,7 +33,8 @@ func processPersonFollow(ctx *context_service.APIContext, activity *ap.Activity)
 		return
 	}
 
-	if err := forgefed.AddFollower(ctx, ctx.ContextUser.ID, federatedUser.ID); err != nil {
+	followingID, err := forgefed.AddFollower(ctx, ctx.ContextUser.ID, federatedUser.ID)
+	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "Unable to add follower", err)
 	}
 
@@ -50,7 +50,9 @@ func processPersonFollow(ctx *context_service.APIContext, activity *ap.Activity)
 		log.Error("write to resp err: %v", err)
 	}
 
-	accept := ap.AcceptNew(ap.IRI(ctx.ContextUser.APActorID()+"/follows/"+uuid.New().String()), activity)
+	accept := ap.AcceptNew(ap.IRI(fmt.Sprintf(
+		"%s/follows/%d", ctx.ContextUser.APActorID(), followingID,
+	)), activity)
 	accept.Actor = ap.IRI(ctx.ContextUser.APActorID())
 	payload, err := jsonld.WithContext(jsonld.IRI(ap.ActivityBaseURI)).Marshal(accept)
 	if err != nil {
