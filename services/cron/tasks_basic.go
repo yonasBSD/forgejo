@@ -193,6 +193,7 @@ func initBasicTasks() {
 	}
 	if setting.Federation.Enabled {
 		registerUpdateRemotePersons()
+		registerCleanupRemotePersons()
 	}
 }
 
@@ -205,5 +206,19 @@ func registerUpdateRemotePersons() {
 		},
 	}, func(ctx context.Context, _ *user_model.User, config Config) error {
 		return user_service.UpdatePersonActor(ctx)
+	})
+}
+
+func registerCleanupRemotePersons() {
+	RegisterTaskFatal("remote_actor_cleanup", &OlderThanConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    true,
+			RunAtStart: true,
+			Schedule:   "@midnight",
+		},
+		OlderThan: 24 * time.Hour,
+	}, func(ctx context.Context, _ *user_model.User, config Config) error {
+		acConfig := config.(*OlderThanConfig)
+		return user_service.CleanUpRemotePersons(ctx, acConfig.OlderThan)
 	})
 }

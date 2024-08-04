@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/log"
@@ -92,6 +93,33 @@ func UpdatePersonActor(ctx context.Context) error {
 
 			if u.IsUploadAvatarChanged(avatar) {
 				_ = UploadAvatar(ctx, u, avatar)
+			}
+		}
+		page++
+	}
+	return nil
+}
+
+// Clean up remote actors (persons) without any followers in local instance
+func CleanUpRemotePersons(ctx context.Context, olderThan time.Duration) error {
+	page := 0
+	for {
+		users, err := user.FindFederatedUserWithNoFollowersAndNoStars(ctx, olderThan, page)
+		//      users, err := forgefed.GetRemoteUsersWithNoLocalFollowers(ctx, olderThan, page)
+		if len(users) == 0 {
+			break
+		}
+		if err != nil {
+			log.Trace("Error: CleanUpRemotePersons: %v", err)
+			return err
+		}
+
+		for _, u := range users {
+			log.Info("Found user %s", u.Name)
+			err = DeleteUser(ctx, u, false)
+			if err != nil {
+				log.Trace("Error: CleanUpRemotePersons: %v", err)
+				return err
 			}
 		}
 		page++

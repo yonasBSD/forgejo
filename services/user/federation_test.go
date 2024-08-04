@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/png"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	forgefed_model "code.gitea.io/gitea/models/forgefed"
@@ -85,4 +86,45 @@ func TestUpdateFederationUser(t *testing.T) {
 
 	updatedUser, _, _ := user_model.FindFederatedUser(ctx, actorID, federationHost.ID)
 	assert.Equal(t, updatedUser.Name, fmt.Sprintf("@%s@example.com", username))
+}
+
+func TestCleaupOldPersons(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	ctx := db.DefaultContext
+
+	federationHost := forgefed_model.FederationHost{
+		HostFqdn: "testcleanupoldpersons.example.com",
+		NodeInfo: forgefed_model.NodeInfo{
+			SoftwareName: "forgejo",
+		},
+	}
+	require.NoError(t, forgefed_model.CreateFederationHost(ctx, &federationHost))
+
+	userNoFollowerNoStar := user_model.User{
+		LowerName:                    "baz",
+		Name:                         "baz",
+		FullName:                     "baz",
+		Email:                        "baz@example.com",
+		EmailNotificationsPreference: "disabled",
+		Passwd:                       "baz",
+		MustChangePassword:           false,
+		LoginName:                    "baz",
+		Type:                         user_model.UserTypeRemoteUser,
+		IsAdmin:                      false,
+		NormalizedFederatedURI:       "https://testcleanupoldpersons.example.com/baz",
+	}
+	federatedUserNoFollowerNoStar := user_model.FederatedUser{
+		ExternalID:       userNoFollowerNoStar.NormalizedFederatedURI,
+		FederationHostID: federationHost.ID,
+	}
+	require.NoError(t, user_model.CreateFederatedUser(ctx, &userNoFollowerNoStar, &federatedUserNoFollowerNoStar))
+
+	time.Sleep(time.Second)
+
+	require.NoError(t, CleanUpRemotePersons(ctx, time.Microsecond))
+
+	u, fu, _ := user_model.FindFederatedUser(ctx, userNoFollowerNoStar.NormalizedFederatedURI, federationHost.ID)
+	assert.Nil(t, u)
+	assert.Nil(t, fu)
 }
