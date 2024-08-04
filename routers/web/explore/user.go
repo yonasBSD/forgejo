@@ -11,12 +11,14 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/container"
+	"code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/sitemap"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/federation"
 )
 
 const (
@@ -92,6 +94,59 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 
 	opts.Keyword = ctx.FormTrim("q")
 	opts.OrderBy = orderBy
+	if len(opts.Keyword) > 0 && federation.IsFingerable(opts.Keyword) {
+		webfingerRes, err := federation.WebFingerLookup(opts.Keyword)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+
+		actorID, err := forgefed.NewActorID(webfingerRes.GetActorLink().Href)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+
+		federationHost, err := federation.GetFederationHostForURI(ctx, webfingerRes.GetActorLink().Href)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+
+		if federationHost == nil {
+
+			federationHost, err = federation.CreateFederationHostFromAP(ctx, actorID)
+			if err != nil {
+				ctx.ServerError("SearchUsers", err)
+				return
+			}
+		}
+
+		user, _, err := user_model.FindFederatedUser(ctx, actorID.ID, federationHost.ID)
+		if err != nil {
+			ctx.ServerError("SearchUsers", err)
+			return
+		}
+		if user != nil {
+			log.Info("Found local federatedUser: %v", user)
+		} else {
+
+			personID, err := forgefed.NewPersonID(webfingerRes.GetActorLink().Href, "forgejo")
+			if err != nil {
+				ctx.ServerError("SearchUsers", err)
+				return
+			}
+
+			user, _, err = federation.CreateUserFromAP(ctx, personID, federationHost.ID)
+			if err != nil {
+				ctx.ServerError("SearchUsers", err)
+				return
+			}
+
+			opts.Keyword = user.Name
+		}
+	}
+
 	if len(opts.Keyword) == 0 || isKeywordValid(opts.Keyword) {
 		users, count, err = user_model.SearchUsers(ctx, opts)
 		if err != nil {
@@ -99,6 +154,7 @@ func RenderUserSearch(ctx *context.Context, opts *user_model.SearchUserOptions, 
 			return
 		}
 	}
+
 	if isSitemap {
 		m := sitemap.NewSitemap()
 		for _, item := range users {
