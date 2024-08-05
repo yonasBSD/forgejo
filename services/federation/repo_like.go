@@ -75,7 +75,7 @@ func ProcessLikeActivity(ctx *context_service.APIContext, form any, repositoryID
 func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
 	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
 	for _, uri := range followingRepoList {
-		federationHost, err := GetFederationHostForURI(ctx, uri)
+		federationHost, err := getFederationHostForURI(ctx.Base, uri)
 		if err != nil {
 			return http.StatusInternalServerError, "Wrong FederationHost", err
 		}
