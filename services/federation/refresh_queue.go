@@ -48,13 +48,13 @@ func refreshSingleItem(item refreshQueueItem) error {
 
 	federatedUser, err := user.GetFederatedUserByID(ctx, item.FederatedUserID)
 	if err != nil {
-		log.Error("GetFederatedUserByID: %w", err)
+		log.Error("GetFederatedUserByID: %v", err)
 		return err
 	}
 
 	localUser, err := user.GetUserByID(ctx, federatedUser.UserID)
 	if err != nil {
-		log.Error("GetUserByID: %w", err)
+		log.Error("GetUserByID: %v", err)
 		return err
 	}
 
