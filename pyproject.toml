@@ -24,4 +24,4 @@ ignore-regex = '(\b(Treshold|mx claus|commitT|ReadBy|#afile|respOne|commitI|[cC]
 # commiter - wrong spelling but seems used in API
 # ALLWAYS - is a config var
 # infact - other variable(s)
-ignore-words-list = 'crate,te,commiter,befores,allways,infact,startd,unknow'
+ignore-words-list = 'bleve,crate,te,commiter,befores,allways,infact,startd,unknow'
