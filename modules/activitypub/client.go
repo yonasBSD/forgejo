@@ -247,30 +247,17 @@ func (ctx *Context) APClientFactory() APClientFactory {
 	return ctx.e
 }
 
-func (ctx *Context) Value(key any) any {
-	if key == clientFactoryContextKey {
-		return ctx
-	}
-	return ctx.Context.Value(key)
-}
-
-// WithContext returns this APClientFactory tied to this context
-func (ctx *Context) WithContext(other context.Context) *Context {
-	return NewContext(ctx, ctx.e)
-}
-
 // provides APClientFactory
 type GetAPClient interface {
 	GetClientFactory() APClientFactory
 }
 
 // GetClientFactory will get an APClientFactory from this context or returns the default implementation
-func GetClientFactory(ctx context.Context) APClientFactory {
+func GetClientFactory(ctx context.Context) (APClientFactory, error) {
 	if e := getClientFactory(ctx); e != nil {
-		return e
+		return e, nil
 	}
-	NewClientFactory()
-	return nil
+	return NewClientFactory()
 }
 
 // getClientFactory will get an APClientFactory from this context or return nil
