@@ -54,7 +54,7 @@ func ListWorkflows(commit *git.Commit) (git.Entries, error) {
 	var err error
 	for _, prefix := range setting.Actions.WorkflowFilePrefix {
 		tree, err = commit.SubTree(prefix)
-		if _, ok := err.(git.ErrNotExist); !ok {
+		if _, ok := err.(git.ErrNotExist); err != nil && !ok {
 			return nil, err
 		}
 	}
