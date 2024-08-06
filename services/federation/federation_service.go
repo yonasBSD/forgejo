@@ -45,7 +45,10 @@ func FollowRemoteActor(ctx *context_service.APIContext, localUser *user.User, ac
 		return err
 	}
 
-	followReq := ap.FollowNew(ap.IRI(localUser.APActorID()), ap.IRI(actorURI))
+	followReq := ap.FollowNew(
+		ap.IRI(localUser.APActorID() + "/follows/" + uuid.New().String()),
+		ap.IRI(actorURI),
+	)
 	followReq.Actor = ap.IRI(localUser.APActorID())
 	followReq.Target = ap.IRI(actorURI)
 	payload, err := jsonld.WithContext(jsonld.IRI(ap.ActivityBaseURI)).
