@@ -10,6 +10,7 @@ import (
 
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 
@@ -40,22 +41,25 @@ func IsWorkflow(path string) bool {
 		return false
 	}
 
-	return strings.HasPrefix(path, ".forgejo/workflows") || strings.HasPrefix(path, ".gitea/workflows") || strings.HasPrefix(path, ".github/workflows")
+	for _, prefix := range setting.Actions.WorkflowFilePrefix {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func ListWorkflows(commit *git.Commit) (git.Entries, error) {
-	tree, err := commit.SubTree(".forgejo/workflows")
-	if _, ok := err.(git.ErrNotExist); ok {
-		tree, err = commit.SubTree(".gitea/workflows")
-	}
-	if _, ok := err.(git.ErrNotExist); ok {
-		tree, err = commit.SubTree(".github/workflows")
+	var tree *git.Tree
+	var err error
+	for _, prefix := range setting.Actions.WorkflowFilePrefix {
+		tree, err = commit.SubTree(prefix)
+		if _, ok := err.(git.ErrNotExist); !ok {
+			return nil, err
+		}
 	}
 	if _, ok := err.(git.ErrNotExist); ok {
 		return nil, nil
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	entries, err := tree.ListEntriesRecursiveFast()
