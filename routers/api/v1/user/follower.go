@@ -266,7 +266,7 @@ func Unfollow(ctx *context.APIContext) {
 
 // Follow follow a remote activitypub account
 func ActivityPubFollow(ctx *context.APIContext) {
-	// swagger:operation POST /user/follow/activitypub user userCurrentActivityPubFollow
+	// swagger:operation POST /user/activitypub/follow user userCurrentActivityPubFollow
 	// ---
 	// summary: Follow a remote activitypub account
 	// parameters:

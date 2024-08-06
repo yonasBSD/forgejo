@@ -949,7 +949,11 @@ func Routes() *web.Route {
 					m.Delete("", user.Unfollow)
 				}, context.UserAssignmentAPI())
 			})
-			m.Post("/follow/activitypub", bind(api.APRemoteFollowOption{}), user.ActivityPubFollow)
+			if setting.Federation.Enabled {
+				m.Group("/activitypub", func() {
+					m.Post("/follow", bind(api.APRemoteFollowOption{}), user.ActivityPubFollow)
+				})
+			}
 
 			// (admin:public_key scope)
 			m.Group("/keys", func() {
