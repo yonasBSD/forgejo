@@ -19,6 +19,8 @@ import (
 	"code.gitea.io/gitea/modules/validation"
 	context_service "code.gitea.io/gitea/services/context"
 
+	ap "github.com/go-ap/activitypub"
+	"github.com/go-ap/jsonld"
 	"github.com/go-fed/httpsig"
 	"github.com/google/uuid"
 )
@@ -33,6 +35,30 @@ func Init() error {
 	if err := initPendingQueue(); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func FollowRemoteActor(ctx *context_service.APIContext, localUser *user.User, actorURI string) error {
+	_, federatedUser, _, err := findOrCreateFederatedUser(ctx, actorURI)
+	if err != nil {
+		return err
+	}
+
+	followReq := ap.FollowNew(ap.IRI(localUser.APActorID()), ap.IRI(actorURI))
+	followReq.Actor = ap.IRI(localUser.APActorID())
+	followReq.Target = ap.IRI(actorURI)
+	payload, err := jsonld.WithContext(jsonld.IRI(ap.ActivityBaseURI)).
+		Marshal(followReq)
+	if err != nil {
+		return err
+	}
+
+	pendingQueue.Push(pendingQueueItem{
+		FederatedUserID: federatedUser.ID,
+		Doer:            localUser,
+		Payload:         payload,
+	})
 
 	return nil
 }

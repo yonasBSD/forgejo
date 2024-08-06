@@ -7,3 +7,7 @@ package structs
 type ActivityPub struct {
 	Context string `json:"@context"`
 }
+
+type APRemoteFollowOption struct {
+	Target string `json:"target"`
+}
