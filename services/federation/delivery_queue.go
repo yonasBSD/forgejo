@@ -47,7 +47,7 @@ func deliverToInbox(item deliveryQueueItem) error {
 		fmt.Sprintf("Delivering an Activity via user[%d] (%s), to %s", item.Doer.ID, item.Doer.Name, item.InboxURL))
 	defer finished()
 
-	apclient, err := activitypub.NewClient(ctx, item.Doer, item.Doer.APActorID())
+	apclient, err := activitypub.NewClient(ctx, item.Doer, item.Doer.APActorID() + "#main-key")
 	if err != nil {
 		return err
 	}

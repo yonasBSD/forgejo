@@ -84,7 +84,7 @@ func createFederationHostFromAP(ctx *context_service.Base, actorID fm.ActorID) (
 	if err != nil {
 		return nil, err
 	}
-	client, err := clientFactory.WithKeys(ctx, user.NewAPActorUser(), user.APActorUserAPActorID())
+	client, err := clientFactory.WithKeys(ctx, user.NewAPActorUser(), user.APActorUserAPActorID() + "#main-key")
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func createUserFromAP(ctx *context_service.Base, actorURL *string, personID fm.P
 	if err != nil {
 		return nil, nil, err
 	}
-	client, err := clientFactory.WithKeys(ctx, user.NewAPActorUser(), user.APActorUserAPActorID())
+	client, err := clientFactory.WithKeys(ctx, user.NewAPActorUser(), user.APActorUserAPActorID() + "#main-key")
 	if err != nil {
 		return nil, nil, err
 	}
