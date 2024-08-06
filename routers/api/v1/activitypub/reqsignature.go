@@ -41,7 +41,7 @@ func getPublicKeyFromResponse(b []byte, keyID *url.URL) (p crypto.PublicKey, err
 }
 
 func fetch(ctx *gitea_context.APIContext, iri *url.URL) (b []byte, err error) {
-	client, err := activitypub.NewClient(ctx, user_model.NewAPActorUser(), user_model.APActorUserAPActorID())
+	client, err := activitypub.NewClient(ctx, user_model.NewAPActorUser(), user_model.APActorUserAPActorID() + "#main-key")
 	if err != nil {
 		return nil, err
 	}
