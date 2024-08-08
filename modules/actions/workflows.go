@@ -50,30 +50,23 @@ func IsWorkflow(path string) bool {
 }
 
 func ListWorkflows(commit *git.Commit) (git.Entries, error) {
-	var tree *git.Tree
-	var err error
+	ret := make(git.Entries, 0)
 	for _, prefix := range setting.Actions.WorkflowFilePrefix {
-		if tree, err = commit.SubTree(prefix); err == nil {
-			break
-		}
-		if _, ok := err.(git.ErrNotExist); !ok {
+		tree, err := commit.SubTree(prefix)
+		if _, ok := err.(git.ErrNotExist); err != nil {
+			if ok {
+				continue
+			}
 			return nil, err
 		}
-	}
-	// always git.ErrNotExist or nil
-	if err != nil {
-		return nil, nil
-	}
-
-	entries, err := tree.ListEntriesRecursiveFast()
-	if err != nil {
-		return nil, err
-	}
-
-	ret := make(git.Entries, 0, len(entries))
-	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".yml") || strings.HasSuffix(entry.Name(), ".yaml") {
-			ret = append(ret, entry)
+		entries, err := tree.ListEntriesRecursiveFast()
+		if err != nil {
+			return nil, err
+		}
+		for _, entry := range entries {
+			if strings.HasSuffix(entry.Name(), ".yml") || strings.HasSuffix(entry.Name(), ".yaml") {
+				ret = append(ret, entry)
+			}
 		}
 	}
 	return ret, nil

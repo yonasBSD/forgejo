@@ -16,6 +16,8 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
@@ -42,7 +44,7 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 			[]*files_service.ChangeRepoFile{
 				{
 					Operation:     "create",
-					TreePath:      ".gitea/workflows/workflow-1.yml",
+					TreePath:      ".forgejo/workflows/workflow-1.yml",
 					ContentReader: strings.NewReader("name: workflow-1\non:\n  push:\njobs:\n  job-1:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
 				},
 				{
@@ -180,5 +182,43 @@ func TestActionsArtifactDeletion(t *testing.T) {
 
 		// Assert that the artifact deletion markup exists
 		htmlDoc.AssertElement(t, "[data-locale-confirm-delete-artifact]", true)
+	})
+}
+
+func TestCustomWorkflowPrefix(t *testing.T) {
+	defer test.MockVariableValue(&setting.Actions.WorkflowFilePrefix, []string{".codeberg/workflows"})()
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeActions}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      ".codeberg/workflows/test01.yml",
+					ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      "codeberg/workflows.yml",
+					ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+				},
+				{
+					Operation:     "create",
+					TreePath:      ".gitea/workflows/test02.yml",
+					ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+				},
+			},
+		)
+		defer f()
+		assert.Equal(t, 1, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
+		repoURL := repo.HTMLURL()
+		test01Req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/test01.yml/runs/latest", repoURL))
+		MakeRequest(t, test01Req, http.StatusTemporaryRedirect)
+		test02Req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/test02.yml/runs/latest", repoURL))
+		MakeRequest(t, test02Req, http.StatusNotFound)
+		testNonChildReq := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/workflows.yml/runs/latest", repoURL))
+		MakeRequest(t, testNonChildReq, http.StatusNotFound)
 	})
 }
