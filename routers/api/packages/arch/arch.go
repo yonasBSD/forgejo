@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	archPkgOrSig, _ = regexp.Compile("^.*\\.pkg\\.tar\\.\\w+(\\.sig)*$")
-	archDBOrSig, _  = regexp.Compile("^.*.db(\\.tar\\.gz)*(\\.sig)*$")
+	archPkgOrSig = regexp.MustCompile(`^.*\.pkg\.tar\.\w+(\.sig)*$`)
+	archDBOrSig  = regexp.MustCompile(`^.*.db(\.tar\.gz)*(\.sig)*$`)
 )
 
 func apiError(ctx *context.Context, status int, obj any) {

@@ -106,17 +106,17 @@ Wg==`), // this is tar.xz file
 	})
 
 	for _, group := range []string{"", "arch", "arch/os", "x86_64"} {
-		groupUrl := rootURL
+		groupURL := rootURL
 		if group != "" {
-			groupUrl = groupUrl + "/" + group
+			groupURL = groupURL + "/" + group
 		}
 		t.Run(fmt.Sprintf("Upload[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"]))
+			req := NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["any"]))
 			MakeRequest(t, req, http.StatusUnauthorized)
 
-			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"])).
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["any"])).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
 
@@ -145,27 +145,27 @@ Wg==`), // this is tar.xz file
 			require.NoError(t, err)
 			require.Equal(t, int64(len(pkgs["any"])), pb.Size)
 
-			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"])).
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["any"])).
 				AddBasicAuth(user.Name) // exists
 			MakeRequest(t, req, http.StatusConflict)
-			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["x86_64"])).
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["x86_64"])).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
-			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["aarch64"])).
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["aarch64"])).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
-			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["aarch64"])).
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["aarch64"])).
 				AddBasicAuth(user.Name) // exists again
 			MakeRequest(t, req, http.StatusConflict)
 		})
 
 		t.Run(fmt.Sprintf("Download[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
-			req := NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
+			req := NewRequest(t, "GET", groupURL+"/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
 			resp := MakeRequest(t, req, http.StatusOK)
 			require.Equal(t, pkgs["x86_64"], resp.Body.Bytes())
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
 			resp = MakeRequest(t, req, http.StatusOK)
 			require.Equal(t, pkgs["any"], resp.Body.Bytes())
 
@@ -179,10 +179,10 @@ Wg==`), // this is tar.xz file
 			req := NewRequest(t, "GET", rootURL+"/repository.key")
 			respPub := MakeRequest(t, req, http.StatusOK)
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
 			respPkg := MakeRequest(t, req, http.StatusOK)
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst.sig")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/test-1.0.0-1-any.pkg.tar.zst.sig")
 			respSig := MakeRequest(t, req, http.StatusOK)
 
 			if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
@@ -195,10 +195,10 @@ Wg==`), // this is tar.xz file
 			req := NewRequest(t, "GET", rootURL+"/repository.key")
 			respPub := MakeRequest(t, req, http.StatusOK)
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/base.db")
 			respPkg := MakeRequest(t, req, http.StatusOK)
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db.sig")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/base.db.sig")
 			respSig := MakeRequest(t, req, http.StatusOK)
 
 			if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
@@ -213,7 +213,7 @@ Wg==`), // this is tar.xz file
 				require.Equal(t, name+"-"+ver+"/desc", s)
 				fn := getProperty(string(d.Data), "FILENAME")
 				pgp := getProperty(string(d.Data), "PGPSIG")
-				req = NewRequest(t, "GET", groupUrl+"/x86_64/"+fn+".sig")
+				req = NewRequest(t, "GET", groupURL+"/x86_64/"+fn+".sig")
 				respSig := MakeRequest(t, req, http.StatusOK)
 				decodeString, err := base64.StdEncoding.DecodeString(pgp)
 				require.NoError(t, err)
@@ -224,7 +224,7 @@ Wg==`), // this is tar.xz file
 		t.Run(fmt.Sprintf("Delete[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			// test data
-			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["other"])).
+			req := NewRequestWithBody(t, "PUT", groupURL, bytes.NewReader(pkgs["other"])).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
 
@@ -232,20 +232,20 @@ Wg==`), // this is tar.xz file
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusNotFound)
 
-			req = NewRequestWithBody(t, "DELETE", groupUrl+"/test/1.0.0-1", nil).
+			req = NewRequestWithBody(t, "DELETE", groupURL+"/test/1.0.0-1", nil).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusNoContent)
 
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/base.db")
 			respPkg := MakeRequest(t, req, http.StatusOK)
 			files, err := listTarGzFiles(respPkg.Body.Bytes())
 			require.NoError(t, err)
 			require.Len(t, files, 1) // other pkg in L225
 
-			req = NewRequestWithBody(t, "DELETE", groupUrl+"/test2/1.0.0-1", nil).
+			req = NewRequestWithBody(t, "DELETE", groupURL+"/test2/1.0.0-1", nil).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusNoContent)
-			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			req = NewRequest(t, "GET", groupURL+"/x86_64/base.db")
 			MakeRequest(t, req, http.StatusNotFound)
 		})
 	}
