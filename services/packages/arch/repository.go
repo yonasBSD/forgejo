@@ -43,7 +43,7 @@ func BuildAllRepositoryFiles(ctx context.Context, ownerID int64) error {
 	}
 	for _, pf := range pfs {
 		if strings.HasSuffix(pf.Name, ".db") {
-			arch := strings.TrimSuffix(strings.TrimPrefix(pf.Name, fmt.Sprintf("%s-", pf.CompositeKey)), ".db")
+			arch := strings.TrimSuffix(pf.Name, ".db")
 			if err := BuildPacmanDB(ctx, ownerID, pf.CompositeKey, arch); err != nil {
 				return err
 			}
@@ -110,7 +110,7 @@ func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) erro
 		return err
 	}
 	for _, pf := range pfs {
-		if pf.CompositeKey == distro && strings.HasPrefix(pf.Name, fmt.Sprintf("%s-%s", distro, arch)) {
+		if pf.CompositeKey == distro && pf.Name == fmt.Sprintf("%s.db", arch) {
 			// remove distro and arch
 			if err := packages_service.DeletePackageFile(ctx, pf); err != nil {
 				return err
@@ -140,8 +140,8 @@ func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) erro
 		return err
 	}
 	for name, data := range map[string]*packages_module.HashedBuffer{
-		fmt.Sprintf("%s-%s.db", distro, arch):     db,
-		fmt.Sprintf("%s-%s.db.sig", distro, arch): sig,
+		fmt.Sprintf("%s.db", arch):     db,
+		fmt.Sprintf("%s.db.sig", arch): sig,
 	} {
 		_, err = packages_service.AddFileToPackageVersionInternal(ctx, pv, &packages_service.PackageFileCreationInfo{
 			PackageFileInfo: packages_service.PackageFileInfo{
@@ -265,9 +265,9 @@ func GetPackageDBFile(ctx context.Context, distro, arch string, ownerID int64, s
 	if err != nil {
 		return nil, err
 	}
-	fileName := fmt.Sprintf("%s-%s.db", distro, arch)
+	fileName := fmt.Sprintf("%s.db", arch)
 	if signFile {
-		fileName = fmt.Sprintf("%s-%s.db.sig", distro, arch)
+		fileName = fmt.Sprintf("%s.db.sig", arch)
 	}
 	file, err := packages_model.GetFileForVersionByName(ctx, pv.ID, fileName, distro)
 	if err != nil {

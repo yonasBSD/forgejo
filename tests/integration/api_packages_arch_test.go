@@ -105,155 +105,151 @@ nYAR`),
 		require.Contains(t, resp.Body.String(), "-----BEGIN PGP PUBLIC KEY BLOCK-----")
 	})
 
-	t.Run("Upload", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-
-		req := NewRequestWithBody(t, "PUT", rootURL+"/default", bytes.NewReader(pkgs["any"]))
-		MakeRequest(t, req, http.StatusUnauthorized)
-
-		req = NewRequestWithBody(t, "PUT", rootURL+"/default", bytes.NewReader(pkgs["any"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-
-		pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeArch)
-		require.NoError(t, err)
-		require.Len(t, pvs, 1)
-
-		pd, err := packages.GetPackageDescriptor(db.DefaultContext, pvs[0])
-		require.NoError(t, err)
-		require.Nil(t, pd.SemVer)
-		require.IsType(t, &arch_model.VersionMetadata{}, pd.Metadata)
-		require.Equal(t, "test", pd.Package.Name)
-		require.Equal(t, "1.0.0-1", pd.Version.Version)
-
-		pfs, err := packages.GetFilesByVersionID(db.DefaultContext, pvs[0].ID)
-		require.NoError(t, err)
-		require.Len(t, pfs, 2) // zst and zst.sig
-		require.True(t, pfs[0].IsLead)
-
-		pb, err := packages.GetBlobByID(db.DefaultContext, pfs[0].BlobID)
-		require.NoError(t, err)
-		require.Equal(t, int64(len(pkgs["any"])), pb.Size)
-
-		req = NewRequestWithBody(t, "PUT", rootURL+"/default", bytes.NewReader(pkgs["any"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusConflict)
-		req = NewRequestWithBody(t, "PUT", rootURL+"/default", bytes.NewReader(pkgs["x86_64"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-		req = NewRequestWithBody(t, "PUT", rootURL+"/other", bytes.NewReader(pkgs["any"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-		req = NewRequestWithBody(t, "PUT", rootURL+"/other", bytes.NewReader(pkgs["aarch64"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-
-		req = NewRequestWithBody(t, "PUT", rootURL+"/base", bytes.NewReader(pkgs["other"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-		req = NewRequestWithBody(t, "PUT", rootURL+"/base", bytes.NewReader(pkgs["x86_64"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-		req = NewRequestWithBody(t, "PUT", rootURL+"/base", bytes.NewReader(pkgs["aarch64"])).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusCreated)
-	})
-
-	t.Run("Download", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		req := NewRequest(t, "GET", rootURL+"/default/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
-		resp := MakeRequest(t, req, http.StatusOK)
-		require.Equal(t, pkgs["x86_64"], resp.Body.Bytes())
-
-		req = NewRequest(t, "GET", rootURL+"/default/x86_64/test-1.0.0-1-any.pkg.tar.zst")
-		resp = MakeRequest(t, req, http.StatusOK)
-		require.Equal(t, pkgs["any"], resp.Body.Bytes())
-
-		req = NewRequest(t, "GET", rootURL+"/default/x86_64/test-1.0.0-1-aarch64.pkg.tar.zst")
-		MakeRequest(t, req, http.StatusNotFound)
-
-		req = NewRequest(t, "GET", rootURL+"/other/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
-		MakeRequest(t, req, http.StatusNotFound)
-
-		req = NewRequest(t, "GET", rootURL+"/other/x86_64/test-1.0.0-1-any.pkg.tar.zst")
-		resp = MakeRequest(t, req, http.StatusOK)
-		require.Equal(t, pkgs["any"], resp.Body.Bytes())
-	})
-
-	t.Run("SignVerify", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		req := NewRequest(t, "GET", rootURL+"/repository.key")
-		respPub := MakeRequest(t, req, http.StatusOK)
-
-		req = NewRequest(t, "GET", rootURL+"/other/x86_64/test-1.0.0-1-any.pkg.tar.zst")
-		respPkg := MakeRequest(t, req, http.StatusOK)
-
-		req = NewRequest(t, "GET", rootURL+"/other/x86_64/test-1.0.0-1-any.pkg.tar.zst.sig")
-		respSig := MakeRequest(t, req, http.StatusOK)
-
-		if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
-			t.Fatal(err)
+	for _, distro := range []string{"", "arch", "arch/os", "x86_64"} {
+		groupUrl := rootURL
+		if distro != "" {
+			groupUrl = groupUrl + "/" + distro
 		}
-	})
+		t.Run(fmt.Sprintf("Upload[%s]", distro), func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
 
-	t.Run("Repository", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		req := NewRequest(t, "GET", rootURL+"/repository.key")
-		respPub := MakeRequest(t, req, http.StatusOK)
+			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"]))
+			MakeRequest(t, req, http.StatusUnauthorized)
 
-		req = NewRequest(t, "GET", rootURL+"/base/x86_64/base.db")
-		respPkg := MakeRequest(t, req, http.StatusOK)
+			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"])).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusCreated)
 
-		req = NewRequest(t, "GET", rootURL+"/base/x86_64/base.db.sig")
-		respSig := MakeRequest(t, req, http.StatusOK)
-
-		if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
-			t.Fatal(err)
-		}
-		files, err := listGzipFiles(respPkg.Body.Bytes())
-		require.NoError(t, err)
-		require.Len(t, files, 2)
-		for s, d := range files {
-			name := getProperty(string(d.Data), "NAME")
-			ver := getProperty(string(d.Data), "VERSION")
-			require.Equal(t, name+"-"+ver+"/desc", s)
-			fn := getProperty(string(d.Data), "FILENAME")
-			pgp := getProperty(string(d.Data), "PGPSIG")
-			req = NewRequest(t, "GET", rootURL+"/base/x86_64/"+fn+".sig")
-			respSig := MakeRequest(t, req, http.StatusOK)
-			decodeString, err := base64.StdEncoding.DecodeString(pgp)
+			pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeArch)
 			require.NoError(t, err)
-			require.Equal(t, respSig.Body.Bytes(), decodeString)
-		}
-	})
-	t.Run("Delete", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		req := NewRequestWithBody(t, "DELETE", rootURL+"/base/notfound/1.0.0-1", nil).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusNotFound)
+			require.Len(t, pvs, 1)
 
-		req = NewRequestWithBody(t, "DELETE", rootURL+"/base/test/1.0.0-1", nil).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusNoContent)
+			pd, err := packages.GetPackageDescriptor(db.DefaultContext, pvs[0])
+			require.NoError(t, err)
+			require.Nil(t, pd.SemVer)
+			require.IsType(t, &arch_model.VersionMetadata{}, pd.Metadata)
+			require.Equal(t, "test", pd.Package.Name)
+			require.Equal(t, "1.0.0-1", pd.Version.Version)
 
-		req = NewRequest(t, "GET", rootURL+"/base/x86_64/base.db")
-		respPkg := MakeRequest(t, req, http.StatusOK)
-		files, err := listGzipFiles(respPkg.Body.Bytes())
-		require.NoError(t, err)
-		require.Len(t, files, 1)
+			pfs, err := packages.GetFilesByVersionID(db.DefaultContext, pvs[0].ID)
+			require.NoError(t, err)
+			size := 0
+			for _, pf := range pfs {
+				if pf.CompositeKey == distro {
+					size++
+				}
+			}
+			require.Equal(t, 2, size) // zst and zst.sig
 
-		req = NewRequestWithBody(t, "DELETE", rootURL+"/base/test2/1.0.0-1", nil).
-			AddBasicAuth(user.Name)
-		MakeRequest(t, req, http.StatusNoContent)
-		req = NewRequest(t, "GET", rootURL+"/base/x86_64/base.db")
-		MakeRequest(t, req, http.StatusNotFound)
+			pb, err := packages.GetBlobByID(db.DefaultContext, pfs[0].BlobID)
+			require.NoError(t, err)
+			require.Equal(t, int64(len(pkgs["any"])), pb.Size)
 
-		req = NewRequest(t, "GET", rootURL+"/default/x86_64/base.db")
-		respPkg = MakeRequest(t, req, http.StatusOK)
-		files, err = listGzipFiles(respPkg.Body.Bytes())
-		require.NoError(t, err)
-		require.Len(t, files, 1)
-	})
+			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"])).
+				AddBasicAuth(user.Name) // exists
+			MakeRequest(t, req, http.StatusConflict)
+			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["x86_64"])).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusCreated)
+			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["aarch64"])).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusCreated)
+			req = NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["aarch64"])).
+				AddBasicAuth(user.Name) // exists again
+			MakeRequest(t, req, http.StatusConflict)
+		})
+
+		t.Run(fmt.Sprintf("Download[%s]", distro), func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			req := NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
+			resp := MakeRequest(t, req, http.StatusOK)
+			require.Equal(t, pkgs["x86_64"], resp.Body.Bytes())
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
+			resp = MakeRequest(t, req, http.StatusOK)
+			require.Equal(t, pkgs["any"], resp.Body.Bytes())
+
+			// get other group
+			req = NewRequest(t, "GET", rootURL+"/unknown/x86_64/test-1.0.0-1-aarch64.pkg.tar.zst")
+			MakeRequest(t, req, http.StatusNotFound)
+		})
+
+		t.Run(fmt.Sprintf("SignVerify[%s]", distro), func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			req := NewRequest(t, "GET", rootURL+"/repository.key")
+			respPub := MakeRequest(t, req, http.StatusOK)
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst")
+			respPkg := MakeRequest(t, req, http.StatusOK)
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-any.pkg.tar.zst.sig")
+			respSig := MakeRequest(t, req, http.StatusOK)
+
+			if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Run(fmt.Sprintf("RepositoryDB[%s]", distro), func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			req := NewRequest(t, "GET", rootURL+"/repository.key")
+			respPub := MakeRequest(t, req, http.StatusOK)
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			respPkg := MakeRequest(t, req, http.StatusOK)
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db.sig")
+			respSig := MakeRequest(t, req, http.StatusOK)
+
+			if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
+				t.Fatal(err)
+			}
+			files, err := listTarFiles(respPkg.Body.Bytes())
+			require.NoError(t, err)
+			require.Len(t, files, 1)
+			for s, d := range files {
+				name := getProperty(string(d.Data), "NAME")
+				ver := getProperty(string(d.Data), "VERSION")
+				require.Equal(t, name+"-"+ver+"/desc", s)
+				fn := getProperty(string(d.Data), "FILENAME")
+				pgp := getProperty(string(d.Data), "PGPSIG")
+				req = NewRequest(t, "GET", groupUrl+"/x86_64/"+fn+".sig")
+				respSig := MakeRequest(t, req, http.StatusOK)
+				decodeString, err := base64.StdEncoding.DecodeString(pgp)
+				require.NoError(t, err)
+				require.Equal(t, respSig.Body.Bytes(), decodeString)
+			}
+		})
+
+		t.Run(fmt.Sprintf("Delete[%s]", distro), func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			//test data
+			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["other"])).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusCreated)
+
+			req = NewRequestWithBody(t, "DELETE", rootURL+"/base/notfound/1.0.0-1", nil).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusNotFound)
+
+			req = NewRequestWithBody(t, "DELETE", groupUrl+"/test/1.0.0-1", nil).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusNoContent)
+
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			respPkg := MakeRequest(t, req, http.StatusOK)
+			files, err := listTarFiles(respPkg.Body.Bytes())
+			require.NoError(t, err)
+			require.Len(t, files, 1) // other pkg in L225
+
+			req = NewRequestWithBody(t, "DELETE", groupUrl+"/test2/1.0.0-1", nil).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusNoContent)
+			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
+			MakeRequest(t, req, http.StatusNotFound)
+
+		})
+	}
 }
 
 func getProperty(data, key string) string {
@@ -270,7 +266,7 @@ func getProperty(data, key string) string {
 	}
 }
 
-func listGzipFiles(data []byte) (fstest.MapFS, error) {
+func listTarFiles(data []byte) (fstest.MapFS, error) {
 	reader, err := gzip.NewReader(bytes.NewBuffer(data))
 	defer reader.Close()
 	if err != nil {

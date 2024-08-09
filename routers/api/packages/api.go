@@ -172,6 +172,9 @@ func CommonRoutes() *web.Route {
 				} else if isPut {
 					ctx.SetParams("distro", strings.Join(pathGroups, "/"))
 					reqPackageAccess(perm.AccessModeWrite)(ctx)
+					if ctx.Written() {
+						return
+					}
 					arch.PushPackage(ctx)
 					return
 				} else if isDelete {
@@ -184,10 +187,13 @@ func CommonRoutes() *web.Route {
 						ctx.SetParams("version", pathGroups[1])
 					} else {
 						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-2], "/"))
-						ctx.SetParams("package", pathGroups[groupLen-1])
-						ctx.SetParams("version", pathGroups[groupLen-2])
+						ctx.SetParams("package", pathGroups[groupLen-2])
+						ctx.SetParams("version", pathGroups[groupLen-1])
 					}
 					reqPackageAccess(perm.AccessModeWrite)(ctx)
+					if ctx.Written() {
+						return
+					}
 					arch.RemovePackage(ctx)
 					return
 				}
