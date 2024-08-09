@@ -204,7 +204,7 @@ Wg==`), // this is tar.xz file
 			if err := gpgVerify(respPub.Body.Bytes(), respSig.Body.Bytes(), respPkg.Body.Bytes()); err != nil {
 				t.Fatal(err)
 			}
-			files, err := listTarFiles(respPkg.Body.Bytes())
+			files, err := listTarGzFiles(respPkg.Body.Bytes())
 			require.NoError(t, err)
 			require.Len(t, files, 1)
 			for s, d := range files {
@@ -238,7 +238,7 @@ Wg==`), // this is tar.xz file
 
 			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
 			respPkg := MakeRequest(t, req, http.StatusOK)
-			files, err := listTarFiles(respPkg.Body.Bytes())
+			files, err := listTarGzFiles(respPkg.Body.Bytes())
 			require.NoError(t, err)
 			require.Len(t, files, 1) // other pkg in L225
 
@@ -265,7 +265,7 @@ func getProperty(data, key string) string {
 	}
 }
 
-func listTarFiles(data []byte) (fstest.MapFS, error) {
+func listTarGzFiles(data []byte) (fstest.MapFS, error) {
 	reader, err := gzip.NewReader(bytes.NewBuffer(data))
 	defer reader.Close()
 	if err != nil {
