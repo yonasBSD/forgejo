@@ -143,10 +143,49 @@ func CommonRoutes() *web.Route {
 				r.Head("", arch.GetRepositoryKey)
 				r.Get("", arch.GetRepositoryKey)
 			})
-			r.Group("/{distro}", func() {
-				r.Put("", reqPackageAccess(perm.AccessModeWrite), arch.PushPackage)
-				r.Get("/{arch}/{file}", arch.GetPackageOrDB)
-				r.Delete("/{package}/{version}", reqPackageAccess(perm.AccessModeWrite), arch.RemovePackage)
+
+			r.Methods("HEAD,GET,PUT,DELETE", "*", func(ctx *context.Context) {
+				pathGroups := strings.Split(strings.Trim(ctx.Params("*"), "/"), "/")
+				groupLen := len(pathGroups)
+				if groupLen == 0 {
+					ctx.Status(http.StatusNotFound)
+					return
+				}
+				isGetHead := ctx.Req.Method == "HEAD" || ctx.Req.Method == "GET"
+				isPut := ctx.Req.Method == "PUT"
+				isDelete := ctx.Req.Method == "DELETE"
+				if isGetHead {
+					if groupLen == 1 {
+						ctx.SetParams("file", pathGroups[0])
+					} else {
+						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-1], "/"))
+						ctx.SetParams("file", pathGroups[groupLen-1])
+					}
+					arch.GetPackageOrDB(ctx)
+					return
+				} else if isPut {
+					ctx.SetParams("distro", strings.Join(pathGroups, "/"))
+					reqPackageAccess(perm.AccessModeWrite)(ctx)
+					arch.PushPackage(ctx)
+					return
+				} else if isDelete {
+					if groupLen < 2 {
+						ctx.Status(http.StatusBadRequest)
+						return
+					}
+					if groupLen == 2 {
+						ctx.SetParams("package", pathGroups[0])
+						ctx.SetParams("version", pathGroups[1])
+					} else {
+						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-2], "/"))
+						ctx.SetParams("package", pathGroups[groupLen-1])
+						ctx.SetParams("version", pathGroups[groupLen-2])
+					}
+					reqPackageAccess(perm.AccessModeWrite)(ctx)
+					arch.RemovePackage(ctx)
+					return
+				}
+				ctx.Status(http.StatusNotFound)
 			})
 		}, reqPackageAccess(perm.AccessModeRead))
 		r.Group("/cargo", func() {

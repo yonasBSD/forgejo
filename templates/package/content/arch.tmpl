@@ -27,7 +27,7 @@ pacman-key --lsign-key '{{$.SignMail}}'</code></pre>
 {{end -}}
 [{{$.PackageDescriptor.Owner.LowerName}}.{{$.RegistryHost}}]
 SigLevel = Required
-Server = <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/arch/{{.}}/$arch"></origin-url>
+Server = <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/arch/{{.}}"></origin-url>
 {{end -}}
 </code></pre>
 			</div>

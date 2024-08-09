@@ -43,8 +43,7 @@ func BuildAllRepositoryFiles(ctx context.Context, ownerID int64) error {
 	}
 	for _, pf := range pfs {
 		if strings.HasSuffix(pf.Name, ".db") {
-			arch := strings.TrimSuffix(strings.TrimPrefix(pf.Name, fmt.Sprintf("%s-", pf.CompositeKey)), ".db")
-			if err := BuildPacmanDB(ctx, ownerID, pf.CompositeKey, arch); err != nil {
+			if err := BuildPacmanDB(ctx, ownerID, pf.CompositeKey); err != nil {
 				return err
 			}
 		}
@@ -64,8 +63,7 @@ func BuildCustomRepositoryFiles(ctx context.Context, ownerID int64, disco string
 	}
 	for _, pf := range pfs {
 		if strings.HasSuffix(pf.Name, ".db") && pf.CompositeKey == disco {
-			arch := strings.TrimSuffix(strings.TrimPrefix(pf.Name, fmt.Sprintf("%s-", pf.CompositeKey)), ".db")
-			if err := BuildPacmanDB(ctx, ownerID, pf.CompositeKey, arch); err != nil {
+			if err := BuildPacmanDB(ctx, ownerID, pf.CompositeKey); err != nil {
 				return err
 			}
 		}
@@ -99,7 +97,7 @@ func NewFileSign(ctx context.Context, ownerID int64, input io.Reader) (*packages
 }
 
 // BuildPacmanDB Create db signature cache
-func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) error {
+func BuildPacmanDB(ctx context.Context, ownerID int64, distro string) error {
 	pv, err := GetOrCreateRepositoryVersion(ctx, ownerID)
 	if err != nil {
 		return err
@@ -110,15 +108,14 @@ func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) erro
 		return err
 	}
 	for _, pf := range pfs {
-		if pf.CompositeKey == distro && strings.HasPrefix(pf.Name, fmt.Sprintf("%s-%s", distro, arch)) {
-			// remove distro and arch
+		if pf.CompositeKey == distro && pf.Name == fmt.Sprintf("%s.db", distro) {
 			if err := packages_service.DeletePackageFile(ctx, pf); err != nil {
 				return err
 			}
 		}
 	}
 
-	db, err := flushDB(ctx, ownerID, distro, arch)
+	db, err := flushDB(ctx, ownerID, distro)
 	if errors.Is(err, io.EOF) {
 		return nil
 	} else if err != nil {
@@ -140,8 +137,8 @@ func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) erro
 		return err
 	}
 	for name, data := range map[string]*packages_module.HashedBuffer{
-		fmt.Sprintf("%s-%s.db", distro, arch):     db,
-		fmt.Sprintf("%s-%s.db.sig", distro, arch): sig,
+		fmt.Sprintf("%s.db", distro):     db,
+		fmt.Sprintf("%s.db.sig", distro): sig,
 	} {
 		_, err = packages_service.AddFileToPackageVersionInternal(ctx, pv, &packages_service.PackageFileCreationInfo{
 			PackageFileInfo: packages_service.PackageFileInfo{
@@ -160,7 +157,7 @@ func BuildPacmanDB(ctx context.Context, ownerID int64, distro, arch string) erro
 	return nil
 }
 
-func flushDB(ctx context.Context, ownerID int64, distro, arch string) (*packages_module.HashedBuffer, error) {
+func flushDB(ctx context.Context, ownerID int64, distro string) (*packages_module.HashedBuffer, error) {
 	pkgs, err := packages_model.GetPackagesByType(ctx, ownerID, packages_model.TypeArch)
 	if err != nil {
 		return nil, err
@@ -174,49 +171,48 @@ func flushDB(ctx context.Context, ownerID int64, distro, arch string) (*packages
 	}
 	gw := gzip.NewWriter(db)
 	tw := tar.NewWriter(gw)
+	errWrap := func(err error) error {
+		return errors.Join(tw.Close(), gw.Close(), db.Close(), err)
+	}
 	count := 0
 	for _, pkg := range pkgs {
 		versions, err := packages_model.GetVersionsByPackageName(
 			ctx, ownerID, packages_model.TypeArch, pkg.Name,
 		)
 		if err != nil {
-			return nil, errors.Join(tw.Close(), gw.Close(), db.Close(), err)
+			return nil, errWrap(err)
 		}
 		sort.Slice(versions, func(i, j int) bool {
 			return versions[i].CreatedUnix > versions[j].CreatedUnix
 		})
 		for _, ver := range versions {
-			file := fmt.Sprintf("%s-%s-%s.pkg.tar.zst", pkg.Name, ver.Version, arch)
-			pf, err := packages_model.GetFileForVersionByName(ctx, ver.ID, file, distro)
+			files, err := packages_model.GetFilesByVersionIDAndKey(ctx, ver.ID, distro)
 			if err != nil {
-				// add any arch package
-				file = fmt.Sprintf("%s-%s-any.pkg.tar.zst", pkg.Name, ver.Version)
-				pf, err = packages_model.GetFileForVersionByName(ctx, ver.ID, file, distro)
+				return nil, errWrap(err)
+			}
+			for _, pf := range files {
+				pps, err := packages_model.GetPropertiesByName(
+					ctx, packages_model.PropertyTypeFile, pf.ID, arch_module.PropertyDescription,
+				)
 				if err != nil {
-					continue
+					return nil, errWrap(err)
 				}
-			}
-			pps, err := packages_model.GetPropertiesByName(
-				ctx, packages_model.PropertyTypeFile, pf.ID, arch_module.PropertyDescription,
-			)
-			if err != nil {
-				return nil, errors.Join(tw.Close(), gw.Close(), db.Close(), err)
-			}
-			if len(pps) >= 1 {
-				meta := []byte(pps[0].Value)
-				header := &tar.Header{
-					Name: pkg.Name + "-" + ver.Version + "/desc",
-					Size: int64(len(meta)),
-					Mode: int64(os.ModePerm),
+				if len(pps) >= 1 {
+					meta := []byte(pps[0].Value)
+					header := &tar.Header{
+						Name: pkg.Name + "-" + ver.Version + "/desc",
+						Size: int64(len(meta)),
+						Mode: int64(os.ModePerm),
+					}
+					if err = tw.WriteHeader(header); err != nil {
+						return nil, errWrap(err)
+					}
+					if _, err := tw.Write(meta); err != nil {
+						return nil, errWrap(err)
+					}
+					count++
+					break
 				}
-				if err = tw.WriteHeader(header); err != nil {
-					return nil, errors.Join(tw.Close(), gw.Close(), db.Close(), err)
-				}
-				if _, err := tw.Write(meta); err != nil {
-					return nil, errors.Join(tw.Close(), gw.Close(), db.Close(), err)
-				}
-				count++
-				break
 			}
 		}
 	}
@@ -260,14 +256,14 @@ func getPackageFile(ctx context.Context, distro, file string, ownerID int64) (*p
 	return pkgfile, nil
 }
 
-func GetPackageDBFile(ctx context.Context, distro, arch string, ownerID int64, signFile bool) (io.ReadSeekCloser, error) {
+func GetPackageDBFile(ctx context.Context, distro string, ownerID int64, signFile bool) (io.ReadSeekCloser, error) {
 	pv, err := GetOrCreateRepositoryVersion(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
-	fileName := fmt.Sprintf("%s-%s.db", distro, arch)
+	fileName := fmt.Sprintf("%s.db", distro)
 	if signFile {
-		fileName = fmt.Sprintf("%s-%s.db.sig", distro, arch)
+		fileName = fmt.Sprintf("%s.db.sig", distro)
 	}
 	file, err := packages_model.GetFileForVersionByName(ctx, pv.ID, fileName, distro)
 	if err != nil {

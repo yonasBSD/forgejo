@@ -71,6 +71,15 @@ func GetFilesByVersionID(ctx context.Context, versionID int64) ([]*PackageFile, 
 	return pfs, db.GetEngine(ctx).Where("version_id = ?", versionID).Find(&pfs)
 }
 
+// GetFilesByVersionIDAndKey gets all files of a version and key
+func GetFilesByVersionIDAndKey(ctx context.Context, versionID int64, key string) ([]*PackageFile, error) {
+	pfs := make([]*PackageFile, 0, 10)
+	return pfs, db.GetEngine(ctx).Where(builder.Eq{
+		"version_id":    versionID,
+		"composite_key": key,
+	}).Find(&pfs)
+}
+
 // GetFileForVersionByID gets a file of a version by id
 func GetFileForVersionByID(ctx context.Context, versionID, fileID int64) (*PackageFile, error) {
 	pf := &PackageFile{
