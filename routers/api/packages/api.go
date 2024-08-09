@@ -163,14 +163,14 @@ func CommonRoutes() *web.Route {
 						ctx.SetParams("arch", pathGroups[0])
 						ctx.SetParams("file", pathGroups[1])
 					} else {
-						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-2], "/"))
+						ctx.SetParams("group", strings.Join(pathGroups[:groupLen-2], "/"))
 						ctx.SetParams("arch", pathGroups[groupLen-2])
 						ctx.SetParams("file", pathGroups[groupLen-1])
 					}
 					arch.GetPackageOrDB(ctx)
 					return
 				} else if isPut {
-					ctx.SetParams("distro", strings.Join(pathGroups, "/"))
+					ctx.SetParams("group", strings.Join(pathGroups, "/"))
 					reqPackageAccess(perm.AccessModeWrite)(ctx)
 					if ctx.Written() {
 						return
@@ -186,7 +186,7 @@ func CommonRoutes() *web.Route {
 						ctx.SetParams("package", pathGroups[0])
 						ctx.SetParams("version", pathGroups[1])
 					} else {
-						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-2], "/"))
+						ctx.SetParams("group", strings.Join(pathGroups[:groupLen-2], "/"))
 						ctx.SetParams("package", pathGroups[groupLen-2])
 						ctx.SetParams("version", pathGroups[groupLen-1])
 					}

@@ -105,12 +105,12 @@ nYAR`),
 		require.Contains(t, resp.Body.String(), "-----BEGIN PGP PUBLIC KEY BLOCK-----")
 	})
 
-	for _, distro := range []string{"", "arch", "arch/os", "x86_64"} {
+	for _, group := range []string{"", "arch", "arch/os", "x86_64"} {
 		groupUrl := rootURL
-		if distro != "" {
-			groupUrl = groupUrl + "/" + distro
+		if group != "" {
+			groupUrl = groupUrl + "/" + group
 		}
-		t.Run(fmt.Sprintf("Upload[%s]", distro), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Upload[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["any"]))
@@ -135,7 +135,7 @@ nYAR`),
 			require.NoError(t, err)
 			size := 0
 			for _, pf := range pfs {
-				if pf.CompositeKey == distro {
+				if pf.CompositeKey == group {
 					size++
 				}
 			}
@@ -159,7 +159,7 @@ nYAR`),
 			MakeRequest(t, req, http.StatusConflict)
 		})
 
-		t.Run(fmt.Sprintf("Download[%s]", distro), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Download[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			req := NewRequest(t, "GET", groupUrl+"/x86_64/test-1.0.0-1-x86_64.pkg.tar.zst")
 			resp := MakeRequest(t, req, http.StatusOK)
@@ -174,7 +174,7 @@ nYAR`),
 			MakeRequest(t, req, http.StatusNotFound)
 		})
 
-		t.Run(fmt.Sprintf("SignVerify[%s]", distro), func(t *testing.T) {
+		t.Run(fmt.Sprintf("SignVerify[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			req := NewRequest(t, "GET", rootURL+"/repository.key")
 			respPub := MakeRequest(t, req, http.StatusOK)
@@ -190,7 +190,7 @@ nYAR`),
 			}
 		})
 
-		t.Run(fmt.Sprintf("RepositoryDB[%s]", distro), func(t *testing.T) {
+		t.Run(fmt.Sprintf("RepositoryDB[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			req := NewRequest(t, "GET", rootURL+"/repository.key")
 			respPub := MakeRequest(t, req, http.StatusOK)
@@ -221,7 +221,7 @@ nYAR`),
 			}
 		})
 
-		t.Run(fmt.Sprintf("Delete[%s]", distro), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Delete[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			//test data
 			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["other"])).

@@ -41,7 +41,7 @@ func GetRepositoryKey(ctx *context.Context) {
 }
 
 func PushPackage(ctx *context.Context) {
-	distro := ctx.Params("distro")
+	group := ctx.Params("group")
 
 	upload, needToClose, err := ctx.UploadStream()
 	if err != nil {
@@ -97,7 +97,7 @@ func PushPackage(ctx *context.Context) {
 	properties := map[string]string{
 		arch_module.PropertyDescription:  p.Desc(),
 		arch_module.PropertyArch:         p.FileMetadata.Arch,
-		arch_module.PropertyDistribution: distro,
+		arch_module.PropertyDistribution: group,
 	}
 
 	version, _, err := packages_service.CreatePackageOrAddFileToExisting(
@@ -114,8 +114,8 @@ func PushPackage(ctx *context.Context) {
 		},
 		&packages_service.PackageFileCreationInfo{
 			PackageFileInfo: packages_service.PackageFileInfo{
-				Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.zst", p.Name, p.Version, p.FileMetadata.Arch),
-				CompositeKey: distro,
+				Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s", p.Name, p.Version, p.FileMetadata.Arch, p.ArchiveType),
+				CompositeKey: group,
 			},
 			OverwriteExisting: false,
 			IsLead:            true,
@@ -138,8 +138,8 @@ func PushPackage(ctx *context.Context) {
 	// add sign file
 	_, err = packages_service.AddFileToPackageVersionInternal(ctx, version, &packages_service.PackageFileCreationInfo{
 		PackageFileInfo: packages_service.PackageFileInfo{
-			CompositeKey: distro,
-			Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.zst.sig", p.Name, p.Version, p.FileMetadata.Arch),
+			CompositeKey: group,
+			Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s.sig", p.Name, p.Version, p.FileMetadata.Arch, p.ArchiveType),
 		},
 		OverwriteExisting: true,
 		IsLead:            false,
@@ -149,7 +149,7 @@ func PushPackage(ctx *context.Context) {
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 	}
-	if err = arch_service.BuildPacmanDB(ctx, ctx.Package.Owner.ID, distro, p.FileMetadata.Arch); err != nil {
+	if err = arch_service.BuildPacmanDB(ctx, ctx.Package.Owner.ID, group, p.FileMetadata.Arch); err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
 	}
@@ -158,13 +158,16 @@ func PushPackage(ctx *context.Context) {
 
 func GetPackageOrDB(ctx *context.Context) {
 	var (
-		file   = ctx.Params("file")
-		distro = ctx.Params("distro")
-		arch   = ctx.Params("arch")
+		file  = ctx.Params("file")
+		group = ctx.Params("group")
+		arch  = ctx.Params("arch")
 	)
 
-	if strings.HasSuffix(file, ".pkg.tar.zst") || strings.HasSuffix(file, ".pkg.tar.zst.sig") {
-		pkg, err := arch_service.GetPackageFile(ctx, distro, file, ctx.Package.Owner.ID)
+	if strings.HasSuffix(file, ".pkg.tar.zst") ||
+		strings.HasSuffix(file, ".pkg.tar.xz") ||
+		strings.HasSuffix(file, ".pkg.tar.zst.sig") ||
+		strings.HasSuffix(file, ".pkg.tar.xz.sig") {
+		pkg, err := arch_service.GetPackageFile(ctx, group, file, ctx.Package.Owner.ID)
 		if err != nil {
 			if errors.Is(err, util.ErrNotExist) {
 				apiError(ctx, http.StatusNotFound, err)
@@ -184,7 +187,7 @@ func GetPackageOrDB(ctx *context.Context) {
 		strings.HasSuffix(file, ".db") ||
 		strings.HasSuffix(file, ".db.tar.gz.sig") ||
 		strings.HasSuffix(file, ".db.sig") {
-		pkg, err := arch_service.GetPackageDBFile(ctx, distro, arch, ctx.Package.Owner.ID,
+		pkg, err := arch_service.GetPackageDBFile(ctx, group, arch, ctx.Package.Owner.ID,
 			strings.HasSuffix(file, ".sig"))
 		if err != nil {
 			if errors.Is(err, util.ErrNotExist) {
@@ -205,9 +208,9 @@ func GetPackageOrDB(ctx *context.Context) {
 
 func RemovePackage(ctx *context.Context) {
 	var (
-		distro = ctx.Params("distro")
-		pkg    = ctx.Params("package")
-		ver    = ctx.Params("version")
+		group = ctx.Params("group")
+		pkg   = ctx.Params("package")
+		ver   = ctx.Params("version")
 	)
 	pv, err := packages_model.GetVersionByNameAndVersion(
 		ctx, ctx.Package.Owner.ID, packages_model.TypeArch, pkg, ver,
@@ -227,7 +230,7 @@ func RemovePackage(ctx *context.Context) {
 	}
 	deleted := false
 	for _, file := range files {
-		if file.CompositeKey == distro {
+		if file.CompositeKey == group {
 			deleted = true
 			err := packages_service.RemovePackageFileAndVersionIfUnreferenced(ctx, ctx.ContextUser, file)
 			if err != nil {
@@ -237,7 +240,7 @@ func RemovePackage(ctx *context.Context) {
 		}
 	}
 	if deleted {
-		err = arch_service.BuildCustomRepositoryFiles(ctx, ctx.Package.Owner.ID, distro)
+		err = arch_service.BuildCustomRepositoryFiles(ctx, ctx.Package.Owner.ID, group)
 		if err != nil {
 			apiError(ctx, http.StatusInternalServerError, err)
 		}
