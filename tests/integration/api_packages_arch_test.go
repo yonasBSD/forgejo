@@ -223,7 +223,7 @@ Wg==`), // this is tar.xz file
 
 		t.Run(fmt.Sprintf("Delete[%s]", group), func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
-			//test data
+			// test data
 			req := NewRequestWithBody(t, "PUT", groupUrl, bytes.NewReader(pkgs["other"])).
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
@@ -247,7 +247,6 @@ Wg==`), // this is tar.xz file
 			MakeRequest(t, req, http.StatusNoContent)
 			req = NewRequest(t, "GET", groupUrl+"/x86_64/base.db")
 			MakeRequest(t, req, http.StatusNotFound)
-
 		})
 	}
 }
