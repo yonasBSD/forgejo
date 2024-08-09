@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	packages_model "code.gitea.io/gitea/models/packages"
@@ -19,6 +20,11 @@ import (
 	"code.gitea.io/gitea/services/context"
 	packages_service "code.gitea.io/gitea/services/packages"
 	arch_service "code.gitea.io/gitea/services/packages/arch"
+)
+
+var (
+	archPkgOrSig, _ = regexp.Compile("^.*\\.pkg\\.tar\\.\\w+(\\.sig)*$")
+	archDBOrSig, _  = regexp.Compile("^.*.db(\\.tar\\.gz)*(\\.sig)*$")
 )
 
 func apiError(ctx *context.Context, status int, obj any) {
@@ -162,11 +168,7 @@ func GetPackageOrDB(ctx *context.Context) {
 		group = ctx.Params("group")
 		arch  = ctx.Params("arch")
 	)
-
-	if strings.HasSuffix(file, ".pkg.tar.zst") ||
-		strings.HasSuffix(file, ".pkg.tar.xz") ||
-		strings.HasSuffix(file, ".pkg.tar.zst.sig") ||
-		strings.HasSuffix(file, ".pkg.tar.xz.sig") {
+	if archPkgOrSig.MatchString(file) {
 		pkg, err := arch_service.GetPackageFile(ctx, group, file, ctx.Package.Owner.ID)
 		if err != nil {
 			if errors.Is(err, util.ErrNotExist) {
@@ -183,10 +185,7 @@ func GetPackageOrDB(ctx *context.Context) {
 		return
 	}
 
-	if strings.HasSuffix(file, ".db.tar.gz") ||
-		strings.HasSuffix(file, ".db") ||
-		strings.HasSuffix(file, ".db.tar.gz.sig") ||
-		strings.HasSuffix(file, ".db.sig") {
+	if archDBOrSig.MatchString(file) {
 		pkg, err := arch_service.GetPackageDBFile(ctx, group, arch, ctx.Package.Owner.ID,
 			strings.HasSuffix(file, ".sig"))
 		if err != nil {

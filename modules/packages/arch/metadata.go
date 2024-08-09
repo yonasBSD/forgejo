@@ -42,14 +42,14 @@ var (
 	reOptDep = regexp.MustCompile(`^[a-zA-Z0-9@._+-]+$|^[a-zA-Z0-9@._+-]+(:.*)`)
 	rePkgVer = regexp.MustCompile(`^[a-zA-Z0-9@._+-]+$|^[a-zA-Z0-9@._+-]+(>.*)|^[a-zA-Z0-9@._+-]+(<.*)|^[a-zA-Z0-9@._+-]+(=.*)`)
 
-	zstdHeader = []byte{0x28, 0xB5, 0x2F, 0xFD}
-	xzHeader   = []byte{0xFD, 0x37, 0x7A, 0x58, 0x5A}
+	magicZstd = []byte{0x28, 0xB5, 0x2F, 0xFD}
+	magicXZ   = []byte{0xFD, 0x37, 0x7A, 0x58, 0x5A}
 )
 
 type Package struct {
 	Name            string `json:"name"`
 	Version         string `json:"version"` // Includes version, release and epoch
-	ArchiveType     string `json:"archive_type"`
+	ArchiveType     string `json:"type"`
 	VersionMetadata VersionMetadata
 	FileMetadata    FileMetadata
 }
@@ -105,10 +105,10 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 
 	var tarball archiver.Reader
 	var tarballType string
-	if bytes.Equal(header[:len(zstdHeader)], zstdHeader) {
+	if bytes.Equal(header[:len(magicZstd)], magicZstd) {
 		tarballType = "zst"
 		tarball = archiver.NewTarZstd()
-	} else if bytes.Equal(header[:len(xzHeader)], xzHeader) {
+	} else if bytes.Equal(header[:len(magicXZ)], magicXZ) {
 		tarballType = "xz"
 		tarball = archiver.NewTarXz()
 	} else {
