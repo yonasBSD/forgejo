@@ -489,7 +489,7 @@ lint-go-gopls:
 
 .PHONY: lint-editorconfig
 lint-editorconfig:
-	$(GO) run $(EDITORCONFIG_CHECKER_PACKAGE) templates .forgejo/workflows
+	$(GO) run $(EDITORCONFIG_CHECKER_PACKAGE) templates/**/*.* .forgejo/workflows/*.*
 
 .PHONY: lint-templates
 lint-templates: .venv node_modules
