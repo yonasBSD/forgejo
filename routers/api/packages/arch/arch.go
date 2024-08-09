@@ -42,6 +42,7 @@ func GetRepositoryKey(ctx *context.Context) {
 
 func PushPackage(ctx *context.Context) {
 	distro := ctx.Params("distro")
+
 	upload, needToClose, err := ctx.UploadStream()
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
@@ -148,7 +149,7 @@ func PushPackage(ctx *context.Context) {
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 	}
-	if err = arch_service.BuildPacmanDB(ctx, ctx.Package.Owner.ID, distro); err != nil {
+	if err = arch_service.BuildPacmanDB(ctx, ctx.Package.Owner.ID, distro, p.FileMetadata.Arch); err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
 	}
@@ -159,6 +160,7 @@ func GetPackageOrDB(ctx *context.Context) {
 	var (
 		file   = ctx.Params("file")
 		distro = ctx.Params("distro")
+		arch   = ctx.Params("arch")
 	)
 
 	if strings.HasSuffix(file, ".pkg.tar.zst") || strings.HasSuffix(file, ".pkg.tar.zst.sig") {
@@ -182,7 +184,7 @@ func GetPackageOrDB(ctx *context.Context) {
 		strings.HasSuffix(file, ".db") ||
 		strings.HasSuffix(file, ".db.tar.gz.sig") ||
 		strings.HasSuffix(file, ".db.sig") {
-		pkg, err := arch_service.GetPackageDBFile(ctx, distro, ctx.Package.Owner.ID,
+		pkg, err := arch_service.GetPackageDBFile(ctx, distro, arch, ctx.Package.Owner.ID,
 			strings.HasSuffix(file, ".sig"))
 		if err != nil {
 			if errors.Is(err, util.ErrNotExist) {

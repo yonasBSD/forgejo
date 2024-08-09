@@ -155,10 +155,16 @@ func CommonRoutes() *web.Route {
 				isPut := ctx.Req.Method == "PUT"
 				isDelete := ctx.Req.Method == "DELETE"
 				if isGetHead {
-					if groupLen == 1 {
-						ctx.SetParams("file", pathGroups[0])
+					if groupLen < 2 {
+						ctx.Status(http.StatusNotFound)
+						return
+					}
+					if groupLen == 2 {
+						ctx.SetParams("arch", pathGroups[0])
+						ctx.SetParams("file", pathGroups[1])
 					} else {
-						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-1], "/"))
+						ctx.SetParams("distro", strings.Join(pathGroups[:groupLen-2], "/"))
+						ctx.SetParams("arch", pathGroups[groupLen-2])
 						ctx.SetParams("file", pathGroups[groupLen-1])
 					}
 					arch.GetPackageOrDB(ctx)
