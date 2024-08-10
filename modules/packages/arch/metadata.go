@@ -112,7 +112,7 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 		tarballType = "xz"
 		tarball = archiver.NewTarXz()
 	} else {
-		return nil, errors.New("unsupported architecture")
+		return nil, errors.New("not supported compression")
 	}
 	err = tarball.Open(r, 0)
 	if err != nil {
@@ -161,9 +161,9 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 
 // ParsePackageInfo Function that accepts reader for .PKGINFO file from package archive,
 // validates all field according to PKGBUILD spec and returns package.
-func ParsePackageInfo(pkgArchiveType string, r io.Reader) (*Package, error) {
+func ParsePackageInfo(compressType string, r io.Reader) (*Package, error) {
 	p := &Package{
-		CompressType: pkgArchiveType,
+		CompressType: compressType,
 	}
 
 	scanner := bufio.NewScanner(r)
