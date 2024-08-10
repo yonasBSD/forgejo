@@ -120,7 +120,7 @@ func PushPackage(ctx *context.Context) {
 		},
 		&packages_service.PackageFileCreationInfo{
 			PackageFileInfo: packages_service.PackageFileInfo{
-				Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s", p.Name, p.Version, p.FileMetadata.Arch, p.ArchiveType),
+				Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s", p.Name, p.Version, p.FileMetadata.Arch, p.CompressType),
 				CompositeKey: group,
 			},
 			OverwriteExisting: false,
@@ -145,7 +145,7 @@ func PushPackage(ctx *context.Context) {
 	_, err = packages_service.AddFileToPackageVersionInternal(ctx, version, &packages_service.PackageFileCreationInfo{
 		PackageFileInfo: packages_service.PackageFileInfo{
 			CompositeKey: group,
-			Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s.sig", p.Name, p.Version, p.FileMetadata.Arch, p.ArchiveType),
+			Filename:     fmt.Sprintf("%s-%s-%s.pkg.tar.%s.sig", p.Name, p.Version, p.FileMetadata.Arch, p.CompressType),
 		},
 		OverwriteExisting: true,
 		IsLead:            false,

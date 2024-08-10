@@ -158,12 +158,12 @@ checkdepend = ola
 makedepend = cmake
 backup = usr/bin/paket1
 `
-	p, err := ParsePackageInfo(strings.NewReader(PKGINFO))
+	p, err := ParsePackageInfo("zst", strings.NewReader(PKGINFO))
 	require.NoError(t, err)
 	require.Equal(t, Package{
-		ArchiveType: "zst",
-		Name:        "a",
-		Version:     "1-2",
+		CompressType: "zst",
+		Name:         "a",
+		Version:      "1-2",
 		VersionMetadata: VersionMetadata{
 			Base:         "b",
 			Description:  "comment",
@@ -418,9 +418,9 @@ dummy6
 `
 
 	md := &Package{
-		ArchiveType: "zst",
-		Name:        "zstd",
-		Version:     "1.5.5-1",
+		CompressType: "zst",
+		Name:         "zstd",
+		Version:      "1.5.5-1",
 		VersionMetadata: VersionMetadata{
 			Base:         "zstd",
 			Description:  "Zstandard - Fast real-time compression algorithm",

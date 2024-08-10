@@ -42,14 +42,14 @@ var (
 	reOptDep = regexp.MustCompile(`^[a-zA-Z0-9@._+-]+$|^[a-zA-Z0-9@._+-]+(:.*)`)
 	rePkgVer = regexp.MustCompile(`^[a-zA-Z0-9@._+-]+$|^[a-zA-Z0-9@._+-]+(>.*)|^[a-zA-Z0-9@._+-]+(<.*)|^[a-zA-Z0-9@._+-]+(=.*)`)
 
-	magicZstd = []byte{0x28, 0xB5, 0x2F, 0xFD}
+	magicZSTD = []byte{0x28, 0xB5, 0x2F, 0xFD}
 	magicXZ   = []byte{0xFD, 0x37, 0x7A, 0x58, 0x5A}
 )
 
 type Package struct {
 	Name            string `json:"name"`
 	Version         string `json:"version"` // Includes version, release and epoch
-	ArchiveType     string `json:"type"`
+	CompressType    string `json:"compress_type"`
 	VersionMetadata VersionMetadata
 	FileMetadata    FileMetadata
 }
@@ -105,7 +105,7 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 
 	var tarball archiver.Reader
 	var tarballType string
-	if bytes.Equal(header[:len(magicZstd)], magicZstd) {
+	if bytes.Equal(header[:len(magicZSTD)], magicZSTD) {
 		tarballType = "zst"
 		tarball = archiver.NewTarZstd()
 	} else if bytes.Equal(header[:len(magicXZ)], magicXZ) {
@@ -135,7 +135,7 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 
 		switch f.Name() {
 		case ".PKGINFO":
-			pkg, err = ParsePackageInfo(f)
+			pkg, err = ParsePackageInfo(tarballType, f)
 			if err != nil {
 				return nil, err
 			}
@@ -155,16 +155,15 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 	pkg.FileMetadata.CompressedSize = r.Size()
 	pkg.FileMetadata.MD5 = hex.EncodeToString(md5)
 	pkg.FileMetadata.SHA256 = hex.EncodeToString(sha256)
-	pkg.ArchiveType = tarballType
 
 	return pkg, nil
 }
 
 // ParsePackageInfo Function that accepts reader for .PKGINFO file from package archive,
 // validates all field according to PKGBUILD spec and returns package.
-func ParsePackageInfo(r io.Reader) (*Package, error) {
+func ParsePackageInfo(pkgArchiveType string, r io.Reader) (*Package, error) {
 	p := &Package{
-		ArchiveType: "zst",
+		CompressType: pkgArchiveType,
 	}
 
 	scanner := bufio.NewScanner(r)
@@ -308,7 +307,7 @@ func ValidatePackageSpec(p *Package) error {
 // Desc Create pacman package description file.
 func (p *Package) Desc() string {
 	entries := []string{
-		"FILENAME", fmt.Sprintf("%s-%s-%s.pkg.tar.%s", p.Name, p.Version, p.FileMetadata.Arch, p.ArchiveType),
+		"FILENAME", fmt.Sprintf("%s-%s-%s.pkg.tar.%s", p.Name, p.Version, p.FileMetadata.Arch, p.CompressType),
 		"NAME", p.Name,
 		"BASE", p.VersionMetadata.Base,
 		"VERSION", p.Version,
