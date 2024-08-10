@@ -161,8 +161,9 @@ backup = usr/bin/paket1
 	p, err := ParsePackageInfo(strings.NewReader(PKGINFO))
 	require.NoError(t, err)
 	require.Equal(t, Package{
-		Name:    "a",
-		Version: "1-2",
+		ArchiveType: "zst",
+		Name:        "a",
+		Version:     "1-2",
 		VersionMetadata: VersionMetadata{
 			Base:         "b",
 			Description:  "comment",
@@ -417,8 +418,9 @@ dummy6
 `
 
 	md := &Package{
-		Name:    "zstd",
-		Version: "1.5.5-1",
+		ArchiveType: "zst",
+		Name:        "zstd",
+		Version:     "1.5.5-1",
 		VersionMetadata: VersionMetadata{
 			Base:         "zstd",
 			Description:  "Zstandard - Fast real-time compression algorithm",
