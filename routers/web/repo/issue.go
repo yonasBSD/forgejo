@@ -1263,7 +1263,7 @@ func NewIssuePost(ctx *context.Context) {
 
 	if err := issue_service.NewIssue(ctx, repo, issue, labelIDs, attachments, assigneeIDs); err != nil {
 		if errors.Is(err, user_model.ErrBlockedByUser) {
-			ctx.RenderWithErr(ctx.Tr("repo.issues.blocked_by_user"), tplIssueNew, form)
+			ctx.JSONError(ctx.Tr("repo.issues.blocked_by_user"))
 			return
 		} else if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
 			ctx.Error(http.StatusBadRequest, "UserDoesNotHaveAccessToRepo", err.Error())
@@ -3197,7 +3197,7 @@ func NewComment(ctx *context.Context) {
 	comment, err := issue_service.CreateIssueComment(ctx, ctx.Doer, ctx.Repo.Repository, issue, form.Content, attachments)
 	if err != nil {
 		if errors.Is(err, user_model.ErrBlockedByUser) {
-			ctx.Flash.Error(ctx.Tr("repo.issues.comment.blocked_by_user"))
+			ctx.JSONError(ctx.Tr("repo.issues.comment.blocked_by_user"))
 		} else {
 			ctx.ServerError("CreateIssueComment", err)
 		}
@@ -3363,12 +3363,6 @@ func ChangeIssueReaction(ctx *context.Context) {
 			log.Info("CreateIssueReaction: %s", err)
 			break
 		}
-		// Reload new reactions
-		issue.Reactions = nil
-		if err = issue.LoadAttributes(ctx); err != nil {
-			log.Info("issue.LoadAttributes: %s", err)
-			break
-		}
 
 		log.Trace("Reaction for issue created: %d/%d/%d", ctx.Repo.Repository.ID, issue.ID, reaction.ID)
 	case "unreact":
@@ -3377,16 +3371,16 @@ func ChangeIssueReaction(ctx *context.Context) {
 			return
 		}
 
-		// Reload new reactions
-		issue.Reactions = nil
-		if err := issue.LoadAttributes(ctx); err != nil {
-			log.Info("issue.LoadAttributes: %s", err)
-			break
-		}
-
 		log.Trace("Reaction for issue removed: %d/%d", ctx.Repo.Repository.ID, issue.ID)
 	default:
 		ctx.NotFound(fmt.Sprintf("Unknown action %s", ctx.Params(":action")), nil)
+		return
+	}
+
+	// Reload new reactions
+	issue.Reactions = nil
+	if err := issue.LoadAttributes(ctx); err != nil {
+		ctx.ServerError("ChangeIssueReaction.LoadAttributes", err)
 		return
 	}
 
@@ -3470,12 +3464,6 @@ func ChangeCommentReaction(ctx *context.Context) {
 			log.Info("CreateCommentReaction: %s", err)
 			break
 		}
-		// Reload new reactions
-		comment.Reactions = nil
-		if err = comment.LoadReactions(ctx, ctx.Repo.Repository); err != nil {
-			log.Info("comment.LoadReactions: %s", err)
-			break
-		}
 
 		log.Trace("Reaction for comment created: %d/%d/%d/%d", ctx.Repo.Repository.ID, comment.Issue.ID, comment.ID, reaction.ID)
 	case "unreact":
@@ -3484,16 +3472,16 @@ func ChangeCommentReaction(ctx *context.Context) {
 			return
 		}
 
-		// Reload new reactions
-		comment.Reactions = nil
-		if err = comment.LoadReactions(ctx, ctx.Repo.Repository); err != nil {
-			log.Info("comment.LoadReactions: %s", err)
-			break
-		}
-
 		log.Trace("Reaction for comment removed: %d/%d/%d", ctx.Repo.Repository.ID, comment.Issue.ID, comment.ID)
 	default:
 		ctx.NotFound(fmt.Sprintf("Unknown action %s", ctx.Params(":action")), nil)
+		return
+	}
+
+	// Reload new reactions
+	comment.Reactions = nil
+	if err = comment.LoadReactions(ctx, ctx.Repo.Repository); err != nil {
+		ctx.ServerError("ChangeCommentReaction.LoadReactions", err)
 		return
 	}
 
