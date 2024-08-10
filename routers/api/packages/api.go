@@ -147,10 +147,6 @@ func CommonRoutes() *web.Route {
 			r.Methods("HEAD,GET,PUT,DELETE", "*", func(ctx *context.Context) {
 				pathGroups := strings.Split(strings.Trim(ctx.Params("*"), "/"), "/")
 				groupLen := len(pathGroups)
-				if groupLen == 0 {
-					ctx.Status(http.StatusNotFound)
-					return
-				}
 				isGetHead := ctx.Req.Method == "HEAD" || ctx.Req.Method == "GET"
 				isPut := ctx.Req.Method == "PUT"
 				isDelete := ctx.Req.Method == "DELETE"
@@ -160,6 +156,7 @@ func CommonRoutes() *web.Route {
 						return
 					}
 					if groupLen == 2 {
+						ctx.SetParams("group", "")
 						ctx.SetParams("arch", pathGroups[0])
 						ctx.SetParams("file", pathGroups[1])
 					} else {
@@ -183,6 +180,7 @@ func CommonRoutes() *web.Route {
 						return
 					}
 					if groupLen == 2 {
+						ctx.SetParams("group", "")
 						ctx.SetParams("package", pathGroups[0])
 						ctx.SetParams("version", pathGroups[1])
 					} else {
