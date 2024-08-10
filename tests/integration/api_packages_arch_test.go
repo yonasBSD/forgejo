@@ -120,6 +120,10 @@ Wg==`), // this is tar.xz file
 				AddBasicAuth(user.Name)
 			MakeRequest(t, req, http.StatusCreated)
 
+			req = NewRequestWithBody(t, "PUT", groupURL, bytes.NewBuffer([]byte("any string"))).
+				AddBasicAuth(user.Name)
+			MakeRequest(t, req, http.StatusBadRequest)
+
 			pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeArch)
 			require.NoError(t, err)
 			require.Len(t, pvs, 1)
