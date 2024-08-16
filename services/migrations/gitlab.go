@@ -304,6 +304,7 @@ func (g *GitlabDownloader) GetLabels() ([]*base.Label, error) {
 				Name:        strings.Replace(label.Name, "::", "/", 1),
 				Color:       g.normalizeColor(label.Color),
 				Description: label.Description,
+				Exclusive:   strings.Contains(label.Name, "::"),
 			}
 			labels = append(labels, baseLabel)
 		}
