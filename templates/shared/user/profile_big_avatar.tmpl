@@ -30,6 +30,12 @@
 	</div>
 	<div class="extra content tw-break-anywhere">
 		<ul>
+			{{if .FederatedURI}}
+				<li>
+					{{svg "octicon-globe"}}
+					<a class="tw-flex-1" href="{{.FederatedURI}}" rel="me noreferrer nofollow" data-tooltip-content="{{ctx.Locale.Tr "user.is_federated"}}">{{.FederatedURI}}</a>
+				</li>
+			{{end}}
 			{{if .ContextUser.Location}}
 				<li>
 					{{svg "octicon-location"}}

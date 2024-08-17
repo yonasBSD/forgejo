@@ -62,6 +62,11 @@ func userProfile(ctx *context.Context) {
 
 	ctx.Data["Title"] = ctx.ContextUser.DisplayName()
 	ctx.Data["PageIsUserProfile"] = true
+	if setting.Federation.Enabled {
+		if ctx.ContextUser.IsRemote() {
+			ctx.Data["FederatedURI"] = ctx.ContextUser.NormalizedFederatedURI
+		}
+	}
 
 	// prepare heatmap data
 	if setting.Service.EnableUserHeatmap {
