@@ -15,7 +15,7 @@ require (
 	gitea.com/go-chi/captcha v0.0.0-20240315150714-fb487f629098
 	gitea.com/go-chi/session v0.0.0-20240316035857-16768d98ec96
 	gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4
-	github.com/42wim/sshsig v0.0.0-20211121163825-841cf5bbc121
+	github.com/42wim/sshsig v0.0.0-20240818000253-e3a6333df815
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/PuerkitoBio/goquery v1.9.2
@@ -104,7 +104,7 @@ require (
 	golang.org/x/image v0.18.0
 	golang.org/x/net v0.28.0
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/sys v0.23.0
+	golang.org/x/sys v0.24.0
 	golang.org/x/text v0.17.0
 	golang.org/x/tools v0.24.0
 	google.golang.org/grpc v1.65.0
