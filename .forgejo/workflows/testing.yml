@@ -37,6 +37,7 @@ jobs:
       - run: make checks-frontend
       - run: make test-frontend-coverage
       - run: make frontend
+      - run: make lint-templates
   test-unit:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
