@@ -25,7 +25,7 @@ func MonitorDiagnosis(ctx *context.Context) {
 	httplib.ServeSetHeaders(ctx.Resp, &httplib.ServeHeaderOptions{
 		ContentType: "application/zip",
 		Disposition: "attachment",
-		Filename:    fmt.Sprintf("gitea-diagnosis-%s.zip", time.Now().Format("20060102-150405")),
+		Filename:    fmt.Sprintf("forgejo-diagnosis-%s.zip", time.Now().Format("20060102-150405")),
 	})
 
 	zipWriter := zip.NewWriter(ctx.Resp)

@@ -120,13 +120,13 @@ func loadLogModeByName(rootCfg ConfigProvider, loggerName, modeName string) (wri
 
 	writerName = modeName
 	defaultFlags := "stdflags"
-	defaultFilaName := "gitea.log"
+	defaultFileName := "forgejo.log"
 	if loggerName == "access" {
 		// "access" logger is special, by default it doesn't have output flags, so it also needs a new writer name to avoid conflicting with other writers.
 		// so "access" logger's writer name is usually "file.access" or "console.access"
 		writerName += ".access"
 		defaultFlags = "none"
-		defaultFilaName = "access.log"
+		defaultFileName = "access.log"
 	}
 
 	writerMode.Level = log.LevelFromString(ConfigInheritedKeyString(sec, "LEVEL", Log.Level.String()))
@@ -153,7 +153,7 @@ func loadLogModeByName(rootCfg ConfigProvider, loggerName, modeName string) (wri
 			defaultFlags = "journaldflags"
 		}
 	case "file":
-		fileName := LogPrepareFilenameForWriter(ConfigInheritedKey(sec, "FILE_NAME").String(), defaultFilaName)
+		fileName := LogPrepareFilenameForWriter(ConfigInheritedKey(sec, "FILE_NAME").String(), defaultFileName)
 		writerOption := log.WriterFileOption{}
 		writerOption.FileName = fileName + filenameSuffix // FIXME: the suffix doesn't seem right, see its related comments
 		writerOption.LogRotate = ConfigInheritedKey(sec, "LOG_ROTATE").MustBool(true)
