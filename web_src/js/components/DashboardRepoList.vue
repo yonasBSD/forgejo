@@ -43,8 +43,8 @@ const sfc = {
         all: {
           searchMode: '',
         },
-        sources: {
-          searchMode: 'source',
+        own: {
+          searchMode: 'own',
         },
         forks: {
           searchMode: 'fork',
@@ -386,9 +386,9 @@ export default sfc; // activate the IDE's Vue plugin
               {{ textAll }}
               <div v-show="reposFilter === 'all'" class="ui circular mini grey label">{{ repoTypeCount }}</div>
             </a>
-            <a class="item" tabindex="0" :class="{active: reposFilter === 'sources'}" @click="changeReposFilter('sources')">
-              {{ textSources }}
-              <div v-show="reposFilter === 'sources'" class="ui circular mini grey label">{{ repoTypeCount }}</div>
+            <a class="item" tabindex="0" :class="{active: reposFilter === 'own'}" @click="changeReposFilter('own')">
+              {{ textOwn }}
+              <div v-show="reposFilter === 'own'" class="ui circular mini grey label">{{ repoTypeCount }}</div>
             </a>
             <a class="item" tabindex="0" :class="{active: reposFilter === 'forks'}" @click="changeReposFilter('forks')">
               {{ textForks }}

@@ -90,7 +90,7 @@ func Dashboard(ctx *context.Context) {
 	ctx.Data["PageIsNews"] = true
 	cnt, _ := organization.GetOrganizationCount(ctx, ctxUser)
 	ctx.Data["UserOrgsCount"] = cnt
-	ctx.Data["PullMirrorsEnabled"] = !setting.Mirror.DisableNewPull
+	ctx.Data["PullMirrorsEnabled"] = setting.Mirror.DisableNewPull
 	ctx.Data["Date"] = date
 
 	var uid int64
