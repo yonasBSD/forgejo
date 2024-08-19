@@ -43,14 +43,14 @@ const sfc = {
         all: {
           searchMode: '',
         },
+        sources: {
+          searchMode: 'source',
+        },
         forks: {
           searchMode: 'fork',
         },
         mirrors: {
           searchMode: 'mirror',
-        },
-        sources: {
-          searchMode: 'source',
         },
         collaborative: {
           searchMode: 'collaborative',
@@ -394,7 +394,7 @@ export default sfc; // activate the IDE's Vue plugin
               {{ textForks }}
               <div v-show="reposFilter === 'forks'" class="ui circular mini grey label">{{ repoTypeCount }}</div>
             </a>
-            <a class="item" tabindex="0" :class="{active: reposFilter === 'mirrors'}" @click="changeReposFilter('mirrors')" v-if="isMirrorsEnabled">
+            <a class="item" tabindex="0" :class="{active: reposFilter === 'mirrors'}" @click="changeReposFilter('mirrors')" v-if="isPullMirrorsEnabled">
               {{ textMirrors }}
               <div v-show="reposFilter === 'mirrors'" class="ui circular mini grey label">{{ repoTypeCount }}</div>
             </a>
