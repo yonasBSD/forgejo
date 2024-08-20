@@ -3,7 +3,7 @@ module code.gitea.io/gitea
 go 1.22.5
 
 require (
-	code.forgejo.org/f3/gof3/v3 v3.7.0
+	code.forgejo.org/f3/gof3/v3 v3.8.0
 	code.forgejo.org/forgejo/reply v1.0.2
 	code.gitea.io/actions-proto-go v0.4.0
 	code.gitea.io/gitea-vet v0.2.3
