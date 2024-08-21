@@ -1,6 +1,8 @@
 module code.gitea.io/gitea
 
-go 1.22.5
+go 1.23
+
+toolchain go1.23.0
 
 require (
 	code.forgejo.org/f3/gof3/v3 v3.7.0
@@ -56,7 +58,7 @@ require (
 	github.com/google/pprof v0.0.0-20240528025155-186aa0362fba
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
-	github.com/gorilla/sessions v1.2.2
+	github.com/gorilla/sessions v1.4.0
 	github.com/h2non/gock v1.2.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
