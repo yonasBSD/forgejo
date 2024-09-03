@@ -31,7 +31,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, gitlabPersonalAccessToken != "")
 	defer server.Close()
 
-	downloader, err := NewGitlabDownloader(context.Background(), server.URL, "gitea/test_repo", "", "", gitlabPersonalAccessToken)
+	downloader, err := NewGitlabDownloader(context.Background(), server.URL, "forgejo/test_repo", "", "", gitlabPersonalAccessToken)
 	if err != nil {
 		t.Fatalf("NewGitlabDownloader is nil: %v", err)
 	}
