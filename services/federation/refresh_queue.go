@@ -62,10 +62,15 @@ func refreshSingleItem(item refreshQueueItem) error {
 		return fmt.Errorf("Federated user[%d] (user[%d]) has no NormalizedFederatedURI", item.FederatedUserID, localUser.ID)
 	}
 
-	client, err := activitypub.NewClient(ctx, item.Doer, item.Doer.APActorID() + "#main-key")
+	clientFactory, err := activitypub.GetClientFactory(ctx)
 	if err != nil {
 		return err
 	}
+	client, err := clientFactory.WithKeys(ctx, item.Doer, item.Doer.APActorID() + "#main-key")
+	if err != nil {
+		return err
+	}
+
 	body, err := client.GetBody(localUser.NormalizedFederatedURI)
 	if err != nil {
 		return err
