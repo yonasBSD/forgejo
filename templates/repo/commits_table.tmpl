@@ -51,16 +51,12 @@
 	</div>
 {{end}}
 
-{{if .PageIsPullCommits}}
-	{{template "repo/pulls/commits_list" .}}
-{{else if and .Commits (gt .CommitCount 0)}}
-	{{template "repo/commits_list" .}}
-{{end}}
-
-{{if .OldFilename}}
-	<div class="ui bottom attached header">
-		<span>{{ctx.Locale.Tr "repo.commits.renamed_from" .OldFilename}} (<a href="{{.OldFilenameHistory}}">{{ctx.Locale.Tr "repo.commits.browse_further"}}</a>)</span>
-	</div>
+{{if and .Commits (gt .CommitCount 0)}}
+	{{if .PageIsPullCommits}}
+		{{template "repo/pulls/commits_list" .}}
+	{{else}}
+		{{template "repo/commits_list" .}}
+	{{end}}
 {{end}}
 
 {{template "base/paginate" .}}
