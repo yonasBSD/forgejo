@@ -606,7 +606,7 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		repoOwnerType = project_model.TypeOrganization
 	}
 	var err error
-	projects, err := db.Find[project_model.Project](ctx, project_model.SearchOptions{
+	repositoryProjects, err := db.Find[project_model.Project](ctx, project_model.SearchOptions{
 		ListOptions: db.ListOptionsAll,
 		RepoID:      repo.ID,
 		IsClosed:    optional.Some(false),
@@ -616,7 +616,7 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		ctx.ServerError("GetProjects", err)
 		return
 	}
-	projects2, err := db.Find[project_model.Project](ctx, project_model.SearchOptions{
+	ownerProjects, err := db.Find[project_model.Project](ctx, project_model.SearchOptions{
 		ListOptions: db.ListOptionsAll,
 		OwnerID:     repo.OwnerID,
 		IsClosed:    optional.Some(false),
@@ -627,9 +627,10 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		return
 	}
 
-	ctx.Data["OpenProjects"] = append(projects, projects2...)
+	ownerHasOpenProjects := len(ownerProjects) > 0
+	ctx.Data["OpenProjects"] = append(repositoryProjects, ownerProjects...)
 
-	projects, err = db.Find[project_model.Project](ctx, project_model.SearchOptions{
+	repositoryProjects, err = db.Find[project_model.Project](ctx, project_model.SearchOptions{
 		ListOptions: db.ListOptionsAll,
 		RepoID:      repo.ID,
 		IsClosed:    optional.Some(true),
@@ -639,7 +640,7 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		ctx.ServerError("GetProjects", err)
 		return
 	}
-	projects2, err = db.Find[project_model.Project](ctx, project_model.SearchOptions{
+	ownerProjects, err = db.Find[project_model.Project](ctx, project_model.SearchOptions{
 		ListOptions: db.ListOptionsAll,
 		OwnerID:     repo.OwnerID,
 		IsClosed:    optional.Some(true),
@@ -650,7 +651,8 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		return
 	}
 
-	ctx.Data["ClosedProjects"] = append(projects, projects2...)
+	ctx.Data["OwnerHasProjects"] = ownerHasOpenProjects || len(ownerProjects) > 0
+	ctx.Data["ClosedProjects"] = append(repositoryProjects, ownerProjects...)
 }
 
 // repoReviewerSelection items to bee shown
@@ -970,6 +972,14 @@ func NewIssue(ctx *context.Context) {
 
 	isProjectsEnabled := ctx.Repo.CanRead(unit.TypeProjects)
 	ctx.Data["IsProjectsEnabled"] = isProjectsEnabled
+
+	// Individuals always have projects unit enabled
+	isOwnerProjectsEnabled := true
+	if ctx.Repo.Owner.IsOrganization() {
+		isOwnerProjectsEnabled = ctx.Org.CanReadUnit(ctx, unit.TypeProjects)
+	}
+	ctx.Data["IsOwnerProjectsEnabled"] = isOwnerProjectsEnabled
+
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
 
@@ -985,7 +995,7 @@ func NewIssue(ctx *context.Context) {
 	}
 
 	projectID := ctx.FormInt64("project")
-	if projectID > 0 && isProjectsEnabled {
+	if projectID > 0 && (isProjectsEnabled || isOwnerProjectsEnabled) {
 		project, err := project_model.GetProjectByID(ctx, projectID)
 		if err != nil {
 			log.Error("GetProjectByID: %d: %v", projectID, err)
@@ -1280,9 +1290,9 @@ func NewIssuePost(ctx *context.Context) {
 	}
 
 	if projectID > 0 {
-		if !ctx.Repo.CanRead(unit.TypeProjects) {
+		if !ctx.Repo.CanRead(unit.TypeProjects) || (ctx.ContextUser.IsOrganization() && !ctx.Org.CanReadUnit(ctx, unit.TypeProjects)) {
 			// User must also be able to see the project.
-			ctx.Error(http.StatusBadRequest, "user hasn't permissions to read projects")
+			ctx.Error(http.StatusForbidden, "user doesn't have permissions to read projects")
 			return
 		}
 		if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, ctx.Doer, projectID, 0); err != nil {
@@ -1481,7 +1491,8 @@ func ViewIssue(ctx *context.Context) {
 	}
 
 	ctx.Data["IsModerationEnabled"] = setting.Moderation.Enabled
-	ctx.Data["IsProjectsEnabled"] = ctx.Repo.CanRead(unit.TypeProjects)
+	isProjectsEnabled := ctx.Repo.CanRead(unit.TypeProjects)
+	ctx.Data["IsProjectsEnabled"] = isProjectsEnabled
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
 
@@ -1550,6 +1561,7 @@ func ViewIssue(ctx *context.Context) {
 	}
 	ctx.Data["Labels"] = labels
 
+	isOwnerProjectsEnabled := true
 	if repo.Owner.IsOrganization() {
 		orgLabels, err := issues_model.GetLabelsByOrgID(ctx, repo.Owner.ID, ctx.FormString("sort"), db.ListOptions{})
 		if err != nil {
@@ -1557,9 +1569,11 @@ func ViewIssue(ctx *context.Context) {
 			return
 		}
 		ctx.Data["OrgLabels"] = orgLabels
-
 		labels = append(labels, orgLabels...)
+
+		isOwnerProjectsEnabled = ctx.Org.CanReadUnit(ctx, unit.TypeProjects)
 	}
+	ctx.Data["IsOwnerProjectsEnabled"] = isOwnerProjectsEnabled
 
 	hasSelected := false
 	for i := range labels {
@@ -1573,7 +1587,9 @@ func ViewIssue(ctx *context.Context) {
 	// Check milestone and assignee.
 	if ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull) {
 		RetrieveRepoMilestonesAndAssignees(ctx, repo)
-		retrieveProjects(ctx, repo)
+		if isProjectsEnabled || isOwnerProjectsEnabled {
+			retrieveProjects(ctx, repo)
+		}
 
 		if ctx.Written() {
 			return
