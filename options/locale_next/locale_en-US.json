@@ -427,5 +427,7 @@
 	"editor.toggle_case": "Toggle case sensitivity",
 	"editor.toggle_regex": "Toggle using regular expressions",
 	"editor.toggle_whole_word": "Toggle matching whole words",
-	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
+	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it.",
+    "repo.settings.admin_enable_repo_code_indexer": "Enable code indexer for this repository",
+    "repo.settings.admin_code_indexer_is_globally_disabled": "Note: Code indexer is disabled globally"
 }

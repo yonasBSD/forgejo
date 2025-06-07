@@ -156,8 +156,9 @@ type RepoSettingForm struct {
 	TrustModel string
 
 	// Admin settings
-	EnableHealthCheck  bool
-	RequestReindexType string
+	EnableHealthCheck     bool
+	EnableRepoCodeIndexer bool
+	RequestReindexType    string
 }
 
 // Validate validates the fields
