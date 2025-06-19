@@ -32,7 +32,7 @@
 		</div>
 
 		<div class="message">
-			{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
+			{{$commitLink:= printf "%s/pulls/%d/commits/%s" $commitRepoLink (PathEscape .ID.String)}}
 			<div class="message-wrapper">
 				{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}
 				{{if IsMultilineCommitMessage .Message}}
@@ -61,14 +61,7 @@
 					{{$class = (print $class " isWarning")}}
 				{{end}}
 			{{end}}
-			{{$commitShaLink := ""}}
-			{{if $.PageIsWiki}}
-				{{$commitShaLink = (printf "%s/wiki/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
-			{{else if $.PageIsPullCommits}}
-				{{$commitShaLink = (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
-			{{else if $.Reponame}}
-				{{$commitShaLink = (printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
-			{{end}}
+			{{$commitShaLink := (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
 			<a {{if $commitShaLink}}href="{{$commitShaLink}}"{{end}} class="{{$class}}">
 				<span class="shortsha">{{ShortSha .ID.String}}</span>
 				{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}
