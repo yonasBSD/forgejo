@@ -33,12 +33,16 @@
 
 		<div class="message">
 			{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
-			<div class="message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
-			{{if IsMultilineCommitMessage .Message}}
-			<button class="ui button js-toggle-commit-body ellipsis-button" aria-expanded="false">...</button>
-			<pre class="commit-body tw-hidden">{{RenderCommitBody $.Context .Message ($.Repository.ComposeMetas ctx)}}</pre>
-			{{end}}
-			{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
+			<div class="message-wrapper">
+				{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}
+				{{if IsMultilineCommitMessage .Message}}
+				<button class="ui button js-toggle-commit-body ellipsis-button" aria-expanded="false">...</button>
+				<pre class="commit-body tw-hidden">{{RenderCommitBody $.Context .Message ($.Repository.ComposeMetas ctx)}}</pre>
+				{{end}}
+				<span class="ci-status">
+					{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
+				</span>
+			</div>
 		</div>
 
 		<div class="tw-text-left">

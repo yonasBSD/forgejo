@@ -2742,6 +2742,7 @@ tbody.commit-list {
 /* Redesigned commit layout using responsive grid configuration */
 .commit-ui-redesign {
   display: grid;
+  background: var(--color-box-body);
   padding: 0.5rem;
   row-gap: 0.5rem;
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
@@ -2759,15 +2760,18 @@ tbody.commit-list {
     grid-column: 1;
   }
 
-  .commit-ui-redesign .date {
+  .commit-ui-redesign .btn {
     grid-row: 1;
     grid-column: 2;
-    justify-self: right;
+    justify-self: end;
+    padding-inline: 0.5rem;
   }
 
   .commit-ui-redesign .message {
     grid-row: 2;
     grid-column: 1 / span 2;
+    padding-inline: 0.5rem;
+
   }
 
   .commit-ui-redesign .ui.sha.label {
@@ -2775,9 +2779,8 @@ tbody.commit-list {
     grid-column: 1;
   }
 
-  .commit-ui-redesign .btn {
+  .commit-ui-redesign .timeline {
     grid-row: 3;
     grid-column: 2;
-    justify-self: right;
   }
 }
