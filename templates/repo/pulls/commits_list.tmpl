@@ -15,7 +15,7 @@
 			<div class="tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
 	{{end}}
 
-	<div class="commit-ui-redesign">
+	<div class="commit-timeline">
 		<div class="author">
 			<div class="tw-flex">
 				{{$userName := .Author.Name}}
@@ -32,7 +32,7 @@
 		</div>
 
 		<div class="message">
-			{{$commitLink:= printf "%s/pulls/%d/commits/%s" $commitRepoLink (PathEscape .ID.String)}}
+			{{$commitLink := (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
 			<div class="message-wrapper">
 				{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}
 				{{if IsMultilineCommitMessage .Message}}
@@ -73,14 +73,11 @@
 		</div>
 
 		<div class="mobile-btn">
-			<div class="item ui dropdown " data-tooltip-content="{{ctx.Locale.Tr "repo.more_operations"}}" aria-label="{{ctx.Locale.Tr "toggle_menu"}}">
+			<div class="item ui dropdown " aria-label="{{ctx.Locale.Tr "toggle_menu"}}">
 				{{svg "octicon-kebab-horizontal"}}
 				<div class="menu">
 					<span class="interact item" data-clipboard-text="{{.ID}}">
 						{{svg "octicon-copy"}} {{ctx.Locale.Tr "copy_hash"}}
-						<span class="{{$class}}">
-							{{ShortSha .ID.String}}
-						</span>
 					</span>
 					{{if not $.PageIsWiki}}
 						{{if $.FileName}}

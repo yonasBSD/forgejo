@@ -2740,7 +2740,7 @@ tbody.commit-list {
 
 /* Layout for templates/repo/pulls/commits_list.tmpl */
 /* Redesigned commit layout using responsive grid configuration */
-.commit-ui-redesign {
+.commit-timeline {
   display: grid;
   background: var(--color-box-body);
   padding: 0.5rem;
@@ -2752,16 +2752,16 @@ tbody.commit-list {
 }
 
 @media (max-width: 640px) {
-  .commit-ui-redesign {
+  .commit-timeline {
     grid-template-columns: 1fr 1fr;
   }
 /* manual div allocation in grid cols, since it uses a new layout for mobile */
-  .commit-ui-redesign .author {
+  .commit-timeline .author {
     grid-row: 1;
     grid-column: 1;
   }
 
-  .commit-ui-redesign .mobile-btn {
+  .commit-timeline .mobile-btn {
     grid-row: 1;
     grid-column: 2;
     justify-self: end;
@@ -2769,21 +2769,21 @@ tbody.commit-list {
     display: flex;
   }
 
-  .commit-ui-redesign .btn { display: none;} /* manually hiding it, but we need to write this in a better way,  */
+  .commit-timeline .btn { display: none;} /* manually hiding it, but we need to write this in a better way,  */
 
-  .commit-ui-redesign .message {
+  .commit-timeline .message {
     grid-row: 2;
     grid-column: 1 / span 2;
     padding-inline: 0.5rem;
 
   }
 
-  .commit-ui-redesign .ui.sha.label {
+  .commit-timeline .ui.sha.label {
     grid-row: 3;
     grid-column: 1;
   }
 
-  .commit-ui-redesign .timeline {
+  .commit-timeline .timeline {
     grid-row: 3;
     grid-column: 2;
   }
