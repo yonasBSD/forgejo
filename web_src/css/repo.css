@@ -2748,6 +2748,7 @@ tbody.commit-list {
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
   align-items: center;
   .author {margin-right: 10%}
+  .mobile-btn {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
 }
 
 @media (max-width: 640px) {
@@ -2760,12 +2761,15 @@ tbody.commit-list {
     grid-column: 1;
   }
 
-  .commit-ui-redesign .btn {
+  .commit-ui-redesign .mobile-btn {
     grid-row: 1;
     grid-column: 2;
     justify-self: end;
     padding-inline: 0.5rem;
+    display: flex;
   }
+
+  .commit-ui-redesign .btn { display: none;} /* manually hiding it, but we need to write this in a better way,  */
 
   .commit-ui-redesign .message {
     grid-row: 2;

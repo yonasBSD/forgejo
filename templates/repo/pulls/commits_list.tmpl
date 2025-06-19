@@ -79,6 +79,36 @@
 			{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
 		</div>
 
+		<div class="mobile-btn">
+			<div class="item ui dropdown " data-tooltip-content="{{ctx.Locale.Tr "repo.more_operations"}}" aria-label="{{ctx.Locale.Tr "toggle_menu"}}">
+				{{svg "octicon-kebab-horizontal"}}
+				<div class="menu">
+					<span class="interact item" data-clipboard-text="{{.ID}}">
+						{{svg "octicon-copy"}} {{ctx.Locale.Tr "copy_hash"}}
+						<span class="{{$class}}">
+							{{ShortSha .ID.String}}
+						</span>
+					</span>
+					{{if not $.PageIsWiki}}
+						{{if $.FileName}}
+							<a
+								class="interact item"
+								rdata-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_single_diff"}}"
+								href="{{printf "%s/commit/%s?files=%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}">
+								{{svg "octicon-file-diff"}}
+							</a>
+							{{end}}
+							<a
+								class="interact item"
+								data-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_path"}}"
+								href="{{if $.FileName}}{{printf "%s/src/commit/%s/%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}{{else}}{{printf "%s/src/commit/%s" $commitRepoLink (PathEscape .ID.String)}}{{end}}">
+								{{svg "octicon-file-code"}} {{ctx.Locale.Tr "repo.commits.view_path"}}
+							</a>
+					{{end}}
+				</div>
+			</div>
+		</div>
+		
 		<div class="btn">
 			<button class="interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
 			{{if not $.PageIsWiki}}
@@ -96,8 +126,8 @@
 					href="{{if $.FileName}}{{printf "%s/src/commit/%s/%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}{{else}}{{printf "%s/src/commit/%s" $commitRepoLink (PathEscape .ID.String)}}{{end}}">
 					{{svg "octicon-file-code"}}
 				</a>
-				{{end}}
-			</div>
+			{{end}}
+		</div>
 	</div>
 {{end}}
 </div></div> <!-- Final group close -->
