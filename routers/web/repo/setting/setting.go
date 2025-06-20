@@ -776,7 +776,9 @@ func SettingsPost(ctx *context.Context) {
 			// repository removed from the index (if we disabled the indexing
 			// for the repo) or to get it indexed (if we just enabled the
 			// indexing)
-			code.UpdateRepoIndexer(ctx.Repo.Repository)
+			if setting.Indexer.RepoIndexerEnabled {
+				code.UpdateRepoIndexer(ctx.Repo.Repository)
+			}
 		}
 
 		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
