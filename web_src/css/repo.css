@@ -2748,28 +2748,24 @@ tbody.commit-list {
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
   align-items: center;
   .author {margin-right: 10%}
-  .mobile-btn {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
+  .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
+  .mobile-history-button {display: none;}
 }
 
 @media (max-width: 640px) {
   .commit-timeline {
     grid-template-columns: 1fr 1fr;
   }
-/* manual div allocation in grid cols, since it uses a new layout for mobile */
+  /* manual div allocation in grid cols, since it uses a new layout for mobile */
   .commit-timeline .author {
     grid-row: 1;
     grid-column: 1;
   }
 
-  .commit-timeline .mobile-btn {
+  .commit-timeline .date {
     grid-row: 1;
     grid-column: 2;
-    justify-self: end;
-    padding-inline: 0.5rem;
-    display: flex;
   }
-
-  .commit-timeline .btn { display: none;} /* manually hiding it, but we need to write this in a better way,  */
 
   .commit-timeline .message {
     grid-row: 2;
@@ -2778,13 +2774,19 @@ tbody.commit-list {
 
   }
 
-  .commit-timeline .ui.sha.label {
+  .commit-timeline .shabox {display: none;}
+  
+  .commit-timeline .mobile-history-button {
+    display: block;
     grid-row: 3;
     grid-column: 1;
   }
 
-  .commit-timeline .timeline {
-    grid-row: 3;
+  .commit-timeline .mobile-shabox {
+    display: block;
+    grid-row:3;
     grid-column: 2;
   }
+
+  .commit-timeline .btn {display: none;}
 }
