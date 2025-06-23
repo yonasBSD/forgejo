@@ -2749,7 +2749,7 @@ tbody.commit-list {
   align-items: center;
   .author {margin-right: 10%}
   .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
-  .mobile-history-button {display: none;}
+  .mobile-btn {display: none;}
 }
 
 @media (max-width: 640px) {
@@ -2775,17 +2775,19 @@ tbody.commit-list {
   }
 
   .commit-timeline .shabox {display: none;}
-  
-  .commit-timeline .mobile-history-button {
-    display: block;
-    grid-row: 3;
-    grid-column: 1;
-  }
 
   .commit-timeline .mobile-shabox {
-    display: block;
-    grid-row:3;
+    display: grid;
+    grid-row: 3;
+    grid-column: 1;
+    justify-self: left;
+  }
+  
+  .commit-timeline .mobile-btn {
+    display: grid;
+    grid-row: 3;
     grid-column: 2;
+    justify-self: right;
   }
 
   .commit-timeline .btn {display: none;}
