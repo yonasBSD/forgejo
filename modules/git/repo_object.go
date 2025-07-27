@@ -7,6 +7,8 @@ package git
 import (
 	"bytes"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -98,4 +100,67 @@ func (repo *Repository) GetRefType(ref string) ObjectType {
 		return ObjectBlob
 	}
 	return ObjectType("invalid")
+}
+
+// Always returns the absolute path to the alternate, if one is set
+func (repo *Repository) GetAlternatePaths() ([]string, error) {
+	data, err := os.ReadFile(filepath.Join(repo.Path, "objects", "info", "alternates"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+
+	lines := bytes.Split(data, []byte{'\n'})
+	res := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		path := strings.TrimSpace(string(line))
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(repo.Path, "objects", path)
+		}
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, abs)
+	}
+
+	return res, nil
+}
+
+// Input paths need to be absolute
+func (repo *Repository) SetAlternatePaths(paths []string, makeRelative bool) error {
+	objectsDir := filepath.Join(repo.Path, "objects")
+	lines := make([]string, 0, len(paths))
+
+	for _, alt := range paths {
+		if makeRelative {
+			rel, err := filepath.Rel(objectsDir, alt)
+			if err != nil {
+				return err
+			}
+			lines = append(lines, rel)
+		} else {
+			abs, err := filepath.Abs(alt)
+			if err != nil {
+				return err
+			}
+			lines = append(lines, abs)
+		}
+	}
+
+	data := []byte(strings.Join(lines, "\n") + "\n")
+	altFile := filepath.Join(objectsDir, "info", "alternates")
+
+	err := os.MkdirAll(filepath.Dir(altFile), 0o755)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(altFile, data, 0o644)
 }
