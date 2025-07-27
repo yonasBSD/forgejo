@@ -113,6 +113,7 @@ type CloneRepoOptions struct {
 	Bare          bool
 	Quiet         bool
 	Branch        string
+	Reference     string
 	Shared        bool
 	NoCheckout    bool
 	Depth         int
@@ -156,6 +157,9 @@ func CloneWithArgs(ctx context.Context, args TrustedCmdArgs, from, to string, op
 	}
 	if opts.Filter != "" {
 		cmd.AddArguments("--filter").AddDynamicArguments(opts.Filter)
+	}
+	if len(opts.Reference) > 0 {
+		cmd.AddArguments("--reference").AddDynamicArguments(opts.Reference)
 	}
 	if len(opts.Branch) > 0 {
 		cmd.AddArguments("-b").AddDynamicArguments(opts.Branch)
