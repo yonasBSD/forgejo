@@ -72,6 +72,11 @@ func ForkRepositoryIfNotExists(ctx context.Context, doer, owner *user_model.User
 		}
 	}
 
+	alternate, err := repo_module.EnsureAlternate(ctx, opts.BaseRepo)
+	if err != nil {
+		return nil, err
+	}
+
 	defaultBranch := opts.BaseRepo.DefaultBranch
 	if opts.SingleBranch != "" {
 		defaultBranch = opts.SingleBranch
@@ -89,6 +94,10 @@ func ForkRepositoryIfNotExists(ctx context.Context, doer, owner *user_model.User
 		IsFork:           true,
 		ForkID:           opts.BaseRepo.ID,
 		ObjectFormatName: opts.BaseRepo.ObjectFormatName,
+	}
+
+	if alternate != nil {
+		repo.AlternateID = alternate.ID
 	}
 
 	oldRepoPath := opts.BaseRepo.RepoPath()
@@ -145,6 +154,9 @@ func ForkRepositoryIfNotExists(ctx context.Context, doer, owner *user_model.User
 		if opts.SingleBranch != "" {
 			cloneCmd.AddArguments("--single-branch", "--branch").AddDynamicArguments(opts.SingleBranch)
 		}
+		if alternate != nil {
+			cloneCmd.AddArguments("--reference").AddDynamicArguments(alternate.GetPath())
+		}
 		repoPath := repo_model.RepoPath(owner.Name, repo.Name)
 		if stdout, _, err := cloneCmd.AddDynamicArguments(oldRepoPath, repoPath).
 			SetDescription(fmt.Sprintf("ForkRepositoryIfNotExists(git clone): %s to %s", opts.BaseRepo.FullName(), repo.FullName())).
@@ -173,6 +185,18 @@ func ForkRepositoryIfNotExists(ctx context.Context, doer, owner *user_model.User
 			return fmt.Errorf("OpenRepository: %w", err)
 		}
 		defer gitRepo.Close()
+
+		if alternate != nil {
+			altPaths, err := gitRepo.GetAlternatePaths()
+			if err != nil {
+				return fmt.Errorf("GetAlternatePaths: %w", err)
+			}
+			// Make the alt path relative, so the repo is relocatable
+			err = gitRepo.SetAlternatePaths(altPaths, true)
+			if err != nil {
+				return fmt.Errorf("SetAlternatePaths: %w", err)
+			}
+		}
 
 		_, err = repo_module.SyncRepoBranchesWithRepo(txCtx, repo, gitRepo, doer.ID)
 		return err
@@ -238,6 +262,11 @@ func ConvertForkToNormalRepository(ctx context.Context, repo *repo_model.Reposit
 
 		if err := repo_module.UpdateRepository(ctx, repo, false); err != nil {
 			log.Error("Unable to update repository %-v whilst converting from fork. Error: %v", repo, err)
+			return err
+		}
+
+		if err := repo_module.DetachAlternate(ctx, repo); err != nil {
+			log.Error("Unable to detach alternate from repo %-v whilst converting from fork. Error: %v", repo, err)
 			return err
 		}
 
