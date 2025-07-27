@@ -576,6 +576,19 @@ func (repo *Repository) GetBaseRepo(ctx context.Context) (err error) {
 	return err
 }
 
+// GetRootBaseRepo finds the root base repository in a fork chain
+func (repo *Repository) GetRootBaseRepo(ctx context.Context) (*Repository, error) {
+	current := repo
+	for current.IsFork && current.ForkID != 0 {
+		next, err := GetRepositoryByID(ctx, current.ForkID)
+		if err != nil {
+			return nil, err
+		}
+		current = next
+	}
+	return current, nil
+}
+
 // IsGenerated returns whether _this_ repository was generated from a template
 func (repo *Repository) IsGenerated() bool {
 	return repo.TemplateID != 0
