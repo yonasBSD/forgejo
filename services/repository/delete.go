@@ -57,6 +57,10 @@ func DeleteRepositoryDirectly(ctx context.Context, doer *user_model.User, repoID
 		}
 	}
 
+	if err := repo.GetAlternate(ctx); err != nil && !repo_model.IsErrAlternateNotExist(err) {
+		return fmt.Errorf("get alternate of repo: %w", err)
+	}
+
 	// Query the action tasks of this repo, they will be needed after they have been deleted to remove the logs
 	tasks, err := db.Find[actions_model.ActionTask](ctx, actions_model.FindTaskOptions{RepoID: repoID})
 	if err != nil {
@@ -306,6 +310,21 @@ func DeleteRepositoryDirectly(ctx context.Context, doer *user_model.User, repoID
 		return err
 	}
 
+	// if the repo has an alternate and it's the last user of it, delete the alternate
+	needsRemoveAlternate := false
+	if repo.Alternate != nil {
+		has, err := repo.Alternate.HasRepositories(ctx)
+		if err != nil {
+			return err
+		}
+		if !has {
+			if _, err = db.DeleteByBean(ctx, repo.Alternate); err != nil {
+				return err
+			}
+			needsRemoveAlternate = true
+		}
+	}
+
 	if err = committer.Commit(); err != nil {
 		return err
 	}
@@ -324,6 +343,11 @@ func DeleteRepositoryDirectly(ctx context.Context, doer *user_model.User, repoID
 	// Remove repository files.
 	repoPath := repo.RepoPath()
 	system_model.RemoveAllWithNotice(ctx, "Delete repository files", repoPath)
+
+	if needsRemoveAlternate {
+		altPath := repo.Alternate.GetPath()
+		system_model.RemoveAllWithNotice(ctx, "Delete alternate files", altPath)
+	}
 
 	// Remove wiki files
 	if repo.HasWiki() {
