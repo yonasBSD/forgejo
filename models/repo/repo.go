@@ -174,6 +174,8 @@ type Repository struct {
 	IsFork                          bool               `xorm:"INDEX NOT NULL DEFAULT false"`
 	ForkID                          int64              `xorm:"INDEX"`
 	BaseRepo                        *Repository        `xorm:"-"`
+	AlternateID                     int64              `xorm:"INDEX NOT NULL DEFAULT 0"`
+	Alternate                       *Alternate         `xorm:"-"`
 	IsTemplate                      bool               `xorm:"INDEX NOT NULL DEFAULT false"`
 	TemplateID                      int64              `xorm:"INDEX"`
 	Size                            int64              `xorm:"NOT NULL DEFAULT 0"`
@@ -587,6 +589,30 @@ func (repo *Repository) GetRootBaseRepo(ctx context.Context) (*Repository, error
 		current = next
 	}
 	return current, nil
+}
+
+// GetAlternate populates repo.Alternate if an alternate exists and
+// returns an error otherwise.
+func (repo *Repository) GetAlternate(ctx context.Context) (err error) {
+	if repo.Alternate != nil {
+		return nil
+	}
+
+	repo.Alternate, err = GetAlternateByID(ctx, repo.AlternateID)
+	return err
+}
+
+func (repo *Repository) UpdateAlternate(ctx context.Context, alternate *Alternate) (err error) {
+	if alternate == nil {
+		repo.AlternateID = 0
+		repo.Alternate = nil
+	} else {
+		repo.AlternateID = alternate.ID
+		repo.Alternate = alternate
+	}
+
+	_, err = db.GetEngine(ctx).ID(repo.ID).Cols("alternate_id").Update(repo)
+	return err
 }
 
 // IsGenerated returns whether _this_ repository was generated from a template

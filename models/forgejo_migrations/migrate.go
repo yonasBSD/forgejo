@@ -119,6 +119,8 @@ var migrations = []*Migration{
 	NewMigration("Migrate `data` column of `secret` table to store keying material", MigrateActionSecretsToKeying),
 	// v39 -> v40
 	NewMigration("Add index for release sha1", AddIndexForReleaseSha1),
+	// v40 -> v41
+	NewMigration("Create the `alternates` table and reference it from `repository`", AddAlternates),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
