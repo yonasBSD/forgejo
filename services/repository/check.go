@@ -100,6 +100,28 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 		return fmt.Errorf("Repository garbage collection failed in repo: %s: Error: %w", repo.FullName(), err)
 	}
 
+	if repo.IsFork || repo.NumForks > 0 {
+		// If the repo is a fork or has forks, ensure it has an alternate set up
+		if _, err := repo_module.EnsureAlternate(ctx, repo); err != nil {
+			log.Error("Failed to set up alternate for repository %s: %v", repo.FullName(), err)
+			desc := fmt.Sprintf("Failed to set up alternate for repository %s: %v", repo.FullName(), err)
+			if err := system_model.CreateRepositoryNotice(desc); err != nil {
+				log.Error("CreateRepositoryNotice: %v", err)
+			}
+			return fmt.Errorf("Failed to set up alternate for repository %s: %w", repo.FullName(), err)
+		}
+	} else {
+		// If it is neither, make sure it does not have an alternate
+		if err := repo_module.DetachAlternate(ctx, repo); err != nil {
+			log.Error("Failed to detach alternate from repository %s: %v", repo.FullName(), err)
+			desc := fmt.Sprintf("Failed to detach alternate from repository %s: %v", repo.FullName(), err)
+			if err := system_model.CreateRepositoryNotice(desc); err != nil {
+				log.Error("CreateRepositoryNotice: %v", err)
+			}
+			return fmt.Errorf("Failed to detach alternate from repository %s: %w", repo.FullName(), err)
+		}
+	}
+
 	// Now update the size of the repository
 	if err := repo_module.UpdateRepoSize(ctx, repo); err != nil {
 		log.Error("Updating size as part of garbage collection failed for %-v. Stdout: %s\nError: %v", repo, stdout, err)
