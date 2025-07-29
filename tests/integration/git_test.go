@@ -52,12 +52,15 @@ func TestGit(t *testing.T) {
 }
 
 func testGit(t *testing.T, u *url.URL) {
+	alternatesDir := filepath.Join(setting.RepoRootPath, "@alternates")
+
 	username := "user2"
 	baseAPITestContext := NewAPITestContext(t, username, "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
 	u.Path = baseAPITestContext.GitPath()
 
 	forkedUserCtx := NewAPITestContext(t, "user4", "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+	subForkedUserCtx := NewAPITestContext(t, "user5", "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
 	t.Run("HTTP", func(t *testing.T) {
 		ensureAnonymousClone(t, u)
@@ -66,17 +69,70 @@ func testGit(t *testing.T, u *url.URL) {
 			httpContext := baseAPITestContext
 			httpContext.Reponame = "repo-tmp-17-" + objectFormat.Name()
 			forkedUserCtx.Reponame = httpContext.Reponame
+			subForkedUserCtx.Reponame = httpContext.Reponame
 
 			dstPath := t.TempDir()
+
+			alternates, err := os.ReadDir(alternatesDir)
+			initialAltCount := 0
+			if err != nil && !os.IsNotExist(err) {
+				require.NoError(t, err)
+			} else if err == nil {
+				initialAltCount = len(alternates)
+			}
 
 			t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, nil, objectFormat))
 			t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
 
+			// Fork the repository, creating an alternate for the original repo and assigning it to the fork
 			t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
+			t.Run("AddSubUserAsCollaborator", doAPIAddCollaborator(httpContext, subForkedUserCtx.Username, perm.AccessModeRead))
 
+			// Convert the fork into an indepentend repo, disassociating it from the alternate
+			t.Run("ConvertFork", doConvertRepository(httpContext))
+
+			// Clone the converted repo, it should be intact and work
+			dstPathConverted := t.TempDir()
+			u.Path = httpContext.GitPath()
+			u.User = url.UserPassword(httpContext.Username, userPassword)
+			t.Run("CloneConverted", doGitClone(dstPathConverted, u))
+
+			// Fork the fork again, creating an alternate for it again and assigning it to the sub-fork
+			t.Run("ForkFromDifferentSubUser", doAPIForkRepository(subForkedUserCtx, httpContext.Username))
+
+			// Delete the intermediate fork, leaving the alternate only on the sub-fork
+			t.Run("DeleteIntermediateFork", doAPIDeleteRepository(httpContext))
+
+			// Clone the now orphaned sub-fork, it should still work and have an alternate
+			dstPathOrphaned := t.TempDir()
+			u.Path = subForkedUserCtx.GitPath()
+			u.User = url.UserPassword(subForkedUserCtx.Username, userPassword)
+			t.Run("CloneOrphanedFork", doGitClone(dstPathOrphaned, u))
+
+			// Check how many alternates there are, it should be two, the original repo and the converted forks
+			alternates, err = os.ReadDir(alternatesDir)
+			require.NoError(t, err)
+			assert.Len(t, alternates, initialAltCount+2)
+
+			// Delete the sub-fork, this should delete the alternate
+			t.Run("DeleteSubFork", doAPIDeleteRepository(subForkedUserCtx))
+
+			// Now it should be one fewer alternate
+			alternates, err = os.ReadDir(alternatesDir)
+			require.NoError(t, err)
+			assert.Len(t, alternates, initialAltCount+1)
+
+			// Finally fork the original repo again, this time re-using the already existing alternate created on the original fork
+			t.Run("ForkFromDifferentUserAgain", doAPIForkRepository(httpContext, forkedUserCtx.Username))
+
+			// And now it should still be 1, since this re-used the existing alternate
+			alternates, err = os.ReadDir(alternatesDir)
+			require.NoError(t, err)
+			assert.Len(t, alternates, initialAltCount+1)
+
+			// Clone the original repo, it should still have an alternate left intact now and work fine
 			u.Path = httpContext.GitPath()
 			u.User = url.UserPassword(username, userPassword)
-
 			t.Run("Clone", doGitClone(dstPath, u))
 
 			dstPath2 := t.TempDir()

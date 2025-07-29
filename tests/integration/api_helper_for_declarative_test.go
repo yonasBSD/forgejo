@@ -167,6 +167,22 @@ func doAPIDeleteRepository(ctx APITestContext) func(*testing.T) {
 	}
 }
 
+func doConvertRepository(ctx APITestContext) func(*testing.T) {
+	return func(t *testing.T) {
+		url := fmt.Sprintf("/%s/%s/settings", ctx.Username, ctx.Reponame)
+		req := NewRequestWithValues(t, "POST", url, map[string]string{
+			"_csrf":     GetCSRF(t, ctx.Session, url),
+			"action":    "convert_fork",
+			"repo_name": fmt.Sprintf("%s/%s", ctx.Username, ctx.Reponame),
+		})
+		if ctx.ExpectedCode != 0 {
+			ctx.Session.MakeRequest(t, req, ctx.ExpectedCode)
+			return
+		}
+		ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
+	}
+}
+
 func doAPICreateUserKey(ctx APITestContext, keyname, keyFile string, callback ...func(*testing.T, api.PublicKey)) func(*testing.T) {
 	return func(t *testing.T) {
 		dataPubKey, err := os.ReadFile(keyFile + ".pub")
