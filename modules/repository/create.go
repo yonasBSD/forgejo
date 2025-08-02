@@ -200,6 +200,20 @@ func UpdateRepoSize(ctx context.Context, repo *repo_model.Repository) error {
 		return fmt.Errorf("updateSize: %w", err)
 	}
 
+	// Attribute the size of the alternate to the base repository only, not forks of it.
+	if repo.AlternateID != 0 && !repo.IsFork {
+		err = repo.GetAlternate(ctx)
+		if err != nil {
+			return fmt.Errorf("updateSize: GetAlternate: %w", err)
+		}
+
+		altSize, err := getDirectorySize(repo.Alternate.GetPath())
+		if err != nil {
+			return fmt.Errorf("updateSize(alternate size): %w", err)
+		}
+		size += altSize
+	}
+
 	lfsSize, err := git_model.GetRepoLFSSize(ctx, repo.ID)
 	if err != nil {
 		return fmt.Errorf("updateSize: GetLFSMetaObjects: %w", err)
