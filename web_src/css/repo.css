@@ -2751,6 +2751,9 @@ tbody.commit-list {
   .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
   .mobile-btn {display: none;}
 }
+@media (max-width: 440px) {
+  .commit-timeline .mobile-shabox .badge {display: none;}
+}
 
 @media (max-width: 640px) {
   .commit-timeline {

@@ -86,8 +86,9 @@
 			{{end}}
 			{{$commitShaLink := (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
 			<button data-clipboard-text="{{.ID}}" class="{{$class}}">
-                <span class="tw-ml-2">{{svg "octicon-copy"}} {{ctx.Locale.Tr "copy"}}</span>
+                <span class="tw-m-2">{{svg "octicon-copy" 18}} {{ctx.Locale.Tr "copy"}}</span>
 				<span class="shortsha">{{ShortSha .ID.String}}</span>
+				<span class="badge">{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}</span>
 			</button>
 		</div>
 
