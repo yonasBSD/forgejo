@@ -83,22 +83,39 @@ func GitGcRepos(ctx context.Context, timeout time.Duration, args git.TrustedCmdA
 	return nil
 }
 
+func syncRepoToAlternate(ctx context.Context, repo *repo_model.Repository, timeout time.Duration) error {
+	if repo.AlternateID == 0 {
+		return nil
+	}
+
+	if err := repo.GetAlternate(ctx); err != nil {
+		return fmt.Errorf("failed to get alternate for repo %s: %w", repo.FullName(), err)
+	}
+
+	altPath := repo.Alternate.GetPath()
+
+	// Potentially the main repo or its location could have changed, so make sure origin actually points to it
+	command := git.NewCommand(ctx, "remote", "set-url", "origin").
+		AddDynamicArguments(repo.RepoPath()).
+		SetDescription(fmt.Sprintf("Update alternate %s origin url: %s", altPath, repo.RepoPath()))
+	stdout, _, err := command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: altPath})
+	if err != nil {
+		return fmt.Errorf("failed to update alternate origin url for %s -> %s. Stdout: %s\nError: %w", altPath, repo.RepoPath(), stdout, err)
+	}
+
+	command = git.NewCommand(ctx, "remote", "update", "--prune", "origin").
+		SetDescription(fmt.Sprintf("Sync alternate %s from its main repo", altPath))
+	stdout, _, err = command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: altPath})
+	if err != nil {
+		return fmt.Errorf("failed to sync alternate %s from its main repo. Stdout: %s\nError: %w", altPath, stdout, err)
+	}
+
+	return nil
+}
+
 // GitGcRepo calls 'git gc' to remove unnecessary files and optimize the local repository
 func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Duration, args git.TrustedCmdArgs) error {
 	log.Trace("Running git gc on %-v", repo)
-	command := git.NewCommand(ctx, "gc").AddArguments(args...).
-		SetDescription(fmt.Sprintf("Repository Garbage Collection: %s", repo.FullName()))
-	var stdout string
-	var err error
-	stdout, _, err = command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: repo.RepoPath()})
-	if err != nil {
-		log.Error("Repository garbage collection failed for %-v. Stdout: %s\nError: %v", repo, stdout, err)
-		desc := fmt.Sprintf("Repository garbage collection failed for %s. Stdout: %s\nError: %v", repo.RepoPath(), stdout, err)
-		if err := system_model.CreateRepositoryNotice(desc); err != nil {
-			log.Error("CreateRepositoryNotice: %v", err)
-		}
-		return fmt.Errorf("Repository garbage collection failed in repo: %s: Error: %w", repo.FullName(), err)
-	}
 
 	if repo.IsFork || repo.NumForks > 0 {
 		// If the repo is a fork or has forks, ensure it has an alternate set up
@@ -120,6 +137,32 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 			}
 			return fmt.Errorf("Failed to detach alternate from repository %s: %w", repo.FullName(), err)
 		}
+	}
+
+	if !repo.IsFork && repo.AlternateID != 0 {
+		// Sync new objects from the alternates main repository to the alternate
+		if err := syncRepoToAlternate(ctx, repo, timeout); err != nil {
+			log.Error("Failed to sync repository %s to its alternate: %v", repo.FullName(), err)
+			desc := fmt.Sprintf("Failed to sync repository %s to its alternate: %v", repo.FullName(), err)
+			if err := system_model.CreateRepositoryNotice(desc); err != nil {
+				log.Error("CreateRepositoryNotice: %v", err)
+			}
+			return fmt.Errorf("Failed to sync repository %s to its alternate: %w", repo.FullName(), err)
+		}
+	}
+
+	command := git.NewCommand(ctx, "gc").AddArguments(args...).
+		SetDescription(fmt.Sprintf("Repository Garbage Collection: %s", repo.FullName()))
+	var stdout string
+	var err error
+	stdout, _, err = command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: repo.RepoPath()})
+	if err != nil {
+		log.Error("Repository garbage collection failed for %-v. Stdout: %s\nError: %v", repo, stdout, err)
+		desc := fmt.Sprintf("Repository garbage collection failed for %s. Stdout: %s\nError: %v", repo.RepoPath(), stdout, err)
+		if err := system_model.CreateRepositoryNotice(desc); err != nil {
+			log.Error("CreateRepositoryNotice: %v", err)
+		}
+		return fmt.Errorf("Repository garbage collection failed in repo: %s: Error: %w", repo.FullName(), err)
 	}
 
 	// Now update the size of the repository
