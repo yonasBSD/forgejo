@@ -2742,6 +2742,9 @@ tbody.commit-list {
 
 .commit-group {
   margin-bottom: 1rem;
+}
+
+.commit-group-commits {
   background: var(--color-box-body);
 }
 
