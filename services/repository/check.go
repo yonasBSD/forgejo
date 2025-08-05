@@ -13,6 +13,7 @@ import (
 	repo_model "forgejo.org/models/repo"
 	system_model "forgejo.org/models/system"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/container"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/log"
 	repo_module "forgejo.org/modules/repository"
@@ -113,6 +114,99 @@ func syncRepoToAlternate(ctx context.Context, repo *repo_model.Repository, timeo
 	return nil
 }
 
+func gcAlternate(ctx context.Context, repo *repo_model.Repository, timeout time.Duration, args git.TrustedCmdArgs) error {
+	if repo.AlternateID == 0 {
+		return nil
+	}
+
+	if err := repo.GetAlternate(ctx); err != nil {
+		return fmt.Errorf("failed to get alternate for repo %s: %w", repo.FullName(), err)
+	}
+
+	altPath := repo.Alternate.GetPath()
+
+	var usingRepos []*repo_model.Repository
+	if err := db.GetEngine(ctx).Where("alternate_id = ?", repo.AlternateID).Find(&usingRepos); err != nil {
+		return fmt.Errorf("failed to fetch repositories using alternate %d: %w", repo.AlternateID, err)
+	}
+
+	// fetch all refs from all repos that use this alternate and store them in a set
+	refsSet := make(container.Set[string])
+	for _, usingRepo := range usingRepos {
+		command := git.NewCommand(ctx, "rev-parse", "--all").
+			SetDescription(fmt.Sprintf("Get all refs from repo %s", usingRepo.FullName()))
+		stdout, _, err := command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: usingRepo.RepoPath()})
+		if err != nil {
+			log.Warn("Failed to get refs from repository %s: %v", usingRepo.FullName(), err)
+			continue
+		}
+		refs := strings.Split(strings.TrimSpace(stdout), "\n")
+		for _, ref := range refs {
+			ref = strings.TrimSpace(ref)
+			if ref != "" {
+				refsSet.Add(ref)
+			}
+		}
+	}
+
+	// filter those refs that aren't in the alternate to begin with
+	realRefsList := make([]string, 0, len(refsSet))
+	if len(refsSet) > 0 {
+		command := git.NewCommand(ctx, "cat-file", "--batch-check").
+			SetDescription(fmt.Sprintf("Batch check refs existence in alternate %s", altPath))
+		stdout, _, err := command.RunStdString(&git.RunOpts{
+			Timeout: timeout,
+			Dir:     altPath,
+			Stdin:   strings.NewReader(strings.Join(refsSet.Values(), "\n")),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to batch check refs existence in alternate %s. Stdout: %s\nError: %w", altPath, stdout, err)
+		}
+
+		lines := strings.Split(strings.TrimSpace(stdout), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line != "" && !strings.HasSuffix(line, " missing") {
+				parts := strings.SplitN(line, " ", 2)
+				realRefsList = append(realRefsList, parts[0])
+			}
+		}
+	}
+
+	// create temporary refs for all refs other repos use
+	// they're left in place, next time around the remote update --prune will clean them up again
+	if len(realRefsList) > 0 {
+		tempRefPrefix := "refs/forgejo-prune-protection/"
+		var updateCommands strings.Builder
+
+		for i, hash := range realRefsList {
+			tempRef := fmt.Sprintf("%stemp-ref-%d", tempRefPrefix, i)
+			updateCommands.WriteString(fmt.Sprintf("update %s %s\n", tempRef, hash))
+		}
+
+		command := git.NewCommand(ctx, "update-ref", "--stdin").
+			SetDescription("Create temporary refs for alternate garbage collection")
+		stdout, _, err := command.RunStdString(&git.RunOpts{
+			Timeout: timeout,
+			Dir:     altPath,
+			Stdin:   strings.NewReader(updateCommands.String()),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create temporary refs in alternate %s. Stdout: %s\nError: %w", altPath, stdout, err)
+		}
+	}
+
+	// finally, it is now safe to run git gc on the alternate
+	command := git.NewCommand(ctx, "gc").AddArguments(args...).
+		SetDescription(fmt.Sprintf("Garbage collect alternate %s", altPath))
+	stdout, _, err := command.RunStdString(&git.RunOpts{Timeout: timeout, Dir: altPath})
+	if err != nil {
+		return fmt.Errorf("failed to garbage collect alternate %s. Stdout: %s\nError: %w", altPath, stdout, err)
+	}
+
+	return nil
+}
+
 // GitGcRepo calls 'git gc' to remove unnecessary files and optimize the local repository
 func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Duration, args git.TrustedCmdArgs) error {
 	log.Trace("Running git gc on %-v", repo)
@@ -148,6 +242,15 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 				log.Error("CreateRepositoryNotice: %v", err)
 			}
 			return fmt.Errorf("Failed to sync repository %s to its alternate: %w", repo.FullName(), err)
+		}
+
+		if err := gcAlternate(ctx, repo, timeout, args); err != nil {
+			log.Error("Failed to garbage collect alternate for repository %s: %v", repo.FullName(), err)
+			desc := fmt.Sprintf("Failed to garbage collect alternate for repository %s: %v", repo.FullName(), err)
+			if err := system_model.CreateRepositoryNotice(desc); err != nil {
+				log.Error("CreateRepositoryNotice: %v", err)
+			}
+			return fmt.Errorf("Failed to garbage collect alternate for repository %s: %w", repo.FullName(), err)
 		}
 	}
 
