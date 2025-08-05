@@ -51,26 +51,13 @@
 		</div>
 
 		<div class="shabox">
-			{{$class := "ui sha label"}}
-			{{if .Signature}}
-				{{$class = (print $class " isSigned")}}
-				{{if .Verification.Verified}}
-					{{if eq .Verification.TrustStatus "trusted"}}
-						{{$class = (print $class " isVerified")}}
-					{{else if eq .Verification.TrustStatus "untrusted"}}
-						{{$class = (print $class " isVerifiedUntrusted")}}
-					{{else}}
-						{{$class = (print $class " isVerifiedUnmatched")}}
-					{{end}}
-				{{else if .Verification.Warning}}
-					{{$class = (print $class " isWarning")}}
-				{{end}}
-			{{end}}
 			{{$commitShaLink := (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
-			<a {{if $commitShaLink}}href="{{$commitShaLink}}"{{end}} class="{{$class}}">
-				<span class="shortsha">{{ShortSha .ID.String}}</span>
-				{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}
-			</a>
+				{{template "repo/shabox" (dict
+				"sha1" .ID.String
+				"commitLink" $commitShaLink
+				"signature" .Signature
+				"verification" .Verification
+			)}}
 		</div>
 
 		<div class="mobile-shabox">
