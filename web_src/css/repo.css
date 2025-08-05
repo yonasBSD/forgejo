@@ -2742,6 +2742,7 @@ tbody.commit-list {
 
 .commit-group {
   margin-bottom: 1rem;
+  background: var(--color-box-body);
 }
 
 .commit-group h4 {
@@ -2751,7 +2752,6 @@ tbody.commit-list {
 /* Redesigned commit layout using responsive grid configuration */
 .commit-timeline {
   display: grid;
-  background: var(--color-box-body);
   padding: 0.5rem;
   row-gap: 0.5rem;
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
