@@ -11,12 +11,12 @@
 	{{if not $commitTime}}{{$commitTime = .Author.When}}{{end}}
 	{{$commitDate := $commitTime.Format "2006-01-02"}}
 	{{if ne $commitDate $prevDate}}
-		{{if ne $prevDate ""}}</div></div>{{end}} <!-- close previous date group -->
+		{{if ne $prevDate ""}}</div></article>{{end}} <!-- close previous date group -->
 		{{$prevDate = $commitDate}}
 
 		<!-- Start a new commit group -->
-		<div class="commit-group">
-			<div class="tw-mb-2 tw-mt-2 tw-font-semibold">{{ $commitTime.Format "Mon, 02 Jan 2006" }}</div>
+		<article class="commit-group">
+			<h4>{{ $commitTime.Format "Mon, 02 Jan 2006" }}</h4>
 			<div class="tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
 	{{end}}
 

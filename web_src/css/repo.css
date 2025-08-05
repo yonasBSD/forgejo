@@ -2739,6 +2739,15 @@ tbody.commit-list {
 }
 
 /* Layout for templates/repo/pulls/commits_list.tmpl */
+
+.commit-group {
+  margin-bottom: 1rem;
+}
+
+.commit-group h4 {
+  font-weight: var(--font-weight-semibold);
+}
+
 /* Redesigned commit layout using responsive grid configuration */
 .commit-timeline {
   display: grid;
