@@ -2,6 +2,11 @@
 {{if $.CommitRepoLink}}{{$commitRepoLink = $.CommitRepoLink}}{{end}}
 {{$prevDate := ""}}
 {{range .Commits}}
+	<!-- ToDo:
+	 - this way of grouping commits doesn't seem completely right, maybe someone can suggest something better
+	 - make sure that timezone is taken into account
+	 - fix missing i18n
+	 - add test coverage for this -->
 	{{$commitTime := .Committer.When}}
 	{{if not $commitTime}}{{$commitTime = .Author.When}}{{end}}
 	{{$commitDate := $commitTime.Format "2006-01-02"}}
