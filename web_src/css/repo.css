@@ -2757,14 +2757,17 @@ tbody.commit-list {
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
   align-items: center;
   .author {margin-right: 10%}
-  .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
-  .mobile-btn {display: none;}
 }
 @media (max-width: 440px) {
   .commit-timeline .mobile-shabox .badge {display: none;}
 }
 
-@media (max-width: 640px) {
+@media (min-width: 640px) {
+  .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
+  .mobile-btn {display: none;}
+}
+
+@media (max-width: 639.9px) {
   .commit-timeline {
     grid-template-columns: 1fr 1fr;
   }
@@ -2783,17 +2786,15 @@ tbody.commit-list {
     grid-row: 2;
     grid-column: 1 / span 2;
     padding-inline: 0.5rem;
+  }
 
+  .mobile-shabox {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
   }
 
   .commit-timeline .shabox {display: none;}
-
-  .commit-timeline .mobile-shabox {
-    display: grid;
-    grid-row: 3;
-    grid-column: 1;
-    justify-self: left;
-  }
 
   .commit-timeline .mobile-btn {
     display: grid;
@@ -2802,5 +2803,7 @@ tbody.commit-list {
     justify-self: right;
   }
 
-  .commit-timeline .btn {display: none;}
+  .commit-timeline .commit-buttons {
+    display: none;
+  }
 }
