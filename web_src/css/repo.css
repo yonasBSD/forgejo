@@ -2796,8 +2796,7 @@ tbody.commit-list {
 
   .commit-timeline .shabox {display: none;}
 
-  .commit-timeline .mobile-btn {
-    display: grid;
+  .commit-timeline details.dropdown {
     grid-row: 3;
     grid-column: 2;
     justify-self: right;
