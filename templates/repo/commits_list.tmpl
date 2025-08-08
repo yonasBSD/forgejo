@@ -51,10 +51,12 @@
 							{{else if $.Reponame}}
 								{{$commitShaLink = (printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
 							{{end}}
-							<a {{if $commitShaLink}}href="{{$commitShaLink}}"{{end}} class="{{$class}}">
-								<span class="shortsha">{{ShortSha .ID.String}}</span>
-								{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}
-							</a>
+							{{template "repo/shabox" (dict
+								"sha1" .ID.String
+								"commitLink" $commitShaLink
+								"signature" .Signature
+								"verification" .Verification
+							)}}
 						</td>
 						<td class="message">
 							<span class="message-wrapper">
