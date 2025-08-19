@@ -3,10 +3,10 @@
 {{$prevDate := ""}}
 {{range .Commits}}
 	<!-- ToDo:
-	 - this way of grouping commits doesn't seem completely right, maybe someone can suggest something better
-	 - make sure that timezone is taken into account
-	 - fix missing i18n
-	 - add test coverage for this -->
+	- this way of grouping commits doesn't seem completely right, maybe someone can suggest something better
+	- make sure that timezone is taken into account
+	- fix missing i18n
+	- add test coverage for this -->
 	{{$commitTime := .Committer.When}}
 	{{if not $commitTime}}{{$commitTime = .Author.When}}{{end}}
 	{{$commitDate := $commitTime.Format "2006-01-02"}}
@@ -16,7 +16,7 @@
 
 		<!-- Start a new commit group -->
 		<article class="commit-group">
-			<h4>{{ $commitTime.Format "Mon, 02 Jan 2006" }}</h4>
+			<h4>{{ DateUtils.AbsoluteShortWithDay $commitTime }}</h4>
 			<div class="commit-group-commits tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
 	{{end}}
 
