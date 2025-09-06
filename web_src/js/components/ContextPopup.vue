@@ -102,7 +102,7 @@ export default {
         } catch {}
 
         if (!response.ok || respJson === null) {
-          if (respJson.message) {
+          if (respJson && respJson.message) {
             this.i18nErrorMessage = respJson.message;
           } else if (response.status === 404) {
             this.i18nErrorMessage = i18n.error_issue_not_found;
