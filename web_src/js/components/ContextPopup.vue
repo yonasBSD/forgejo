@@ -96,12 +96,12 @@ export default {
       try {
         const response = await GET(`${appSubUrl}/${data.owner}/${data.repo}/issues/${data.index}/info`);
 
-        let respJson = {};
+        let respJson = null;
         try {
           respJson = await response.json();
         } catch {}
 
-        if (!response.ok) {
+        if (!response.ok || respJson === null) {
           if (respJson.message) {
             this.i18nErrorMessage = respJson.message;
           } else if (response.status === 404) {
