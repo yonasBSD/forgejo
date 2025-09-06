@@ -95,11 +95,23 @@ export default {
 
       try {
         const response = await GET(`${appSubUrl}/${data.owner}/${data.repo}/issues/${data.index}/info`);
-        const respJson = await response.json();
+
+        let respJson = {};
+        try {
+          respJson = await response.json();
+        } catch {}
+
         if (!response.ok) {
-          this.i18nErrorMessage = respJson.message ?? i18n.network_error;
+          if (respJson.message) {
+            this.i18nErrorMessage = respJson.message;
+          } else if (response.status === 404) {
+            this.i18nErrorMessage = i18n.error_issue_not_found;
+          } else {
+            this.i18nErrorMessage = i18n.error_occurred;
+          }
           return;
         }
+
         this.issue = respJson;
       } catch {
         this.i18nErrorMessage = i18n.network_error;
