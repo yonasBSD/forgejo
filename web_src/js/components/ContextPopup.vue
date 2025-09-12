@@ -130,7 +130,7 @@ export default {
         <p><small>{{ issue.repository.full_name }} on {{ createdAt }}</small></p>
         <p><svg-icon :name="icon" :class="['text', color]"/> <strong>{{ issue.title }}</strong> #{{ issue.number }}</p>
         <p>{{ body }}</p>
-        <div class="labels-list">
+        <div class="labels-list" v-if="labels.length > 0">
           <!-- eslint-disable-next-line vue/no-v-html -->
           <div v-for="label in labels" :key="label.name" class="ui label" :style="{ color: label.textColor, backgroundColor: label.color }" v-html="label.name"/>
         </div>
