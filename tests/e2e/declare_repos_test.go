@@ -126,6 +126,21 @@ body:
 			postIssue(repo, user, 450, "right issue", "an issue containing word right")
 			postIssue(repo, user, 150, "left issue", "an issue containing word left")
 		}),
+		newRepo(t, 1, "issues-highlighted", &tests.DeclarativeRepoOptions{
+			UnitConfig: optional.Some(map[unit_model.Type]convert.Conversion{
+				unit_model.TypeIssues: &repo_model.IssuesConfig{
+					EnableDependencies: true,
+				},
+			}),
+		}, []FileChanges{
+			{
+				Filename:  "history1.md",
+				Versions:  []string{""},
+				CommitMsg: "Fix #1, #2",
+			},
+		}, func(user *user_model.User, repo *repo_model.Repository) {
+			postIssue(repo, user, 500, "Issue #1", "An issue that exists")
+		}),
 		// add your repo declarations here
 	}
 
