@@ -547,6 +547,48 @@ func EditIssueComment(ctx *context.APIContext) {
 	editIssueComment(ctx, *form)
 }
 
+// GetIssueCommentHistory get the list of edits of a comment
+func GetIssueCommentHistory(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/issues/comments/{id}/history issue issueGetCommentHistory
+	// ---
+	// summary: Get the list of edits of a comment
+	// deprecated: false
+	// parameters:
+	// - name: owner
+	//	 in:	path
+	//	 description: owner of the repo
+	//	 type: string
+	//	 required: true
+	//-  name: repo
+	//	 in: path
+	//	 description: name of the repo
+	//	 required: true
+	//	 type: string
+	// - name: id
+	//	 in: path
+	//	 description: id of comment
+	//	 type: integer
+	//	 required: true
+	//	 format: int64
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/CommentHistory"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
+	//
+
+	comment := ctx.Comment
+
+	historyList, err := issues_model.FetchIssueContentHistoryList(ctx, comment.IssueID, comment.ID)
+
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "CommentHistory", err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, historyList)
+}
+
 // EditIssueCommentDeprecated modify a comment of an issue
 func EditIssueCommentDeprecated(ctx *context.APIContext) {
 	// swagger:operation PATCH /repos/{owner}/{repo}/issues/{index}/comments/{id} issue issueEditCommentDeprecated

@@ -1440,6 +1440,8 @@ func Routes() *web.Route {
 								Get(repo.GetIssueCommentReactions).
 								Post(reqToken(), bind(api.EditReactionOption{}), repo.PostIssueCommentReaction).
 								Delete(reqToken(), bind(api.EditReactionOption{}), repo.DeleteIssueCommentReaction)
+							m.Combo("/history").
+								Get(repo.GetIssueCommentHistory)
 							m.Group("/assets", func() {
 								m.Combo("").
 									Get(repo.ListIssueCommentAttachments).
