@@ -53,11 +53,11 @@ func TestPullCommitLinks(t *testing.T) {
 
 	htmlDoc := NewHTMLParser(t, resp.Body)
 
-	commitSha := htmlDoc.Find(".commit-list td.sha a.sha.label").First()
+	commitSha := htmlDoc.Find(".commit-timeline .shabox .sha.label").First()
 	commitShaHref, _ := commitSha.Attr("href")
 	assert.Equal(t, "/user2/repo1/pulls/3/commits/5f22f7d0d95d614d25a5b68592adb345a4b5c7fd", commitShaHref)
 
-	commitLink := htmlDoc.Find(".commit-list td.message a").First()
+	commitLink := htmlDoc.Find(".commit-timeline .message-wrapper a").First()
 	commitLinkHref, _ := commitLink.Attr("href")
 	assert.Equal(t, "/user2/repo1/pulls/3/commits/5f22f7d0d95d614d25a5b68592adb345a4b5c7fd", commitLinkHref)
 }
