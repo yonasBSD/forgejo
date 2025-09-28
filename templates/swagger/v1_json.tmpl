@@ -9625,6 +9625,51 @@
         }
       }
     },
+    "/repos/{owner}/{repo}/issues/comments/{id}/history": {
+      "get": {
+        "tags": [
+          "issue"
+        ],
+        "summary": "Get the list of edits of a comment",
+        "operationId": "issueGetCommentHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the comment to get history for",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ContentHistory"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/issues/comments/{id}/reactions": {
       "get": {
         "consumes": [

@@ -555,24 +555,26 @@ func GetIssueCommentHistory(ctx *context.APIContext) {
 	// deprecated: false
 	// parameters:
 	// - name: owner
-	//	 in:	path
-	//	 description: owner of the repo
-	//	 type: string
-	//	 required: true
-	//-  name: repo
-	//	 in: path
-	//	 description: name of the repo
-	//	 required: true
-	//	 type: string
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
 	// - name: id
-	//	 in: path
-	//	 description: id of comment
-	//	 type: integer
-	//	 required: true
-	//	 format: int64
+	//   in: path
+	//   description: id of the comment to get history for
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: body
+	//   in: body
 	// responses:
 	//   "200":
-	//     "$ref": "#/responses/CommentHistory"
+	//     "$ref": "#/responses/ContentHistory"
 	//   "500":
 	//     "$ref": "#/responses/internalServerError"
 	//
@@ -580,13 +582,26 @@ func GetIssueCommentHistory(ctx *context.APIContext) {
 	comment := ctx.Comment
 
 	historyList, err := issues_model.FetchIssueContentHistoryList(ctx, comment.IssueID, comment.ID)
-
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "CommentHistory", err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, historyList)
+	var result []api.CommentHistory
+	for _, historyItem := range historyList {
+		result = append(result, api.CommentHistory{
+			UserID:         historyItem.UserID,
+			UserName:       historyItem.UserName,
+			UserFullName:   historyItem.UserFullName,
+			UserAvatarLink: historyItem.UserAvatarLink,
+			HistoryID:      historyItem.HistoryID,
+			EditedUnix:     historyItem.EditedUnix.AsTime(),
+			IsFirstCreated: historyItem.IsFirstCreated,
+			IsDeleted:      historyItem.IsDeleted,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, result)
 }
 
 // EditIssueCommentDeprecated modify a comment of an issue

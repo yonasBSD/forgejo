@@ -306,7 +306,7 @@ func TestAPIGetComment(t *testing.T) {
 func TestAPIGetCommentHistory(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 2})
+	comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 1})
 	require.NoError(t, comment.LoadIssue(db.DefaultContext))
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: comment.Issue.RepoID})
 	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
@@ -321,7 +321,7 @@ func TestAPIGetCommentHistory(t *testing.T) {
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusOK)
 
-	contentHistory := unittest.AssertExistsAndLoadBean(t, &issues_model.ContentHistory{ID: 2, IssueID: comment.IssueID, CommentID: comment.ID})
+	contentHistory := unittest.AssertExistsAndLoadBean(t, &issues_model.ContentHistory{ID: 1, IssueID: comment.IssueID, CommentID: comment.ID})
 
 	req = NewRequestf(t, "GET", "/api/v1/repos/%s/%s/issues/%d/comments/%d/history", repoOwner.Name, repo.Name, comment.IssueID, comment.ID)
 	resp := MakeRequest(t, req, http.StatusOK)
@@ -329,15 +329,14 @@ func TestAPIGetCommentHistory(t *testing.T) {
 	var apiCommentHistory issues_model.ContentHistory
 	DecodeJSON(t, resp, &apiCommentHistory)
 
-	assert.EqualValues(t, contentHistory.ID, apiCommentHistory.ID)
-	assert.EqualValues(t, contentHistory.IssueID, apiCommentHistory.IssueID)
-	assert.EqualValues(t, contentHistory.CommentID, apiCommentHistory.CommentID)
-	assert.EqualValues(t, contentHistory.EditedUnix, contentHistory.EditedUnix)
-	assert.EqualValues(t, contentHistory.PosterID, apiCommentHistory.PosterID)
-	assert.EqualValues(t, contentHistory.ContentText, apiCommentHistory.ContentText)
-	assert.EqualValues(t, contentHistory.EditedUnix, apiCommentHistory.EditedUnix)
-	assert.EqualValues(t, contentHistory.IsDeleted, apiCommentHistory.IsDeleted)
-	assert.EqualValues(t, contentHistory.IsFirstCreated, apiCommentHistory.IsFirstCreated)
+	assert.Equal(t, contentHistory.ID, apiCommentHistory.ID)
+	assert.Equal(t, contentHistory.IssueID, apiCommentHistory.IssueID)
+	assert.Equal(t, contentHistory.CommentID, apiCommentHistory.CommentID)
+	assert.Equal(t, contentHistory.PosterID, apiCommentHistory.PosterID)
+	assert.Equal(t, contentHistory.ContentText, apiCommentHistory.ContentText)
+	assert.Equal(t, contentHistory.EditedUnix, apiCommentHistory.EditedUnix)
+	assert.Equal(t, contentHistory.IsDeleted, apiCommentHistory.IsDeleted)
+	assert.Equal(t, contentHistory.IsFirstCreated, apiCommentHistory.IsFirstCreated)
 }
 
 func TestAPIGetSystemUserComment(t *testing.T) {

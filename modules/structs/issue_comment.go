@@ -24,6 +24,18 @@ type Comment struct {
 	Updated time.Time `json:"updated_at"`
 }
 
+type CommentHistory struct {
+	UserID         int64  `json:"user_id"`
+	UserName       string `json:"user_name"`
+	UserFullName   string `json:"user_full_name"`
+	UserAvatarLink string `json:"user_avatar_link"`
+	HistoryID      int64  `json:"history_id"`
+	// swagger:strfmt date-time
+	EditedUnix     time.Time `json:"edited_unix"`
+	IsFirstCreated bool      `json:"is_first_created"`
+	IsDeleted      bool      `json:"is_deleted"`
+}
+
 // CreateIssueCommentOption options for creating a comment on an issue
 type CreateIssueCommentOption struct {
 	// required:true
