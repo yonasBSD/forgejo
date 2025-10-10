@@ -96,7 +96,7 @@
 							<li>
 								<a
 									class="interact item"
-									rdata-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_single_diff"}}"
+									data-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_single_diff"}}"
 									href="{{printf "%s/commit/%s?files=%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}">
 									{{svg "octicon-file-diff"}}
 								</a>
@@ -125,7 +125,7 @@
 				{{if $.FileName}}
 				<a
 					class="btn interact-bg tw-p-2"
-					rdata-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_single_diff"}}"
+					data-tooltip-content="{{ctx.Locale.Tr "repo.commits.view_single_diff"}}"
 					href="{{printf "%s/commit/%s?files=%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}">
 					{{svg "octicon-file-diff"}}
 				</a>
