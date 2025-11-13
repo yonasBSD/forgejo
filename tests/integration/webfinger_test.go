@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
@@ -24,6 +25,7 @@ func TestWebfinger(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
 
 	appURL, _ := url.Parse(setting.AppURL)
 
@@ -110,4 +112,7 @@ func TestWebfinger(t *testing.T) {
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s/%s/foo", "example.com", user.Name))
 	MakeRequest(t, req, http.StatusBadRequest)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:@%s@%s@%s", repo2.Name, repo2.OwnerName, appURL.Host))
+	session.MakeRequest(t, req, http.StatusOK)
 }
