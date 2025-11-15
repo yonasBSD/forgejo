@@ -45,6 +45,7 @@ var (
 	timeLogPattern = regexp.MustCompile(`(?:\s|^|\(|\[)(@([0-9]+([\.,][0-9]+)?(w|d|m|h))+)(?:\s|$|\)|\]|[:;,.?!]\s|[:;,.?!]$)`)
 
 	issueCloseKeywordsPat, issueReopenKeywordsPat *regexp.Regexp
+	prManualMergeKeywordsPat                      *regexp.Regexp
 	issueKeywordsOnce                             sync.Once
 
 	giteaHostInit         sync.Once
@@ -56,6 +57,7 @@ var (
 		"closes",
 		"reopens",
 		"neutered",
+		"manuallyMerges",
 	}
 )
 
@@ -71,6 +73,8 @@ const (
 	XRefActionReopens // 2
 	// XRefActionNeutered means the cross-reference will no longer affect the source
 	XRefActionNeutered // 3
+	// XRefActionManuallyMerges means the cross-reference merges a PR if it is seen
+	XRefActionManuallyMerges // 4
 )
 
 func (a XRefAction) String() string {
@@ -160,13 +164,18 @@ func parseKeywords(words []string) []string {
 func newKeywords() {
 	issueKeywordsOnce.Do(func() {
 		// Delay initialization until after the settings module is initialized
-		doNewKeywords(setting.Repository.PullRequest.CloseKeywords, setting.Repository.PullRequest.ReopenKeywords)
+		doNewKeywords(
+			setting.Repository.PullRequest.CloseKeywords,
+			setting.Repository.PullRequest.ReopenKeywords,
+			setting.Repository.PullRequest.ManualMergeKeywords,
+		)
 	})
 }
 
-func doNewKeywords(close, reopen []string) {
+func doNewKeywords(close, reopen, manualMerge []string) {
 	issueCloseKeywordsPat = makeKeywordsPat(close)
 	issueReopenKeywordsPat = makeKeywordsPat(reopen)
+	prManualMergeKeywordsPat = makeKeywordsPat(manualMerge)
 }
 
 // getGiteaHostName returns a normalized string with the local host name, with no scheme or port information
@@ -583,6 +592,12 @@ func findActionKeywords(content []byte, start int) (XRefAction, *RefSpan) {
 			return XRefActionReopens, &RefSpan{Start: m[2], End: m[3]}
 		}
 	}
+	if prManualMergeKeywordsPat != nil {
+		m = prManualMergeKeywordsPat.FindSubmatchIndex(content[:start])
+		if m != nil {
+			return XRefActionManuallyMerges, &RefSpan{Start: m[2], End: m[3]}
+		}
+	}
 	return XRefActionNone, nil
 }
 
@@ -592,5 +607,5 @@ func IsXrefActionable(ref *RenderizableReference, extTracker bool) bool {
 		// External issues cannot be automatically closed
 		return false
 	}
-	return ref.Action == XRefActionCloses || ref.Action == XRefActionReopens
+	return ref.Action == XRefActionCloses || ref.Action == XRefActionReopens || ref.Action == XRefActionManuallyMerges
 }

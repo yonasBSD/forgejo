@@ -308,7 +308,7 @@ func testPRProtected(ctx context.Context, id int64) (*issues_model.PullRequest, 
 		return nil, false
 	}
 
-	if manuallyMerged(ctx, pr) {
+	if detectManualMerges(ctx, pr) {
 		log.Trace("%-v is manually merged (status: %s, merge commit: %s)", pr, pr.Status, pr.MergedCommitID)
 		return nil, false
 	}

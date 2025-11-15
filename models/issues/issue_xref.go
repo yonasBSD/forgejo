@@ -333,12 +333,16 @@ func (c *Comment) RefIssueIdent(ctx context.Context) string {
 //  |____|   |____/|____/____/____|_  /\___  >__   |____/  \___  >____  > |__|
 //                                  \/     \/   |__|           \/     \/
 
-// ResolveCrossReferences will return the list of references to close/reopen by this PR
+// ResolveCrossReferences will return the list of references (issues, pull requests) to be affected by this PR.
 func (pr *PullRequest) ResolveCrossReferences(ctx context.Context) ([]*Comment, error) {
 	unfiltered := make([]*Comment, 0, 5)
 	if err := db.GetEngine(ctx).
 		Where("ref_repo_id = ? AND ref_issue_id = ?", pr.Issue.RepoID, pr.Issue.ID).
-		In("ref_action", []references.XRefAction{references.XRefActionCloses, references.XRefActionReopens}).
+		In("ref_action", []references.XRefAction{
+			references.XRefActionCloses,
+			references.XRefActionReopens,
+			references.XRefActionManuallyMerges,
+		}).
 		OrderBy("id").
 		Find(&unfiltered); err != nil {
 		return nil, fmt.Errorf("get reference: %w", err)

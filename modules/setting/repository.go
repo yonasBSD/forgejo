@@ -88,6 +88,7 @@ var (
 			WorkInProgressPrefixes                   []string
 			CloseKeywords                            []string
 			ReopenKeywords                           []string
+			ManualMergeKeywords                      []string
 			DefaultMergeStyle                        string
 			DefaultMergeMessageCommitsLimit          int
 			DefaultMergeMessageSize                  int
@@ -218,6 +219,7 @@ var (
 			WorkInProgressPrefixes                   []string
 			CloseKeywords                            []string
 			ReopenKeywords                           []string
+			ManualMergeKeywords                      []string
 			DefaultMergeStyle                        string
 			DefaultMergeMessageCommitsLimit          int
 			DefaultMergeMessageSize                  int
@@ -233,6 +235,7 @@ var (
 			// https://help.github.com/articles/closing-issues-via-commit-messages
 			CloseKeywords:                            strings.Split("close,closes,closed,fix,fixes,fixed,resolve,resolves,resolved", ","),
 			ReopenKeywords:                           strings.Split("reopen,reopens,reopened", ","),
+			ManualMergeKeywords:                      strings.Split("merge,merges,merged", ","),
 			DefaultMergeStyle:                        "merge",
 			DefaultMergeMessageCommitsLimit:          50,
 			DefaultMergeMessageSize:                  5 * 1024,

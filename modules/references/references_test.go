@@ -247,6 +247,18 @@ func TestFindAllIssueReferences(t *testing.T) {
 				{102, "", "", "102", false, XRefActionCloses, &RefSpan{Start: 56, End: 60}, &RefSpan{Start: 50, End: 55}, "4h15m"},
 			},
 		},
+		{
+			"Merges: !1312",
+			[]testResult{
+				{1312, "", "", "1312", true, XRefActionManuallyMerges, &RefSpan{Start: 8, End: 13}, &RefSpan{Start: 0, End: 6}, ""},
+			},
+		},
+		{
+			"Fill blahaj with love\n\nThis merges !1312.",
+			[]testResult{
+				{1312, "", "", "1312", true, XRefActionManuallyMerges, &RefSpan{Start: 34, End: 39}, &RefSpan{Start: 27, End: 33}, ""},
+			},
+		},
 	}
 
 	testFixtures(t, fixtures, "default")
@@ -545,11 +557,15 @@ func TestCustomizeCloseKeywords(t *testing.T) {
 
 	issueKeywordsOnce.Do(func() {})
 
-	doNewKeywords([]string{"cierra", "cerró"}, []string{"reabre"})
+	doNewKeywords([]string{"cierra", "cerró"}, []string{"reabre"}, []string{})
 	testFixtures(t, fixtures, "spanish")
 
 	// Restore default settings
-	doNewKeywords(setting.Repository.PullRequest.CloseKeywords, setting.Repository.PullRequest.ReopenKeywords)
+	doNewKeywords(
+		setting.Repository.PullRequest.CloseKeywords,
+		setting.Repository.PullRequest.ReopenKeywords,
+		setting.Repository.PullRequest.ManualMergeKeywords,
+	)
 }
 
 func TestParseCloseKeywords(t *testing.T) {
