@@ -113,6 +113,9 @@ func TestWebfinger(t *testing.T) {
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s/%s/foo", "example.com", user.Name))
 	MakeRequest(t, req, http.StatusBadRequest)
 
+	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:%s@%s@%s", repo2.Name, repo2.OwnerName, appURL.Host))
+	session.MakeRequest(t, req, http.StatusOK)
+
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:@%s@%s@%s", repo2.Name, repo2.OwnerName, appURL.Host))
 	session.MakeRequest(t, req, http.StatusOK)
 }

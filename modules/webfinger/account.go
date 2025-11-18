@@ -24,7 +24,7 @@ func runeToString(r rune) (string, error) {
 func ParseWebfingerAccount() gomme.Parser[string, string] {
 	return func(input string) gomme.Result[string, string] {
 		return gomme.Preceded(
-			gomme.Token[string]("@"),
+			gomme.Optional(gomme.Token[string]("@")),
 			gomme.Map(
 				gomme.Many1(gomme.Alternative(
 					URIUnreserved(),

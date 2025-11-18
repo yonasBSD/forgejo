@@ -11,17 +11,17 @@ import (
 
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
-	"forgejo.org/models/webfinger"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/webfinger"
 	"forgejo.org/services/context"
 )
 
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
 
 // WebfingerUserActor returns a user entry from the database.
-func WebfingerUserActor(ctx *context.Context, appURL *url.URL, parts []string) (*user_model.User, error) {
-	user, host := parts[0], parts[1]
+func WebfingerUserActor(ctx *context.Context, appURL *url.URL, userActor webfinger.WebfingerUserActor) (*user_model.User, error) {
+	user, host := userActor.User, userActor.Host
 	if host != appURL.Host {
 		ctx.Error(http.StatusBadRequest)
 		return nil, fmt.Errorf("invalid host, have: %v, expected: %v", host, appURL.Host)
@@ -101,8 +101,8 @@ func WebfingerRenderUserActor(ctx *context.Context, appURL *url.URL, u *user_mod
 }
 
 // WebfingerRepoActor returns a repository entry from the database.
-func WebfingerRepoActor(ctx *context.Context, appURL *url.URL, parts []string) (*repo_model.Repository, error) {
-	repo, owner, host := parts[0], parts[1], parts[2]
+func WebfingerRepoActor(ctx *context.Context, appURL *url.URL, repoActor webfinger.WebfingerRepo) (*repo_model.Repository, error) {
+	repo, owner, host := repoActor.Repo, repoActor.Owner, repoActor.Host
 	if host != appURL.Host {
 		ctx.Error(http.StatusBadRequest)
 		return nil, fmt.Errorf("invalid host, have: %v, expected: %v", host, appURL.Host)
@@ -174,19 +174,14 @@ func WebfingerQuery(ctx *context.Context) {
 
 	switch resource.Scheme {
 	case "acct":
-		// allow only the current host
-		parts := strings.SplitN(resource.Opaque, "@", 4)
-
-		switch len(parts) {
-		case 2:
-			u, err = WebfingerUserActor(ctx, appURL, parts)
-			if u == nil && err == nil {
+		if repo, err := webfinger.ParseWebfingerRepo(resource.String()); err == nil {
+			r, err = WebfingerRepoActor(ctx, appURL, repo)
+		} else if userActor, err := webfinger.ParseWebfingerUserActor(resource.String()); err == nil {
+			if u, err = WebfingerUserActor(ctx, appURL, userActor); u == nil && err == nil {
 				return
 			}
-		case 4:
-			r, err = WebfingerRepoActor(ctx, appURL, parts[1:])
-
-		default:
+		} else {
+			log.Error("Error getting acct: %s Error: %v", resource.Opaque, err)
 			ctx.Error(http.StatusBadRequest)
 			return
 		}
