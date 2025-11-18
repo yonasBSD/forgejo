@@ -8,10 +8,10 @@ package webfinger
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
 // swagger:model
 type JRD struct {
-	Subject    string           `json:"subject,omitempty"`
-	Aliases    []string         `json:"aliases,omitempty"`
-	Properties map[string]any   `json:"properties,omitempty"`
-	Links      []*Link          `json:"links,omitempty"`
+	Subject    string         `json:"subject,omitempty"`
+	Aliases    []string       `json:"aliases,omitempty"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Links      []*Link        `json:"links,omitempty"`
 }
 
 // Link represents a JRD link in a WebFinger response.
