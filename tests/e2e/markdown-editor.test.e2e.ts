@@ -356,7 +356,7 @@ test('Markdown insert table', async ({page}) => {
   const newTableButton = page.locator('button[data-md-action="new-table"]');
   await newTableButton.click();
 
-  const newTableModal = page.locator('div[data-markdown-table-modal-id="0"]');
+  const newTableModal = page.locator('dialog[data-markdown-table-modal-id="0"]');
   await expect(newTableModal).toBeVisible();
   await screenshot(page);
 
@@ -379,7 +379,7 @@ test('Markdown insert link', async ({page}) => {
   const newLinkButton = page.locator('button[data-md-action="new-link"]');
   await newLinkButton.click();
 
-  const newLinkModal = page.locator('div[data-markdown-link-modal-id="0"]');
+  const newLinkModal = page.locator('dialog[data-markdown-link-modal-id="0"]');
   await expect(newLinkModal).toBeVisible();
   await accessibilityCheck({page}, ['[data-modal-name="new-markdown-link"]'], [], []);
   await screenshot(page);
@@ -491,7 +491,7 @@ test('Multiple combo markdown: insert table', async ({page}) => {
   const newTableButtonOne = page.locator('[for="_combo_markdown_editor_0"] button[data-md-action="new-table"]');
   await newTableButtonOne.click();
 
-  const newTableModalOne = page.locator('div[data-markdown-table-modal-id="0"]');
+  const newTableModalOne = page.locator('dialog[data-markdown-table-modal-id="0"]');
   await expect(newTableModalOne).toBeVisible();
 
   await newTableModalOne.locator('input[name="table-rows"]').fill('3');
@@ -513,7 +513,7 @@ test('Multiple combo markdown: insert table', async ({page}) => {
   const newTableButtonTwo = page.locator('[for="_combo_markdown_editor_1"] button[data-md-action="new-table"]');
   await newTableButtonTwo.click();
 
-  const newTableModalTwo = page.locator('div[data-markdown-table-modal-id="1"]');
+  const newTableModalTwo = page.locator('dialog[data-markdown-table-modal-id="1"]');
   await expect(newTableModalTwo).toBeVisible();
 
   await newTableModalTwo.locator('input[name="table-rows"]').fill('2');

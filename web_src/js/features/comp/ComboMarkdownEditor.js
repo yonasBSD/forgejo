@@ -96,8 +96,8 @@ class ComboMarkdownEditor {
     this.textareaMarkdownToolbar.querySelector('button[data-md-action="unindent"]')?.addEventListener('click', () => {
       this.indentSelection(true, false);
     });
-    this.textareaMarkdownToolbar.querySelector('button[data-md-action="new-table"]')?.setAttribute('data-modal', `div[data-markdown-table-modal-id="${this.elementIdSuffix}"]`);
-    this.textareaMarkdownToolbar.querySelector('button[data-md-action="new-link"]')?.setAttribute('data-modal', `div[data-markdown-link-modal-id="${this.elementIdSuffix}"]`);
+    this.textareaMarkdownToolbar.querySelector('button[data-md-action="new-table"]')?.setAttribute('data-modal', `dialog[data-markdown-table-modal-id="${this.elementIdSuffix}"]`);
+    this.textareaMarkdownToolbar.querySelector('button[data-md-action="new-link"]')?.setAttribute('data-modal', `dialog[data-markdown-link-modal-id="${this.elementIdSuffix}"]`);
 
     // Find all data-md-ctrl-shortcut elements in the markdown toolbar.
     const shortcutKeys = new Map();
@@ -261,7 +261,7 @@ class ComboMarkdownEditor {
 
   addNewTable(event) {
     const elementId = event.target.getAttribute('data-element-id');
-    const newTableModal = document.querySelector(`div[data-markdown-table-modal-id="${elementId}"]`);
+    const newTableModal = document.querySelector(`dialog[data-markdown-table-modal-id="${elementId}"]`);
     const form = newTableModal.querySelector('div[data-selector-name="form"]');
 
     // Validate input fields
@@ -293,7 +293,7 @@ class ComboMarkdownEditor {
   }
 
   setupTableInserter() {
-    const newTableModal = this.container.querySelector('div[data-modal-name="new-markdown-table"]');
+    const newTableModal = this.container.querySelector('dialog[data-modal-name="new-markdown-table"]');
     newTableModal.setAttribute('data-markdown-table-modal-id', this.elementIdSuffix);
 
     const button = newTableModal.querySelector('button[data-selector-name="ok-button"]');
@@ -303,7 +303,7 @@ class ComboMarkdownEditor {
 
   addNewLink(event) {
     const elementId = event.target.getAttribute('data-element-id');
-    const newLinkModal = document.querySelector(`div[data-markdown-link-modal-id="${elementId}"]`);
+    const newLinkModal = document.querySelector(`dialog[data-markdown-link-modal-id="${elementId}"]`);
     const form = newLinkModal.querySelector('div[data-selector-name="form"]');
 
     // Validate input fields
@@ -328,7 +328,7 @@ class ComboMarkdownEditor {
   }
 
   setupLinkInserter() {
-    const newLinkModal = this.container.querySelector('div[data-modal-name="new-markdown-link"]');
+    const newLinkModal = this.container.querySelector('dialog[data-modal-name="new-markdown-link"]');
     newLinkModal.setAttribute('data-markdown-link-modal-id', this.elementIdSuffix);
     const textarea = document.getElementById(`_combo_markdown_editor_${this.elementIdSuffix}`);
 

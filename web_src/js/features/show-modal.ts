@@ -49,6 +49,6 @@ export function initGlobalShowModal() {
       }
     }
 
-    showModal(modal.id, undefined);
+    showModal(modal, undefined);
   });
 }
