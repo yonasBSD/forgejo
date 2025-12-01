@@ -88,24 +88,26 @@
 	{{svg "octicon-trash"}}
 	{{ctx.Locale.Tr "repo.issues.delete"}}
 </button>
-<div class="ui g-modal-confirm modal" id="sidebar-delete-issue">
-	<div class="header">
-		{{if .Issue.IsPull}}
-			{{ctx.Locale.Tr "repo.pulls.delete.title"}}
-		{{else}}
-			{{ctx.Locale.Tr "repo.issues.delete.title"}}
-		{{end}}
-	</div>
-	<div class="content">
-		<p>
+<dialog id="sidebar-delete-issue">
+	<article>
+		<header>
 			{{if .Issue.IsPull}}
-				{{ctx.Locale.Tr "repo.pulls.delete.text"}}
+				{{ctx.Locale.Tr "repo.pulls.delete.title"}}
 			{{else}}
-				{{ctx.Locale.Tr "repo.issues.delete.text"}}
+				{{ctx.Locale.Tr "repo.issues.delete.title"}}
 			{{end}}
-		</p>
-	</div>
-	<form action="{{.Issue.Link}}/delete" method="post">
-		{{template "base/modal_actions_confirm" .}}
-	</form>
-</div>
+		</header>
+		<div class="content">
+			<p>
+				{{if .Issue.IsPull}}
+					{{ctx.Locale.Tr "repo.pulls.delete.text"}}
+				{{else}}
+					{{ctx.Locale.Tr "repo.issues.delete.text"}}
+				{{end}}
+			</p>
+		</div>
+		<form action="{{.Issue.Link}}/delete" method="post">
+			{{template "base/modal_actions_confirm" .}}
+		</form>
+	</article>
+</dialog>
