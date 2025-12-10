@@ -48,6 +48,7 @@ func checkScriptType(ctx context.Context, logger log.Logger, autofix bool) error
 	return nil
 }
 
+// FIXME this probably needs to change
 func checkHooks(ctx context.Context, logger log.Logger, autofix bool) error {
 	if err := iterateRepositories(ctx, func(repo *repo_model.Repository) error {
 		results, err := repository.CheckDelegateHooks(repo.RepoPath())
@@ -57,9 +58,9 @@ func checkHooks(ctx context.Context, logger log.Logger, autofix bool) error {
 		}
 		if len(results) > 0 && autofix {
 			logger.Warn("Regenerated hooks for %s", repo.FullName())
-			if err := repository.CreateDelegateHooks(repo.RepoPath()); err != nil {
-				logger.Critical("Unable to recreate delegate hooks for %-v. ERROR: %v", repo, err)
-				return fmt.Errorf("Unable to recreate delegate hooks for %-v. ERROR: %w", repo, err)
+			if err := repository.SetHooksPath(ctx, repo.RepoPath()); err != nil {
+				logger.Critical("Unable to set hooksPath for %-v. ERROR: %v", repo, err)
+				return fmt.Errorf("Unable to set hooksPath for %-v. ERROR: %w", repo, err)
 			}
 		}
 		for _, result := range results {

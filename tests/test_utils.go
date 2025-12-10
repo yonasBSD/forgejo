@@ -33,6 +33,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/process"
+	"forgejo.org/modules/repository"
 	repo_module "forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/storage"
@@ -101,6 +102,10 @@ func InitTest(requireGitea bool) {
 	setting.Repository.DefaultBranch = "master" // many test code still assume that default branch is called "master"
 	_ = util.RemoveAll(repo_module.LocalCopyPath())
 
+	err := repository.InitDelegateHooks(git.HomeDir())
+	if err != nil {
+		log.Fatal("git.InitDelegateHook: %v", err)
+	}
 	if err := git.InitFull(context.Background()); err != nil {
 		log.Fatal("git.InitOnceWithSync: %v", err)
 	}

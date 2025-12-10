@@ -32,12 +32,12 @@ func SyncRepositoryHooks(ctx context.Context) error {
 			default:
 			}
 
-			if err := repo_module.CreateDelegateHooks(repo.RepoPath()); err != nil {
-				return fmt.Errorf("SyncRepositoryHook: %w", err)
+			if err := repo_module.SetHooksPath(ctx, repo.RepoPath()); err != nil {
+				return fmt.Errorf("SetHooksPath: %w", err)
 			}
 			if repo.HasWiki() {
-				if err := repo_module.CreateDelegateHooks(repo.WikiPath()); err != nil {
-					return fmt.Errorf("SyncRepositoryHook: %w", err)
+				if err := repo_module.SetHooksPath(ctx, repo.WikiPath()); err != nil {
+					return fmt.Errorf("SetHooksPath (wiki): %w", err)
 				}
 			}
 			return nil
