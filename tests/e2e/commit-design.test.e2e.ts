@@ -31,6 +31,7 @@ test('PR Commits: mobile responsive layout checks', async ({page}) => {
   await expect(page.locator('.shabox').first()).toBeHidden();
   await expect(page.locator('.commit-buttons').first()).toBeHidden();
 
+  // horizontal scrolling to check for overflow
   await expect(page.locator('.commit-group-commits').first()).not.toHaveCSS('overflow-x', 'scroll');
   
   await screenshot(page);
@@ -42,6 +43,13 @@ test('PR Commits: desktop responsive layout checks', async ({page}) => {
   expect(response?.status()).toBe(200);
   // desktop view
   await page.setViewportSize({ width: 1200, height: 800});
+
+  // date group visibility test
+  await expect(page.locator('.commit-group').first()).toBeVisible();
+  await expect(page.locator('.commit-group h4').first()).toBeVisible();
+
+  // desktop grid is the default 5‑column template; just assert it’s a grid
+  await expect(page.locator('.commit-timeline').first()).toHaveCSS('display', 'grid');
 
   // desktop-specific visibility test
   await expect(page.locator('.mobile-shabox').first()).toBeHidden();
