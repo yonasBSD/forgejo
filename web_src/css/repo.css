@@ -2767,7 +2767,6 @@ tbody.commit-list {
 
 @media (min-width: 640px) {
   .mobile-shabox {display: none;} /*hiding the button in desktop view, only accessible in mobile view*/
-  .mobile-btn {display: none;}
 }
 
 @media (max-width: 639.9px) {
