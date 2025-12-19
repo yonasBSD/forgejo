@@ -15,14 +15,14 @@ test.use({user: 'user2'});
 test('PR Commits: mobile responsive layout checks', async ({page}) => {
   const response = await page.goto('/user2/repo1/pulls/3/commits');
   expect(response?.status()).toBe(200);
-  //mobile view
-  await page.setViewportSize({ width: 375, height: 667 });
-  
+  // mobile view
+  await page.setViewportSize({width: 375, height: 667});
+
   // mobile-specific grid positioning
   await expect(page.locator('.commit-timeline .author').first()).toHaveCSS('grid-column-start', '1');
   await expect(page.locator('.commit-timeline .date').first()).toHaveCSS('grid-column-start', '2');
   await expect(page.locator('.commit-timeline .message').first()).toHaveCSS('grid-column-end', 'span 2');
-  await expect(page.locator('.commit-timeline .mobile-shabox').first()).toHaveCSS('grid-column-start', '1')
+  await expect(page.locator('.commit-timeline .mobile-shabox').first()).toHaveCSS('grid-column-start', '1');
   await expect(page.locator('.commit-timeline details').first()).toHaveCSS('grid-column-start', '2');
 
   // mobile-specific visibility test
@@ -33,16 +33,15 @@ test('PR Commits: mobile responsive layout checks', async ({page}) => {
 
   // horizontal scrolling to check for overflow
   await expect(page.locator('.commit-group-commits').first()).not.toHaveCSS('overflow-x', 'scroll');
-  
+
   await screenshot(page);
 });
-
 
 test('PR Commits: desktop responsive layout checks', async ({page}) => {
   const response = await page.goto('/user2/repo1/pulls/3/commits');
   expect(response?.status()).toBe(200);
   // desktop view
-  await page.setViewportSize({ width: 1200, height: 800});
+  await page.setViewportSize({width: 1200, height: 800});
 
   // date group visibility test
   await expect(page.locator('.commit-group').first()).toBeVisible();
@@ -57,4 +56,4 @@ test('PR Commits: desktop responsive layout checks', async ({page}) => {
   await expect(page.locator('.commit-buttons').first()).toBeVisible();
 
   await screenshot(page);
-}); 
+});
