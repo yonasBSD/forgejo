@@ -2757,7 +2757,7 @@ tbody.commit-list {
   display: grid;
   padding: 0.5rem;
   row-gap: 0.5rem;
-  grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
+  grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(12ch, 10%) auto;
   align-items: center;
   .author {margin-right: 10%}
 }
