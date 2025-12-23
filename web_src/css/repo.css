@@ -2757,9 +2757,13 @@ tbody.commit-list {
   display: grid;
   padding: 0.5rem;
   row-gap: 0.5rem;
+  column-gap: 0.5rem;
   grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(12ch, 10%) auto;
   align-items: center;
-  .author {margin-right: 10%}
+  .sha.label {
+    /* unwanted property of .sha.label, needs fix upstream in hashbox.css at some point */
+    margin-inline: 0 !important;
+  }
 }
 @media (max-width: 440px) {
   .commit-timeline .mobile-shabox .badge {display: none;}
@@ -2787,7 +2791,6 @@ tbody.commit-list {
   .commit-timeline .message {
     grid-row: 2;
     grid-column: 1 / span 2;
-    padding-inline: 0.5rem;
   }
 
   .mobile-shabox {
