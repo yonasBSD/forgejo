@@ -86,7 +86,7 @@
 					{{svg "octicon-copy" 14}}
 				</button>
 			</div>
-			<details class="dropdown dir-rtl tw-pr-4 ">
+			<details class="dropdown dir-rtl tw-pr-4">
 				<summary class="border" aria-label="{{ctx.Locale.Tr "toggle_menu"}}">
 					{{svg "octicon-kebab-horizontal"}}
 				</summary>
@@ -115,7 +115,7 @@
 			</details>
 		</div>
 
-		<div class="date tw-flex-1 tw-text-right tw-pr-4">
+		<div class="date tw-text-right tw-pr-4">
 			{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
 		</div>
 
