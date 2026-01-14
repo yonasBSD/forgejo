@@ -23,13 +23,17 @@
 					<button type="button" class="item context js-aria-clickable quote-reply {{if .diff}}quote-reply-diff{{end}}" data-target="{{.item.HashTag}}-content" data-author="{{.item.Poster.Name}}" data-reference-url="{{$referenceUrl}}" data-context="{{.ctxData.Repository.Link}}">
 						{{ctx.Locale.Tr "repo.issues.context.quote_reply"}}
 					</button>
+				</li>
 
-					{{if not .ctxData.UnitIssuesGlobalDisabled}}
+				{{if not .ctxData.UnitIssuesGlobalDisabled}}
+					<li>
 						<button type="button" class="item context js-aria-clickable reference-issue" data-target="{{.item.HashTag}}-raw" data-modal="#reference-issue-modal" data-poster="{{.item.Poster.GetDisplayName}}" data-poster-username="{{.item.Poster.Name}}" data-reference="{{$referenceUrl}}">
 							{{ctx.Locale.Tr "repo.issues.context.reference_issue"}}
 						</button>
-					{{end}}
+					</li>
+				{{end}}
 
+				<li>
 					{{if or .ctxData.Permission.IsAdmin .IsCommentPoster .ctxData.HasIssuesOrPullsWritePermission}}
 						<div class="divider"></div>
 						<button type="button" class="item context js-aria-clickable edit-content">
