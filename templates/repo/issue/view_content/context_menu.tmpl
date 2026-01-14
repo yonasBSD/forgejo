@@ -45,12 +45,12 @@
 			{{end}}
 
 			{{if and .ctxData.IsModerationEnabled .ctxData.IsSigned (not .IsCommentPoster)}}
+				<hr>
 				<li>
 					{{$contentType := "comment"}}
 					{{if eq .item .ctxData.Issue}}
 						{{if .ctxData.Issue.IsPull}} {{$contentType = "pull"}} {{else}} {{$contentType = "issue"}} {{end}}
 					{{end}}
-					<div class="divider"></div>
 					<a class="item context" href="{{AppSubUrl}}/report_abuse?type={{$contentType}}&id={{.item.ID}}">
 						{{ctx.Locale.Tr "moderation.report_content"}}
 					</a>
