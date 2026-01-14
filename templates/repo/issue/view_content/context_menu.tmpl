@@ -39,12 +39,15 @@
 						<button type="button" class="item context js-aria-clickable edit-content">
 							{{ctx.Locale.Tr "repo.issues.context.edit"}}
 						</button>
-						{{if .delete}}
+					</li>
+
+					{{if .delete}}
+						<li>
 							<button type="button" class="item context js-aria-clickable delete-comment" data-comment-id={{.item.HashTag}} data-url="{{.ctxData.RepoLink}}/comments/{{.item.ID}}/delete" data-locale="{{ctx.Locale.Tr "repo.issues.delete_comment_confirm"}}">
 								{{ctx.Locale.Tr "repo.issues.context.delete"}}
 							</button>
-						{{end}}
-					</li>
+						</li>
+					{{end}}
 				{{end}}
 			{{end}}
 
