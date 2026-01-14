@@ -18,7 +18,7 @@
 
 			{{if and .ctxData.IsSigned (not .ctxData.Repository.IsArchived)}}
 				<li>
-					<button type="button" class="quote-reply {{if .diff}}quote-reply-diff{{end}}" data-target="{{.item.HashTag}}-content" data-author="{{.item.Poster.Name}}" data-reference-url="{{$referenceUrl}}" data-context="{{.ctxData.Repository.Link}}">
+					<button type="button" class="quote-reply{{if .diff}} quote-reply-diff{{end}}" data-target="{{.item.HashTag}}-content" data-author="{{.item.Poster.Name}}" data-reference-url="{{$referenceUrl}}" data-context="{{.ctxData.Repository.Link}}">
 						{{ctx.Locale.Tr "repo.issues.context.quote_reply"}}
 					</button>
 				</li>
