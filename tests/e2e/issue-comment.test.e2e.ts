@@ -170,8 +170,8 @@ test('Always focus edit tab first on edit', async ({page}) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
-  const opener = page.locator('#issue-1 .comment-container details.dropdown summary')
-  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content')
+  const opener = page.locator('#issue-1 .comment-container details.dropdown summary');
+  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content');
 
   // Switch to preview tab and save
   await opener.click();
@@ -196,8 +196,8 @@ test('Reset content of comment edit field on cancel', async ({page}) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
-  const opener = page.locator('#issue-1 .comment-container details.dropdown summary')
-  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content')
+  const opener = page.locator('#issue-1 .comment-container details.dropdown summary');
+  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content');
   const editorTextarea = page.locator('[id="_combo_markdown_editor_1"]');
 
   // Change the content of the edit field
@@ -220,7 +220,7 @@ test('Quote reply', async ({page}, workerInfo) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
-  const opener = page.locator('#issuecomment-1001 .comment-container details.dropdown summary')
+  const opener = page.locator('#issuecomment-1001 .comment-container details.dropdown summary');
   const editorTextarea = page.locator('textarea.markdown-text-editor');
 
   // Full quote.
