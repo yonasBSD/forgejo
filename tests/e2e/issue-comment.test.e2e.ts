@@ -12,10 +12,10 @@ import {screenshot} from './shared/screenshots.ts';
 test.use({user: 'user2'});
 
 for (const run of [
-  {title: 'JS off', js: true},
-  {title: 'JS on', js: false},
+  {title: 'JS off', useJs: false},
+  {title: 'JS on', useJs: true},
 ]) {
-  test.describe(`Create issue & comment`, () => {
+  test.describe(`Create issue & comment, delete comment`, () => {
     // playwright/valid-title says: [error] Title must be a string
     test(`${run.title}`, async ({browser}, workerInfo) => {
       test.skip(['Mobile Chrome'].includes(workerInfo.project.name), 'Mobile Chrome has trouble clicking Comment button with JS enabled');
@@ -24,7 +24,7 @@ for (const run of [
       const issueContent = dynamic_id();
       const commentContent = dynamic_id();
 
-      const context = await login_user(browser, workerInfo, 'user2', {javaScriptEnabled: run.js});
+      const context = await login_user(browser, workerInfo, 'user2', {javaScriptEnabled: run.useJs});
       const page = await context.newPage();
 
       let response = await page.goto('/user2/repo1/issues/new');
@@ -35,7 +35,7 @@ for (const run of [
       await page.getByPlaceholder('Leave a comment').fill(issueContent);
       await page.getByRole('button', {name: 'Create issue'}).click();
 
-      if (run.js) {
+      if (run.useJs) {
         await expect(page).toHaveURL(/\/user2\/repo1\/issues\/\d+$/);
       } else {
         // NoJS clients end up on a .../comments JSON file and browsers surround it with some HTML
@@ -48,8 +48,10 @@ for (const run of [
       await page.locator('#comment-form').getByPlaceholder('Leave a comment').fill(commentContent);
       await page.locator('#comment-form button.primary').filter({hasText: 'Comment'}).click();
 
-      if (!run.js) {
+      // NoJS has bad UX: user gets sent to a page with raw JSON response
+      if (!run.useJs) {
         const redirectUrl = await JSON.parse(await page.locator('body').textContent())['redirect'];
+        // Follow the redirect link in the response to get back to the issue
         response = await page.goto(redirectUrl);
         expect(response?.status()).toBe(200);
       }
@@ -58,6 +60,15 @@ for (const run of [
       await expect(page.locator('h1')).toContainText(issueTitle);
       await expect(page.locator('.comment').filter({hasText: issueContent})).toHaveCount(1);
       await expect(page.locator('.comment').filter({hasText: commentContent})).toHaveCount(1);
+
+      // Delete the newly created comment
+      if (run.useJs) {
+        // Not possible w/o JS ATM
+        await page.locator('.comment').filter({hasText: commentContent}).getByLabel('Comment menu').click();
+        page.on('dialog', (dialog) => dialog.accept());
+        await page.locator('.comment').filter({hasText: commentContent}).locator('details.dropdown .content button[data-url$="/delete"]').click();
+        await expect(page.locator('.comment').filter({hasText: commentContent})).toHaveCount(0);
+      }
     });
   });
 }
