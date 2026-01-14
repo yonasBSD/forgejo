@@ -1,8 +1,10 @@
-<div class="item action ui dropdown jump pointing top right context-dropdown" aria-label="{{ctx.Locale.Tr "repo.issues.context.menu"}}">
-	<a class="context-menu muted">
-		{{svg "octicon-kebab-horizontal"}}
-	</a>
-	<div class="menu">
+<details class="dropdown">
+	<summary>
+		<a class="context-menu muted">
+			{{svg "octicon-kebab-horizontal"}}
+		</a>
+	</summary>
+	<div class="meu">
 		{{$referenceUrl := ""}}
 		{{if .issue}}
 			{{$referenceUrl = printf "%s#%s" .ctxData.Issue.Link .item.HashTag}}
@@ -32,4 +34,4 @@
 			<a class="item context" href="{{AppSubUrl}}/report_abuse?type={{$contentType}}&id={{.item.ID}}">{{ctx.Locale.Tr "moderation.report_content"}}</a>
 		{{end}}
 	</div>
-</div>
+</details>
