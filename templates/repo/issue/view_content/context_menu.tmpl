@@ -33,9 +33,9 @@
 					</li>
 				{{end}}
 
-				<li>
-					{{if or .ctxData.Permission.IsAdmin .IsCommentPoster .ctxData.HasIssuesOrPullsWritePermission}}
-						<div class="divider"></div>
+				{{if or .ctxData.Permission.IsAdmin .IsCommentPoster .ctxData.HasIssuesOrPullsWritePermission}}
+					<hr>
+					<li>
 						<button type="button" class="item context js-aria-clickable edit-content">
 							{{ctx.Locale.Tr "repo.issues.context.edit"}}
 						</button>
@@ -44,8 +44,8 @@
 								{{ctx.Locale.Tr "repo.issues.context.delete"}}
 							</button>
 						{{end}}
-					{{end}}
-				</li>
+					</li>
+				{{end}}
 			{{end}}
 
 			{{if and .ctxData.IsModerationEnabled .ctxData.IsSigned (not .IsCommentPoster)}}
