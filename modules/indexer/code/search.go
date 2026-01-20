@@ -7,11 +7,14 @@ import (
 	"bytes"
 	"context"
 	"html/template"
+	"math"
 	"slices"
+	"sort"
 	"strings"
 
 	"forgejo.org/modules/highlight"
 	"forgejo.org/modules/indexer/code/internal"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/services/gitdiff"
 )
@@ -188,6 +191,189 @@ func HighlightSearchResultCode(filename string, lineNums []int, highlightRanges 
 }
 
 func searchResult(result *internal.SearchResult, startIndex, endIndex int) (*Result, error) {
+	if setting.Indexer.RepoType == "zoekt" {
+		return searchZoektResult(result)
+	}
+	return searchResultCommon(result, startIndex, endIndex)
+}
+
+func searchZoektResult(result *internal.SearchResult) (*Result, error) {
+	// Sort matches by starting position
+	sort.Slice(result.Matches, func(i, j int) bool {
+		return result.Matches[i].Start < result.Matches[j].Start
+	})
+
+	// Split all the content into lines (according to the order)
+	contentLines := strings.Split(result.Content, "\n")
+
+	// Create map: string num -> string text
+	lineMap := make(map[int]string, len(result.LineNumbers))
+	for i, lineNum := range result.LineNumbers {
+		if i < len(contentLines) {
+			lineMap[lineNum] = contentLines[i]
+		}
+	}
+
+	// Collect all line numbers to display
+	var sortedLines []int
+	for _, match := range result.Matches {
+		for i := match.LineNumber - 1; i <= match.LineNumber+1; i++ {
+			if i > 0 {
+				sortedLines = append(sortedLines, i)
+			}
+		}
+	}
+
+	// Sort line numbers in ascending order
+	sort.Ints(sortedLines)
+
+	// Remove duplicate line numbers after sorting
+	uniqueLines := sortedLines[:0]
+	for i, line := range sortedLines {
+		if i == 0 || line != sortedLines[i-1] {
+			uniqueLines = append(uniqueLines, line)
+		}
+	}
+	sortedLines = uniqueLines
+
+	// Group lines into blocks (block break if distance > 2 lines)
+	var blocks [][]int
+	var currentBlock []int
+	for i, line := range sortedLines {
+		if i > 0 && line > sortedLines[i-1]+2 {
+			if len(currentBlock) > 0 {
+				blocks = append(blocks, currentBlock)
+				currentBlock = nil
+			}
+		}
+		currentBlock = append(currentBlock, line)
+	}
+	if len(currentBlock) > 0 {
+		blocks = append(blocks, currentBlock)
+	}
+
+	var resultLines []ResultLine
+	for _, block := range blocks {
+		// Forming a text block from lines lineMap
+		var blockLines []string
+		for _, lineNum := range block {
+			if lineText, ok := lineMap[lineNum]; ok {
+				blockLines = append(blockLines, lineText)
+			} else {
+				// If there is no line, insert a blank one to preserve the numbering
+				blockLines = append(blockLines, "")
+			}
+		}
+
+		// Calculate line offsets in a block
+		lineOffsets := make([]int, len(blockLines)+1)
+		for i := 1; i <= len(blockLines); i++ {
+			lineOffsets[i] = lineOffsets[i-1] + len(blockLines[i-1]) + 1
+		}
+
+		startLine := block[0]
+		endLine := block[len(block)-1]
+
+		// Form the entire block text for highlighting
+		blockContent := strings.Join(blockLines, "\n")
+
+		highlightByLine := make(map[int][][2]int)
+		for _, match := range result.Matches {
+			if match.LineNumber < startLine || match.LineNumber > endLine {
+				continue
+			}
+
+			lineInBlock := -1
+			for i, ln := range block {
+				if ln == match.LineNumber {
+					lineInBlock = i
+					break
+				}
+			}
+			if lineInBlock == -1 || lineInBlock >= len(blockLines) {
+				continue
+			}
+
+			globalLineIdx := -1
+			minDelta := math.MaxInt
+			for i, num := range result.LineNumbers {
+				if num != match.LineNumber {
+					continue
+				}
+				delta := abs(result.LineOffsets[i] - match.Start)
+				if delta < minDelta {
+					minDelta = delta
+					globalLineIdx = i
+				}
+			}
+
+			if globalLineIdx == -1 {
+				continue
+			}
+
+			lineOffsetInResult := result.LineOffsets[globalLineIdx]
+			highlightStart := match.Start - lineOffsetInResult
+			highlightEnd := match.End - lineOffsetInResult
+
+			highlightByLine[lineInBlock] = append(highlightByLine[lineInBlock], [2]int{highlightStart, highlightEnd})
+		}
+
+		// merge overlapping ranges
+		var highlightRanges [][3]int
+		for lineIdx, ranges := range highlightByLine {
+			if len(ranges) == 0 {
+				continue
+			}
+			sort.Slice(ranges, func(i, j int) bool {
+				return ranges[i][0] < ranges[j][0]
+			})
+			merged := make([][2]int, 0, len(ranges))
+			current := ranges[0]
+			for _, r := range ranges[1:] {
+				if r[0] <= current[1] {
+					if r[1] > current[1] {
+						current[1] = r[1]
+					}
+				} else {
+					merged = append(merged, current)
+					current = r
+				}
+			}
+			merged = append(merged, current)
+
+			for _, r := range merged {
+				highlightRanges = append(highlightRanges, [3]int{lineIdx, r[0], r[1]})
+			}
+		}
+
+		highlightedLines := HighlightSearchResultCode(
+			result.Filename,
+			block,
+			highlightRanges,
+			blockContent,
+		)
+		resultLines = append(resultLines, highlightedLines...)
+	}
+
+	return &Result{
+		RepoID:      result.RepoID,
+		Filename:    result.Filename,
+		CommitID:    result.CommitID,
+		UpdatedUnix: result.UpdatedUnix,
+		Language:    result.Language,
+		Color:       result.Color,
+		Lines:       resultLines,
+	}, nil
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+func searchResultCommon(result *internal.SearchResult, startIndex, endIndex int) (*Result, error) {
 	startLineNum := 1 + strings.Count(result.Content[:startIndex], "\n")
 
 	var formattedLinesBuffer bytes.Buffer

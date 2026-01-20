@@ -23,6 +23,13 @@ type IndexerData struct {
 	RepoID int64
 }
 
+// Matches found in code with zoekt indexer
+type Match struct {
+	Start      int
+	End        int
+	LineNumber int
+}
+
 // SearchResult result of performing a search in a repo
 type SearchResult struct {
 	RepoID      int64
@@ -34,6 +41,9 @@ type SearchResult struct {
 	UpdatedUnix timeutil.TimeStamp
 	Language    string
 	Color       string
+	Matches     []Match
+	LineNumbers []int
+	LineOffsets []int
 }
 
 // SearchResultLanguages result of top languages count in search results
