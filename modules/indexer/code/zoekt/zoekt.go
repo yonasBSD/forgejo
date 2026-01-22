@@ -14,6 +14,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"regexp/syntax"
 	"slices"
 	"strconv"
 	"strings"
@@ -239,25 +241,35 @@ func (b *Indexer) generateZoektQuery(_ context.Context, opts *internal.SearchOpt
 	var contentQuery query.Q
 	var err error
 
-	if opts.Mode == internal.CodeSearchModeUnion {
+	// Zoekt does not support true fuzzy search.
+	// CodeSearchModeFuzzy is therefore treated as a union (OR) search
+	// to preserve previous behavior.
+	switch opts.Mode {
+	case internal.CodeSearchModeUnion, internal.CodeSearchModeFuzzy:
 		fields := strings.Fields(keyword)
 		if len(fields) == 0 {
 			return nil, errors.New("empty keyword")
 		}
-		contentQuery, err = query.Parse(TransToZoektContentQueryString(QuoteMeta(fields[0])))
+		contentQuery, err = query.Parse(
+			TransToZoektContentQueryString(QuoteMeta(fields[0])),
+		)
 		if err != nil {
 			return nil, err
 		}
 		for _, f := range fields[1:] {
-			q, err := query.Parse(TransToZoektContentQueryString(QuoteMeta(f)))
+			q, err := query.Parse(
+				TransToZoektContentQueryString(QuoteMeta(f)),
+			)
 			if err != nil {
 				return nil, err
 			}
 			contentQuery = query.NewOr(contentQuery, q)
 		}
-	} else {
+	default:
 		// Exact match
-		contentQuery, err = query.Parse(TransToZoektContentQueryString(QuoteMeta(keyword)))
+		contentQuery, err = query.Parse(
+			TransToZoektContentQueryString(QuoteMeta(keyword)),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -271,6 +283,26 @@ func (b *Indexer) generateZoektQuery(_ context.Context, opts *internal.SearchOpt
 			repoIDs[i] = uint32(id)
 		}
 		finalQuery = query.NewAnd(finalQuery, query.NewRepoIDs(repoIDs...))
+	}
+
+	if opts.Filename != "" {
+		prefix := strings.TrimPrefix(opts.Filename, "/")
+
+		re, err := syntax.Parse(
+			"^"+regexp.QuoteMeta(prefix),
+			syntax.Perl,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		fileQuery := &query.Regexp{
+			Regexp:   re,
+			FileName: true,
+			Content:  false,
+		}
+
+		finalQuery = query.NewAnd(finalQuery, fileQuery)
 	}
 
 	return finalQuery, nil
@@ -406,17 +438,6 @@ func (b *Indexer) Search(ctx context.Context, opts *internal.SearchOptions) (int
 	if err != nil {
 		return 0, nil, nil, err
 	}
-	log.Info("len of (result): %d", len(result.Files))
-
-	// remove filename match items
-	for i := 0; i < len(result.Files); i++ {
-		result.Files[i].LineMatches = slices.DeleteFunc(result.Files[i].LineMatches, func(line zoekt.LineMatch) bool {
-			return line.FileName
-		})
-	}
-	result.Files = slices.DeleteFunc(result.Files, func(file zoekt.FileMatch) bool {
-		return len(file.LineMatches) == 0
-	})
 
 	allHits := convertZoektResult(result.Files)
 

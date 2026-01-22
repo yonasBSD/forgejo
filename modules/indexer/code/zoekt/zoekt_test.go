@@ -119,3 +119,35 @@ func TestGenerateZoektQuery_Union(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, q)
 }
+
+func TestGenerateZoektQuery_SpecialCharacters(t *testing.T) {
+	indexer := &Indexer{}
+
+	opts := &internal.SearchOptions{
+		Keyword: `foo.bar+baz[qux]`,
+		Mode:    internal.CodeSearchModeExact,
+	}
+
+	q, err := indexer.generateZoektQuery(context.Background(), opts)
+	require.NoError(t, err)
+	require.NotNil(t, q)
+}
+
+func TestConvertZoektResult_IgnoresFilenameMatches(t *testing.T) {
+	files := []zoekt.FileMatch{
+		{
+			RepositoryID: 1,
+			FileName:     "foo.go",
+			Version:      "commit123",
+			Content:      []byte("package main\n"),
+			LineMatches: []zoekt.LineMatch{
+				{
+					FileName: true, // filename-only match
+				},
+			},
+		},
+	}
+
+	results := convertZoektResult(files)
+	assert.Empty(t, results)
+}

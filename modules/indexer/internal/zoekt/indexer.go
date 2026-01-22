@@ -1,4 +1,4 @@
-// Copyright 2026 The Forgejo Authors. All rights reserved.
+// Copyright 2025 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 //go:build unix
@@ -62,7 +62,7 @@ func (i *Indexer) Init(_ context.Context) (bool, error) {
 			compare = "newer"
 		}
 
-		log.Warn("Found %s zoekt index with version %d, Gitea will remove it and rebuild", compare, metadata.Version)
+		log.Warn("Found %s zoekt index with version %d, Forgejo will remove it and rebuild", compare, metadata.Version)
 
 		// the indexer is using a previous version, so we should delete it and
 		// re-populate
