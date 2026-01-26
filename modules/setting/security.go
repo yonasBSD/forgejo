@@ -4,12 +4,15 @@
 package setting
 
 import (
+	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"forgejo.org/modules/auth/password/hash"
 	"forgejo.org/modules/generate"
+	"forgejo.org/modules/jwtx"
 	"forgejo.org/modules/keying"
 	"forgejo.org/modules/log"
 )
@@ -38,6 +41,31 @@ var (
 	SuccessfulTokensCacheSize          int
 	DisableQueryAuthToken              bool
 )
+
+/*
+ * key loading is a two-stage process to avoid complications for unit tests:
+ *
+ * For symmetric keys, we want to add a random key to the configuration. We would
+ * not want to change the configuration after loading has completed to maintain
+ * isolation. So from this perspective, we would want to initialize keys only
+ * during setting.load...From()
+ *
+ * For asymmetric keys, we want to create a random private key _file_.
+ * Doing so during the setting load phase, however, creates key files for unit
+ * tests, because they usually complete the full settings load phase, but do not
+ * initialize modules which they do not need. Depending on the test case, it
+ * might not provide a writable AppDataPath, or it would leave private key files
+ * in the source tree. All of this can be avoided with
+ * specifically adjusting the ini loaded for unit tests, but adds considerable
+ * friction.
+ *
+ * So to avoid all this, we split key loading in two phases:
+ * - settings parse the config and save missing symmetric keys
+ * - module init takes the parsed config, creates missing asymmetric keys and
+ *   creates the actual signingkey objects
+ *
+ * jwtx.SigningKeyCfg and jwtx.KeyCfg are used for handover
+ */
 
 // loadSecret load the secret from ini by uriKey or verbatimKey, only one of them could be set
 // If the secret is loaded from uriKey (file), the file should be non-empty, to guarantee the behavior stable and clear.
@@ -79,6 +107,124 @@ func loadSecret(sec ConfigSection, uriKey, verbatimKey string) string {
 		log.Fatal("Unsupported URI-Scheme %q (%q = %q)", tempURI.Scheme, uriKey, uri)
 		return ""
 	}
+}
+
+// createSymmeticSigningKey creates a new symmetric signing key and saves it to
+// the setting named cfgSecret (usually [PFX_]SECRET) in section cfgSection
+func createSymmeticSigningKeyCfg(rootCfg ConfigProvider, cfgSection, cfgSecret string) (*[]byte, error) {
+	jwtSecretBytes, jwtSecretBase64 := generate.NewJwtSecret()
+	saveCfg, err := rootCfg.PrepareSaving()
+	if err == nil {
+		rootCfg.Section(cfgSection).Key(cfgSecret).SetValue(jwtSecretBase64)
+		saveCfg.Section(cfgSection).Key(cfgSecret).SetValue(jwtSecretBase64)
+		err = saveCfg.Save()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("save %s.%s failed: %v", cfgSection, cfgSecret, err)
+	}
+	return &jwtSecretBytes, nil
+}
+
+// loadSymmeticSigningKey loads a signing key and creates it unless present
+// loads from [pfx]SECRET_URI
+// loads from or saves to [pfx]SECRET
+// in section sec
+func loadSymmeticSigningKeyCfg(rootCfg ConfigProvider, sec ConfigSection, pfx string) (*[]byte, error) {
+	cfgSecretURI := pfx + "SECRET_URI"
+	cfgSecret := pfx + "SECRET"
+
+	secretBase64 := loadSecret(sec, cfgSecretURI, cfgSecret)
+	secret, err := generate.DecodeJwtSecret(secretBase64)
+	if err == nil {
+		return &secret, nil
+	}
+
+	log.Info("[%s] %s or %s failed loading: %v - creating new key", sec.Name(), cfgSecret, cfgSecretURI, err)
+	return createSymmeticSigningKeyCfg(rootCfg, sec.Name(), cfgSecret)
+}
+
+// loadAsymmeticSigningKey loads a signing key from [pfx]SIGNING_PRIVATE_KEY_FILE
+// or creates it if it does not exist
+func loadAsymmeticSigningKeyPath(sec ConfigSection, pfx, defaultFile string) *string {
+	cfgFile := pfx + "SIGNING_PRIVATE_KEY_FILE"
+	keyPath := sec.Key(cfgFile).MustString(defaultFile)
+	if !filepath.IsAbs(keyPath) {
+		keyPath = filepath.Join(AppDataPath, keyPath)
+	}
+	return &keyPath
+}
+
+type checkKeyCfg func(rootCfg ConfigProvider, cfgSection, pfx string) error
+
+func onlyAsymmetric() checkKeyCfg {
+	return func(rootCfg ConfigProvider, cfgSection, pfx string) error {
+		sec := rootCfg.Section(cfgSection)
+		cfgAlg := pfx + "SIGNING_ALGORITHM"
+
+		if sec.HasKey(cfgAlg) {
+			alg := sec.Key(cfgAlg).String()
+			if !jwtx.IsValidAsymmetricAlgorithm(alg) {
+				return fmt.Errorf("Unsupported algorithm: %s = %s", cfgAlg, alg)
+			}
+		}
+
+		noCfg := []string{
+			pfx + "SECRET_URI",
+			pfx + "SECRET",
+		}
+
+		for _, cfg := range noCfg {
+			if sec.HasKey(cfg) {
+				return fmt.Errorf("Unsupported config key: %s - must be removed", cfg)
+			}
+		}
+
+		return nil
+	}
+}
+
+// loadSigningKey() loads a or creates signing key based on settings in section cfgSection
+// [pfx]SIGNING_ALGORITHM determines the algorithm
+// [pfx]SECRET is a literal secret for symmetric algorithms
+// [pfx]SECRET_URI is the uri of a secret for symmetric algorithms
+// [pfx]SIGNING_PRIVATE_KEY_FILE is a file with a private key for asymmetric algorithms
+//
+// [pfx]SECRET might get written to literally in the config if needed but not present
+
+func loadSigningKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile string, checks ...checkKeyCfg) (*jwtx.SigningKeyCfg, error) {
+	for _, check := range checks {
+		err := check(rootCfg, cfgSection, pfx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sec := rootCfg.Section(cfgSection)
+	cfgAlg := pfx + "SIGNING_ALGORITHM"
+
+	algorithm := sec.Key(cfgAlg).MustString(defaultAlg)
+
+	cfg := jwtx.SigningKeyCfg{Algorithm: algorithm}
+	var err error
+
+	if jwtx.IsValidSymmetricAlgorithm(algorithm) {
+		cfg.SecretBytes, err = loadSymmeticSigningKeyCfg(rootCfg, sec, pfx)
+	} else if jwtx.IsValidAsymmetricAlgorithm(algorithm) {
+		cfg.PrivateKeyPath = loadAsymmeticSigningKeyPath(sec, pfx, defaultPrivateKeyFile)
+	} else {
+		err = fmt.Errorf("invalid algorithm: %s = %s", cfgAlg, algorithm)
+	}
+
+	return &cfg, err
+}
+
+func loadKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile string, checks ...checkKeyCfg) (*jwtx.KeyCfg, error) {
+	signing, err := loadSigningKeyCfg(rootCfg, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile, checks...)
+	if err != nil {
+		err = fmt.Errorf("[%s] %v", cfgSection, err)
+		return nil, err
+	}
+	return &jwtx.KeyCfg{Signing: signing}, nil
 }
 
 // generateSaveInternalToken generates and saves the internal token to app.ini
