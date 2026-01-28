@@ -68,7 +68,7 @@ func setup(ctx context.Context, debug, gitNeeded bool) {
 	setting.MustInstalled()
 	// Sanity check to ensure path is not relative, see: https://github.com/go-gitea/gitea/pull/19317
 	if _, err := os.Stat(setting.RepoRootPath); err != nil {
-		_ = fail(ctx, "Unable to access repository path", "Unable to access repository path %q, err: %v", setting.RepoRootPath, err)
+		_ = fail(ctx, fmt.Sprintf("Unable to access repository path %q", setting.RepoRootPath), "Unable to access repository path %q, err: %v", setting.RepoRootPath, err)
 		return
 	}
 	if gitNeeded {

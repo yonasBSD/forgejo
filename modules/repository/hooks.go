@@ -4,13 +4,12 @@
 package repository
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"path"
+	// "path"
 	"path/filepath"
 
-	"forgejo.org/modules/git"
+	// "forgejo.org/modules/git"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 )
@@ -102,15 +101,6 @@ done
 	giteaHookTpls = append(giteaHookTpls, "")
 
 	return hookNames, hookTpls, giteaHookTpls
-}
-
-// SetHooksPath updates the repository's config to use the centralised hooks
-func SetHooksPath(ctx context.Context, repoPath string) (err error) {
-	cmd := git.NewCommand(ctx, "config")
-	cmd.AddDynamicArguments("core.hooksPath", path.Join(git.HomeDir(), "hooks"))
-
-	opts := git.RunOpts{Dir: repoPath}
-	return cmd.Run(&opts)
 }
 
 func InitDelegateHooks(path string) (err error) {
