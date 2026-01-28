@@ -201,6 +201,11 @@ func InitFull(ctx context.Context) (err error) {
 	_, err = exec.LookPath("ssh")
 	HasSSHExecutable = err == nil
 
+	err = InitDelegateHooks(HomeDir())
+	if err != nil {
+		return nil
+	}
+
 	return syncGitConfig()
 }
 

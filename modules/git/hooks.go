@@ -1,7 +1,7 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package repository
+package git
 
 import (
 	"fmt"
@@ -142,14 +142,6 @@ func InitDelegateHooks(path string) (err error) {
 	return nil
 }
 
-func checkExecutable(filename string) bool {
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		return false
-	}
-	return (fileInfo.Mode() & 0o100) > 0
-}
-
 func ensureExecutable(filename string) error {
 	fileInfo, err := os.Stat(filename)
 	if err != nil {
@@ -160,68 +152,4 @@ func ensureExecutable(filename string) error {
 	}
 	mode := fileInfo.Mode() | 0o100
 	return os.Chmod(filename, mode)
-}
-
-// CheckDelegateHooks checks the hooks scripts for the repo
-// FIXME this needs to be refactored
-func CheckDelegateHooks(repoPath string) ([]string, error) {
-	hookNames, hookTpls, giteaHookTpls := getHookTemplates()
-
-	hookDir := filepath.Join(repoPath, "hooks")
-	results := make([]string, 0, 10)
-
-	for i, hookName := range hookNames {
-		oldHookPath := filepath.Join(hookDir, hookName)
-		newHookPath := filepath.Join(hookDir, hookName+".d", "gitea")
-
-		cont := false
-		isExist, err := util.IsExist(oldHookPath)
-		if err != nil {
-			results = append(results, fmt.Sprintf("unable to check if %s exists. Error: %v", oldHookPath, err))
-		}
-		if err == nil && !isExist {
-			results = append(results, fmt.Sprintf("old hook file %s does not exist", oldHookPath))
-			cont = true
-		}
-		isExist, err = util.IsExist(oldHookPath + ".d")
-		if err != nil {
-			results = append(results, fmt.Sprintf("unable to check if %s exists. Error: %v", oldHookPath+".d", err))
-		}
-		if err == nil && !isExist {
-			results = append(results, fmt.Sprintf("hooks directory %s does not exist", oldHookPath+".d"))
-			cont = true
-		}
-		isExist, err = util.IsExist(newHookPath)
-		if err != nil {
-			results = append(results, fmt.Sprintf("unable to check if %s exists. Error: %v", newHookPath, err))
-		}
-		if err == nil && !isExist {
-			results = append(results, fmt.Sprintf("new hook file %s does not exist", newHookPath))
-			cont = true
-		}
-		if cont {
-			continue
-		}
-		contents, err := os.ReadFile(oldHookPath)
-		if err != nil {
-			return results, err
-		}
-		if string(contents) != hookTpls[i] {
-			results = append(results, fmt.Sprintf("old hook file %s is out of date", oldHookPath))
-		}
-		if !checkExecutable(oldHookPath) {
-			results = append(results, fmt.Sprintf("old hook file %s is not executable", oldHookPath))
-		}
-		contents, err = os.ReadFile(newHookPath)
-		if err != nil {
-			return results, err
-		}
-		if string(contents) != giteaHookTpls[i] {
-			results = append(results, fmt.Sprintf("new hook file %s is out of date", newHookPath))
-		}
-		if !checkExecutable(newHookPath) {
-			results = append(results, fmt.Sprintf("new hook file %s is not executable", newHookPath))
-		}
-	}
-	return results, nil
 }
