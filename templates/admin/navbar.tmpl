@@ -77,6 +77,22 @@
 			</div>
 		</details>
 		{{end}}
+		{{if .EnableFederation}}
+		<details class="item toggleable-item" {{if or .PageIsAdminFederationSummary .PageIsAdminFederationHosts .PageIsAdminFederationUsers}}open{{end}}>
+			<summary>Federation</summary>
+			<div class="menu">
+				<a class="{{if .PageIsAdminFederationSummary}}active {{end}}item" href="{{AppSubUrl}}/admin/federation">
+					Summary
+				</a>
+				<a class="{{if .PageIsAdminFederationHosts}}active {{end}}item" href="{{AppSubUrl}}/admin/federation/hosts">
+					Hosts
+				</a>
+				<a class="{{if .PageIsAdminFederationUsers}}active {{end}}item" href="{{AppSubUrl}}/admin/federation/users">
+					Users
+				</a>
+			</div>
+		</details>
+		{{end}}
 		<details class="item toggleable-item" {{if or .PageIsAdminConfig}}open{{end}}>
 			<summary>{{ctx.Locale.Tr "admin.config"}}</summary>
 			<div class="menu">

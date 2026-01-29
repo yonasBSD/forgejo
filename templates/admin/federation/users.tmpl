@@ -1,0 +1,40 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin user")}}
+	<div class="admin-setting-content">
+		<h4 class="ui top attached header">
+			{{if .Host}}[{{.Host.HostFqdn}}]{{end}}
+			Manage federation users ({{ctx.Locale.Tr "admin.total" .TotalCount}})
+		</h4>
+		<div class="ui attached table segment">
+			<table class="ui very basic striped table unstackable">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>UserID</th>
+						<th>ExternalID</th>
+						<th>InboxPath</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range .Users}}
+						<tr>
+							<td>{{.ID}}</td>
+							<td>{{.UserID}}</td>
+							<td>{{.ExternalID}}</td>
+							<td>{{.InboxPath}}</td>
+							<td>
+								<div class="tw-flex tw-gap-2">
+									<a href="{{AppUrl}}/admin/users/{{.UserID}}" data-tooltip-content="Local User Details">{{svg "octicon-person"}}</a>
+								</div>
+							</td>
+						</tr>
+					{{else}}
+						<tr><td class="tw-text-center" colspan="10">{{ctx.Locale.Tr "repo.pulls.no_results"}}</td></tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+
+		{{template "base/paginate" .}}
+	</div>
+{{template "admin/layout_footer" .}}

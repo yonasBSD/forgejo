@@ -1,0 +1,38 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin config")}}
+	<div class="admin-setting-content">
+		{{if .Host}}
+		<h4 class="ui top attached header">
+			Host Details
+		</h4>
+		<div class="ui attached table segment">
+			<dl class="admin-dl-horizontal">
+				<dt>ID</dt>
+				<dd>{{.Host.ID}}</dd>
+				<dt>FQDN</dt>
+				<dd>{{.Host.HostFqdn}}</dd>
+				<dt>Port</dt>
+				<dd>{{.Host.HostPort}}</dd>
+				<dt>Schema</dt>
+				<dd>{{.Host.HostSchema}}</dd>
+				<dt>Software</dt>
+				<dd>{{.Host.NodeInfo.SoftwareName}}</dd>
+				<dt>Created</dt>
+				<dd>{{DateUtils.AbsoluteShort .Host.Created}}</dd>
+				<dt>Updated</dt>
+				<dd>{{DateUtils.AbsoluteShort .Host.Updated}}</dd>
+				<dt>Latest Activity</dt>
+				<dd>{{DateUtils.FullTime .Host.LatestActivity}}</dd>
+			</dl>
+		</div>
+		{{end}}
+		<h4 class="ui top attached header">
+			Statistics
+		</h4>
+		<div class="ui attached table segment">
+			<dl class="admin-dl-horizontal">
+				<dt>User Count</dt>
+				<dd>{{.UsersTotal}}</dd>
+			</dl>
+		</div>
+	</div>
+{{template "admin/layout_footer" .}}

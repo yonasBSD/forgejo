@@ -18,6 +18,16 @@ func init() {
 	db.RegisterModel(new(FederatedUserFollower))
 }
 
+func CountFederatedUsers(ctx context.Context) (int64, error) {
+	count, err := db.GetEngine(ctx).Join("INNER", "user", "user.id = user_id").Count(&FederatedUser{})
+	return count, err
+}
+
+func CountFederatedUsersByHostID(ctx context.Context, federationHostID int64) (int64, error) {
+	count, err := db.GetEngine(ctx).Where("federation_host_id=?", federationHostID).Join("INNER", "user", "user.id = user_id").Count(&FederatedUser{})
+	return count, err
+}
+
 func CreateFederatedUser(ctx context.Context, user *User, federatedUser *FederatedUser) error {
 	if res, err := validation.IsValid(user); !res {
 		return err
@@ -81,6 +91,38 @@ func FindFederatedUser(ctx context.Context, externalID string, federationHostID 
 		return nil, nil, err
 	}
 	return user, federatedUser, nil
+}
+
+func FindFederatedUsers(ctx context.Context) ([]*FederatedUser, error) {
+	var users []*FederatedUser
+	err := db.GetEngine(ctx).Join("INNER", "user", "user.id = user_id").Find(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		if res, err := validation.IsValid(user); !res {
+			return nil, err
+		}
+	}
+
+	return users, nil
+}
+
+func FindFederatedUsersByHostID(ctx context.Context, federationHostID int64) ([]*FederatedUser, error) {
+	var users []*FederatedUser
+	err := db.GetEngine(ctx).Where("federation_host_id = ?", federationHostID).Join("INNER", "user", "user.id = user_id").Find(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		if res, err := validation.IsValid(user); !res {
+			return nil, err
+		}
+	}
+
+	return users, nil
 }
 
 func GetFederatedUser(ctx context.Context, externalID string, federationHostID int64) (*User, *FederatedUser, error) {

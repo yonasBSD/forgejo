@@ -1,0 +1,58 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin user")}}
+	<div class="admin-setting-content">
+		<h4 class="ui top attached header">
+			Manage federation hosts ({{ctx.Locale.Tr "admin.total" .TotalCount}})
+		</h4>
+		<div class="ui attached table segment">
+			<table class="ui very basic striped table unstackable">
+				<thead>
+					<tr>
+						<th data-sortt-asc="id_asc" data-sortt-desc="id_desc">
+							ID
+							{{SortArrow "id_asc" "id_desc" .SortType true}}
+						</th>
+						<th data-sortt-asc="fqdn_asc" data-sortt-desc="fqdn_desc">
+							FQDN
+							{{SortArrow "fqdn_asc" "fqdn_desc" .SortType false}}
+						</th>
+						<th>Schema</th>
+						<th>Port</th>
+						<th>Software</th>
+						<th data-sortt-asc="created_asc" data-sortt-desc="created_desc">
+							Created
+							{{SortArrow "created_asc" "created_desc" .SortType true}}
+						</th>
+						<th data-sortt-asc="activity_asc" data-sortt-desc="activity_desc">
+							Latest Activity
+							{{SortArrow "activity_asc" "activity_desc" .SortType true}}
+						</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range .Hosts}}
+						<tr>
+							<td>{{.ID}}</td>
+							<td>{{.HostFqdn}}</td>
+							<td>{{.HostSchema}}</td>
+							<td>{{.HostPort}}</td>
+							<td>{{.NodeInfo.SoftwareName}}</td>
+							<td>{{DateUtils.AbsoluteShort .Created}}</td>
+							<td>{{DateUtils.FullTime .LatestActivity}}</td>
+							<td>
+								<div class="tw-flex tw-gap-2">
+									<a href="{{$.Link}}/{{.ID}}" data-tooltip-content="Host Details">{{svg "octicon-server"}}</a>
+									<a href="{{$.Link}}/{{.ID}}/users" data-tooltip-content="Host Users">{{svg "octicon-people"}}</a>
+								</div>
+							</td>
+						</tr>
+					{{else}}
+						<tr><td class="tw-text-center" colspan="10">{{ctx.Locale.Tr "repo.pulls.no_results"}}</td></tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+
+		{{template "base/paginate" .}}
+	</div>
+{{template "admin/layout_footer" .}}

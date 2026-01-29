@@ -1,0 +1,15 @@
+{{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin config")}}
+	<div class="admin-setting-content">
+		<h4 class="ui top attached header">
+			Statistics
+		</h4>
+		<div class="ui attached table segment">
+			<dl class="admin-dl-horizontal">
+				<dt>Host Count</dt>
+				<dd>{{.HostsTotal}}</dd>
+				<dt>User Count</dt>
+				<dd>{{.UsersTotal}}</dd>
+			</dl>
+		</div>
+	</div>
+{{template "admin/layout_footer" .}}
