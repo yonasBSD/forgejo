@@ -11,5 +11,28 @@
 				<dd>{{.UsersTotal}}</dd>
 			</dl>
 		</div>
+		<h4 class="ui top attached header">
+			Configuration
+		</h4>
+		<div class="ui attached table segment">
+			<dl class="admin-dl-horizontal">
+				<dt>Enabled</dt>
+				<dd>{{if .FederationEnabled}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
+				<dt>Share User Statistics</dt>
+				<dd>{{if .FederationShareUserStatistics}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
+				<dt>Max Size</dt>
+				<dd>{{.FederationMaxSize}} MiB</dd>
+				<dt>Signature Algorithms</dt>
+				<dd>{{.FederationSignatureAlgorithms}}</dd>
+				<dt>Digest Algorithm</dt>
+				<dd>{{.FederationDigestAlgorithm}}</dd>
+				<dt>Get Headers</dt>
+				<dd>{{.FederationGetHeaders}}</dd>
+				<dt>Post Headers</dt>
+				<dd>{{.FederationPostHeaders}}</dd>
+				<dt>Signature Enforced</dt>
+				<dd>{{if .FederationSignatureEnforced}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
+			</dl>
+		</div>
 	</div>
 {{template "admin/layout_footer" .}}

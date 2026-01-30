@@ -9,6 +9,7 @@ import (
 	"forgejo.org/models/forgefed"
 	users_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
+	"forgejo.org/modules/setting"
 	"forgejo.org/services/context"
 )
 
@@ -31,6 +32,15 @@ func FederationSummary(ctx *context.Context) {
 
 	ctx.Data["HostsTotal"] = hosts_total
 	ctx.Data["UsersTotal"] = users_total
+
+	ctx.Data["FederationEnabled"] = setting.Federation.Enabled
+	ctx.Data["FederationShareUserStatistics"] = setting.Federation.ShareUserStatistics
+	ctx.Data["FederationMaxSize"] = setting.Federation.MaxSize / 1024 / 1024 // in MiB
+	ctx.Data["FederationSignatureAlgorithms"] = setting.Federation.SignatureAlgorithms
+	ctx.Data["FederationDigestAlgorithm"] = setting.Federation.DigestAlgorithm
+	ctx.Data["FederationGetHeaders"] = setting.Federation.GetHeaders
+	ctx.Data["FederationPostHeaders"] = setting.Federation.PostHeaders
+	ctx.Data["FederationSignatureEnforced"] = setting.Federation.SignatureEnforced
 
 	ctx.Data["Title"] = "Federation summary"
 	ctx.Data["PageIsAdminFederationSummary"] = true
