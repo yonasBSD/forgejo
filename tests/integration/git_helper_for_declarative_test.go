@@ -85,8 +85,6 @@ func onApplicationRun[T testing.TB](t T, callback func(T, *url.URL)) {
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(setting.CustomConf, rootPathRe.ReplaceAll(conf, []byte("[repository]\nROOT = "+setting.RepoRootPath)), 0o600))
 
-	os.Setenv("GITEA_CONF", setting.CustomConf)
-
 	defer func() {
 		require.NoError(t, os.WriteFile(setting.CustomConf, conf, 0o600))
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
