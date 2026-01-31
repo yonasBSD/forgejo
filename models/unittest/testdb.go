@@ -47,10 +47,20 @@ func fatalTestError(fmtStr string, args ...any) {
 
 // InitSettings initializes config provider and load common settings for tests
 func InitSettings() {
-	if setting.CustomConf == "" {
-		setting.CustomConf = filepath.Join(setting.CustomPath, "conf/app-unittest-tmp.ini")
-		_ = os.Remove(setting.CustomConf)
+	InitCustomSettings("unittest.ini")
+}
+
+func InitCustomSettings(confFile string) {
+	root := base.SetupGiteaRoot()
+	if root == "" {
+		fatalTestError("Environment variable $GITEA_ROOT not set")
 	}
+	setting.AppPath = filepath.Join(root, "gitea")
+	if setting.CustomConf == "" {
+		setting.CustomConf = filepath.Join(root, "tests", confFile)
+	}
+	os.Setenv("GITEA_CONF", setting.CustomConf)
+
 	setting.InitCfgProvider(setting.CustomConf)
 	setting.LoadCommonSettings()
 
@@ -72,9 +82,10 @@ func InitSettings() {
 
 // TestOptions represents test options
 type TestOptions struct {
-	FixtureFiles []string
-	SetUp        func() error // SetUp will be executed before all tests in this package
-	TearDown     func() error // TearDown will be executed after all tests in this package
+	FixtureFiles    []string
+	SetUp           func() error // SetUp will be executed before all tests in this package
+	TearDown        func() error // TearDown will be executed after all tests in this package
+	IniFileOverride string
 }
 
 // MainTest a reusable TestMain(..) function for unit tests that need to use a
@@ -97,7 +108,11 @@ func MainTest(m *testing.M, testOpts ...*TestOptions) {
 
 	giteaRoot = searchDir
 	setting.CustomPath = filepath.Join(giteaRoot, "custom")
-	InitSettings()
+	if len(testOpts) == 0 || testOpts[0].IniFileOverride == "" {
+		InitSettings()
+	} else {
+		InitCustomSettings(testOpts[0].IniFileOverride)
+	}
 
 	fixturesDir = filepath.Join(giteaRoot, "models", "fixtures")
 	var opts FixturesOptions
