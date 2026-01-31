@@ -1,17 +1,16 @@
 {{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin user")}}
 	<div class="admin-setting-content">
 		<h4 class="ui top attached header">
-			{{if .Host}}[{{.Host.HostFqdn}}]{{end}}
-			Manage federation users ({{ctx.Locale.Tr "admin.total" .TotalCount}})
+			{{ctx.Locale.Tr "federation.users.manage_panel"}} ({{ctx.Locale.Tr "admin.total" .TotalCount}}) {{if .Host}} @ {{.Host.HostFqdn}}:{{.Host.HostPort}}{{end}}
 		</h4>
 		<div class="ui attached table segment">
 			<table class="ui very basic striped table unstackable">
 				<thead>
 					<tr>
-						<th>ID</th>
-						<th>UserID</th>
-						<th>ExternalID</th>
-						<th>InboxPath</th>
+						<th>{{ctx.Locale.Tr "federation.user.id"}}</th>
+						<th>{{ctx.Locale.Tr "federation.user.user_id"}}</th>
+						<th>{{ctx.Locale.Tr "federation.user.external_id"}}</th>
+						<th>{{ctx.Locale.Tr "federation.user.inbox_path"}}</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -24,7 +23,7 @@
 							<td>{{.InboxPath}}</td>
 							<td>
 								<div class="tw-flex tw-gap-2">
-									<a href="{{AppUrl}}/admin/users/{{.UserID}}" data-tooltip-content="Local User Details">{{svg "octicon-person"}}</a>
+									<a href="{{AppUrl}}/admin/users/{{.UserID}}" data-tooltip-content="{{ctx.Locale.Tr "federation.users.show_local_user"}}">{{svg "octicon-person"}}</a>
 								</div>
 							</td>
 						</tr>

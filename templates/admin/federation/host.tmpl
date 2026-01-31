@@ -2,35 +2,35 @@
 	<div class="admin-setting-content">
 		{{if .Host}}
 		<h4 class="ui top attached header">
-			Host Details
+			{{ctx.Locale.Tr "federation.hosts.details_panel"}}
 		</h4>
 		<div class="ui attached table segment">
 			<dl class="admin-dl-horizontal">
-				<dt>ID</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.id"}}</dt>
 				<dd>{{.Host.ID}}</dd>
-				<dt>FQDN</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.fqdn"}}</dt>
 				<dd>{{.Host.HostFqdn}}</dd>
-				<dt>Port</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.port"}}</dt>
 				<dd>{{.Host.HostPort}}</dd>
-				<dt>Schema</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.schema"}}</dt>
 				<dd>{{.Host.HostSchema}}</dd>
-				<dt>Software</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.software_name"}}</dt>
 				<dd>{{.Host.NodeInfo.SoftwareName}}</dd>
-				<dt>Created</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.created"}}</dt>
 				<dd>{{DateUtils.AbsoluteShort .Host.Created}}</dd>
-				<dt>Updated</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.updated"}}</dt>
 				<dd>{{DateUtils.AbsoluteShort .Host.Updated}}</dd>
-				<dt>Latest Activity</dt>
+				<dt>{{ctx.Locale.Tr "federation.host.latest_activity"}}</dt>
 				<dd>{{DateUtils.FullTime .Host.LatestActivity}}</dd>
 			</dl>
 		</div>
 		{{end}}
 		<h4 class="ui top attached header">
-			Statistics
+			{{ctx.Locale.Tr "federation.hosts.stats_panel"}}
 		</h4>
 		<div class="ui attached table segment">
 			<dl class="admin-dl-horizontal">
-				<dt>User Count</dt>
+				<dt>{{ctx.Locale.Tr "federation.stats.user_count"}}</dt>
 				<dd>{{.UsersTotal}}</dd>
 			</dl>
 		</div>
