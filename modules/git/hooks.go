@@ -6,10 +6,8 @@ package git
 import (
 	"fmt"
 	"os"
-	// "path"
 	"path/filepath"
 
-	// "forgejo.org/modules/git"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 )
