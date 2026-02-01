@@ -151,6 +151,8 @@ func recordMigrationComplete(x *xorm.Engine, migration *Migration) error {
 func Migrate(x *xorm.Engine, freshDB bool) error {
 	resolveMigrations()
 
+	setting.LoadSettings()
+
 	// Set a new clean the default mapper to GonicMapper as that is the default for .
 	x.SetMapper(names.GonicMapper{})
 	if err := x.Sync(new(ForgejoMigration)); err != nil {

@@ -230,7 +230,7 @@ func CreateRepositoryDirectly(ctx context.Context, doer, u *user_model.User, opt
 		OriginalServiceType:             opts.GitServiceType,
 		IsPrivate:                       opts.IsPrivate,
 		IsFsckEnabled:                   !opts.IsMirror,
-		IsCodeIndexerEnabled:            true,
+		IsCodeIndexerEnabled:            setting.Indexer.RepoIndexerOptIn,
 		IsTemplate:                      opts.IsTemplate,
 		CloseIssuesViaCommitInAnyBranch: setting.Repository.DefaultCloseIssuesViaCommitsInAnyBranch,
 		Status:                          opts.Status,

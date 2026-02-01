@@ -3,7 +3,10 @@
 
 package forgejo_migrations //nolint:revive
 
-import "xorm.io/xorm"
+import (
+	"forgejo.org/modules/setting"
+	"xorm.io/xorm"
+)
 
 func AddIsCodeIndexerEnabledToRepository(x *xorm.Engine) error {
 	type Repository struct {
@@ -11,7 +14,13 @@ func AddIsCodeIndexerEnabledToRepository(x *xorm.Engine) error {
 		IsCodeIndexerEnabled bool  `xorm:"NOT NULL DEFAULT true"`
 	}
 
-	return x.Sync(&Repository{})
+	err := x.Sync(&Repository{})
+	if err != nil {
+		return err
+	}
+
+	_, err = x.Exec("UPDATE `repository` SET is_code_indexer_enabled = ?", setting.Indexer.RepoIndexerOptIn)
+	return err
 }
 
 func init() {

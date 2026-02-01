@@ -24,6 +24,7 @@ var Indexer = struct {
 	StartupTimeout   time.Duration
 
 	RepoIndexerEnabled     bool
+	RepoIndexerOptIn       bool
 	RepoIndexerRepoTypes   []string
 	RepoIndexerEnableFuzzy bool
 	RepoType               string
@@ -42,6 +43,7 @@ var Indexer = struct {
 	IssueIndexerName: "gitea_issues",
 
 	RepoIndexerEnabled:     false,
+	RepoIndexerOptIn:       true,
 	RepoIndexerRepoTypes:   []string{"sources", "forks", "mirrors", "templates"},
 	RepoIndexerEnableFuzzy: false,
 	RepoType:               "bleve",
@@ -88,6 +90,7 @@ func loadIndexerFrom(rootCfg ConfigProvider) {
 	Indexer.IssueIndexerName = sec.Key("ISSUE_INDEXER_NAME").MustString(Indexer.IssueIndexerName)
 
 	Indexer.RepoIndexerEnabled = sec.Key("REPO_INDEXER_ENABLED").MustBool(false)
+	Indexer.RepoIndexerOptIn = sec.Key("REPO_INDEXER_OPT_IN").MustBool(true)
 	Indexer.RepoIndexerRepoTypes = strings.Split(sec.Key("REPO_INDEXER_REPO_TYPES").MustString("sources,forks,mirrors,templates"), ",")
 	Indexer.RepoIndexerEnableFuzzy = sec.Key("REPO_INDEXER_FUZZY_ENABLED").MustBool(false)
 	Indexer.RepoType = sec.Key("REPO_INDEXER_TYPE").MustString("bleve")

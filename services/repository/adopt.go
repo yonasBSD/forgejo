@@ -47,7 +47,7 @@ func AdoptRepository(ctx context.Context, doer, u *user_model.User, opts CreateR
 		OriginalServiceType:             opts.GitServiceType,
 		IsPrivate:                       opts.IsPrivate,
 		IsFsckEnabled:                   !opts.IsMirror,
-		IsCodeIndexerEnabled:            true,
+		IsCodeIndexerEnabled:            setting.Indexer.RepoIndexerOptIn,
 		CloseIssuesViaCommitInAnyBranch: setting.Repository.DefaultCloseIssuesViaCommitsInAnyBranch,
 		Status:                          opts.Status,
 		IsEmpty:                         !opts.AutoInit,
