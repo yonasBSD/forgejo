@@ -5,6 +5,7 @@ package forgejo_migrations
 
 import (
 	"forgejo.org/modules/setting"
+
 	"xorm.io/xorm"
 )
 
