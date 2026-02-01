@@ -1,39 +1,10 @@
 {{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin user")}}
 	<div class="admin-setting-content">
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "federation.users.manage_panel"}} ({{ctx.Locale.Tr "admin.total" .TotalCount}}) {{if .Host}} @ {{.Host.HostFqdn}}:{{.Host.HostPort}}{{end}}
+			{{ctx.Locale.Tr "federation.users.manage_panel"}} ({{ctx.Locale.Tr "admin.total" .TotalCount}})
 		</h4>
 		<div class="ui attached table segment">
-			<table class="ui very basic striped table unstackable">
-				<thead>
-					<tr>
-						<th>{{ctx.Locale.Tr "federation.user.id"}}</th>
-						<th>{{ctx.Locale.Tr "federation.user.user_id"}}</th>
-						<th>{{ctx.Locale.Tr "federation.user.external_id"}}</th>
-						<th>{{ctx.Locale.Tr "federation.user.inbox_path"}}</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{{range .Users}}
-						<tr>
-							<td>{{.ID}}</td>
-							<td>{{.UserID}}</td>
-							<td>{{.ExternalID}}</td>
-							<td>{{.InboxPath}}</td>
-							<td>
-								<div class="tw-flex tw-gap-2">
-									<a href="{{AppUrl}}admin/users/{{.UserID}}" data-tooltip-content="{{ctx.Locale.Tr "federation.users.show_local_user"}}">{{svg "octicon-person"}}</a>
-								</div>
-							</td>
-						</tr>
-					{{else}}
-						<tr><td class="tw-text-center" colspan="10">{{ctx.Locale.Tr "repo.pulls.no_results"}}</td></tr>
-					{{end}}
-				</tbody>
-			</table>
+			{{template "admin/federation/user_list" .}}
 		</div>
-
-		{{template "base/paginate" .}}
 	</div>
 {{template "admin/layout_footer" .}}

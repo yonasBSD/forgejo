@@ -23,11 +23,6 @@ func CountFederatedUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-func CountFederatedUsersByHostID(ctx context.Context, federationHostID int64) (int64, error) {
-	count, err := db.GetEngine(ctx).Where("federation_host_id=?", federationHostID).Join("INNER", "user", "user.id = user_id").Count(&FederatedUser{})
-	return count, err
-}
-
 func CreateFederatedUser(ctx context.Context, user *User, federatedUser *FederatedUser) error {
 	if res, err := validation.IsValid(user); !res {
 		return err

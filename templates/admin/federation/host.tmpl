@@ -26,13 +26,13 @@
 		</div>
 		{{end}}
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "federation.hosts.stats_panel"}}
+			{{ctx.Locale.Tr "federation.hosts.users_panel"}}
+			<div class="ui right">
+				{{.UsersTotal}}
+			</div>
 		</h4>
-		<div class="ui attached table segment">
-			<dl class="admin-dl-horizontal">
-				<dt>{{ctx.Locale.Tr "federation.stats.user_count"}}</dt>
-				<dd>{{.UsersTotal}}</dd>
-			</dl>
+		<div class="ui attached segment">
+			{{template "admin/federation/user_list" .}}
 		</div>
 	</div>
 {{template "admin/layout_footer" .}}

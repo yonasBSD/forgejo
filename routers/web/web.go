@@ -829,14 +829,9 @@ func registerRoutes(m *web.Route) {
 		if setting.Federation.Enabled {
 			m.Group("/federation", func() {
 				m.Get("", admin.FederationSummary)
-
 				m.Get("/hosts", admin.FederationHosts)
 				m.Get("/users", admin.FederationUsers)
-
-				m.Group("/hosts/{id}", func() {
-					m.Get("", admin.FederationHost)
-					m.Get("/users", admin.FederationUsers)
-				})
+				m.Get("/hosts/{id}", admin.FederationHost)
 			})
 		}
 	}, adminReq, ctxDataSet("EnableOAuth2", setting.OAuth2.Enabled, "EnablePackages", setting.Packages.Enabled, "EnableModeration", setting.Moderation.Enabled))

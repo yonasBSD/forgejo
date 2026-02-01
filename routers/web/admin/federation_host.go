@@ -25,14 +25,15 @@ func FederationHost(ctx *context.Context) {
 		return
 	}
 
-	users_total, err := users_model.CountFederatedUsersByHostID(ctx, federationHostID)
+	users, err := users_model.FindFederatedUsersByHostID(ctx, federationHostID)
 	if err != nil {
-		ctx.ServerError("CountFederatedUsersByHostID", err)
+		ctx.ServerError("FindFederatedUsersByHostID", err)
 		return
 	}
 
 	ctx.Data["Host"] = host
-	ctx.Data["UsersTotal"] = users_total
+	ctx.Data["Users"] = users
+	ctx.Data["UsersTotal"] = len(users)
 	ctx.Data["Title"] = host.HostFqdn
 	ctx.Data["PageIsAdminFederationHosts"] = true
 

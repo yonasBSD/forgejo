@@ -42,7 +42,6 @@
 							<td>
 								<div class="tw-flex tw-gap-2">
 									<a href="{{$.Link}}/{{.ID}}" data-tooltip-content="{{ctx.Locale.Tr "federation.hosts.show_details"}}">{{svg "octicon-server"}}</a>
-									<a href="{{$.Link}}/{{.ID}}/users" data-tooltip-content="{{ctx.Locale.Tr "federation.hosts.show_users"}}">{{svg "octicon-people"}}</a>
 								</div>
 							</td>
 						</tr>
@@ -52,7 +51,5 @@
 				</tbody>
 			</table>
 		</div>
-
-		{{template "base/paginate" .}}
 	</div>
 {{template "admin/layout_footer" .}}
