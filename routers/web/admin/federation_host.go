@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"forgejo.org/models/forgefed"
-	users_model "forgejo.org/models/user"
+	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
 	"forgejo.org/services/context"
 )
@@ -25,7 +25,7 @@ func FederationHost(ctx *context.Context) {
 		return
 	}
 
-	users, err := users_model.FindFederatedUsersByHostID(ctx, federationHostID)
+	users, err := user_model.FindFederatedUsersByHostID(ctx, federationHostID)
 	if err != nil {
 		ctx.ServerError("FindFederatedUsersByHostID", err)
 		return

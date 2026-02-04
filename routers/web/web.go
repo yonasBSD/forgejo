@@ -828,7 +828,6 @@ func registerRoutes(m *web.Route) {
 
 		if setting.Federation.Enabled {
 			m.Group("/federation", func() {
-				m.Get("", admin.FederationSummary)
 				m.Get("/hosts", admin.FederationHosts)
 				m.Get("/users", admin.FederationUsers)
 				m.Get("/hosts/{id}", admin.FederationHost)

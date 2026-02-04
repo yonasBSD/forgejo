@@ -6,7 +6,7 @@ package admin
 import (
 	"net/http"
 
-	users_model "forgejo.org/models/user"
+	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
 	"forgejo.org/services/context"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 func FederationUsers(ctx *context.Context) {
-	users, err := users_model.FindFederatedUsers(ctx)
+	users, err := user_model.FindFederatedUsers(ctx)
 	if err != nil {
 		ctx.ServerError("GetFederatedUsers", err)
 		return

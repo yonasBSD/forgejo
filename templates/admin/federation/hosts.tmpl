@@ -1,29 +1,29 @@
 {{template "admin/layout_head" (dict "ctxData" . "pageClass" "admin user")}}
 	<div class="admin-setting-content">
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "federation.hosts.manage_panel"}} ({{ctx.Locale.Tr "admin.total" .TotalCount}})
+			{{ctx.Locale.Tr "admin.federation.hosts.manage_panel"}} ({{ctx.Locale.Tr "admin.total" .TotalCount}})
 		</h4>
 		<div class="ui attached table segment">
 			<table class="ui very basic striped table unstackable">
 				<thead>
 					<tr>
 						<th data-sortt-asc="id_asc" data-sortt-desc="id_desc">
-							{{ctx.Locale.Tr "federation.host.id"}}
+							{{ctx.Locale.Tr "admin.federation.host.id"}}
 							{{SortArrow "id_asc" "id_desc" .SortType true}}
 						</th>
 						<th data-sortt-asc="fqdn_asc" data-sortt-desc="fqdn_desc">
-							{{ctx.Locale.Tr "federation.host.fqdn"}}
+							{{ctx.Locale.Tr "admin.federation.host.fqdn"}}
 							{{SortArrow "fqdn_asc" "fqdn_desc" .SortType false}}
 						</th>
-						<th>{{ctx.Locale.Tr "federation.host.schema"}}</th>
-						<th>{{ctx.Locale.Tr "federation.host.port"}}</th>
-						<th>{{ctx.Locale.Tr "federation.host.software_name"}}</th>
+						<th>{{ctx.Locale.Tr "admin.federation.host.schema"}}</th>
+						<th>{{ctx.Locale.Tr "admin.federation.host.port"}}</th>
+						<th>{{ctx.Locale.Tr "admin.federation.host.software_name"}}</th>
 						<th data-sortt-asc="created_asc" data-sortt-desc="created_desc">
-							{{ctx.Locale.Tr "federation.host.created"}}
+							{{ctx.Locale.Tr "admin.federation.host.created"}}
 							{{SortArrow "created_asc" "created_desc" .SortType true}}
 						</th>
 						<th data-sortt-asc="activity_asc" data-sortt-desc="activity_desc">
-							{{ctx.Locale.Tr "federation.host.latest_activity"}}
+							{{ctx.Locale.Tr "admin.federation.host.latest_activity"}}
 							{{SortArrow "activity_asc" "activity_desc" .SortType true}}
 						</th>
 						<th></th>
@@ -41,7 +41,7 @@
 							<td>{{DateUtils.FullTime .LatestActivity}}</td>
 							<td>
 								<div class="tw-flex tw-gap-2">
-									<a href="{{$.Link}}/{{.ID}}" data-tooltip-content="{{ctx.Locale.Tr "federation.hosts.show_details"}}">{{svg "octicon-server"}}</a>
+									<a href="{{$.Link}}/{{.ID}}" data-tooltip-content="{{ctx.Locale.Tr "admin.federation.hosts.show_details"}}">{{svg "octicon-server"}}</a>
 								</div>
 							</td>
 						</tr>

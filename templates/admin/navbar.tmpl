@@ -78,17 +78,14 @@
 		</details>
 		{{end}}
 		{{if .EnableFederation}}
-		<details class="item toggleable-item" {{if or .PageIsAdminFederationSummary .PageIsAdminFederationHosts .PageIsAdminFederationUsers}}open{{end}}>
-			<summary>{{ctx.Locale.Tr "federation.federation"}}</summary>
+		<details class="item toggleable-item" {{if or .PageIsAdminFederationHosts .PageIsAdminFederationUsers}}open{{end}}>
+			<summary>{{ctx.Locale.Tr "admin.federation.federation"}}</summary>
 			<div class="menu">
-				<a class="{{if .PageIsAdminFederationSummary}}active {{end}}item" href="{{AppSubUrl}}/admin/federation">
-					{{ctx.Locale.Tr "federation.summary"}}
-				</a>
 				<a class="{{if .PageIsAdminFederationHosts}}active {{end}}item" href="{{AppSubUrl}}/admin/federation/hosts">
-					{{ctx.Locale.Tr "federation.hosts"}}
+					{{ctx.Locale.Tr "admin.federation.hosts"}}
 				</a>
 				<a class="{{if .PageIsAdminFederationUsers}}active {{end}}item" href="{{AppSubUrl}}/admin/federation/users">
-					{{ctx.Locale.Tr "federation.users"}}
+					{{ctx.Locale.Tr "admin.federation.users"}}
 				</a>
 			</div>
 		</details>

@@ -2,36 +2,36 @@
 	<div class="admin-setting-content">
 		{{if .Host}}
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "federation.hosts.details_panel"}}
+			{{ctx.Locale.Tr "admin.federation.hosts.details_panel"}}
 		</h4>
 		<div class="ui attached table segment">
 			<dl class="admin-dl-horizontal">
-				<dt>{{ctx.Locale.Tr "federation.host.id"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.id"}}</dt>
 				<dd>{{.Host.ID}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.fqdn"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.fqdn"}}</dt>
 				<dd>{{.Host.HostFqdn}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.port"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.port"}}</dt>
 				<dd>{{.Host.HostPort}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.schema"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.schema"}}</dt>
 				<dd>{{.Host.HostSchema}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.software_name"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.software_name"}}</dt>
 				<dd>{{.Host.NodeInfo.SoftwareName}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.created"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.created"}}</dt>
 				<dd>{{DateUtils.AbsoluteShort .Host.Created}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.updated"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.updated"}}</dt>
 				<dd>{{DateUtils.AbsoluteShort .Host.Updated}}</dd>
-				<dt>{{ctx.Locale.Tr "federation.host.latest_activity"}}</dt>
+				<dt>{{ctx.Locale.Tr "admin.federation.host.latest_activity"}}</dt>
 				<dd>{{DateUtils.FullTime .Host.LatestActivity}}</dd>
 			</dl>
 		</div>
 		{{end}}
 		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "federation.hosts.users_panel"}}
+			{{ctx.Locale.Tr "admin.federation.users.manage_panel"}}
 			<div class="ui right">
 				{{.UsersTotal}}
 			</div>
 		</h4>
-		<div class="ui attached segment">
+		<div class="ui attached table segment">
 			{{template "admin/federation/user_list" .}}
 		</div>
 	</div>
