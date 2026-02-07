@@ -81,16 +81,25 @@ func loadSecret(sec ConfigSection, uriKey, verbatimKey string) string {
 	if uri == "" {
 		return verbatim
 	}
+	verbatim, err := loadSecretFromURI(uri)
+	if err == nil {
+		return verbatim
+	}
+	log.Fatal("%s: %w", uriKey, err)
+	// unreached
+	return ""
+}
 
+func loadSecretFromURI(uri string) (string, error) {
 	tempURI, err := url.Parse(uri)
 	if err != nil {
-		log.Fatal("Failed to parse %s (%s): %v", uriKey, uri, err)
+		return "", fmt.Errorf("Failed to parse %s: %v", uri, err)
 	}
 	switch tempURI.Scheme {
 	case "file":
 		buf, err := os.ReadFile(tempURI.RequestURI())
 		if err != nil {
-			log.Fatal("Failed to read %s (%s): %v", uriKey, tempURI.RequestURI(), err)
+			return "", fmt.Errorf("Failed to read %s: %v", tempURI.RequestURI(), err)
 		}
 		val := strings.TrimSpace(string(buf))
 		if val == "" {
@@ -98,14 +107,13 @@ func loadSecret(sec ConfigSection, uriKey, verbatimKey string) string {
 			// For example: if INTERNAL_TOKEN_URI=file:///empty-file,
 			// Then if the token is re-generated during installation and saved to INTERNAL_TOKEN
 			// Then INTERNAL_TOKEN and INTERNAL_TOKEN_URI both exist, that's a fatal error (they shouldn't)
-			log.Fatal("Failed to read %s (%s): the file is empty", uriKey, tempURI.RequestURI())
+			return "", fmt.Errorf("Failed to read %s: the file is empty", tempURI.RequestURI())
 		}
-		return val
+		return val, nil
 
 	// only file URIs are allowed
 	default:
-		log.Fatal("Unsupported URI-Scheme %q (%q = %q)", tempURI.Scheme, uriKey, uri)
-		return ""
+		return "", fmt.Errorf("Unsupported URI-Scheme %q in %q", tempURI.Scheme, uri)
 	}
 }
 
