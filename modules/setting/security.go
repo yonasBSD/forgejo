@@ -97,9 +97,13 @@ func loadSecretFromURI(uri string) (string, error) {
 	}
 	switch tempURI.Scheme {
 	case "file":
-		buf, err := os.ReadFile(tempURI.RequestURI())
+		path := tempURI.RequestURI()
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(AppDataPath, path)
+		}
+		buf, err := os.ReadFile(path)
 		if err != nil {
-			return "", fmt.Errorf("Failed to read %s: %v", tempURI.RequestURI(), err)
+			return "", fmt.Errorf("Failed to read %s: %v", path, err)
 		}
 		val := strings.TrimSpace(string(buf))
 		if val == "" {
@@ -107,7 +111,7 @@ func loadSecretFromURI(uri string) (string, error) {
 			// For example: if INTERNAL_TOKEN_URI=file:///empty-file,
 			// Then if the token is re-generated during installation and saved to INTERNAL_TOKEN
 			// Then INTERNAL_TOKEN and INTERNAL_TOKEN_URI both exist, that's a fatal error (they shouldn't)
-			return "", fmt.Errorf("Failed to read %s: the file is empty", tempURI.RequestURI())
+			return "", fmt.Errorf("Failed to read %s: the file is empty", path)
 		}
 		return val, nil
 
