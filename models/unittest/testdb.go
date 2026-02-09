@@ -50,14 +50,23 @@ func InitSettings() {
 	InitCustomSettings("unittest.ini")
 }
 
-func InitCustomSettings(confFile string) {
+func InitCustomSettings(confFileName string) {
 	root := base.SetupGiteaRoot()
 	if root == "" {
 		fatalTestError("Environment variable $GITEA_ROOT not set")
 	}
 	setting.AppPath = filepath.Join(root, "gitea")
 	if setting.CustomConf == "" {
-		setting.CustomConf = filepath.Join(root, "tests", confFile)
+		templateFile := confFileName + ".tmpl"
+		content, err := os.ReadFile(filepath.Join(root, "tests", templateFile))
+		if err != nil {
+			log.Fatalf("couldn't read config template: %s", templateFile)
+		}
+		err = os.WriteFile(filepath.Join(root, "tests", confFileName), content, 0o644)
+		if err != nil {
+			log.Fatalf("couldn't write config: %s", confFileName)
+		}
+		setting.CustomConf = filepath.Join(root, "tests", confFileName)
 	}
 	os.Setenv("GITEA_CONF", setting.CustomConf)
 
