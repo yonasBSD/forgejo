@@ -412,7 +412,7 @@ func doMergeAndPush(ctx context.Context, pr *issues_model.PullRequest, doer *use
 			err.GenerateMessage()
 			return "", err
 		}
-		return "", fmt.Errorf("git push: %s", mergeCtx.outbuf.String()+mergeCtx.errbuf.String())
+		return "", fmt.Errorf("git push: %s", mergeCtx.errbuf.String())
 	}
 	mergeCtx.outbuf.Reset()
 	mergeCtx.errbuf.Reset()
