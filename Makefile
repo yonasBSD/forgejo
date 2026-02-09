@@ -485,10 +485,11 @@ RUN_DEADCODE = $(GO) run $(DEADCODE_PACKAGE) -generated=false -f='{{println .Pat
 
 .PHONY: lint-go
 lint-go:
-	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
+	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS) \
+	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 	$(RUN_DEADCODE) > .cur-deadcode-out
 	@$(DIFF) .deadcode-out .cur-deadcode-out \
-	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
+	|| (code=$$?; echo "You added dead code, please evaluate and remove or add usage"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
