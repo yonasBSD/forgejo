@@ -72,10 +72,12 @@ NO_REPLY_ADDRESS                  = noreply.example.org
 ENABLE_NOTIFY_MAIL                = true
 
 [picture]
-DISABLE_GRAVATAR              = false
-ENABLE_FEDERATED_AVATAR       = false
-AVATAR_UPLOAD_PATH            = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/avatars
-REPOSITORY_AVATAR_UPLOAD_PATH = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/repo-avatars
+DISABLE_GRAVATAR                     = false
+ENABLE_FEDERATED_AVATAR              = false
+AVATAR_UPLOAD_PATH                   = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/avatars
+RESIZED_AVATAR_CACHE_PATH            = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/resized-avatars
+REPOSITORY_AVATAR_UPLOAD_PATH        = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/repo-avatars
+RESIZED_REPOSITORY_AVATAR_CACHE_PATH = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/data/resized-repo-avatars
 
 [session]
 PROVIDER        = file
