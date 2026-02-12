@@ -20,33 +20,20 @@ import (
 // https://datatracker.ietf.org/doc/html/draft-ietf-appsawg-webfinger-14#section-4.4
 
 // WebfingerUserActor returns a user entry from the database.
-func WebfingerUserActor(ctx *context.Context, appURL *url.URL, userActor webfinger.WebfingerUserActor) (*user_model.User, error) {
+func WebfingerUserActor(ctx *context.Context, appURL *url.URL, userActor *webfinger.UserActor) (*user_model.User, error) {
+	if userActor == nil {
+		return nil, fmt.Errorf("nil WebfingerUserActor")
+	}
+
 	user, host := userActor.User, userActor.Host
 	if host != appURL.Host {
-		ctx.Error(http.StatusBadRequest)
 		return nil, fmt.Errorf("invalid host, have: %v, expected: %v", host, appURL.Host)
 	}
 
 	// Instance actor
-	if user == "ghost" {
-		aliases := []string{
-			appURL.String() + "api/v1/activitypub/actor",
-		}
-
-		links := []*webfinger.Link{
-			{
-				Rel:  "self",
-				Type: "application/activity+json",
-				Href: appURL.String() + "api/v1/activitypub/actor",
-			},
-		}
-
-		ctx.Resp.Header().Add("Access-Control-Allow-Origin", "*")
-		ctx.JSON(http.StatusOK, &webfinger.JRD{
-			Subject: fmt.Sprintf("acct:%s@%s", "ghost", appURL.Host),
-			Aliases: aliases,
-			Links:   links,
-		})
+	if userActor.IsGhost() {
+		jrd := userActor.JRD()
+		ctx.JSON(http.StatusOK, &jrd)
 		ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 
 		return nil, nil
@@ -56,52 +43,23 @@ func WebfingerUserActor(ctx *context.Context, appURL *url.URL, userActor webfing
 }
 
 // WebfingerRenderUserActor creates a JRD response for an user entry.
-func WebfingerRenderUserActor(ctx *context.Context, appURL *url.URL, u *user_model.User) {
-	if !user_model.IsUserVisibleToViewer(ctx, u, ctx.Doer) {
+func WebfingerRenderUserActor(ctx *context.Context, u *user_model.User) {
+	if u == nil || !user_model.IsUserVisibleToViewer(ctx, u, ctx.Doer) {
 		ctx.Error(http.StatusNotFound)
 		return
 	}
 
-	aliases := []string{
-		u.HTMLURL(),
-		appURL.String() + "api/v1/activitypub/user-id/" + fmt.Sprint(u.ID),
-	}
-	if !u.KeepEmailPrivate {
-		aliases = append(aliases, fmt.Sprintf("mailto:%s", u.Email))
-	}
-
-	links := []*webfinger.Link{
-		{
-			Rel:  "http://webfinger.net/rel/profile-page",
-			Type: "text/html",
-			Href: u.HTMLURL(),
-		},
-		{
-			Rel:  "http://webfinger.net/rel/avatar",
-			Href: u.AvatarLink(ctx),
-		},
-		{
-			Rel:  "self",
-			Type: "application/activity+json",
-			Href: appURL.String() + "api/v1/activitypub/user-id/" + fmt.Sprint(u.ID),
-		},
-		{
-			Rel:  "http://openid.net/specs/connect/1.0/issuer",
-			Href: strings.TrimSuffix(appURL.String(), "/"),
-		},
-	}
-
-	ctx.Resp.Header().Add("Access-Control-Allow-Origin", "*")
-	ctx.JSON(http.StatusOK, &webfinger.JRD{
-		Subject: fmt.Sprintf("acct:%s@%s", url.QueryEscape(u.Name), appURL.Host),
-		Aliases: aliases,
-		Links:   links,
-	})
+	jrd := webfinger.UserActorFromUser(ctx, u).JRD()
+	ctx.JSON(http.StatusOK, &jrd)
 	ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 }
 
 // WebfingerRepoActor returns a repository entry from the database.
-func WebfingerRepoActor(ctx *context.Context, appURL *url.URL, repoActor webfinger.WebfingerRepo) (*repo_model.Repository, error) {
+func WebfingerRepoActor(ctx *context.Context, appURL *url.URL, repoActor *webfinger.RepoActor) (*repo_model.Repository, error) {
+	if repoActor == nil {
+		return nil, fmt.Errorf("nil WebfingerRepoActor")
+	}
+
 	repo, owner, host := repoActor.Repo, repoActor.Owner, repoActor.Host
 	if host != appURL.Host {
 		ctx.Error(http.StatusBadRequest)
@@ -112,49 +70,14 @@ func WebfingerRepoActor(ctx *context.Context, appURL *url.URL, repoActor webfing
 }
 
 // WebfingerRenderRepoActor creates a JRD response for a repository entry.
-func WebfingerRenderRepoActor(ctx *context.Context, appURL *url.URL, r *repo_model.Repository) {
-	if !user_model.IsUserVisibleToViewer(ctx, r.Owner, ctx.Doer) {
+func WebfingerRenderRepoActor(ctx *context.Context, r *repo_model.Repository) {
+	if r == nil || !user_model.IsUserVisibleToViewer(ctx, r.Owner, ctx.Doer) {
 		ctx.Error(http.StatusNotFound)
 		return
 	}
-	aliases := []string{
-		appURL.String() + "api/v1/activitypub/repo-id/" + fmt.Sprint(r.ID),
-	}
-	if r.Owner != nil && !r.Owner.KeepEmailPrivate {
-		aliases = append(aliases, fmt.Sprintf("mailto:%s", r.Owner.Email))
-	}
 
-	links := []*webfinger.Link{
-		{
-			Rel:  "self",
-			Type: "application/activity+json",
-			Href: appURL.String() + "api/v1/activitypub/repo-id/" + fmt.Sprint(r.ID),
-		},
-		{
-			Rel:  "http://openid.net/specs/connect/1.0/issuer",
-			Href: strings.TrimSuffix(appURL.String(), "/"),
-		},
-	}
-	if r.Owner != nil {
-		links = append(links, []*webfinger.Link{
-			{
-				Rel:  "http://webfinger.net/rel/profile-page",
-				Type: "text/html",
-				Href: r.Owner.HTMLURL(),
-			},
-			{
-				Rel:  "http://webfinger.net/rel/avatar",
-				Href: r.Owner.AvatarLink(ctx),
-			},
-		}...)
-	}
-
-	ctx.Resp.Header().Add("Access-Control-Allow-Origin", "*")
-	ctx.JSON(http.StatusOK, &webfinger.JRD{
-		Subject: fmt.Sprintf("acct:%s@%s", url.QueryEscape(r.OwnerName), appURL.Host),
-		Aliases: aliases,
-		Links:   links,
-	})
+	jrd := webfinger.RepoActorFromRepo(ctx, r).JRD()
+	ctx.JSON(http.StatusOK, &jrd)
 	ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 }
 
@@ -174,10 +97,12 @@ func WebfingerQuery(ctx *context.Context) {
 
 	switch resource.Scheme {
 	case "acct":
-		if repo, err := webfinger.ParseWebfingerRepo(resource.String()); err == nil {
-			r, err = WebfingerRepoActor(ctx, appURL, repo)
-		} else if userActor, err := webfinger.ParseWebfingerUserActor(resource.String()); err == nil {
-			if u, err = WebfingerUserActor(ctx, appURL, userActor); u == nil && err == nil {
+		if repo, err := webfinger.ParseRepoActor(resource.String()); err == nil {
+			if r, err = WebfingerRepoActor(ctx, appURL, &repo); err != nil {
+				break
+			}
+		} else if userActor, err := webfinger.ParseUserActor(resource.String()); err == nil {
+			if u, err = WebfingerUserActor(ctx, appURL, &userActor); u == nil && err == nil {
 				return
 			}
 		} else {
@@ -248,10 +173,10 @@ func WebfingerQuery(ctx *context.Context) {
 		}
 		return
 	} else if u != nil {
-		WebfingerRenderUserActor(ctx, appURL, u)
+		WebfingerRenderUserActor(ctx, u)
 		return
 	} else if r != nil {
-		WebfingerRenderRepoActor(ctx, appURL, r)
+		WebfingerRenderRepoActor(ctx, r)
 		return
 	}
 

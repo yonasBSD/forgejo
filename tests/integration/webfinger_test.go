@@ -34,14 +34,14 @@ func TestWebfinger(t *testing.T) {
 		Type       string            `json:"type,omitempty"`
 		Href       string            `json:"href,omitempty"`
 		Titles     map[string]string `json:"titles,omitempty"`
-		Properties map[string]any    `json:"properties,omitempty"`
+		Properties map[string]string `json:"properties,omitempty"`
 	}
 
 	type webfingerJRD struct {
-		Subject    string           `json:"subject,omitempty"`
-		Aliases    []string         `json:"aliases,omitempty"`
-		Properties map[string]any   `json:"properties,omitempty"`
-		Links      []*webfingerLink `json:"links,omitempty"`
+		Subject    string            `json:"subject,omitempty"`
+		Aliases    []string          `json:"aliases,omitempty"`
+		Properties map[string]string `json:"properties,omitempty"`
+		Links      []*webfingerLink  `json:"links,omitempty"`
 	}
 
 	session := loginUser(t, "user1")
@@ -87,7 +87,7 @@ func TestWebfinger(t *testing.T) {
 	assert.ElementsMatch(t, []string{appURL.String() + "api/v1/activitypub/actor"}, instanceActor.Aliases)
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:%s@%s", user.LowerName, "unknown.host"))
-	MakeRequest(t, req, http.StatusBadRequest)
+	MakeRequest(t, req, http.StatusNotFound)
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:%s@%s", "user31", appURL.Host))
 	MakeRequest(t, req, http.StatusNotFound)

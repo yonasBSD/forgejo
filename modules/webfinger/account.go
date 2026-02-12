@@ -20,8 +20,8 @@ func runeToString(r rune) (string, error) {
 	return string(r), nil
 }
 
-// ParseWebfingerAccount parses a WebFinger `resource` component using the `acct` format for ActivityPub accounts.
-func ParseWebfingerAccount() gomme.Parser[string, string] {
+// ParseAcctPart parses a WebFinger `resource` component using the `acct` format for ActivityPub accounts.
+func ParseAcctPart() gomme.Parser[string, string] {
 	return func(input string) gomme.Result[string, string] {
 		return gomme.Preceded(
 			gomme.Optional(gomme.Token[string]("@")),
