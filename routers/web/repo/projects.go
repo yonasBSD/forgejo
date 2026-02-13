@@ -495,6 +495,11 @@ func UpdateIssueProjectColumn(ctx *context.Context) {
 		return
 	}
 
+	if issue.RepoID != ctx.Repo.Repository.ID {
+		ctx.NotFound("", nil)
+		return
+	}
+
 	if err := issue.LoadProject(ctx); err != nil {
 		ctx.ServerError("LoadProject", err)
 		return

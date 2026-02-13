@@ -1,5 +1,5 @@
 <div id="column-section"{{if .IsOOB}} hx-swap-oob="morph"{{end}} hx-indicator="this">
-	{{if and .Issue.Project .HasIssuesOrPullsWritePermission .ProjectColumns (gt (len .ProjectColumns) 1) (not .Repository.IsArchived)}}
+	{{if and .Issue.Project .HasIssuesOrPullsWritePermission .ProjectColumns (gt (len .ProjectColumns) 0) (not .Repository.IsArchived)}}
 		<div class="tw-mt-2">
 			<div class="ui selection dropdown tw-w-full" hx-target="#column-section" hx-swap="morph">
 				<input type="hidden" name="column_id" value="{{if .IssueProjectColumn}}{{.IssueProjectColumn.ID}}{{end}}">
