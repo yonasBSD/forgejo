@@ -1,0 +1,22 @@
+<div id="column-section"{{if .IsOOB}} hx-swap-oob="morph"{{end}} hx-indicator="this">
+	{{if and .Issue.Project .HasIssuesOrPullsWritePermission .ProjectColumns (gt (len .ProjectColumns) 1) (not .Repository.IsArchived)}}
+		<div class="tw-mt-2">
+			<div class="ui selection dropdown tw-w-full" hx-target="#column-section" hx-swap="morph">
+				<input type="hidden" name="column_id" value="{{if .IssueProjectColumn}}{{.IssueProjectColumn.ID}}{{end}}">
+				{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+				<div class="text">{{if .IssueProjectColumn}}{{.IssueProjectColumn.Title}}{{else}}{{ctx.Locale.Tr "repo.issues.new.no_column"}}{{end}}</div>
+				<div class="menu">
+					{{range .ProjectColumns}}
+						<div class="item{{if and $.IssueProjectColumn (eq $.IssueProjectColumn.ID .ID)}} active selected{{end}}" data-value="{{.ID}}" hx-post="{{$.RepoLink}}/issues/projects/column?issue_id={{$.Issue.ID}}&column_id={{.ID}}&htmx=true">
+							{{.Title}}
+						</div>
+					{{end}}
+				</div>
+			</div>
+		</div>
+	{{else if and .Issue.Project .IssueProjectColumn}}
+		<div class="tw-mt-2">
+			<span class="item muted">{{svg "octicon-columns" 16 "tw-mr-2"}}{{.IssueProjectColumn.Title}}</span>
+		</div>
+	{{end}}
+</div>

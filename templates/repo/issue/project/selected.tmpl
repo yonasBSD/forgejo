@@ -1,0 +1,10 @@
+<div hx-swap-oob="true" id="selected-project" class="ui select-project list">
+	<span class="no-select item {{if .Issue.Project}}tw-hidden{{end}}">{{ctx.Locale.Tr "repo.issues.new.no_project"}}</span>
+	<div class="selected">
+		{{if .Issue.Project}}
+			<a class="item muted sidebar-item-link" href="{{.Issue.Project.Link ctx}}">
+				{{svg .Issue.Project.IconName 16 "tw-mr-2"}}{{.Issue.Project.Title}}
+			</a>
+		{{end}}
+	</div>
+</div>

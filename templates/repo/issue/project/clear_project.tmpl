@@ -1,0 +1,3 @@
+<div hx-swap-oob="true" id="clear-project" class="{{if and .UseHTMX (or (and (not .OpenProjects) (not .ClosedProjects)) (not .Issue.Project))}}disabled {{end}}no-select item"{{if .UseHTMX}} hx-post="{{$.RepoLink}}/issues/projects?issue_ids={{.Issue.ID}}&htmx=true"{{end}}>
+	{{ctx.Locale.Tr "repo.issues.new.clear_project"}}
+</div>

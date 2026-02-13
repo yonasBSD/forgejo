@@ -15,6 +15,8 @@
 	<div class="divider"></div>
 
 	{{template "repo/issue/view_content/sidebar/projects" .}}
+
+	{{template "repo/issue/view_content/sidebar/project_column" .}}
 	<div class="divider"></div>
 
 	{{template "repo/issue/view_content/sidebar/assignees" dict "isExistingIssue" true "." .}}

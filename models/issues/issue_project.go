@@ -49,6 +49,15 @@ func (issue *Issue) ProjectColumnID(ctx context.Context) int64 {
 	return ip.ProjectColumnID
 }
 
+// LoadProjectColumn returns the full Column for the issue's current project card
+func (issue *Issue) LoadProjectColumn(ctx context.Context) (*project_model.Column, error) {
+	columnID := issue.ProjectColumnID(ctx)
+	if columnID == 0 {
+		return nil, nil
+	}
+	return project_model.GetColumn(ctx, columnID)
+}
+
 // LoadIssuesFromColumn load issues assigned to this column
 func LoadIssuesFromColumn(ctx context.Context, b *project_model.Column, doer *user_model.User, org *org_model.Organization, isClosed optional.Option[bool]) (IssueList, error) {
 	issueOpts := &IssuesOptions{

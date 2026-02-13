@@ -421,7 +421,125 @@ func UpdateIssueProject(ctx *context.Context) {
 		}
 	}
 
-	ctx.JSONOK()
+	if ctx.FormBool("htmx") {
+		prepareHiddenCommentType(ctx)
+		if ctx.Written() {
+			return
+		}
+
+		issue := issues[0]
+		// Force reload project
+		issue.Project = nil
+		if err := issue.LoadProject(ctx); err != nil {
+			ctx.ServerError("LoadProject", err)
+			return
+		}
+
+		if issue.Project != nil {
+			columns, err := issue.Project.GetColumns(ctx)
+			if err != nil {
+				ctx.ServerError("GetProjectColumns", err)
+				return
+			}
+			ctx.Data["ProjectColumns"] = columns
+
+			currentColumn, err := issue.LoadProjectColumn(ctx)
+			if err != nil {
+				ctx.ServerError("LoadProjectColumn", err)
+				return
+			}
+			ctx.Data["IssueProjectColumn"] = currentColumn
+		}
+
+		retrieveProjects(ctx, ctx.Repo.Repository)
+		if ctx.Written() {
+			return
+		}
+
+		comment := &issues_model.Comment{}
+		has, err := db.GetEngine(ctx).Where("issue_id = ? AND type = ?", issue.ID, issues_model.CommentTypeProject).OrderBy("id DESC").Limit(1).Get(comment)
+		if err != nil {
+			ctx.ServerError("GetLatestProjectComment", err)
+			return
+		}
+		if has {
+			if err := comment.LoadProject(ctx); err != nil {
+				ctx.ServerError("LoadProject", err)
+				return
+			}
+			if err := comment.LoadPoster(ctx); err != nil {
+				ctx.ServerError("LoadPoster", err)
+				return
+			}
+			issue.Comments = issues_model.CommentList{comment}
+		} else {
+			issue.Comments = issues_model.CommentList{}
+		}
+
+		ctx.Data["Issue"] = issue
+		ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
+		ctx.HTML(http.StatusOK, "htmx/project_sidebar")
+	} else {
+		ctx.JSONOK()
+	}
+}
+
+// UpdateIssueProjectColumn changes the column an issue is in within its current project
+func UpdateIssueProjectColumn(ctx *context.Context) {
+	issueID := ctx.FormInt64("issue_id")
+	columnID := ctx.FormInt64("column_id")
+
+	issue, err := issues_model.GetIssueByID(ctx, issueID)
+	if err != nil {
+		ctx.NotFoundOrServerError("GetIssueByID", issues_model.IsErrIssueNotExist, err)
+		return
+	}
+
+	if err := issue.LoadProject(ctx); err != nil {
+		ctx.ServerError("LoadProject", err)
+		return
+	}
+	if issue.Project == nil {
+		ctx.NotFound("issue has no project", nil)
+		return
+	}
+
+	card, err := project_model.GetProjectCard(ctx, issue.Project.ID, issue.ID)
+	if err != nil {
+		ctx.ServerError("GetProjectCard", err)
+		return
+	}
+
+	if err := project_model.MoveCardToColumn(ctx, card.ID, columnID, 0); err != nil {
+		if project_model.IsErrProjectColumnNotExist(err) {
+			ctx.NotFound("column not found or does not belong to project", nil)
+			return
+		}
+		ctx.ServerError("MoveCardToColumn", err)
+		return
+	}
+
+	if ctx.FormBool("htmx") {
+		columns, err := issue.Project.GetColumns(ctx)
+		if err != nil {
+			ctx.ServerError("GetProjectColumns", err)
+			return
+		}
+		ctx.Data["ProjectColumns"] = columns
+
+		currentColumn, err := issue.LoadProjectColumn(ctx)
+		if err != nil {
+			ctx.ServerError("LoadProjectColumn", err)
+			return
+		}
+		ctx.Data["IssueProjectColumn"] = currentColumn
+
+		ctx.Data["Issue"] = issue
+		ctx.Data["HasIssuesOrPullsWritePermission"] = ctx.Repo.CanWriteIssuesOrPulls(issue.IsPull)
+		ctx.HTML(http.StatusOK, "htmx/project_column_sidebar")
+	} else {
+		ctx.JSONOK()
+	}
 }
 
 // DeleteProjectColumn allows for the deletion of a project column
