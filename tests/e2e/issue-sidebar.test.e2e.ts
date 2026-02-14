@@ -364,6 +364,33 @@ test.describe('Dependency dropdown', () => {
   });
 });
 
+test('Issue: Project Column', async ({page}) => {
+  const response = await page.goto('/user2/repo1/issues/1');
+  expect(response?.status()).toBe(200);
+
+  const columnSection = page.locator('#column-section');
+  const columnDropdown = columnSection.locator('.ui.selection.dropdown');
+  const columnText = columnDropdown.locator('.text');
+
+  // Restore to known state: ensure column is "To Do"
+  const currentText = await columnText.textContent();
+  if (!currentText?.includes('To Do')) {
+    await columnDropdown.click();
+    await page.locator('#column-section .menu .item').filter({hasText: 'To Do'}).click();
+    await expect(columnText).toContainText('To Do');
+  }
+
+  // Switch to "In Progress"
+  await columnDropdown.click();
+  await page.locator('#column-section .menu .item').filter({hasText: 'In Progress'}).click();
+  await expect(columnText).toContainText('In Progress');
+
+  // Restore to "To Do"
+  await columnDropdown.click();
+  await page.locator('#column-section .menu .item').filter({hasText: 'To Do'}).click();
+  await expect(columnText).toContainText('To Do');
+});
+
 test('Issue: Reference', async ({page}) => {
   let response = await page.goto('/user2/repo1/pulls/5');
   expect(response?.status()).toBe(200);

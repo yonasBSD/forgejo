@@ -19,6 +19,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestLoadProjectColumn(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	t.Run("Issue with project column", func(t *testing.T) {
+		// Issue 1 is in project 1, column 1 ("To Do")
+		issue := unittest.AssertExistsAndLoadBean(t, &issues.Issue{ID: 1})
+		col, err := issue.LoadProjectColumn(db.DefaultContext)
+		require.NoError(t, err)
+		require.NotNil(t, col)
+		assert.Equal(t, "To Do", col.Title)
+		assert.EqualValues(t, 1, col.ID)
+	})
+
+	t.Run("Issue with project but no column assigned", func(t *testing.T) {
+		// Issue 2 is in project 1, but project_board_id=0 (no column)
+		issue := unittest.AssertExistsAndLoadBean(t, &issues.Issue{ID: 2})
+		col, err := issue.LoadProjectColumn(db.DefaultContext)
+		require.NoError(t, err)
+		assert.Nil(t, col)
+	})
+
+	t.Run("Issue not in any project", func(t *testing.T) {
+		// Issue 4 is in repo 2, not assigned to any project
+		issue := unittest.AssertExistsAndLoadBean(t, &issues.Issue{ID: 4})
+		col, err := issue.LoadProjectColumn(db.DefaultContext)
+		require.NoError(t, err)
+		assert.Nil(t, col)
+	})
+}
+
 func TestPrivateIssueProjects(t *testing.T) {
 	defer unittest.OverrideFixtures("models/fixtures/PrivateIssueProjects")()
 	require.NoError(t, unittest.PrepareTestDatabase())
