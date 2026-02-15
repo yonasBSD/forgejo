@@ -1,7 +1,7 @@
 - id: 1001
-  lower_name: bob
-  name: Bob
-  full_name: Bob
+  lower_name: "@bob@bob.example.com"
+  name: "@bob@bob.example.com"
+  full_name: "@bob@bob.example.com"
   email: bob@bob.example.com
   keep_email_private: false
   email_notifications_preference: enabled
@@ -35,9 +35,9 @@
   keep_activity_private: false
 
 - id: 1002
-  lower_name: alice
-  name: Alice
-  full_name: Alice
+  lower_name: "@alice@alice.example.com"
+  name: "@alice@alice.example.com"
+  full_name: "@alice@alice.example.com"
   email: alice@alice.example.com
   keep_email_private: false
   email_notifications_preference: enabled
@@ -71,9 +71,9 @@
   keep_activity_private: false
 
 - id: 1003
-  lower_name: eve
-  name: Eve
-  full_name: Eve
+  lower_name: "@eve@alice.example.com"
+  name: "@eve@alice.example.com"
+  full_name: "@eve@alice.example.com"
   email: eve@alice.example.com
   keep_email_private: false
   email_notifications_preference: enabled

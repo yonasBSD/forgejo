@@ -72,7 +72,7 @@ func TestForgefedRepositoryCreateUserValid(t *testing.T) {
 
 		// Act
 		err = user.CreateFederatedUser(ctx, &user.User{
-			Name:  "Bob",
+			Name:  "@bob@forgejo.example.com",
 			Email: "bob@forgejo.example.com",
 		}, &user.FederatedUser{
 			ExternalID:       "1",
@@ -82,7 +82,7 @@ func TestForgefedRepositoryCreateUserValid(t *testing.T) {
 
 		// Assert
 		require.NoError(t, err)
-		localUser := unittest.AssertExistsAndLoadBean(t, &user.User{Email: "bob@forgejo.example.com"})
+		localUser := unittest.AssertExistsAndLoadBean(t, &user.User{Name: "@bob@forgejo.example.com", Email: "bob@forgejo.example.com"})
 		unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{UserID: localUser.ID, FederationHostID: 1})
 	})
 }
@@ -104,7 +104,7 @@ func TestForgefedRepositoryCreateUserInvalid(t *testing.T) {
 
 		// Act
 		err = user.CreateFederatedUser(ctx, &user.User{
-			Name:  "Bob",
+			Name:  "@bob@forgejo.example.com",
 			Email: "bob@forgejo.example.com",
 		}, &user.FederatedUser{
 			// invalid
@@ -147,7 +147,7 @@ func TestForgefedRepositoryFindHostsAndUsers(t *testing.T) {
 		require.NoError(t, err)
 
 		err = user.CreateFederatedUser(ctx, &user.User{
-			Name:  "Bob",
+			Name:  "@bob@bob.example.com",
 			Email: "bob@bob.example.com",
 		}, &user.FederatedUser{
 			ExternalID:       "1",
@@ -157,7 +157,7 @@ func TestForgefedRepositoryFindHostsAndUsers(t *testing.T) {
 		require.NoError(t, err)
 
 		err = user.CreateFederatedUser(ctx, &user.User{
-			Name:  "Alice",
+			Name:  "@alice@alice.example.com",
 			Email: "alice@alice.example.com",
 		}, &user.FederatedUser{
 			ExternalID:       "1",
@@ -167,7 +167,7 @@ func TestForgefedRepositoryFindHostsAndUsers(t *testing.T) {
 		require.NoError(t, err)
 
 		err = user.CreateFederatedUser(ctx, &user.User{
-			Name:  "Eve",
+			Name:  "@eve@alice.example.com",
 			Email: "eve@alice.example.com",
 		}, &user.FederatedUser{
 			ExternalID:       "2",
