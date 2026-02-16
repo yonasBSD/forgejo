@@ -1,0 +1,35 @@
+-
+  id: 10010
+  type: 31 # project column
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  old_project_board_id: 1 # To Do
+  project_board_id: 2 # In Progress
+  created_unix: 1761222939
+
+-
+  id: 10011
+  type: 31 # project column
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  old_project_board_id: 2 # In Progress
+  project_board_id: 3 # Done
+  created_unix: 1761222939
+
+-
+  id: 10012
+  type: 31 # project column
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  old_project_board_id: 999 # deleted column
+  project_board_id: 1 # To Do
+  created_unix: 1761222939
+
+-
+  id: 10013
+  type: 31 # project column
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  old_project_board_id: 1 # To Do
+  project_board_id: 999 # deleted column
+  created_unix: 1761222939

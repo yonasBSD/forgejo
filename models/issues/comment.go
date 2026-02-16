@@ -260,6 +260,10 @@ type Comment struct {
 	ProjectID            int64
 	OldProject           *project_model.Project `xorm:"-"`
 	Project              *project_model.Project `xorm:"-"`
+	OldProjectColumnID   int64                  `xorm:"'old_project_board_id'"`
+	ProjectColumnID      int64                  `xorm:"'project_board_id'"`
+	OldProjectColumn     *project_model.Column  `xorm:"-"`
+	ProjectColumn        *project_model.Column  `xorm:"-"`
 	OldMilestoneID       int64
 	MilestoneID          int64
 	OldMilestone         *Milestone `xorm:"-"`
@@ -565,6 +569,31 @@ func (c *Comment) LoadProject(ctx context.Context) error {
 	return nil
 }
 
+// LoadProjectColumns if comment.Type is CommentTypeProjectColumn, then load old/new columns.
+func (c *Comment) LoadProjectColumns(ctx context.Context) error {
+	if c.OldProjectColumnID > 0 {
+		var oldColumn project_model.Column
+		has, err := db.GetEngine(ctx).ID(c.OldProjectColumnID).Get(&oldColumn)
+		if err != nil {
+			return err
+		} else if has {
+			c.OldProjectColumn = &oldColumn
+		}
+	}
+
+	if c.ProjectColumnID > 0 {
+		var column project_model.Column
+		has, err := db.GetEngine(ctx).ID(c.ProjectColumnID).Get(&column)
+		if err != nil {
+			return err
+		} else if has {
+			c.ProjectColumn = &column
+		}
+	}
+
+	return nil
+}
+
 // LoadMilestone if comment.Type is CommentTypeMilestone, then load milestone
 func (c *Comment) LoadMilestone(ctx context.Context) error {
 	if c.OldMilestoneID > 0 {
@@ -823,38 +852,40 @@ func CreateComment(ctx context.Context, opts *CreateCommentOptions) (_ *Comment,
 	}
 
 	comment := &Comment{
-		Type:             opts.Type,
-		PosterID:         opts.Doer.ID,
-		Poster:           opts.Doer,
-		IssueID:          opts.Issue.ID,
-		LabelID:          LabelID,
-		OldMilestoneID:   opts.OldMilestoneID,
-		MilestoneID:      opts.MilestoneID,
-		OldProjectID:     opts.OldProjectID,
-		ProjectID:        opts.ProjectID,
-		TimeID:           opts.TimeID,
-		RemovedAssignee:  opts.RemovedAssignee,
-		AssigneeID:       opts.AssigneeID,
-		AssigneeTeamID:   opts.AssigneeTeamID,
-		CommitID:         opts.CommitID,
-		CommitSHA:        opts.CommitSHA,
-		Line:             opts.LineNum,
-		Content:          opts.Content,
-		OldTitle:         opts.OldTitle,
-		NewTitle:         opts.NewTitle,
-		OldRef:           opts.OldRef,
-		NewRef:           opts.NewRef,
-		DependentIssueID: opts.DependentIssueID,
-		TreePath:         opts.TreePath,
-		ReviewID:         opts.ReviewID,
-		Patch:            opts.Patch,
-		RefRepoID:        opts.RefRepoID,
-		RefIssueID:       opts.RefIssueID,
-		RefCommentID:     opts.RefCommentID,
-		RefAction:        opts.RefAction,
-		RefIsPull:        opts.RefIsPull,
-		IsForcePush:      opts.IsForcePush,
-		Invalidated:      opts.Invalidated,
+		Type:               opts.Type,
+		PosterID:           opts.Doer.ID,
+		Poster:             opts.Doer,
+		IssueID:            opts.Issue.ID,
+		LabelID:            LabelID,
+		OldMilestoneID:     opts.OldMilestoneID,
+		MilestoneID:        opts.MilestoneID,
+		OldProjectID:       opts.OldProjectID,
+		ProjectID:          opts.ProjectID,
+		OldProjectColumnID: opts.OldProjectColumnID,
+		ProjectColumnID:    opts.ProjectColumnID,
+		TimeID:             opts.TimeID,
+		RemovedAssignee:    opts.RemovedAssignee,
+		AssigneeID:         opts.AssigneeID,
+		AssigneeTeamID:     opts.AssigneeTeamID,
+		CommitID:           opts.CommitID,
+		CommitSHA:          opts.CommitSHA,
+		Line:               opts.LineNum,
+		Content:            opts.Content,
+		OldTitle:           opts.OldTitle,
+		NewTitle:           opts.NewTitle,
+		OldRef:             opts.OldRef,
+		NewRef:             opts.NewRef,
+		DependentIssueID:   opts.DependentIssueID,
+		TreePath:           opts.TreePath,
+		ReviewID:           opts.ReviewID,
+		Patch:              opts.Patch,
+		RefRepoID:          opts.RefRepoID,
+		RefIssueID:         opts.RefIssueID,
+		RefCommentID:       opts.RefCommentID,
+		RefAction:          opts.RefAction,
+		RefIsPull:          opts.RefIsPull,
+		IsForcePush:        opts.IsForcePush,
+		Invalidated:        opts.Invalidated,
 	}
 	if opts.Issue.NoAutoTime {
 		// Preload the comment with the Issue containing the forced update
@@ -1015,34 +1046,36 @@ type CreateCommentOptions struct {
 	Issue *Issue
 	Label *Label
 
-	DependentIssueID int64
-	OldMilestoneID   int64
-	MilestoneID      int64
-	OldProjectID     int64
-	ProjectID        int64
-	TimeID           int64
-	AssigneeID       int64
-	AssigneeTeamID   int64
-	RemovedAssignee  bool
-	OldTitle         string
-	NewTitle         string
-	OldRef           string
-	NewRef           string
-	CommitID         int64
-	CommitSHA        string
-	Patch            string
-	LineNum          int64
-	TreePath         string
-	ReviewID         int64
-	Content          string
-	Attachments      []string // UUIDs of attachments
-	RefRepoID        int64
-	RefIssueID       int64
-	RefCommentID     int64
-	RefAction        references.XRefAction
-	RefIsPull        bool
-	IsForcePush      bool
-	Invalidated      bool
+	DependentIssueID   int64
+	OldMilestoneID     int64
+	MilestoneID        int64
+	OldProjectID       int64
+	ProjectID          int64
+	OldProjectColumnID int64
+	ProjectColumnID    int64
+	TimeID             int64
+	AssigneeID         int64
+	AssigneeTeamID     int64
+	RemovedAssignee    bool
+	OldTitle           string
+	NewTitle           string
+	OldRef             string
+	NewRef             string
+	CommitID           int64
+	CommitSHA          string
+	Patch              string
+	LineNum            int64
+	TreePath           string
+	ReviewID           int64
+	Content            string
+	Attachments        []string // UUIDs of attachments
+	RefRepoID          int64
+	RefIssueID         int64
+	RefCommentID       int64
+	RefAction          references.XRefAction
+	RefIsPull          bool
+	IsForcePush        bool
+	Invalidated        bool
 }
 
 // GetCommentByID returns the comment by given ID.

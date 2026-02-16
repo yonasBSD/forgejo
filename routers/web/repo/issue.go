@@ -1739,6 +1739,23 @@ func ViewIssue(ctx *context.Context) {
 			if comment.ProjectID > 0 && comment.Project == nil {
 				comment.Project = ghostProject
 			}
+		} else if comment.Type == issues_model.CommentTypeProjectColumn {
+			if err = comment.LoadProjectColumns(ctx); err != nil {
+				ctx.ServerError("LoadProjectColumns", err)
+				return
+			}
+
+			ghostColumn := &project_model.Column{
+				Title: ctx.Locale.TrString("projects.deleted_column"),
+			}
+
+			if comment.OldProjectColumnID > 0 && comment.OldProjectColumn == nil {
+				comment.OldProjectColumn = ghostColumn
+			}
+
+			if comment.ProjectColumnID > 0 && comment.ProjectColumn == nil {
+				comment.ProjectColumn = ghostColumn
+			}
 		} else if comment.Type == issues_model.CommentTypeAssignees || comment.Type == issues_model.CommentTypeReviewRequest {
 			if err = comment.LoadAssigneeUserAndTeam(ctx); err != nil {
 				ctx.ServerError("LoadAssigneeUserAndTeam", err)

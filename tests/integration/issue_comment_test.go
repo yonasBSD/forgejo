@@ -197,6 +197,39 @@ func TestIssueCommentChangeProject(t *testing.T) {
 		[]string{"/user1", "/user2/-/projects/4"})
 }
 
+func TestIssueCommentChangeProjectColumn(t *testing.T) {
+	defer unittest.OverrideFixtures("tests/integration/fixtures/TestIssueCommentChangeProjectColumn")()
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// Move from "To Do" to "In Progress"
+	testIssueCommentChangeEvent(t, htmlDoc, "10010",
+		"octicon-project", "User One", "/user1",
+		[]string{"user1 moved this from column To Do to In Progress"},
+		[]string{"/user1"})
+
+	// Move from "In Progress" to "Done"
+	testIssueCommentChangeEvent(t, htmlDoc, "10011",
+		"octicon-project", "User One", "/user1",
+		[]string{"user1 moved this from column In Progress to Done"},
+		[]string{"/user1"})
+
+	// Old column deleted, moved to "To Do"
+	testIssueCommentChangeEvent(t, htmlDoc, "10012",
+		"octicon-project", "User One", "/user1",
+		[]string{"user1 moved this from column deleted column to To Do"},
+		[]string{"/user1"})
+
+	// Move from "To Do" to a now-deleted column
+	testIssueCommentChangeEvent(t, htmlDoc, "10013",
+		"octicon-project", "User One", "/user1",
+		[]string{"user1 moved this from column To Do to deleted column"},
+		[]string{"/user1"})
+}
+
 func TestIssueCommentChangeLabel(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

@@ -431,5 +431,7 @@
 	"editor.toggle_case": "Toggle case sensitivity",
 	"editor.toggle_regex": "Toggle using regular expressions",
 	"editor.toggle_whole_word": "Toggle matching whole words",
+	"projects.deleted_column": "deleted column",
+	"issues.change_project_column_at": "%[1]s moved this from column <b>%[2]s</b> to <b>%[3]s</b> %[4]s",
 	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

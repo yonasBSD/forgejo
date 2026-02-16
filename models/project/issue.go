@@ -86,6 +86,20 @@ func MoveIssuesOnProjectColumn(ctx context.Context, column *Column, sortedIssueI
 	})
 }
 
+// GetProjectIssueColumnIDs returns a map of issueID → current project_board_id
+// for the given issue IDs. Issues not found in the project_issue table are omitted.
+func GetProjectIssueColumnIDs(ctx context.Context, issueIDs []int64) (map[int64]int64, error) {
+	var projectIssues []ProjectIssue
+	if err := db.GetEngine(ctx).In("issue_id", issueIDs).Find(&projectIssues); err != nil {
+		return nil, err
+	}
+	result := make(map[int64]int64, len(projectIssues))
+	for _, pi := range projectIssues {
+		result[pi.IssueID] = pi.ProjectColumnID
+	}
+	return result, nil
+}
+
 func (c *Column) moveIssuesToAnotherColumn(ctx context.Context, newColumn *Column) error {
 	if c.ProjectID != newColumn.ProjectID {
 		return errors.New("columns have to be in the same project")

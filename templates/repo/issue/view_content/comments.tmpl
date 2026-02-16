@@ -633,6 +633,28 @@
 				</span>
 			</div>
 			{{end}}
+		{{else if eq .Type 31}}
+			{{if not $.UnitProjectsGlobalDisabled}}
+			<div class="timeline-item event" id="{{.HashTag}}">
+				<span class="badge">{{svg "octicon-project"}}</span>
+				{{template "shared/user/avatarlink" dict "user" .Poster}}
+				<span class="text grey muted-links">
+					{{$oldColumnTitle := ""}}
+					{{if .OldProjectColumn}}
+						{{$oldColumnTitle = .OldProjectColumn.Title}}
+					{{else}}
+						{{$oldColumnTitle = ctx.Locale.TrString "projects.deleted_column"}}
+					{{end}}
+					{{$newColumnTitle := ""}}
+					{{if .ProjectColumn}}
+						{{$newColumnTitle = .ProjectColumn.Title}}
+					{{else}}
+						{{$newColumnTitle = ctx.Locale.TrString "projects.deleted_column"}}
+					{{end}}
+					{{ctx.Locale.Tr "issues.change_project_column_at" (ExecuteTemplate ctx "shared/user/authorlink" .Poster) $oldColumnTitle $newColumnTitle $createdStr}}
+				</span>
+			</div>
+			{{end}}
 		{{else if eq .Type 32}}
 			<div class="timeline-item-group">
 				<div class="timeline-item event" id="{{.HashTag}}">

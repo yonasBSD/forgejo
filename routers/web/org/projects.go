@@ -614,9 +614,34 @@ func MoveIssues(ctx *context.Context) {
 		}
 	}
 
+	// Get current column IDs before the move
+	oldColumnIDs, err := project_model.GetProjectIssueColumnIDs(ctx, issueIDs)
+	if err != nil {
+		ctx.ServerError("GetProjectIssueColumnIDs", err)
+		return
+	}
+
 	if err = project_model.MoveIssuesOnProjectColumn(ctx, column, sortedIssueIDs); err != nil {
 		ctx.ServerError("MoveIssuesOnProjectColumn", err)
 		return
+	}
+
+	// Create comments for issues that changed columns
+	for _, issue := range movedIssues {
+		oldColumnID := oldColumnIDs[issue.ID]
+		if oldColumnID != column.ID {
+			if _, err := issues_model.CreateComment(ctx, &issues_model.CreateCommentOptions{
+				Type:               issues_model.CommentTypeProjectColumn,
+				Doer:               ctx.Doer,
+				Repo:               issue.Repo,
+				Issue:              issue,
+				OldProjectColumnID: oldColumnID,
+				ProjectColumnID:    column.ID,
+			}); err != nil {
+				ctx.ServerError("CreateComment", err)
+				return
+			}
+		}
 	}
 
 	ctx.JSONOK()
