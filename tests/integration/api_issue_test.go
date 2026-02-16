@@ -125,6 +125,45 @@ func TestAPIListIssues(t *testing.T) {
 	})
 }
 
+func TestAPIIssueProject(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadIssue)
+
+	t.Run("IssueWithProject", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Issue 1 is assigned to project 1, column 1 ("To Do") per fixtures
+		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/%s/%s/issues/1", owner.Name, repo.Name)).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		require.NotNil(t, apiIssue.Project)
+		assert.EqualValues(t, 1, apiIssue.Project.ID)
+		assert.Equal(t, "First project", apiIssue.Project.Title)
+		assert.Equal(t, api.StateOpen, apiIssue.Project.State)
+		assert.Equal(t, "To Do", apiIssue.Project.Column)
+	})
+
+	t.Run("IssueWithoutProject", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Issue 11 (index 4 in repo 1) is not assigned to any project
+		issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 11, RepoID: repo.ID})
+		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repo.Name, issue.Index)).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		assert.Nil(t, apiIssue.Project)
+	})
+}
+
 func TestAPIListIssuesWithLabels(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

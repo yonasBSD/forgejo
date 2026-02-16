@@ -26509,6 +26509,9 @@
           "format": "int64",
           "x-go-name": "PinOrder"
         },
+        "project": {
+          "$ref": "#/definitions/Project"
+        },
         "pull_request": {
           "$ref": "#/definitions/PullRequestMeta"
         },
@@ -27703,6 +27706,29 @@
         "push": {
           "type": "boolean",
           "x-go-name": "Push"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "Project": {
+      "description": "Project represents a project",
+      "type": "object",
+      "properties": {
+        "column": {
+          "type": "string",
+          "x-go-name": "Column"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "state": {
+          "$ref": "#/definitions/StateType"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "forgejo.org/modules/structs"

@@ -14,6 +14,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
@@ -175,6 +176,14 @@ func (p *Project) CanBeAccessedByOwnerRepo(ownerID int64, repo *repo_model.Repos
 		return repo != nil && p.RepoID == repo.ID // if a project belongs to a repository, then its OwnerID is 0 and can be ignored
 	}
 	return p.OwnerID == ownerID && p.RepoID == 0
+}
+
+// State returns the project's state as an API StateType
+func (p *Project) State() api.StateType {
+	if p.IsClosed {
+		return api.StateClosed
+	}
+	return api.StateOpen
 }
 
 func init() {
