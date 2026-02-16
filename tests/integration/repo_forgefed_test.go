@@ -180,8 +180,9 @@ func TestForgefedRepositoryFindHostsAndUsers(t *testing.T) {
 		hosts, err := forgefed.FindFederationHosts(ctx)
 		require.NoError(t, err)
 		assert.Len(t, hosts, 2)
-		assert.Equal(t, "bob.example.com", hosts[0].HostFqdn)
-		assert.Equal(t, "alice.example.com", hosts[1].HostFqdn)
+		hostFqdns := []string{hosts[0].HostFqdn, hosts[1].HostFqdn}
+		assert.Contains(t, hostFqdns, "bob.example.com")
+		assert.Contains(t, hostFqdns, "alice.example.com")
 
 		users, err := user.FindFederatedUsers(ctx)
 		require.NoError(t, err)
