@@ -28,6 +28,18 @@ for hook in $(dirname $0)/${hookname}.d/*; do
   exitcodes="${exitcodes} $?"
 done
 
+# Custom hooks
+custom_hooks_dir="./hooks/${hookname}.d"
+if [ -d "${custom_hooks_dir}" ]; then
+  for hook in ${custom_hooks_dir}/*; do
+    if [ $(basename "${hook}") != "gitea" ]; then
+      test -x "${hook}" && test -f "${hook}" || continue
+      echo "${data}" | "${hook}"
+      exitcodes="${exitcodes} $?"
+    fi
+  done
+fi
+
 for i in ${exitcodes}; do
   [ ${i} -eq 0 ] || exit ${i}
 done
@@ -44,6 +56,18 @@ for hook in $(dirname $0)/${hookname}.d/*; do
   "${hook}" $1 $2 $3
   exitcodes="${exitcodes} $?"
 done
+
+# Custom hooks
+custom_hooks_dir="./hooks/${hookname}.d"
+if [ -d "${custom_hooks_dir}" ]; then
+  for hook in ${custom_hooks_dir}/*; do
+    if [ $(basename "${hook}") != "gitea" ]; then
+      test -x "${hook}" && test -f "${hook}" || continue
+      "${hook}" $1 $2 $3
+      exitcodes="${exitcodes} $?"
+    fi
+  done
+fi
 
 for i in ${exitcodes}; do
   [ ${i} -eq 0 ] || exit ${i}
@@ -63,6 +87,17 @@ for hook in $(dirname $0)/${hookname}.d/*; do
   exitcodes="${exitcodes} $?"
 done
 
+# Custom hooks
+custom_hooks_dir="./hooks/${hookname}.d"
+if [ -d "${custom_hooks_dir}" ]; then
+  for hook in ${custom_hooks_dir}/*; do
+    if [ $(basename "${hook}") != "gitea" ]; then
+      test -x "${hook}" && test -f "${hook}" || continue
+      echo "${data}" | "${hook}"
+      exitcodes="${exitcodes} $?"
+    fi
+  done
+fi
 for i in ${exitcodes}; do
   [ ${i} -eq 0 ] || exit ${i}
 done
