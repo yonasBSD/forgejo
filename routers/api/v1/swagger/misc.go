@@ -63,6 +63,13 @@ type swaggerResponseLabelTemplateInfo struct {
 	Body []api.LabelTemplate `json:"body"`
 }
 
+// ProjectTemplateList
+// swagger:response ProjectTemplateList
+type swaggerResponseProjectTemplateList struct {
+	// in:body
+	Body []api.ProjectTemplateConfig `json:"body"`
+}
+
 // Boolean
 // swagger:response boolean
 type swaggerResponseBoolean struct {

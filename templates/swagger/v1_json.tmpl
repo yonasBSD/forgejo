@@ -4967,6 +4967,23 @@
         }
       }
     },
+    "/project/templates": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "miscellaneous"
+        ],
+        "summary": "Returns a list of all project template types",
+        "operationId": "listProjectTemplates",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ProjectTemplateList"
+          }
+        }
+      }
+    },
     "/repos/issues/search": {
       "get": {
         "produces": [
@@ -27707,6 +27724,26 @@
       },
       "x-go-package": "forgejo.org/modules/structs"
     },
+    "ProjectTemplateConfig": {
+      "description": "ProjectTemplateConfig describes a project template type",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "type": {
+          "type": "integer",
+          "format": "uint8",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
     "PublicKey": {
       "description": "PublicKey publickey is a user key to push code to repository",
       "type": "object",
@@ -30913,6 +30950,15 @@
           "type": "integer",
           "format": "int64",
           "description": "The total number of packages"
+        }
+      }
+    },
+    "ProjectTemplateList": {
+      "description": "ProjectTemplateList",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ProjectTemplateConfig"
         }
       }
     },
