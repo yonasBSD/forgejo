@@ -21,8 +21,6 @@ func TestCustomGitHooks(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 		owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
-		// session := loginUser(t, owner.LowerName)
-		// token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
 
 		httpContext := NewAPITestContext(t, owner.Name, repo.Name)
 
@@ -34,7 +32,6 @@ func TestCustomGitHooks(t *testing.T) {
 		doGitClone(dstPath, u)(t)
 
 		customHooksDir := path.Join(repo.RepoPath(), "hooks")
-		defer os.RemoveAll(customHooksDir)
 
 		hookNames := []string{"pre-receive", "update", "post-receive"}
 
