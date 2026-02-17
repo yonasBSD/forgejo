@@ -9,11 +9,11 @@ import (
 	"path"
 	"testing"
 
-	// auth_model "forgejo.org/models/auth"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
+
 	"github.com/stretchr/testify/require"
 )
 
