@@ -18,7 +18,6 @@ import (
 	org_model "forgejo.org/models/organization"
 	quota_model "forgejo.org/models/quota"
 	repo_model "forgejo.org/models/repo"
-	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/setting"
@@ -28,8 +27,8 @@ import (
 	app_context "forgejo.org/services/context"
 	repo_service "forgejo.org/services/repository"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
-	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1026,13 +1025,11 @@ func createQuotaWebEnv(t *testing.T) *quotaWebEnv {
 		user := quotaWebEnvUser{}
 
 		// Create the user
-		userName := gouuid.NewString()
-		apiCreateUser(t, userName)
-		user.User = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: userName})
-		user.Session = loginUser(t, userName)
+		user.User = forgery.CreateUser(t, nil)
+		user.Session = loginUser(t, user.User.Name)
 
 		// Create a repository for the user
-		repo, _, _ := tests.CreateDeclarativeRepoWithOptions(t, user.User, tests.DeclarativeRepoOptions{})
+		repo := forgery.CreateRepository(t, user.User, nil)
 		user.Repo = repo
 
 		return user
@@ -1073,25 +1070,19 @@ func createQuotaWebEnv(t *testing.T) *quotaWebEnv {
 		org := quotaWebEnvOrg{}
 
 		// Create the org
-		userName := gouuid.NewString()
-		org.Org = &org_model.Organization{
-			Name: userName,
-		}
-		err := org_model.CreateOrganization(db.DefaultContext, org.Org, owner)
-		require.NoError(t, err)
+		org.Org = forgery.CreateOrganisation(t, owner)
 
 		// Create a repository for the org
-		orgUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: org.Org.ID})
-		repo, _, _ := tests.CreateDeclarativeRepoWithOptions(t, orgUser, tests.DeclarativeRepoOptions{})
+		repo := forgery.CreateRepository(t, org.Org.AsUser(), nil)
 		org.Repo = repo
 
 		// Create a quota group for them
-		group, err := quota_model.CreateGroup(db.DefaultContext, userName)
+		group, err := quota_model.CreateGroup(db.DefaultContext, org.Org.Name)
 		require.NoError(t, err)
 		org.QuotaGroup = group
 
 		// Create a rule
-		rule, err := quota_model.CreateRule(db.DefaultContext, userName, limit, quota_model.LimitSubjects{quota_model.LimitSubjectSizeAll})
+		rule, err := quota_model.CreateRule(db.DefaultContext, org.Org.Name, limit, quota_model.LimitSubjects{quota_model.LimitSubjectSizeAll})
 		require.NoError(t, err)
 		org.QuotaRule = rule
 
