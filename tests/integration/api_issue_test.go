@@ -24,6 +24,7 @@ import (
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -848,15 +849,13 @@ func TestAPIIssueDependencyPermissions(t *testing.T) {
 	actingUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
 	token := getUserToken(t, actingUser.Name, auth_model.AccessTokenScopeAll)
 
-	actingUserRepo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, actingUser, tests.DeclarativeRepoOptions{})
-	defer reset()
+	actingUserRepo := forgery.CreateRepository(t, actingUser, nil)
 	actingUserIssue := createIssue(t, actingUser, actingUserRepo, "source issue", "some content")
 
 	otherUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-	otherUserRepo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, otherUser, tests.DeclarativeRepoOptions{
-		IsPrivate: optional.Some(true),
+	otherUserRepo := forgery.CreateRepository(t, otherUser, &forgery.CreateRepositoryOptions{
+		IsPrivate: true,
 	})
-	defer reset()
 	otherUserIssue := createIssue(t, otherUser, otherUserRepo, "target issue", "some content")
 
 	apiEndpoint := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/dependencies", actingUserRepo.OwnerName, actingUserRepo.Name, actingUserIssue.Index)
