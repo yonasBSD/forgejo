@@ -20,7 +20,6 @@ import (
 	"forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
-	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/tests"
@@ -29,7 +28,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/convert"
 )
 
 func TestAPIListIssues(t *testing.T) {
@@ -664,35 +662,25 @@ func TestAPISearchIssuesWithLabels(t *testing.T) {
 func TestAPIInternalAndExternalIssueTracker(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-	otherUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+	user := forgery.CreateUser(t, &forgery.CreateUserOptions{
+		IsAdmin: true,
+	})
+	otherUser := forgery.CreateUser(t, nil)
 	token := getUserToken(t, user.Name, auth_model.AccessTokenScopeAll)
 
-	internalIssueRepo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, user, tests.DeclarativeRepoOptions{
-		Name:          optional.Some("internal-issues"),
-		EnabledUnits:  optional.Some([]unit.Type{unit.TypeIssues}),
-		DisabledUnits: optional.Some([]unit.Type{unit.TypeExternalTracker}),
-		UnitConfig: optional.Some(map[unit.Type]convert.Conversion{
-			unit.TypeIssues: &repo_model.IssuesConfig{
-				EnableTimetracker:  true,
-				EnableDependencies: true,
-			},
-		}),
+	internalIssueRepo := forgery.CreateRepository(t, user, nil)
+	forgery.DisableRepoUnits(t, internalIssueRepo, unit.TypeExternalTracker)
+	forgery.EnableRepoUnit(t, internalIssueRepo, unit.TypeIssues, &repo_model.IssuesConfig{
+		EnableTimetracker:  true,
+		EnableDependencies: true,
 	})
-	defer reset()
 
-	externalIssueRepo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, user, tests.DeclarativeRepoOptions{
-		Name:          optional.Some("external-issues"),
-		EnabledUnits:  optional.Some([]unit.Type{unit.TypeExternalTracker}),
-		DisabledUnits: optional.Some([]unit.Type{unit.TypeIssues}),
-	})
-	defer reset()
+	externalIssueRepo := forgery.CreateRepository(t, user, nil)
+	forgery.DisableRepoUnits(t, externalIssueRepo, unit.TypeIssues)
+	forgery.EnableRepoUnit(t, internalIssueRepo, unit.TypeExternalTracker, nil)
 
-	disabledIssueRepo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, user, tests.DeclarativeRepoOptions{
-		Name:          optional.Some("disabled-issues"),
-		DisabledUnits: optional.Some([]unit.Type{unit.TypeIssues, unit.TypeExternalTracker}),
-	})
-	defer reset()
+	disabledIssueRepo := forgery.CreateRepository(t, user, nil)
+	forgery.DisableRepoUnits(t, disabledIssueRepo, unit.TypeIssues, unit.TypeExternalTracker)
 
 	runTest := func(t *testing.T, repo *repo_model.Repository, requestAllowed bool) {
 		t.Helper()
