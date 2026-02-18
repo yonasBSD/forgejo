@@ -20,7 +20,7 @@ import (
 	"forgejo.org/routers"
 	"forgejo.org/services/contexttest"
 	"forgejo.org/services/federation"
-	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,8 +49,7 @@ func TestActivityPubPersonInboxNoteToDistant(t *testing.T) {
 		localSession2 := loginUser(t, localUser2.LoginName)
 		localSecssion2Token := getTokenForLoggedInUser(t, localSession2, auth_model.AccessTokenScopeWriteIssue)
 
-		repo, _, f := tests.CreateDeclarativeRepoWithOptions(t, localUser2, tests.DeclarativeRepoOptions{})
-		defer f()
+		repo := forgery.CreateRepository(t, localUser2, nil)
 
 		// follow (distant follows local)
 		followActivity := []byte(fmt.Sprintf(
