@@ -63,7 +63,7 @@ func ToNotificationThread(ctx context.Context, n *activities_model.Notification)
 			if err := n.Issue.LoadPullRequest(ctx); err == nil &&
 				n.Issue.PullRequest != nil &&
 				n.Issue.PullRequest.HasMerged {
-				result.Subject.State = "merged"
+				result.Subject.State = api.StateMerged
 			}
 		}
 	case activities_model.NotificationSourceRepository:

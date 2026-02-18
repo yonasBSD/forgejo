@@ -21,6 +21,8 @@ const (
 	StateOpen StateType = "open"
 	// StateClosed pr is closed
 	StateClosed StateType = "closed"
+	// StateMerged pr is merged
+	StateMerged StateType = "merged"
 	// StateAll is all
 	StateAll StateType = "all"
 )
