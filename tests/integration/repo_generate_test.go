@@ -23,6 +23,7 @@ import (
 	"forgejo.org/modules/translation"
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -239,40 +240,27 @@ func TestRepoGenerateTemplating(t *testing.T) {
 		expected := `# %s
 	This is a Repo By %s
 	ThisIsThe%sInAnInlineWay`
-		templateName := "my_template"
-		generatedName := "my_generated"
 
-		userName := "user1"
-		session := loginUser(t, userName)
-		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: userName})
-
-		template, _, f := tests.CreateDeclarativeRepoWithOptions(t, user, tests.DeclarativeRepoOptions{
-			Name:       optional.Some(templateName),
-			IsTemplate: optional.Some(true),
-			Files: optional.Some([]*files_service.ChangeRepoFile{
-				{
-					Operation:     "create",
-					TreePath:      ".forgejo/template",
-					ContentReader: strings.NewReader("**/Readme.md"),
-				},
-				{
-					Operation:     "create",
-					TreePath:      "dira-${REPO_NAME}/dirb-${REPO_NAME}/Readme.md",
-					ContentReader: strings.NewReader(input),
-				},
-			}),
+		template := forgery.CreateRepository(t, nil, &forgery.CreateRepositoryOptions{
+			IsTemplate: true,
+			Files: forgery.MapFS{
+				".forgejo/template":                             forgery.MapFile("**/Readme.md"),
+				"dira-${REPO_NAME}/dirb-${REPO_NAME}/Readme.md": forgery.MapFile(input),
+			},
 		})
-		defer f()
+		user := template.Owner
+		session := loginUser(t, user.Name)
 
 		// The repo.TemplateID field is not initialized. Luckily, the ID field holds the expected value
 		templateID := strconv.FormatInt(template.ID, 10)
+		generatedName := "my_generated"
 
 		testRepoGenerateSuccess(
 			t,
 			session,
 			templateID,
 			user.Name,
-			templateName,
+			template.Name,
 			user,
 			user,
 			generatedName,
