@@ -313,9 +313,7 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 		assert.False(t, srcRepo.HasWiki())
 		session := loginUser(t, user.Name)
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
-		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-			Files: forgery.SkipGitInit,
-		})
+		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
 
 		sshURL := fmt.Sprintf("ssh://%s@%s/%s.git", setting.SSH.User, net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), pushToRepo.FullName())
 

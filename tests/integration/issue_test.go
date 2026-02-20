@@ -1401,9 +1401,7 @@ body:
 func TestIssueUnsubscription(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
-		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-			Files: forgery.SkipGitInit,
-		})
+		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
 		session := loginUser(t, user.Name)
 
 		issueURL := testNewIssue(t, session, user.Name, repo.Name, "Issue title", "Description")

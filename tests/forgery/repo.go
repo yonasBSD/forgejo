@@ -23,9 +23,8 @@ import (
 type CreateRepositoryOptions struct {
 	Name string // if nil a unique name (derived from the test name) will be generated
 
-	// Content of the initial commit (if nil, auto-init with a standard README.md will be committed), see [MapFS].
-	// If an empty MapFS is provided, the git repo will be left uninitialized.
-	// use MapFS{".": &fstest.MapFile{Mode: fs.ModeDir}} to get an initialized empty repo
+	// Content of the initial commit, if nil the git repo will be left uninitialized.
+	// Use [MapFS] or [FilesInit] to setup the initial files.
 	Files fs.FS
 
 	ObjectFormat git.ObjectFormat // If nil, SHA1
@@ -36,8 +35,18 @@ type CreateRepositoryOptions struct {
 	SkipCleanup bool    // if true the repo will not be deleted at the end of the test (can be useful to debug locally)
 }
 
-// CreateRepository returns the repo, the last commit SHA, and a defer-able function to delete the repo.
-// owner and opts can be nil
+// FilesInit specifies the templates to use upon repository initialization.
+type FilesInit struct {
+	Readme     string
+	Gitignores string
+	License    string
+}
+
+func (FilesInit) Open(name string) (fs.File, error) {
+	panic("FilesInit is only a sentinel value")
+}
+
+// CreateRepository returns the repo, owner and opts can be nil
 func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateRepositoryOptions) *repo_model.Repository {
 	t.Helper()
 
@@ -55,20 +64,22 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 
 	gitFormat := cmp.Or(opts.ObjectFormat, git.Sha1ObjectFormat)
 
-	autoInit := opts.Files == nil
 	// Create the repository
-	repo, err := repo_service.CreateRepositoryDirectly(t.Context(), owner, owner, repo_service.CreateRepoOptions{
+	createOptions := repo_service.CreateRepoOptions{
 		Name:             repoName,
 		Description:      "Test Repo",
-		AutoInit:         autoInit,
-		Gitignores:       "",
-		License:          "CC0-1.0",
-		Readme:           "Default",
 		DefaultBranch:    "main",
 		IsTemplate:       opts.IsTemplate,
 		ObjectFormatName: gitFormat.Name(),
 		IsPrivate:        opts.IsPrivate,
-	})
+	}
+	if fi, ok := opts.Files.(FilesInit); ok {
+		createOptions.AutoInit = true
+		createOptions.Readme = cmp.Or(fi.Readme, "Default")
+		createOptions.Gitignores = fi.Gitignores
+		createOptions.License = fi.License
+	}
+	repo, err := repo_service.CreateRepositoryDirectly(t.Context(), owner, owner, createOptions)
 	require.NoError(t, err)
 	if !opts.SkipCleanup {
 		t.Cleanup(func() {
@@ -77,18 +88,16 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 	}
 	assert.NotEmpty(t, repo)
 
-	if !autoInit { // manual init is needed
-		if mf, ok := opts.Files.(MapFS); !ok || len(mf) > 0 { // only if non-empty MapFS is given
-			sha, err := initRepo(owner, repo, gitFormat, opts.Files, "init")
-			require.NoError(t, err)
-			if opts.LatestSha != nil {
-				*opts.LatestSha = sha
-			}
-
-			// reload the repo since pushing a commit might update the model via the push_update queue (IsEmpty for instance)
-			repo, err = repo_model.GetRepositoryByID(t.Context(), repo.ID)
-			require.NoError(t, err)
+	if !createOptions.AutoInit && opts.Files != nil {
+		sha, err := initRepo(owner, repo, gitFormat, opts.Files, "init")
+		require.NoError(t, err)
+		if opts.LatestSha != nil {
+			*opts.LatestSha = sha
 		}
+
+		// reload the repo since pushing a commit might update the model via the push_update queue (IsEmpty for instance)
+		repo, err = repo_model.GetRepositoryByID(t.Context(), repo.ID)
+		require.NoError(t, err)
 	}
 	repo.Owner = owner
 

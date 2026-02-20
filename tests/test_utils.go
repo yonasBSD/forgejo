@@ -10,7 +10,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"io/fs"
 	"mime/multipart"
 	"os"
 	"path"
@@ -423,10 +422,9 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 				}
 			}
 		}
-		if len(mfs) == 0 {
-			mfs["."] = &fstest.MapFile{Mode: fs.ModeDir} // ensure MapFS is not empty
-		}
 		opts.Files = mfs
+	} else {
+		opts.Files = forgery.FilesInit{}
 	}
 
 	repo := forgery.CreateRepository(t, owner, opts)

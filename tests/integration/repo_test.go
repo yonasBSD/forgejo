@@ -1378,7 +1378,6 @@ func TestInitInstructions(t *testing.T) {
 		}
 
 		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-			Files:        forgery.SkipGitInit,
 			ObjectFormat: objectFormat,
 		})
 

@@ -19,9 +19,6 @@ import (
 
 type MapFS = fstest.MapFS
 
-// SkipGitInit indicates that git init should be skipped
-var SkipGitInit = MapFS{}
-
 func MapFile(data string) *fstest.MapFile {
 	return &fstest.MapFile{
 		Data: []byte(data),

@@ -227,9 +227,7 @@ func TestSSHPushMirror(t *testing.T) {
 		assert.False(t, srcRepo.HasWiki())
 		sess := loginUser(t, user.Name)
 
-		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-			Files: forgery.SkipGitInit,
-		})
+		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
 		sshURL := fmt.Sprintf("ssh://%s@%s/%s.git", setting.SSH.User, net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), pushToRepo.FullName())
 
 		t.Run("Mutual exclusive", func(t *testing.T) {
@@ -282,9 +280,7 @@ func TestSSHPushMirror(t *testing.T) {
 		testMirrorPush := func(t *testing.T, srcRepo *repo_model.Repository, expectedSHA string) {
 			t.Helper()
 
-			pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-				Files: forgery.SkipGitInit,
-			})
+			pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
 			sshURL := fmt.Sprintf("ssh://%s@%s/%s.git", setting.SSH.User, net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), pushToRepo.FullName())
 
 			var pushMirror *repo_model.PushMirror
@@ -588,9 +584,7 @@ func TestPushMirrorSettings(t *testing.T) {
 		assert.False(t, srcRepo.HasWiki())
 		sess := loginUser(t, user.Name)
 
-		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-			Files: forgery.SkipGitInit,
-		})
+		pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
 
 		t.Run("Adding", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
