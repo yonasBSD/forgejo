@@ -1029,7 +1029,9 @@ func createQuotaWebEnv(t *testing.T) *quotaWebEnv {
 		user.Session = loginUser(t, user.User.Name)
 
 		// Create a repository for the user
-		repo := forgery.CreateRepository(t, user.User, nil)
+		repo := forgery.CreateRepository(t, user.User, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
 		user.Repo = repo
 
 		return user
@@ -1073,7 +1075,9 @@ func createQuotaWebEnv(t *testing.T) *quotaWebEnv {
 		org.Org = forgery.CreateOrganisation(t, owner)
 
 		// Create a repository for the org
-		repo := forgery.CreateRepository(t, org.Org.AsUser(), nil)
+		repo := forgery.CreateRepository(t, org.Org.AsUser(), &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
 		org.Repo = repo
 
 		// Create a quota group for them

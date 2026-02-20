@@ -280,7 +280,9 @@ func prepareQuotaEnv(t *testing.T, username string) *quotaEnv {
 	env.cleanups = append(env.cleanups, userCleanup)
 
 	// Create a repository
-	repo := forgery.CreateRepository(t, env.User.User, nil)
+	repo := forgery.CreateRepository(t, env.User.User, &forgery.CreateRepositoryOptions{
+		Files: forgery.FilesInit{}, // needed to prevent some 404
+	})
 	env.Repo = repo
 
 	return &env

@@ -662,24 +662,27 @@ func TestAPISearchIssuesWithLabels(t *testing.T) {
 func TestAPIInternalAndExternalIssueTracker(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
+	repoOptions := &forgery.CreateRepositoryOptions{
+		Files: forgery.FilesInit{}, // needed to prevent some 404
+	}
 	user := forgery.CreateUser(t, &forgery.CreateUserOptions{
 		IsAdmin: true,
 	})
 	otherUser := forgery.CreateUser(t, nil)
 	token := getUserToken(t, user.Name, auth_model.AccessTokenScopeAll)
 
-	internalIssueRepo := forgery.CreateRepository(t, user, nil)
+	internalIssueRepo := forgery.CreateRepository(t, user, repoOptions)
 	forgery.DisableRepoUnits(t, internalIssueRepo, unit.TypeExternalTracker)
 	forgery.EnableRepoUnit(t, internalIssueRepo, unit.TypeIssues, &repo_model.IssuesConfig{
 		EnableTimetracker:  true,
 		EnableDependencies: true,
 	})
 
-	externalIssueRepo := forgery.CreateRepository(t, user, nil)
+	externalIssueRepo := forgery.CreateRepository(t, user, repoOptions)
 	forgery.DisableRepoUnits(t, externalIssueRepo, unit.TypeIssues)
 	forgery.EnableRepoUnit(t, internalIssueRepo, unit.TypeExternalTracker, nil)
 
-	disabledIssueRepo := forgery.CreateRepository(t, user, nil)
+	disabledIssueRepo := forgery.CreateRepository(t, user, repoOptions)
 	forgery.DisableRepoUnits(t, disabledIssueRepo, unit.TypeIssues, unit.TypeExternalTracker)
 
 	runTest := func(t *testing.T, repo *repo_model.Repository, requestAllowed bool) {

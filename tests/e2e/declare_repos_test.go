@@ -183,7 +183,8 @@ func newRepo(t *testing.T, userID int64, repoName string, enabledUnits map[unit_
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userID})
 
 	somerepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
-		Name: repoName,
+		Name:  repoName,
+		Files: forgery.FilesInit{},
 	})
 	if len(enabledUnits) == 0 {
 		forgery.EnableRepoUnit(t, somerepo, unit_model.TypeCode, nil)
