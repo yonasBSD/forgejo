@@ -34,7 +34,7 @@ func FederationHost(ctx *context.Context) {
 	ctx.Data["Host"] = host
 	ctx.Data["Users"] = users
 	ctx.Data["UsersTotal"] = len(users)
-	ctx.Data["Title"] = host.HostFqdn
+	ctx.Data["Title"] = ctx.Tr("admin.federation.hosts.details_panel")
 	ctx.Data["PageIsAdminFederationHosts"] = true
 
 	ctx.HTML(http.StatusOK, tplFederationHost)

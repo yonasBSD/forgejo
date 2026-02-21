@@ -25,7 +25,7 @@ func FederationHosts(ctx *context.Context) {
 	}
 	total := len(hosts)
 
-	ctx.Data["Title"] = "Federation hosts"
+	ctx.Data["Title"] = ctx.Tr("admin.federation.hosts.title")
 	ctx.Data["PageIsAdminFederationHosts"] = true
 	ctx.Data["SortType"] = sort
 	ctx.Data["TotalCount"] = total

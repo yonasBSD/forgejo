@@ -24,7 +24,7 @@ func FederationUsers(ctx *context.Context) {
 
 	ctx.Data["Users"] = users
 	ctx.Data["TotalCount"] = len(users)
-	ctx.Data["Title"] = "Federation users"
+	ctx.Data["Title"] = ctx.Tr("admin.federation.users.title")
 	ctx.Data["PageIsAdminFederationUsers"] = true
 
 	ctx.HTML(http.StatusOK, tplFederationUsers)
