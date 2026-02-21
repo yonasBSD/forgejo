@@ -22,6 +22,7 @@ import (
 	"forgejo.org/modules/avatar"
 	"forgejo.org/modules/httpcache"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/storage"
 	"forgejo.org/modules/util"
 	"forgejo.org/modules/web/routing"
@@ -120,14 +121,14 @@ func cachingHandler(prefix string, imgStore storage.ObjectStorage, whenMissing f
 			return
 		}
 
-		// If no size is provided, fall back on the original image
-		if size == 0 {
-			fi, err := imgStore.Stat(rPath)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-				return
-			}
+		originalFile, err := imgStore.Stat(rPath)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
 
+		// If no size is provided, or if the original file is small enough, fall back on the original image
+		if size == 0 || originalFile.Size() < setting.Avatar.MaxOriginSize {
 			reader, err := imgStore.Open(rPath)
 			if err != nil {
 				log.Error("Error whilst opening %s %s. Error: %v", prefix, rPath, err)
@@ -135,7 +136,7 @@ func cachingHandler(prefix string, imgStore storage.ObjectStorage, whenMissing f
 				return
 			}
 			defer reader.Close()
-			httpcache.ServeContentWithCacheControl(w, req, path.Base(rPath), fi.ModTime(), reader)
+			httpcache.ServeContentWithCacheControl(w, req, path.Base(rPath), originalFile.ModTime(), reader)
 		}
 
 		cachePath := fmt.Sprintf("resized/%d/%s", size, rPath)
