@@ -80,6 +80,11 @@ type Issue struct {
 	Repo        *RepositoryMeta  `json:"repository"`
 
 	PinOrder int `json:"pin_order"`
+
+	// Number of dependencies (issues that this issue depends on / is blocked by)
+	DependenciesCount int64 `json:"dependencies_count"`
+	// Number of issues that this issue blocks
+	BlocksCount int64 `json:"blocks_count"`
 }
 
 // CreateIssueOption options to create one issue

@@ -208,6 +208,16 @@ func issueDepExists(ctx context.Context, issueID, depID int64) (bool, error) {
 	return db.GetEngine(ctx).Where("(issue_id = ? AND dependency_id = ?)", issueID, depID).Exist(&IssueDependency{})
 }
 
+// CountIssueDependencies returns the number of dependencies (issues that block this issue)
+func CountIssueDependencies(ctx context.Context, issueID int64) (int64, error) {
+	return db.GetEngine(ctx).Where("issue_id = ?", issueID).Count(&IssueDependency{})
+}
+
+// CountIssueBlocks returns the number of issues that this issue blocks
+func CountIssueBlocks(ctx context.Context, issueID int64) (int64, error) {
+	return db.GetEngine(ctx).Where("dependency_id = ?", issueID).Count(&IssueDependency{})
+}
+
 // IssueNoDependenciesLeft checks if issue can be closed
 func IssueNoDependenciesLeft(ctx context.Context, issue *Issue) (bool, error) {
 	exists, err := db.GetEngine(ctx).

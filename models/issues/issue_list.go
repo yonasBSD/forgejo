@@ -526,6 +526,67 @@ func (issues IssueList) loadTotalTrackedTimes(ctx context.Context) (err error) {
 	return nil
 }
 
+func (issues IssueList) LoadDependencyCounts(ctx context.Context) error {
+	if len(issues) == 0 {
+		return nil
+	}
+
+	type depCount struct {
+		IssueID int64
+		Count   int64
+	}
+
+	issueIDs := issues.getIssueIDs()
+	depCounts := make(map[int64]int64, len(issues))
+	blockCounts := make(map[int64]int64, len(issues))
+
+	left := len(issueIDs)
+	for left > 0 {
+		limit := db.DefaultMaxInSize
+		if left < limit {
+			limit = left
+		}
+
+		// Count dependencies (issues that block each issue)
+		var deps []depCount
+		err := db.GetEngine(ctx).Table("issue_dependency").
+			Select("issue_id, count(*) as `count`").
+			In("issue_id", issueIDs[:limit]).
+			GroupBy("issue_id").
+			Find(&deps)
+		if err != nil {
+			return err
+		}
+		for _, d := range deps {
+			depCounts[d.IssueID] = d.Count
+		}
+
+		// Count blocks (issues blocked by each issue)
+		var blocks []depCount
+		err = db.GetEngine(ctx).Table("issue_dependency").
+			Select("dependency_id as issue_id, count(*) as `count`").
+			In("dependency_id", issueIDs[:limit]).
+			GroupBy("dependency_id").
+			Find(&blocks)
+		if err != nil {
+			return err
+		}
+		for _, b := range blocks {
+			blockCounts[b.IssueID] = b.Count
+		}
+
+		left -= limit
+		issueIDs = issueIDs[limit:]
+	}
+
+	for _, issue := range issues {
+		issue.DependenciesCount = depCounts[issue.ID]
+		issue.BlocksCount = blockCounts[issue.ID]
+		issue.isDependencyCountsLoaded = true
+	}
+	return nil
+}
+
 // loadAttributes loads all attributes, expect for attachments and comments
 func (issues IssueList) LoadAttributes(ctx context.Context) error {
 	if _, err := issues.LoadRepositories(ctx); err != nil {
@@ -558,6 +619,10 @@ func (issues IssueList) LoadAttributes(ctx context.Context) error {
 
 	if err := issues.loadTotalTrackedTimes(ctx); err != nil {
 		return fmt.Errorf("issue.loadAttributes: loadTotalTrackedTimes: %w", err)
+	}
+
+	if err := issues.LoadDependencyCounts(ctx); err != nil {
+		return fmt.Errorf("issue.loadAttributes: LoadDependencyCounts: %w", err)
 	}
 
 	return nil

@@ -130,6 +130,10 @@ type Issue struct {
 	TotalTrackedTime    int64                    `xorm:"-"`
 	Assignees           []*user_model.User       `xorm:"-"`
 
+	DependenciesCount        int64 `xorm:"-"`
+	BlocksCount              int64 `xorm:"-"`
+	isDependencyCountsLoaded bool  `xorm:"-"`
+
 	// IsLocked limits commenting abilities to users on an issue
 	// with write access
 	IsLocked bool `xorm:"NOT NULL DEFAULT false"`
@@ -158,6 +162,24 @@ func (issue *Issue) LoadTotalTimes(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// LoadDependencyCounts loads the dependency and blocks counts for the issue
+func (issue *Issue) LoadDependencyCounts(ctx context.Context) error {
+	if issue.isDependencyCountsLoaded {
+		return nil
+	}
+	var err error
+	issue.DependenciesCount, err = CountIssueDependencies(ctx, issue.ID)
+	if err != nil {
+		return err
+	}
+	issue.BlocksCount, err = CountIssueBlocks(ctx, issue.ID)
+	if err != nil {
+		return err
+	}
+	issue.isDependencyCountsLoaded = true
 	return nil
 }
 

@@ -886,3 +886,65 @@ func TestAPIIssueDependencyPermissions(t *testing.T) {
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusNotFound) // as otherUserRepo is a private repo we can't link a dependency to it
 }
+
+func TestAPIIssueDependencyCounts(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	token := getUserToken(t, user.Name, auth_model.AccessTokenScopeAll)
+
+	repo, _, reset := tests.CreateDeclarativeRepoWithOptions(t, user, tests.DeclarativeRepoOptions{
+		EnabledUnits: optional.Some([]unit.Type{unit.TypeIssues}),
+		UnitConfig: optional.Some(map[unit.Type]convert.Conversion{
+			unit.TypeIssues: &repo_model.IssuesConfig{
+				EnableDependencies: true,
+			},
+		}),
+	})
+	defer reset()
+
+	issueA := createIssue(t, user, repo, "Issue A", "blocks something")
+	issueB := createIssue(t, user, repo, "Issue B", "depends on A")
+	issueC := createIssue(t, user, repo, "Issue C", "no dependencies")
+
+	getIssue := func(index int64) *api.Issue {
+		t.Helper()
+		resp := MakeRequest(t, NewRequest(t, "GET",
+			fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", repo.OwnerName, repo.Name, index),
+		).AddTokenAuth(token), http.StatusOK)
+		var issue api.Issue
+		DecodeJSON(t, resp, &issue)
+		return &issue
+	}
+
+	// Before any dependencies: all counts should be 0
+	a := getIssue(issueA.Index)
+	assert.Equal(t, int64(0), a.DependenciesCount)
+	assert.Equal(t, int64(0), a.BlocksCount)
+
+	c := getIssue(issueC.Index)
+	assert.Equal(t, int64(0), c.DependenciesCount)
+	assert.Equal(t, int64(0), c.BlocksCount)
+
+	// Add A as a dependency of B (B depends on A)
+	depMeta := api.IssueMeta{Index: issueA.Index, Owner: repo.OwnerName, Name: repo.Name}
+	MakeRequest(t, NewRequestWithJSON(t, "POST",
+		fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/dependencies", repo.OwnerName, repo.Name, issueB.Index),
+		depMeta,
+	).AddTokenAuth(token), http.StatusCreated)
+
+	// Issue B: should have 1 dependency (A), 0 blocks
+	b := getIssue(issueB.Index)
+	assert.Equal(t, int64(1), b.DependenciesCount)
+	assert.Equal(t, int64(0), b.BlocksCount)
+
+	// Issue A: should have 0 dependencies, 1 block (blocks B)
+	a = getIssue(issueA.Index)
+	assert.Equal(t, int64(0), a.DependenciesCount)
+	assert.Equal(t, int64(1), a.BlocksCount)
+
+	// Issue C: still no dependencies
+	c = getIssue(issueC.Index)
+	assert.Equal(t, int64(0), c.DependenciesCount)
+	assert.Equal(t, int64(0), c.BlocksCount)
+}

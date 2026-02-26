@@ -40,21 +40,26 @@ func toIssue(ctx context.Context, doer *user_model.User, issue *issues_model.Iss
 	if err := issue.LoadAttachments(ctx); err != nil {
 		return &api.Issue{}
 	}
+	if err := issue.LoadDependencyCounts(ctx); err != nil {
+		return &api.Issue{}
+	}
 
 	apiIssue := &api.Issue{
-		ID:          issue.ID,
-		Index:       issue.Index,
-		Poster:      ToUser(ctx, issue.Poster, doer),
-		Title:       issue.Title,
-		Body:        issue.Content,
-		Attachments: toAttachments(issue.Repo, issue.Attachments, getDownloadURL),
-		Ref:         issue.Ref,
-		State:       issue.State(),
-		IsLocked:    issue.IsLocked,
-		Comments:    issue.NumComments,
-		Created:     issue.CreatedUnix.AsTime(),
-		Updated:     issue.UpdatedUnix.AsTime(),
-		PinOrder:    issue.PinOrder,
+		ID:                issue.ID,
+		Index:             issue.Index,
+		Poster:            ToUser(ctx, issue.Poster, doer),
+		Title:             issue.Title,
+		Body:              issue.Content,
+		Attachments:       toAttachments(issue.Repo, issue.Attachments, getDownloadURL),
+		Ref:               issue.Ref,
+		State:             issue.State(),
+		IsLocked:          issue.IsLocked,
+		Comments:          issue.NumComments,
+		Created:           issue.CreatedUnix.AsTime(),
+		Updated:           issue.UpdatedUnix.AsTime(),
+		PinOrder:          issue.PinOrder,
+		DependenciesCount: issue.DependenciesCount,
+		BlocksCount:       issue.BlocksCount,
 	}
 
 	if issue.Repo != nil {

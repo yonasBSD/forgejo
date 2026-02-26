@@ -26461,6 +26461,12 @@
           },
           "x-go-name": "Assignees"
         },
+        "blocks_count": {
+          "description": "Number of issues that this issue blocks",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "BlocksCount"
+        },
         "body": {
           "type": "string",
           "x-go-name": "Body"
@@ -26479,6 +26485,12 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Created"
+        },
+        "dependencies_count": {
+          "description": "Number of dependencies (issues that this issue depends on / is blocked by)",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DependenciesCount"
         },
         "due_date": {
           "type": "string",
