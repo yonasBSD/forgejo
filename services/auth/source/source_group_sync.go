@@ -6,6 +6,9 @@ package source
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"slices"
+	"strings"
 
 	"forgejo.org/models"
 	"forgejo.org/models/organization"
@@ -22,15 +25,39 @@ const (
 )
 
 // SyncGroupsToTeams maps authentication source groups to organization and team memberships
-func SyncGroupsToTeams(ctx context.Context, user *user_model.User, sourceUserGroups container.Set[string], sourceGroupTeamMapping map[string]map[string][]string, performRemoval bool) error {
+func SyncGroupsToTeams(ctx context.Context,
+	user *user_model.User,
+	sourceUserGroups container.Set[string],
+	sourceGroupTeamMapping map[string]map[string][]string,
+	performRemoval bool,
+	dynGroupMaps *DynGroupMaps,
+	dynGroupMapsRemoval bool,
+) error {
 	orgCache := make(map[string]*organization.Organization)
 	teamCache := make(map[string]*organization.Team)
-	return SyncGroupsToTeamsCached(ctx, user, sourceUserGroups, sourceGroupTeamMapping, performRemoval, orgCache, teamCache)
+
+	return SyncGroupsToTeamsCached(ctx, user,
+		sourceUserGroups, sourceGroupTeamMapping, performRemoval,
+		dynGroupMaps, dynGroupMapsRemoval,
+		orgCache, teamCache)
 }
 
 // SyncGroupsToTeamsCached maps authentication source groups to organization and team memberships
-func SyncGroupsToTeamsCached(ctx context.Context, user *user_model.User, sourceUserGroups container.Set[string], sourceGroupTeamMapping map[string]map[string][]string, performRemoval bool, orgCache map[string]*organization.Organization, teamCache map[string]*organization.Team) error {
-	membershipsToAdd, membershipsToRemove := resolveMappedMemberships(sourceUserGroups, sourceGroupTeamMapping)
+func SyncGroupsToTeamsCached(
+	ctx context.Context,
+	user *user_model.User,
+	sourceUserGroups container.Set[string],
+	sourceGroupTeamMapping map[string]map[string][]string,
+	performRemoval bool,
+	dynGroupMaps *DynGroupMaps,
+	dynGroupMapsRemoval bool,
+	orgCache map[string]*organization.Organization,
+	teamCache map[string]*organization.Team,
+) error {
+	membershipsToAdd, membershipsToRemove := resolveMappedMemberships(
+		ctx, user,
+		sourceUserGroups, sourceGroupTeamMapping,
+		dynGroupMaps, dynGroupMapsRemoval)
 
 	if performRemoval {
 		if err := syncGroupsToTeamsCached(ctx, user, membershipsToRemove, syncRemove, orgCache, teamCache); err != nil {
@@ -45,9 +72,114 @@ func SyncGroupsToTeamsCached(ctx context.Context, user *user_model.User, sourceU
 	return nil
 }
 
-func resolveMappedMemberships(sourceUserGroups container.Set[string], sourceGroupTeamMapping map[string]map[string][]string) (map[string][]string, map[string][]string) {
+// DynGroupMaps are dynamic group to organization team mappings.
+type DynGroupMaps struct {
+	regexes []*regexp.Regexp
+}
+
+// Find checks whether group matches a dynamic group to organization team
+// mapping and returns the name of the organization and of the team.
+func (d *DynGroupMaps) Find(group string) (string, string) {
+	if d == nil {
+		return "", ""
+	}
+
+	for _, r := range d.regexes {
+		// check if group matches regex
+		match := r.FindStringSubmatch(group)
+		if match == nil {
+			continue
+		}
+
+		// match, try to get org and team
+		org := ""
+		team := ""
+		for i, name := range r.SubexpNames() {
+			switch name {
+			case "org":
+				org = match[i]
+			case "team":
+				team = match[i]
+			}
+		}
+		return org, team
+	}
+
+	return "", ""
+}
+
+// Empty returns whether the dynamic group to organization team mappings
+// are empty.
+func (d *DynGroupMaps) Empty() bool {
+	return d == nil || len(d.regexes) == 0
+}
+
+// NewDynGroupMaps returns new dynamic group to organzation team mappings.
+func NewDynGroupMaps(list []string) *DynGroupMaps {
+	d := &DynGroupMaps{
+		regexes: []*regexp.Regexp{},
+	}
+	for _, s := range list {
+		// replace placeholders with regex
+		s = strings.Replace(s, "{org}", `(?<org>[\w-]+)`, 1)
+		s = strings.Replace(s, "{team}", `(?<team>[\w-]+)`, 1)
+		s = fmt.Sprintf("^%s$", s)
+
+		// create regex
+		r, err := regexp.Compile(s)
+		if err != nil {
+			log.Error("group sync: could not compile regex: %v", err)
+			continue
+		}
+		d.regexes = append(d.regexes, r)
+	}
+	return d
+}
+
+// getMembershipsToRemoveNotAdded returns memberships to remove.
+// It returns all current memberships of the user that are not added based on
+// the group team mappings in membershipsToAdd as memberships to remove.
+func getMembershipsToRemoveNotAdded(
+	ctx context.Context,
+	user *user_model.User,
+	membershipsToAdd map[string][]string,
+) map[string][]string {
+	membershipsToRemove := map[string][]string{}
+
+	// get user's organizations
+	orgs, err := organization.GetUserOrgsList(ctx, user)
+	if err != nil {
+		log.Warn("group sync: could not get organizations: %v", err)
+	}
+	for _, org := range orgs {
+		// get user's teams in organization
+		teams, err := organization.GetUserOrgTeams(ctx, org.ID, user.ID)
+		if err != nil {
+			log.Warn("group sync: could not get organization teams: %v", err)
+		}
+		for _, team := range teams {
+			// remove membership if it's not added via group team mapping
+			if !slices.Contains(membershipsToAdd[org.Name], team.LowerName) {
+				membershipsToRemove[org.Name] = append(membershipsToRemove[org.Name], team.LowerName)
+			}
+		}
+	}
+
+	return membershipsToRemove
+}
+
+func resolveMappedMemberships(
+	ctx context.Context,
+	user *user_model.User,
+	sourceUserGroups container.Set[string],
+	sourceGroupTeamMapping map[string]map[string][]string,
+	dynGroupMaps *DynGroupMaps,
+	dynGroupMapsRemoval bool,
+) (map[string][]string, map[string][]string) {
 	membershipsToAdd := map[string][]string{}
 	membershipsToRemove := map[string][]string{}
+
+	// static mappings
 	for group, memberships := range sourceGroupTeamMapping {
 		isUserInGroup := sourceUserGroups.Contains(group)
 		if isUserInGroup {
@@ -60,6 +192,24 @@ func resolveMappedMemberships(sourceUserGroups container.Set[string], sourceGrou
 			}
 		}
 	}
+
+	// dynamic mappings
+	if !dynGroupMaps.Empty() {
+		for group := range sourceUserGroups {
+			org, team := dynGroupMaps.Find(group)
+			if org == "" || team == "" {
+				// no matching mapping found or invalid mapping
+				continue
+			}
+			membershipsToAdd[org] = append(membershipsToAdd[org], team)
+		}
+	}
+
+	// dynamic removal
+	if dynGroupMapsRemoval {
+		membershipsToRemove = getMembershipsToRemoveNotAdded(ctx, user, membershipsToAdd)
+	}
+
 	return membershipsToAdd, membershipsToRemove
 }
 
