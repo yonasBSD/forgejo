@@ -20,12 +20,16 @@ const (
 	tplAccessTokenEdit base.TplName = "user/settings/access_token_edit"
 )
 
+func loadAccessTokenCreateData(ctx *context.Context) {
+	ctx.Data["AccessTokenScopePublicOnly"] = string(auth_model.AccessTokenScopePublicOnly) // note: SliceUtils.Contains won't work in the template if this is a `auth_model.AccessTokenScope`, so it's cast to a string here
+}
+
 // Applications render manage access token page
 func AccessTokenCreate(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("settings.applications")
 	ctx.Data["PageIsSettingsApplications"] = true
 
-	loadApplicationsData(ctx)
+	loadAccessTokenCreateData(ctx)
 
 	ctx.HTML(http.StatusOK, tplAccessTokenEdit)
 }
@@ -37,9 +41,8 @@ func AccessTokenCreatePost(ctx *context.Context) {
 	ctx.Data["PageIsSettingsApplications"] = true
 
 	if ctx.HasError() {
-		loadApplicationsData(ctx)
-
-		ctx.HTML(http.StatusOK, tplSettingsApplications)
+		loadAccessTokenCreateData(ctx)
+		ctx.HTML(http.StatusOK, tplAccessTokenEdit)
 		return
 	}
 
@@ -49,7 +52,7 @@ func AccessTokenCreatePost(ctx *context.Context) {
 		return
 	}
 	if !scope.HasPermissionScope() {
-		loadApplicationsData(ctx)
+		loadAccessTokenCreateData(ctx)
 		ctx.RenderWithErr(ctx.Tr("settings.at_least_one_permission"), tplAccessTokenEdit, form)
 		return
 	}
@@ -69,8 +72,8 @@ func AccessTokenCreatePost(ctx *context.Context) {
 		return
 	}
 	if exist {
-		ctx.Flash.Error(ctx.Tr("settings.generate_token_name_duplicate", t.Name))
-		ctx.Redirect(setting.AppSubURL + "/user/settings/applications")
+		loadAccessTokenCreateData(ctx)
+		ctx.RenderWithErr(ctx.Tr("settings.generate_token_name_duplicate", t.Name), tplAccessTokenEdit, form)
 		return
 	}
 

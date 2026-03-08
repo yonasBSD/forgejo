@@ -16,11 +16,11 @@
 				<div class="field">
 					<label>{{ctx.Locale.Tr "settings.repo_and_org_access"}}</label>
 					<label class="tw-cursor-pointer">
-						<input class="enable-system tw-mt-1 tw-mr-1" type="radio" name="scope" value="{{$.AccessTokenScopePublicOnly}}">
+						<input class="enable-system tw-mt-1 tw-mr-1" type="radio" name="scope" value="{{$.AccessTokenScopePublicOnly}}" {{if (SliceUtils.Contains .scope $.AccessTokenScopePublicOnly)}} checked {{end}}>
 						{{ctx.Locale.Tr "settings.permissions_public_only"}}
 					</label>
 					<label class="tw-cursor-pointer">
-						<input class="enable-system tw-mt-1 tw-mr-1" type="radio" name="scope" value="" checked>
+						<input class="enable-system tw-mt-1 tw-mr-1" type="radio" name="scope" value="" {{if (not (SliceUtils.Contains .scope $.AccessTokenScopePublicOnly))}} checked {{end}}>
 						{{ctx.Locale.Tr "settings.permissions_access_all"}}
 					</label>
 				</div>

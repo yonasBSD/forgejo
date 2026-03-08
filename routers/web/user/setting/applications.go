@@ -36,7 +36,6 @@ type TokenWithResources struct {
 }
 
 func loadApplicationsData(ctx *context.Context) {
-	ctx.Data["AccessTokenScopePublicOnly"] = auth_model.AccessTokenScopePublicOnly
 	tokens, err := db.Find[auth_model.AccessToken](ctx, auth_model.ListAccessTokensOptions{UserID: ctx.Doer.ID})
 	if err != nil {
 		ctx.ServerError("ListAccessTokens", err)
