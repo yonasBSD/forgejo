@@ -9,6 +9,7 @@ import (
 
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/modules/base"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/web"
 	"forgejo.org/services/context"
@@ -80,4 +81,32 @@ func AccessTokenCreatePost(ctx *context.Context) {
 	ctx.Flash.Info(t.Token)
 
 	ctx.Redirect(setting.AppSubURL + "/user/settings/applications")
+}
+
+// DeleteAccessToken response for delete user access token
+func DeleteAccessToken(ctx *context.Context) {
+	if err := auth_model.DeleteAccessTokenByID(ctx, ctx.FormInt64("id"), ctx.Doer.ID); err != nil {
+		ctx.Flash.Error("DeleteAccessTokenByID: " + err.Error())
+	} else {
+		ctx.Flash.Success(ctx.Tr("settings.delete_token_success"))
+	}
+
+	ctx.JSONRedirect(setting.AppSubURL + "/user/settings/applications")
+}
+
+// RegenerateAccessToken response for regenerating user access token
+func RegenerateAccessToken(ctx *context.Context) {
+	if t, err := auth_model.RegenerateAccessTokenByID(ctx, ctx.FormInt64("id"), ctx.Doer.ID); err != nil {
+		if auth_model.IsErrAccessTokenNotExist(err) {
+			ctx.Flash.Error(ctx.Tr("error.not_found"))
+		} else {
+			ctx.Flash.Error(ctx.Tr("error.server_internal"))
+			log.Error("DeleteAccessTokenByID", err)
+		}
+	} else {
+		ctx.Flash.Success(ctx.Tr("settings.regenerate_token_success"))
+		ctx.Flash.Info(t.Token)
+	}
+
+	ctx.JSONRedirect(setting.AppSubURL + "/user/settings/applications")
 }

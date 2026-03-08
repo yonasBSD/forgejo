@@ -12,7 +12,6 @@ import (
 	access_model "forgejo.org/models/perm/access"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/modules/base"
-	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/services/context"
 )
@@ -29,34 +28,6 @@ func Applications(ctx *context.Context) {
 	loadApplicationsData(ctx)
 
 	ctx.HTML(http.StatusOK, tplSettingsApplications)
-}
-
-// DeleteApplication response for delete user access token
-func DeleteApplication(ctx *context.Context) {
-	if err := auth_model.DeleteAccessTokenByID(ctx, ctx.FormInt64("id"), ctx.Doer.ID); err != nil {
-		ctx.Flash.Error("DeleteAccessTokenByID: " + err.Error())
-	} else {
-		ctx.Flash.Success(ctx.Tr("settings.delete_token_success"))
-	}
-
-	ctx.JSONRedirect(setting.AppSubURL + "/user/settings/applications")
-}
-
-// RegenerateApplication response for regenerating user access token
-func RegenerateApplication(ctx *context.Context) {
-	if t, err := auth_model.RegenerateAccessTokenByID(ctx, ctx.FormInt64("id"), ctx.Doer.ID); err != nil {
-		if auth_model.IsErrAccessTokenNotExist(err) {
-			ctx.Flash.Error(ctx.Tr("error.not_found"))
-		} else {
-			ctx.Flash.Error(ctx.Tr("error.server_internal"))
-			log.Error("DeleteAccessTokenByID", err)
-		}
-	} else {
-		ctx.Flash.Success(ctx.Tr("settings.regenerate_token_success"))
-		ctx.Flash.Info(t.Token)
-	}
-
-	ctx.JSONRedirect(setting.AppSubURL + "/user/settings/applications")
 }
 
 type TokenWithResources struct {
