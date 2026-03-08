@@ -133,7 +133,6 @@ test('User: Add access token', async ({browser}, workerInfo) => {
   await page.locator('#scoped-access-submit').click();
   await page.locator('#name:invalid').isVisible();
 
-  await page.locator('details.optional.field').click();
   await page.selectOption('#access-token-scope-activitypub', 'read:activitypub');
   await page.locator('#scoped-access-submit').click();
 
