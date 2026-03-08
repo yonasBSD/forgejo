@@ -128,6 +128,7 @@ test('User: Canceling adding GPG key clears input', async ({browser}, workerInfo
 test('User: Add access token', async ({browser}, workerInfo) => {
   const page = await login({browser}, workerInfo);
   await page.goto('/user/settings/applications');
+  await page.getByRole('link', {name: 'New access token'}).click();
 
   await page.locator('#scoped-access-submit').click();
   await page.locator('#name:invalid').isVisible();

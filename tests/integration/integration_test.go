@@ -492,7 +492,7 @@ func createApplicationSettingsToken(t testing.TB, session *TestSession, name str
 	for _, scope := range scopes {
 		urlValues.Add("scope", string(scope))
 	}
-	req := NewRequestWithURLValues(t, "POST", "/user/settings/applications", urlValues)
+	req := NewRequestWithURLValues(t, "POST", "/user/settings/applications/tokens/new", urlValues)
 	resp := session.MakeRequest(t, req, http.StatusSeeOther)
 
 	// Log the flash values on failure
