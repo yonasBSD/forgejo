@@ -163,5 +163,5 @@ test('User: Add access token validation error', async ({browser}, workerInfo) =>
   await page.getByText('has been used as an application name already.').isVisible();
   // validate that selected options (public-only, activitypub) are still selected.
   await expect(page.getByRole('radio', {name: 'Public only'})).toBeChecked();
-  // await expect(page.getByRole('combobox', {name: 'activitypub'})).toHaveValue('read:activitypub'); // FIXME: fixed in next commit
+  await expect(page.getByRole('combobox', {name: 'activitypub'})).toHaveValue('read:activitypub');
 });

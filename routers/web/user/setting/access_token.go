@@ -6,6 +6,8 @@ package setting
 
 import (
 	"net/http"
+	"slices"
+	"strings"
 
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/modules/base"
@@ -22,6 +24,22 @@ const (
 
 func loadAccessTokenCreateData(ctx *context.Context) {
 	ctx.Data["AccessTokenScopePublicOnly"] = string(auth_model.AccessTokenScopePublicOnly) // note: SliceUtils.Contains won't work in the template if this is a `auth_model.AccessTokenScope`, so it's cast to a string here
+
+	categories := []string{
+		"activitypub",
+		"issue",
+		"misc",
+		"notification",
+		"organization",
+		"package",
+		"repository",
+		"user",
+	}
+	if ctx.Doer.IsAdmin {
+		categories = append(categories, "admin")
+	}
+	slices.SortFunc(categories, strings.Compare)
+	ctx.Data["Categories"] = categories
 }
 
 // Applications render manage access token page
