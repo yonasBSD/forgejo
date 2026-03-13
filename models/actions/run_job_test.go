@@ -301,3 +301,14 @@ func TestRunHasOtherJobs(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, has)
 }
+
+func TestIsRequestedByRunner(t *testing.T) {
+	job := &ActionRunJob{ID: 422}
+
+	sameID := int64(422)
+	differentID := int64(509)
+
+	assert.True(t, job.IsRequestedByRunner(nil))
+	assert.True(t, job.IsRequestedByRunner(&sameID))
+	assert.False(t, job.IsRequestedByRunner(&differentID))
+}

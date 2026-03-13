@@ -191,3 +191,88 @@ jobs:
 		assert.NotEqual(t, task1.Id, task2.Id)
 	})
 }
+
+func TestActionFetchTask_RequestedJob(t *testing.T) {
+	if !setting.Database.Type.IsSQLite3() {
+		// mock repo runner only supported on SQLite testing
+		t.Skip()
+	}
+
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-many-tasks",
+			[]unit_model.Type{unit_model.TypeActions}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation: "create",
+					TreePath:  ".forgejo/workflows/simple.yml",
+					ContentReader: strings.NewReader(`
+on:
+  push:
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo OK
+  job2:
+    runs-on: debian
+    steps:
+      - run: echo OK
+  job3:
+    runs-on: debian
+    steps:
+      - run: echo OK
+`),
+				},
+			},
+		)
+		defer f()
+
+		debianRunner := newMockRunner()
+		debianRunner.registerAsRepoRunner(t, user2.Name, repo.Name, "debian-runner", []string{"debian"})
+
+		ubuntuRunner := newMockRunner()
+		ubuntuRunner.registerAsRepoRunner(t, user2.Name, repo.Name, "ubuntu-runner", []string{"ubuntu-latest"})
+
+		job1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job1"})
+		_ = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job2"})
+		job3 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job3"})
+
+		nonExistingJobID := job3.ID + 1
+
+		unittest.AssertNotExistsBean(t, &actions_model.ActionRunJob{ID: nonExistingJobID})
+
+		// The runner's labels do not match. Therefore, it does not receive the job despite explicitly asking for it.
+		task := debianRunner.maybeFetchTaskWithRequestedJob(t, &job1.ID)
+		require.Nil(t, task)
+
+		// If the requested job does not exist or is not ready, the runner does not receive any job.
+		task = ubuntuRunner.maybeFetchTaskWithRequestedJob(t, &nonExistingJobID)
+		require.Nil(t, task)
+
+		ubuntuRunner.lastTasksVersion = 0
+		debianRunner.lastTasksVersion = 0
+
+		// The next job waiting in line for the debian-runner is job2. But because the runner explicitly asks for job3,
+		// it receives job3 instead.
+		task = debianRunner.maybeFetchTaskWithRequestedJob(t, &job3.ID)
+		require.NotNil(t, task)
+		assert.Contains(t, string(task.GetWorkflowPayload()), "name: job3")
+
+		ubuntuRunner.lastTasksVersion = 0
+		debianRunner.lastTasksVersion = 0
+
+		// Without explicitly asking for a job, the runners receives the next job waiting in line.
+		// The next job waiting in line for the debian-runner is job2. But because the runner explicitly asks for job3,
+		// it receives job3 instead.
+		task = debianRunner.maybeFetchTaskWithRequestedJob(t, nil)
+		require.NotNil(t, task)
+		assert.Contains(t, string(task.GetWorkflowPayload()), "name: job2")
+
+		task = ubuntuRunner.maybeFetchTaskWithRequestedJob(t, nil)
+		require.NotNil(t, task)
+		assert.Contains(t, string(task.GetWorkflowPayload()), "name: job1")
+	})
+}

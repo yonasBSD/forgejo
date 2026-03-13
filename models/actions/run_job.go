@@ -108,6 +108,12 @@ func (job *ActionRunJob) LoadAttributes(ctx context.Context) error {
 	return job.Run.LoadAttributes(ctx)
 }
 
+// IsRequestedByRunner returns true if this ActionRunJob was explicitly requested by the runner or if the runner
+// expressed no preference. Returns false in all other cases.
+func (job *ActionRunJob) IsRequestedByRunner(requestedJob *int64) bool {
+	return requestedJob == nil || job.ID == *requestedJob
+}
+
 func (job *ActionRunJob) ItRunsOn(labels []string) bool {
 	if len(labels) == 0 || len(job.RunsOn) == 0 {
 		return false

@@ -184,16 +184,21 @@ func (s *Service) FetchTask(
 		// if the task version in request is not equal to the version in db,
 		// it means there may still be some tasks not be assigned.
 		// try to pick a task for the runner that send the request.
-		if t, ok, err := actions_service.PickTask(ctx, runner, requestKey); err != nil {
+		if t, ok, err := actions_service.PickTask(ctx, runner, requestKey, req.Msg.RequestedJob); err != nil {
 			log.Error("pick task failed: %v", err)
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("pick task: %w", err))
 		} else if ok {
 			task = t
 
 			taskCapacity := req.Msg.GetTaskCapacity()
+			if req.Msg.RequestedJob != nil {
+				// The presence of a requested job implies a task capacity of 1.
+				// https://code.forgejo.org/forgejo/forgejo-actions-feature-requests/issues/76
+				taskCapacity = 1
+			}
 			taskCapacity-- // remove 1 for the task already fetched as `task`
 			for taskCapacity > 0 {
-				if t, ok, err := actions_service.PickTask(ctx, runner, requestKey); err != nil {
+				if t, ok, err := actions_service.PickTask(ctx, runner, requestKey, nil); err != nil {
 					// Don't return an error to the client/runner -- we've already assigned one-or-more tasks to the runner
 					// and if we don't return them, they can't be picked up by another runner and will become zombie tasks.
 					// Log the error and return the tasks we've assigned so far.

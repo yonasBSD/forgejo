@@ -150,6 +150,16 @@ func (r *mockRunner) maybeFetchTask(t *testing.T) *runnerv1.Task {
 	return resp.Msg.Task
 }
 
+func (r *mockRunner) maybeFetchTaskWithRequestedJob(t *testing.T, jobID *int64) *runnerv1.Task {
+	resp, err := r.client.runnerServiceClient.FetchTask(t.Context(), connect.NewRequest(&runnerv1.FetchTaskRequest{
+		TasksVersion: r.lastTasksVersion,
+		RequestedJob: jobID,
+	}))
+	require.NoError(t, err)
+	r.lastTasksVersion = resp.Msg.TasksVersion
+	return resp.Msg.Task
+}
+
 func (r *mockRunner) fetchTask(t *testing.T, timeout ...time.Duration) *runnerv1.Task {
 	fetchTimeout := 10 * time.Second
 	if len(timeout) > 0 {

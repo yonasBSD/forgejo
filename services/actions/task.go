@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func PickTask(ctx context.Context, runner *actions_model.ActionRunner, requestKey *string) (*runnerv1.Task, bool, error) {
+func PickTask(ctx context.Context, runner *actions_model.ActionRunner, requestKey *string, requestedJob *int64) (*runnerv1.Task, bool, error) {
 	var (
 		task *runnerv1.Task
 		job  *actions_model.ActionRunJob
@@ -40,7 +40,7 @@ func PickTask(ctx context.Context, runner *actions_model.ActionRunner, requestKe
 	}
 
 	if err := db.WithTx(ctx, func(ctx context.Context) error {
-		t, ok, err := actions_model.CreateTaskForRunner(ctx, runner, requestKey)
+		t, ok, err := actions_model.CreateTaskForRunner(ctx, runner, requestKey, requestedJob)
 		if err != nil {
 			return fmt.Errorf("CreateTaskForRunner: %w", err)
 		}
