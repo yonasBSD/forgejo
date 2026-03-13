@@ -49,7 +49,9 @@ func AccessTokenCreatePost(ctx *context.Context) {
 		return
 	}
 	if !scope.HasPermissionScope() {
-		ctx.Flash.Error(ctx.Tr("settings.at_least_one_permission"), true)
+		loadApplicationsData(ctx)
+		ctx.RenderWithErr(ctx.Tr("settings.at_least_one_permission"), tplAccessTokenEdit, form)
+		return
 	}
 	t := &auth_model.AccessToken{
 		UID:   ctx.Doer.ID,
