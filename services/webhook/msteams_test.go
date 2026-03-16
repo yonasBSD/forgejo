@@ -4,6 +4,8 @@
 package webhook
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	webhook_model "forgejo.org/models/webhook"
@@ -17,30 +19,61 @@ import (
 
 func TestMSTeamsPayload(t *testing.T) {
 	mc := msteamsConvertor{}
+
+	// helper to find text within the adaptive card body
+	findTextInBody := func(pl MSTeamsPayload, substr string) bool {
+		for _, c := range pl.Body {
+			for _, it := range c.Items {
+				switch v := it.(type) {
+				case MSTeamsTextBlock:
+					if strings.Contains(v.Text, substr) {
+						return true
+					}
+				case MSTeamsColumnSet:
+					for _, col := range v.Columns {
+						for _, it2 := range col.Items {
+							if tb, ok := it2.(MSTeamsTextBlock); ok && strings.Contains(tb.Text, substr) {
+								return true
+							}
+						}
+					}
+				case MSTeamsContainer:
+					for _, it2 := range v.Items {
+						if tb, ok := it2.(MSTeamsTextBlock); ok && strings.Contains(tb.Text, substr) {
+							return true
+						}
+					}
+				}
+			}
+		}
+		return false
+	}
+
 	t.Run("Create", func(t *testing.T) {
 		p := createTestPayload()
 
 		pl, err := mc.Create(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] branch test created", pl.Title)
-		assert.Equal(t, "[test/repo] branch test created", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repo.FullName, fact.Value)
-			} else if fact.Name == "branch:" {
-				assert.Equal(t, "test", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.PotentialAction[0].Targets[0].URI)
+		// header
+		require.GreaterOrEqual(t, len(pl.Body), 2)
+		header := pl.Body[0]
+		hb, ok := header.Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repo.FullName, p.Repo.HTMLURL), hb.Text)
+
+		// sender contains display name and action text
+		sender := pl.Body[1]
+		cs, ok := sender.Items[0].(MSTeamsColumnSet)
+		require.True(t, ok)
+		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.True(t, strings.Contains(colText.Text, "**user1**"))
+		assert.True(t, strings.Contains(colText.Text, "created a new branch 'test'"))
+
+		// action button should point to branch
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.Actions[0].URL)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
@@ -49,24 +82,19 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Delete(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] branch test deleted", pl.Title)
-		assert.Equal(t, "[test/repo] branch test deleted", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repo.FullName, fact.Value)
-			} else if fact.Name == "branch:" {
-				assert.Equal(t, "test", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.PotentialAction[0].Targets[0].URI)
+		hb, ok := pl.Body[0].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repo.FullName, p.Repo.HTMLURL), hb.Text)
+
+		sender := pl.Body[1]
+		cs, ok := sender.Items[0].(MSTeamsColumnSet)
+		require.True(t, ok)
+		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.True(t, strings.Contains(colText.Text, "deleted branch 'test'"))
+
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.Actions[0].URL)
 	})
 
 	t.Run("Fork", func(t *testing.T) {
@@ -75,24 +103,18 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Fork(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "test/repo2 is forked to test/repo", pl.Title)
-		assert.Equal(t, "test/repo2 is forked to test/repo", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repo.FullName, fact.Value)
-			} else if fact.Name == "Forkee:" {
-				assert.Equal(t, p.Forkee.FullName, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo", pl.PotentialAction[0].Targets[0].URI)
+		hb, ok := pl.Body[0].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repo.FullName, p.Repo.HTMLURL), hb.Text)
+
+		cs, ok := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		require.True(t, ok)
+		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.True(t, strings.Contains(colText.Text, "forked"))
+
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo", pl.Actions[0].URL)
 	})
 
 	t.Run("Push", func(t *testing.T) {
@@ -101,24 +123,22 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Push(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo:test] 2 new commits", pl.Title)
-		assert.Equal(t, "[test/repo:test] 2 new commits", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "[2020558](http://localhost:3000/test/repo/commit/2020558fe2e34debb818a514715839cabd25e778) commit message - user1\n\n[2020558](http://localhost:3000/test/repo/commit/2020558fe2e34debb818a514715839cabd25e778) commit message - user1", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repo.FullName, fact.Value)
-			} else if fact.Name == "Commit count:" {
-				assert.Equal(t, "2", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.PotentialAction[0].Targets[0].URI)
+		// header + sender
+		hb, ok := pl.Body[0].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repo.FullName, p.Repo.HTMLURL), hb.Text)
+		cs, ok := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		require.True(t, ok)
+		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		require.True(t, ok)
+		assert.True(t, strings.Contains(colText.Text, "pushed 2 new commits to test"))
+
+		// commit details present in body
+		require.True(t, findTextInBody(pl, "2020558"))
+		require.True(t, findTextInBody(pl, "commit message"))
+
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.Actions[0].URL)
 	})
 
 	t.Run("Issue", func(t *testing.T) {
@@ -128,47 +148,27 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Issue(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] Issue opened: #2 crash", pl.Title)
-		assert.Equal(t, "[test/repo] Issue opened: #2 crash", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "issue body", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Issue #:" {
-				assert.Equal(t, "2", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/issues/2", pl.PotentialAction[0].Targets[0].URI)
+		// header and sender
+		hb, _ := pl.Body[0].Items[0].(MSTeamsTextBlock)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL), hb.Text)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "opened issue #2"))
+
+		// issue title and body present
+		assert.True(t, findTextInBody(pl, "Issue #2: crash"))
+		assert.True(t, findTextInBody(pl, "issue body"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/issues/2", pl.Actions[0].URL)
 
 		p.Action = api.HookIssueClosed
 		pl, err = mc.Issue(p)
 		require.NoError(t, err)
-
-		assert.Equal(t, "[test/repo] Issue closed: #2 crash", pl.Title)
-		assert.Equal(t, "[test/repo] Issue closed: #2 crash", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Issue #:" {
-				assert.Equal(t, "2", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/issues/2", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "closed issue #2"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/issues/2", pl.Actions[0].URL)
 	})
 
 	t.Run("IssueComment", func(t *testing.T) {
@@ -177,24 +177,12 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.IssueComment(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] New comment on issue #2 crash", pl.Title)
-		assert.Equal(t, "[test/repo] New comment on issue #2 crash", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "more info needed", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Issue #:" {
-				assert.Equal(t, "2", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/issues/2#issuecomment-4", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "commented on issue #2"))
+		assert.True(t, findTextInBody(pl, "more info needed"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/issues/2#issuecomment-4", pl.Actions[0].URL)
 	})
 
 	t.Run("PullRequest", func(t *testing.T) {
@@ -203,24 +191,13 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.PullRequest(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] Pull request opened: #12 Fix bug", pl.Title)
-		assert.Equal(t, "[test/repo] Pull request opened: #12 Fix bug", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "fixes bug #2", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Pull request #:" {
-				assert.Equal(t, "12", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "opened new pull request #12"))
+		assert.True(t, findTextInBody(pl, "Pull request #12: Fix bug"))
+		assert.True(t, findTextInBody(pl, "fixes bug #2"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12", pl.Actions[0].URL)
 	})
 
 	t.Run("PullRequestComment", func(t *testing.T) {
@@ -229,24 +206,12 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.IssueComment(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] New comment on pull request #12 Fix bug", pl.Title)
-		assert.Equal(t, "[test/repo] New comment on pull request #12 Fix bug", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "changes requested", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Issue #:" {
-				assert.Equal(t, "12", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12#issuecomment-4", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "commented on pull request #12"))
+		assert.True(t, findTextInBody(pl, "changes requested"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12#issuecomment-4", pl.Actions[0].URL)
 	})
 
 	t.Run("Review", func(t *testing.T) {
@@ -256,24 +221,10 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Review(p, webhook_module.HookEventPullRequestReviewApproved)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] Pull request review approved: #12 Fix bug", pl.Title)
-		assert.Equal(t, "[test/repo] Pull request review approved: #12 Fix bug", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Equal(t, "good job", pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Pull request #:" {
-				assert.Equal(t, "12", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12", pl.PotentialAction[0].Targets[0].URI)
+		// review content should be present
+		assert.True(t, findTextInBody(pl, "good job"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12", pl.Actions[0].URL)
 	})
 
 	t.Run("Repository", func(t *testing.T) {
@@ -282,22 +233,10 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Repository(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] Repository created", pl.Title)
-		assert.Equal(t, "[test/repo] Repository created", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 1)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo", pl.PotentialAction[0].Targets[0].URI)
+		hb, _ := pl.Body[0].Items[0].(MSTeamsTextBlock)
+		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL), hb.Text)
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo", pl.Actions[0].URL)
 	})
 
 	t.Run("Package", func(t *testing.T) {
@@ -306,22 +245,11 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Package(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "Package created: GiteaContainer:latest", pl.Title)
-		assert.Equal(t, "Package created: GiteaContainer:latest", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 1)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Package:" {
-				assert.Equal(t, p.Package.Name, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/user1/-/packages/container/GiteaContainer/latest", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "created package"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/user1/-/packages/container/GiteaContainer/latest", pl.Actions[0].URL)
 	})
 
 	t.Run("Wiki", func(t *testing.T) {
@@ -331,64 +259,29 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Wiki(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] New wiki page 'index' (Wiki change comment)", pl.Title)
-		assert.Equal(t, "[test/repo] New wiki page 'index' (Wiki change comment)", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "created new wiki page 'index'"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 
 		p.Action = api.HookWikiEdited
 		pl, err = mc.Wiki(p)
 		require.NoError(t, err)
-
-		assert.Equal(t, "[test/repo] Wiki page 'index' edited (Wiki change comment)", pl.Title)
-		assert.Equal(t, "[test/repo] Wiki page 'index' edited (Wiki change comment)", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "edited wiki page 'index'"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 
 		p.Action = api.HookWikiDeleted
 		pl, err = mc.Wiki(p)
 		require.NoError(t, err)
-
-		assert.Equal(t, "[test/repo] Wiki page 'index' deleted", pl.Title)
-		assert.Equal(t, "[test/repo] Wiki page 'index' deleted", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "deleted wiki page 'index'"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 	})
 
 	t.Run("Release", func(t *testing.T) {
@@ -397,24 +290,11 @@ func TestMSTeamsPayload(t *testing.T) {
 		pl, err := mc.Release(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, "[test/repo] Release created: v1.0", pl.Title)
-		assert.Equal(t, "[test/repo] Release created: v1.0", pl.Summary)
-		assert.Len(t, pl.Sections, 1)
-		assert.Equal(t, "user1", pl.Sections[0].ActivitySubtitle)
-		assert.Empty(t, pl.Sections[0].Text)
-		assert.Len(t, pl.Sections[0].Facts, 2)
-		for _, fact := range pl.Sections[0].Facts {
-			if fact.Name == "Repository:" {
-				assert.Equal(t, p.Repository.FullName, fact.Value)
-			} else if fact.Name == "Tag:" {
-				assert.Equal(t, "v1.0", fact.Value)
-			} else {
-				t.Fail()
-			}
-		}
-		assert.Len(t, pl.PotentialAction, 1)
-		assert.Len(t, pl.PotentialAction[0].Targets, 1)
-		assert.Equal(t, "http://localhost:3000/test/repo/releases/tag/v1.0", pl.PotentialAction[0].Targets[0].URI)
+		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
+		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
+		assert.True(t, strings.Contains(colText.Text, "published release v1.0"))
+		require.Len(t, pl.Actions, 1)
+		assert.Equal(t, "http://localhost:3000/test/repo/releases/tag/v1.0", pl.Actions[0].URL)
 	})
 }
 
@@ -450,5 +330,15 @@ func TestMSTeamsJSONPayload(t *testing.T) {
 	var body MSTeamsPayload
 	err = json.NewDecoder(req.Body).Decode(&body)
 	require.NoError(t, err)
-	assert.Equal(t, "[test/repo:test] 2 new commits", body.Summary)
+	// ensure commit info is present in resulting adaptive card
+	assert.True(t, func() bool {
+		for _, c := range body.Body {
+			for _, it := range c.Items {
+				if tb, ok := it.(MSTeamsTextBlock); ok && strings.Contains(tb.Text, "commit message") {
+					return true
+				}
+			}
+		}
+		return false
+	}())
 }
