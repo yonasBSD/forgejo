@@ -68,8 +68,8 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.True(t, ok)
 		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
 		require.True(t, ok)
-		assert.True(t, strings.Contains(colText.Text, "**user1**"))
-		assert.True(t, strings.Contains(colText.Text, "created a new branch 'test'"))
+		assert.Contains(t, colText.Text, "**user1**")
+		assert.Contains(t, colText.Text, "created a new branch 'test'")
 
 		// action button should point to branch
 		require.Len(t, pl.Actions, 1)
@@ -91,7 +91,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.True(t, ok)
 		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
 		require.True(t, ok)
-		assert.True(t, strings.Contains(colText.Text, "deleted branch 'test'"))
+		assert.Contains(t, colText.Text, "deleted branch 'test'")
 
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/src/test", pl.Actions[0].URL)
@@ -111,7 +111,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.True(t, ok)
 		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
 		require.True(t, ok)
-		assert.True(t, strings.Contains(colText.Text, "forked"))
+		assert.Contains(t, colText.Text, "forked")
 
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo", pl.Actions[0].URL)
@@ -131,7 +131,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.True(t, ok)
 		colText, ok := cs.Columns[1].Items[0].(MSTeamsTextBlock)
 		require.True(t, ok)
-		assert.True(t, strings.Contains(colText.Text, "pushed 2 new commits to test"))
+		assert.Contains(t, colText.Text, "pushed 2 new commits to test")
 
 		// commit details present in body
 		require.True(t, findTextInBody(pl, "2020558"))
@@ -153,7 +153,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("💬 Update | [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL), hb.Text)
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "opened issue #2"))
+		assert.Contains(t, colText.Text, "opened issue #2")
 
 		// issue title and body present
 		assert.True(t, findTextInBody(pl, "Issue #2: crash"))
@@ -166,7 +166,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.NoError(t, err)
 		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "closed issue #2"))
+		assert.Contains(t, colText.Text, "closed issue #2")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/issues/2", pl.Actions[0].URL)
 	})
@@ -179,7 +179,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "commented on issue #2"))
+		assert.Contains(t, colText.Text, "commented on issue #2")
 		assert.True(t, findTextInBody(pl, "more info needed"))
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/issues/2#issuecomment-4", pl.Actions[0].URL)
@@ -193,7 +193,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "opened new pull request #12"))
+		assert.Contains(t, colText.Text, "opened new pull request #12")
 		assert.True(t, findTextInBody(pl, "Pull request #12: Fix bug"))
 		assert.True(t, findTextInBody(pl, "fixes bug #2"))
 		require.Len(t, pl.Actions, 1)
@@ -208,7 +208,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "commented on pull request #12"))
+		assert.Contains(t, colText.Text, "commented on pull request #12")
 		assert.True(t, findTextInBody(pl, "changes requested"))
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12#issuecomment-4", pl.Actions[0].URL)
@@ -247,7 +247,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "created package"))
+		assert.Contains(t, colText.Text, "created package")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/user1/-/packages/container/GiteaContainer/latest", pl.Actions[0].URL)
 	})
@@ -261,7 +261,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "created new wiki page 'index'"))
+		assert.Contains(t, colText.Text, "created new wiki page 'index'")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 
@@ -270,7 +270,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.NoError(t, err)
 		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "edited wiki page 'index'"))
+		assert.Contains(t, colText.Text, "edited wiki page 'index'")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 
@@ -279,7 +279,7 @@ func TestMSTeamsPayload(t *testing.T) {
 		require.NoError(t, err)
 		cs, _ = pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ = cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "deleted wiki page 'index'"))
+		assert.Contains(t, colText.Text, "deleted wiki page 'index'")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/wiki/index", pl.Actions[0].URL)
 	})
@@ -292,7 +292,7 @@ func TestMSTeamsPayload(t *testing.T) {
 
 		cs, _ := pl.Body[1].Items[0].(MSTeamsColumnSet)
 		colText, _ := cs.Columns[1].Items[0].(MSTeamsTextBlock)
-		assert.True(t, strings.Contains(colText.Text, "published release v1.0"))
+		assert.Contains(t, colText.Text, "published release v1.0")
 		require.Len(t, pl.Actions, 1)
 		assert.Equal(t, "http://localhost:3000/test/repo/releases/tag/v1.0", pl.Actions[0].URL)
 	})

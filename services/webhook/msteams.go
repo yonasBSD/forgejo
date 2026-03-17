@@ -138,6 +138,7 @@ type (
 		MsTeams MSTeamsOptions     `json:"msteams"`           // Optional: settings for Microsoft Teams
 		Body    []MSTeamsContainer `json:"body"`              // Array of containers (sections)
 		Actions []MSTeamsAction    `json:"actions,omitempty"` // Optional array of actions
+		Style   string             `json:"style,omitempty"`   // color theme of the card, e.g. "default", "emphasis", "accent", "good", "attention", "warning"
 	}
 )
 
@@ -536,7 +537,6 @@ func (m msteamsConvertor) Review(p *api.PullRequestPayload, event webhook_module
 		}
 
 		actionTitle = fmt.Sprintf("reviewed %s on pull request #%d", action, p.Index)
-		//p.PullRequest.Title
 
 		switch event {
 		case webhook_module.HookEventPullRequestReviewApproved:
@@ -633,7 +633,7 @@ func (m msteamsConvertor) Wiki(p *api.WikiPayload) (MSTeamsPayload, error) {
 	}
 
 	if p.Action != api.HookWikiDeleted && p.Comment != "" {
-		actionTitle += fmt.Sprintf(" with comment")
+		actionTitle += " with comment"
 		bodySections[0].Items = append(bodySections[0].Items, MSTeamsTextBlock{
 			Type: "TextBlock",
 			Text: "Comment: " + p.Comment,
@@ -805,6 +805,7 @@ func createMSTeamsPayload(r *api.Repository, s *api.User, actionTitle string, bo
 		},
 		Body:    body,
 		Actions: []MSTeamsAction{actionButton},
+		Style:   defaultStyle,
 	}
 }
 
