@@ -725,22 +725,36 @@ func (m msteamsConvertor) Action(p *api.ActionPayload) (MSTeamsPayload, error) {
 }
 
 func createMSTeamsPayload(r *api.Repository, s *api.User, actionTitle string, bodySections []MSTeamsContainer, actionTarget string) MSTeamsPayload {
-	// determine displayed username
+	// Safely handle nil sender/repository
 	var displayName string
-	if s.FullName != "" {
-		// bold the full name if it's set
-		displayName = fmt.Sprintf("**%s** (%s)", s.FullName, s.UserName)
+	var senderAvatar, senderHTML string
+	if s != nil {
+		senderAvatar = s.AvatarURL
+		senderHTML = s.HTMLURL
+		if s.FullName != "" {
+			displayName = fmt.Sprintf("**%s** (%s)", s.FullName, s.UserName)
+		} else {
+			displayName = fmt.Sprintf("**%s**", s.UserName)
+		}
 	} else {
-		// otherwise just use the username
-		displayName = fmt.Sprintf("**%s**", s.UserName)
+		// fallback values when sender is nil
+		senderAvatar = ""
+		senderHTML = ""
+		displayName = "**unknown**"
 	}
-	// Header: title
+
+	// Update header adding the repository name and link
+	var updatedRepo string = ""
+	if r != nil {
+		updatedRepo = fmt.Sprintf(" | [%s](%s)", r.FullName, r.HTMLURL)
+	}
+
 	headerSection := MSTeamsContainer{
 		Type: "Container",
 		Items: []any{
 			MSTeamsTextBlock{
 				Type:     "TextBlock",
-				Text:     fmt.Sprintf("💬 Update | [%s](%s)", r.FullName, r.HTMLURL),
+				Text:     "💬 Update" + updatedRepo,
 				Weight:   "Bolder",
 				Size:     "Small",
 				IsSubtle: true,
@@ -761,7 +775,7 @@ func createMSTeamsPayload(r *api.Repository, s *api.User, actionTitle string, bo
 						Items: []any{
 							MSTeamsImage{
 								Type:  "Image",
-								URL:   s.AvatarURL, // use the sender's avatar URL
+								URL:   senderAvatar, // use the sender's avatar URL (safe)
 								Alt:   "Avatar of " + displayName,
 								Size:  "Small",
 								Style: "Person",
@@ -774,7 +788,7 @@ func createMSTeamsPayload(r *api.Repository, s *api.User, actionTitle string, bo
 						Items: []any{
 							MSTeamsTextBlock{
 								Type:   "TextBlock",
-								Text:   markdownLinkFormatter(s.HTMLURL, displayName) + " " + actionTitle,
+								Text:   markdownLinkFormatter(senderHTML, displayName) + " " + actionTitle,
 								Weight: "Default",
 								Size:   "Default",
 							},
