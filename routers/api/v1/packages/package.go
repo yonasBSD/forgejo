@@ -53,6 +53,8 @@ func ListPackages(ctx *context.APIContext) {
 	//     "$ref": "#/responses/PackageList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	listOptions := utils.GetListOptions(ctx)
 

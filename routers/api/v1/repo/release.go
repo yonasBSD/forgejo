@@ -154,6 +154,9 @@ func ListReleases(ctx *context.APIContext) {
 	//     "$ref": "#/responses/ReleaseList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
+
 	listOptions := utils.GetListOptions(ctx)
 
 	opts := repo_model.FindReleasesOptions{

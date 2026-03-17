@@ -55,6 +55,8 @@ func GetIssueDependencies(ctx *context.APIContext) {
 	//     "$ref": "#/responses/IssueListWithoutPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	// If this issue's repository does not enable dependencies then there can be no dependencies by default
 	if !ctx.Repo.Repository.IsDependenciesEnabled(ctx) {
@@ -318,6 +320,8 @@ func GetIssueBlocks(ctx *context.APIContext) {
 	//     "$ref": "#/responses/IssueListWithoutPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	// We need to list the issues that DEPEND on this issue not the other way round
 	// Therefore whether dependencies are enabled or not in this repository is potentially irrelevant.

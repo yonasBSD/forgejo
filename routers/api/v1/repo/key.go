@@ -82,6 +82,8 @@ func ListDeployKeys(ctx *context.APIContext) {
 	//     "$ref": "#/responses/DeployKeyList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	opts := asymkey_model.ListDeployKeysOptions{
 		ListOptions: utils.GetListOptions(ctx),

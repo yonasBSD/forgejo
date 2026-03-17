@@ -98,6 +98,8 @@ func ListIssueAttachments(ctx *context.APIContext) {
 	//     "$ref": "#/responses/AttachmentList"
 	//   "404":
 	//     "$ref": "#/responses/error"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	issue := getIssueFromContext(ctx)
 	if issue == nil {

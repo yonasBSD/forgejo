@@ -193,6 +193,8 @@ func ListOrgRepos(ctx *context.APIContext) {
 	//     "$ref": "#/responses/RepositoryList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	listUserRepos(ctx, ctx.Org.Organization.AsUser(), ctx.IsSigned)
 }

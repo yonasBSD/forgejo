@@ -104,6 +104,8 @@ func ListPullRequests(ctx *context.APIContext) {
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/PullRequestList"
+	//   "400":
+	//     "$ref": "#/responses/error"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 	//   "500":
@@ -358,6 +360,8 @@ func DownloadPullDiffOrPatch(ctx *context.APIContext) {
 	//     "$ref": "#/responses/string"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
 		if issues_model.IsErrPullRequestNotExist(err) {
@@ -830,6 +834,8 @@ func IsPullRequestMerged(ctx *context.APIContext) {
 	//     description: pull request has been merged
 	//   "404":
 	//     description: pull request has not been merged
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
@@ -1433,6 +1439,8 @@ func GetPullRequestCommits(ctx *context.APIContext) {
 	//     "$ref": "#/responses/CommitList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
@@ -1556,6 +1564,8 @@ func GetPullRequestFiles(ctx *context.APIContext) {
 	//     "$ref": "#/responses/ChangedFileListWithPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {

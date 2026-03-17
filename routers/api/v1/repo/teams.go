@@ -37,6 +37,10 @@ func ListTeams(ctx *context.APIContext) {
 	//     "$ref": "#/responses/TeamListWithoutPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "405":
+	//     "$ref": "#/responses/error"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	if !ctx.Repo.Owner.IsOrganization() {
 		ctx.Error(http.StatusMethodNotAllowed, "noOrg", "repo is not owned by an organization")

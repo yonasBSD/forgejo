@@ -48,6 +48,8 @@ func SigningKey(ctx *context.APIContext) {
 	//     description: "GPG armored public key"
 	//     schema:
 	//       type: string
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	path := ""
 	if ctx.Repo != nil && ctx.Repo.Repository != nil {

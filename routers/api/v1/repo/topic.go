@@ -47,6 +47,8 @@ func ListTopics(ctx *context.APIContext) {
 	//     "$ref": "#/responses/TopicNames"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	opts := &repo_model.FindTopicOptions{
 		ListOptions: utils.GetListOptions(ctx),

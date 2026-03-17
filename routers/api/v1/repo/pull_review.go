@@ -60,6 +60,8 @@ func ListPullReviews(ctx *context.APIContext) {
 	//     "$ref": "#/responses/PullReviewList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
@@ -193,6 +195,8 @@ func GetPullReviewComments(ctx *context.APIContext) {
 	//     "$ref": "#/responses/PullReviewCommentList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	review, _, statusSet := prepareSingleReview(ctx)
 	if statusSet {

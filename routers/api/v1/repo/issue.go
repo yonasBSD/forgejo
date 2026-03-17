@@ -421,6 +421,10 @@ func ListIssues(ctx *context.APIContext) {
 	//     "$ref": "#/responses/IssueList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 	before, since, err := context.GetQueryBeforeSince(ctx.Base)
 	if err != nil {
 		ctx.Error(http.StatusUnprocessableEntity, "GetQueryBeforeSince", err)

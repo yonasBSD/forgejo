@@ -73,6 +73,8 @@ func ListMembers(ctx *context.APIContext) {
 	//     "$ref": "#/responses/UserList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	var (
 		isMember bool

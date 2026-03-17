@@ -99,6 +99,9 @@ func ListIssueCommentAttachments(ctx *context.APIContext) {
 	//     "$ref": "#/responses/AttachmentList"
 	//   "404":
 	//     "$ref": "#/responses/error"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
+
 	comment := ctx.Comment
 
 	if err := comment.LoadAttachments(ctx); err != nil {

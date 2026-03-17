@@ -134,6 +134,8 @@ func GetUserOrgsPermissions(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	var o *user_model.User
 	if o = user.GetUserByParamsName(ctx, ":org"); o == nil {

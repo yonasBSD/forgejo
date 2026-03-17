@@ -52,6 +52,8 @@ func ListTeams(ctx *context.APIContext) {
 	//     "$ref": "#/responses/TeamList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	teams, count, err := organization.SearchTeam(ctx, &organization.SearchTeamOptions{
 		ListOptions: utils.GetListOptions(ctx),
@@ -400,6 +402,8 @@ func GetTeamMembers(ctx *context.APIContext) {
 	//     "$ref": "#/responses/UserList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	isMember, err := organization.IsOrganizationMember(ctx, ctx.Org.Team.OrgID, ctx.Doer.ID)
 	if err != nil {
@@ -569,6 +573,8 @@ func GetTeamRepos(ctx *context.APIContext) {
 	//     "$ref": "#/responses/RepositoryList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	team := ctx.Org.Team
 	teamRepos, err := organization.GetTeamRepositories(ctx, &organization.SearchTeamRepoOptions{

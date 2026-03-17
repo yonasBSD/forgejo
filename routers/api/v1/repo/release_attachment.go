@@ -128,6 +128,8 @@ func ListReleaseAttachments(ctx *context.APIContext) {
 	//     "$ref": "#/responses/AttachmentList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	releaseID := ctx.ParamsInt64(":id")
 	release, err := repo_model.GetReleaseByID(ctx, releaseID)

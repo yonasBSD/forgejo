@@ -201,6 +201,8 @@ func ListPinnedIssues(ctx *context.APIContext) {
 	//     "$ref": "#/responses/IssueListWithoutPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 	issues, err := issues_model.GetPinnedIssues(ctx, ctx.Repo.Repository.ID, false)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "LoadPinnedIssues", err)

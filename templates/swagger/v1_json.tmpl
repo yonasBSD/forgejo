@@ -3932,6 +3932,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -4440,6 +4443,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -4524,6 +4530,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -4747,6 +4756,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -9748,6 +9760,12 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -10078,6 +10096,9 @@
           },
           "404": {
             "$ref": "#/responses/error"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -10376,6 +10397,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -10525,6 +10549,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -10713,6 +10740,9 @@
           },
           "404": {
             "$ref": "#/responses/error"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -11017,6 +11047,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -11474,6 +11507,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -11622,6 +11658,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -12048,6 +12087,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -12694,8 +12736,17 @@
           "200": {
             "$ref": "#/responses/TrackedTimeList"
           },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -12926,6 +12977,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -13964,6 +14018,9 @@
           "200": {
             "$ref": "#/responses/PullRequestList"
           },
+          "400": {
+            "$ref": "#/responses/error"
+          },
           "404": {
             "$ref": "#/responses/notFound"
           },
@@ -14280,6 +14337,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -14348,6 +14408,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -14422,6 +14485,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -14466,6 +14532,9 @@
           },
           "404": {
             "description": "pull request has not been merged"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -14745,6 +14814,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -15016,6 +15088,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -15754,6 +15829,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -16106,6 +16184,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -16413,6 +16494,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -17371,6 +17455,12 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/responses/error"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -17585,6 +17675,12 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -17683,6 +17779,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       },
@@ -18202,6 +18301,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -18634,6 +18736,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -18783,6 +18888,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }
@@ -21813,6 +21921,9 @@
           },
           "404": {
             "$ref": "#/responses/notFound"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
           }
         }
       }

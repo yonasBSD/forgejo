@@ -294,6 +294,8 @@ func ListWikiPages(ctx *context.APIContext) {
 	//     "$ref": "#/responses/WikiPageList"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	wikiRepo, commit := findWikiRepoCommit(ctx)
 	if wikiRepo != nil {

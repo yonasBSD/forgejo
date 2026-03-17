@@ -47,6 +47,8 @@ func ListIssueLabels(ctx *context.APIContext) {
 	//     "$ref": "#/responses/LabelListWithoutPagination"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "500":
+	//     "$ref": "#/responses/internalServerError"
 
 	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo.Repository.ID, ctx.ParamsInt64(":index"))
 	if err != nil {
